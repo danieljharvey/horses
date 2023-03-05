@@ -11,6 +11,8 @@ on:
       - "repl/**"
       - "core/**"
       - "backends/**"
+      - "cabal.project"
+      - "cabal.project.freeze"
 
   pull_request:
     branches:
@@ -22,6 +24,8 @@ on:
       - "repl/**"
       - "core/**"
       - "backends/**"
+      - "cabal.project"
+      - "cabal.project.freeze"
 
 jobs:
   build:
@@ -58,7 +62,7 @@ jobs:
 
       - uses: haskell/actions/setup@v2
         with:
-          ghc-version: '9.2.5'
+          ghc-version: '9.4.4'
           cabal-version: '3.8.1.0'
 
       - name: Build all things

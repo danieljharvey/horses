@@ -109,7 +109,7 @@ getConstructorNumber (Smol.DataType _ _ constructors) constructor =
 
 -- create function and it's type at once
 functionAndType ::
-  MonadModuleBuilder m =>
+  (MonadModuleBuilder m) =>
   AST.Name ->
   [(Type, ParameterName)] ->
   Type ->
@@ -274,7 +274,7 @@ irTypeNeedsPointer :: IRType -> Bool
 irTypeNeedsPointer (IRStruct _) = True
 irTypeNeedsPointer _ = False
 
-irIdentifierToLLVM :: IsString a => IRIdentifier -> a
+irIdentifierToLLVM :: (IsString a) => IRIdentifier -> a
 irIdentifierToLLVM (IRIdentifier s) = fromString s
 
 irPrimToLLVM :: IRPrim -> LLVM.Operand

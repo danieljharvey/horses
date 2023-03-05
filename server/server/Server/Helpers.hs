@@ -37,14 +37,14 @@ handleServerM cfg et computation = do
           )
   Handler $ ExceptT $ f <$> ioEither
 
-handleExceptT :: Printer e => ErrorType -> ExceptT e IO a -> Handler a
+handleExceptT :: (Printer e) => ErrorType -> ExceptT e IO a -> Handler a
 handleExceptT et computation =
   let errorFunc = case et of
         UserError -> to400Error
         InternalError -> to500Error
    in Handler $ withExceptT errorFunc computation
 
-handleEither :: Printer e => ErrorType -> Either e a -> Handler a
+handleEither :: (Printer e) => ErrorType -> Either e a -> Handler a
 handleEither et computation =
   let errorFunc = case et of
         UserError -> to400Error

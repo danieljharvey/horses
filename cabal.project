@@ -10,7 +10,7 @@ packages:
   llvm-calc2/llvm-calc2.cabal,
   vendored/**/*.cabal
 
-with-compiler: ghc-9.2.5
+with-compiler: ghc-9.4.4
 
 package diagnose
   flags: +megaparsec-compat
