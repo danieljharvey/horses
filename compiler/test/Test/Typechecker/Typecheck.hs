@@ -27,7 +27,7 @@ import Test.Codegen.Shared
 import Test.Hspec
 import Test.Utils.Helpers
 
-identity :: Monoid ann => Expr Name ann
+identity :: (Monoid ann) => Expr Name ann
 identity =
   MyLambda
     mempty

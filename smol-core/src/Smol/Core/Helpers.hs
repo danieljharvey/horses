@@ -63,7 +63,7 @@ mapToNumbered =
 
 -- | 'MonadError' analogue to the 'Control.Exception.try' function.
 -- coming in mtl 2.3
-tryError :: MonadError e m => m a -> m (Either e a)
+tryError :: (MonadError e m) => m a -> m (Either e a)
 tryError action = (Right <$> action) `catchError` (pure . Left)
 
 fromRight :: (Show e) => Either e a -> a

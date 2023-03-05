@@ -50,7 +50,7 @@ fromJust maybe' = case maybe' of
   Just a -> a
   _ -> error "Expected a Just"
 
-unsafeParseExpr' :: Monoid ann => Text -> Expr Name ann
+unsafeParseExpr' :: (Monoid ann) => Text -> Expr Name ann
 unsafeParseExpr' t = case parseExpr t of
   Right a -> a $> mempty
   Left _ ->

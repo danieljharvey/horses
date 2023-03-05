@@ -33,7 +33,7 @@ newtype MimsaHandlerT xs m a = MimsaHandlerT {unMimsaHandlerT :: ExceptT (Union 
 
 -- | Deliberately hide 'ExceptT's 'MonadError' instance to be able to use
 -- underlying monad's instance.
-instance MonadError e m => MonadError e (MimsaHandlerT xs m) where
+instance (MonadError e m) => MonadError e (MimsaHandlerT xs m) where
   throwError = lift . throwError
   catchError (MimsaHandlerT act) h =
     MimsaHandlerT $
