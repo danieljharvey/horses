@@ -11,7 +11,7 @@ module Smol.Core.Typecheck.Subtype
 where
 
 import Control.Monad.Except
-import Control.Monad.Writer.Strict
+import Control.Monad.Writer.CPS
 import Data.Bifunctor (first)
 import Data.Foldable (foldl', foldrM)
 import Data.Functor (($>))

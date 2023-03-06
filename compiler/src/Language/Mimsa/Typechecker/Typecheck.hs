@@ -8,7 +8,7 @@ where
 
 import Control.Monad.Except
 import Control.Monad.State (State, runState)
-import Control.Monad.Writer.Strict
+import Control.Monad.Writer.CPS
 import Data.Map.Strict (Map)
 import Language.Mimsa.Core
 import Language.Mimsa.Typechecker.Elaborate

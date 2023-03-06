@@ -73,6 +73,7 @@ library
     , servant-server
     , text
     , transformers
+    , writer-cps-mtl
 
   default-language:   Haskell2010
 

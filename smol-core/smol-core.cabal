@@ -49,6 +49,7 @@ common shared
     , string-conversions
     , text
     , unix
+    , writer-cps-mtl
 
 library
   import:           shared
@@ -81,7 +82,10 @@ library
     Smol.Core.IR.ToLLVM.Patterns
     Smol.Core.IR.ToLLVM.ToLLVM
     Smol.Core.Parser
+    Smol.Core.Parser.DataType
+    Smol.Core.Parser.Expr
     Smol.Core.Parser.Identifiers
+    Smol.Core.Parser.Module
     Smol.Core.Parser.Pattern
     Smol.Core.Parser.Primitives
     Smol.Core.Parser.Shared
@@ -106,6 +110,7 @@ library
     Smol.Core.Types.Expr
     Smol.Core.Types.GetPath
     Smol.Core.Types.Identifier
+    Smol.Core.Types.Module
     Smol.Core.Types.Module.DefIdentifier
     Smol.Core.Types.Module.Entity
     Smol.Core.Types.Module.Module
