@@ -12,7 +12,7 @@ where
 
 import Control.Monad.Except
 import Control.Monad.State (State)
-import Control.Monad.Writer.Strict
+import Control.Monad.Writer.CPS
 import Data.Bifunctor
 import Data.Foldable
 import Data.Functor
