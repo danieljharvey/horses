@@ -8,7 +8,7 @@ where
 import Control.Monad.IO.Class
 import Data.Either
 import Data.Foldable
-import qualified Data.Map.Strict as M
+import qualified Data.HashMap.Strict as M
 import qualified Data.Text as T
 import qualified Language.Mimsa.Actions.Helpers.LookupExpression as Actions
 import qualified Language.Mimsa.Actions.Modules.Check as Actions

@@ -9,6 +9,7 @@ import Data.String
 import Data.Text (Text)
 import qualified Data.Text as T
 import Language.Mimsa.Core.Printer
+import Data.Hashable
 
 ------------
 
@@ -20,7 +21,8 @@ newtype InfixOp = InfixOp Text
       JSON.ToJSON,
       JSON.ToJSONKey,
       JSON.FromJSON,
-      JSON.FromJSONKey
+      JSON.FromJSONKey,
+      Hashable
     )
 
 -------------

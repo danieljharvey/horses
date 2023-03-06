@@ -11,8 +11,8 @@ import Control.Monad.Except
 import Control.Monad.Identity
 import Data.Bifunctor
 import Data.Functor (($>))
-import Data.Map.Strict (Map)
-import qualified Data.Map.Strict as M
+import Data.HashMap.Strict (HashMap)
+import qualified Data.HashMap.Strict as M
 import Data.Maybe
 import Data.Set (Set)
 import qualified Data.Set as S

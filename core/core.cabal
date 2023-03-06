@@ -90,6 +90,7 @@ library
     , servant-server
     , text
     , transformers
+    , unordered-containers
 
   default-language:   Haskell2010
 

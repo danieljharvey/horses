@@ -13,6 +13,7 @@ where
 
 -- a TyVar is the string token for any unknown type
 
+import Data.Hashable
 import qualified Data.Aeson as JSON
 import qualified Data.Char as Ch
 import Data.String
@@ -34,7 +35,8 @@ newtype TyVar = TyVar {getTyVar' :: Text}
       JSON.FromJSON,
       JSON.FromJSONKey,
       JSON.ToJSON,
-      JSON.ToJSONKey
+      JSON.ToJSONKey,
+      Hashable
     )
 
 instance IsString TyVar where

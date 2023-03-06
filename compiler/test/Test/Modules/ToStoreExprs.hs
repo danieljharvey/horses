@@ -6,7 +6,7 @@ module Test.Modules.ToStoreExprs
 where
 
 import Data.Functor
-import qualified Data.Map.Strict as M
+import qualified Data.HashMap.Strict as M
 import Language.Mimsa.Core hiding (parseModule)
 import Language.Mimsa.Modules.HashModule
 import Language.Mimsa.Modules.Parse

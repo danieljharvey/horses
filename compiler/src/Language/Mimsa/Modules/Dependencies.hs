@@ -14,8 +14,8 @@ where
 -- work out the dependencies between definitions inside a module
 
 import Control.Monad.Except
-import Data.Map.Strict (Map)
-import qualified Data.Map.Strict as M
+import Data.HashMap.Strict (HashMap)
+import qualified Data.HashMap.Strict as M
 import Data.Maybe
 import Data.Monoid (First (..))
 import Data.Set (Set)

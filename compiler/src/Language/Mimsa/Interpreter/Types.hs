@@ -10,7 +10,7 @@ module Language.Mimsa.Interpreter.Types
 where
 
 import Control.Monad.Reader
-import Data.Map.Strict (Map)
+import Data.HashMap.Strict (HashMap)
 import Language.Mimsa.Core
 import Language.Mimsa.Types.Error.InterpreterError
 import Language.Mimsa.Types.Interpreter.Stack
@@ -25,8 +25,8 @@ type InterpreterM var ann a =
 
 data InterpretReaderEnv var ann = InterpretReaderEnv
   { ireStack :: StackFrame var ann,
-    ireGlobals :: Map ExprHash (InterpretExpr var ann),
-    ireInfixes :: Map InfixOp ExprHash
+    ireGlobals :: HashMap ExprHash (InterpretExpr var ann),
+    ireInfixes :: HashMap InfixOp ExprHash
   }
 
 type InterpretExpr var ann = Expr (var, Unique) (ExprData var ann)

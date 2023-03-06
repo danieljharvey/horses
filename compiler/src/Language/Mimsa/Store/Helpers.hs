@@ -3,7 +3,7 @@
 module Language.Mimsa.Store.Helpers (lookupExprHashInStore, setStoreExpression) where
 
 import Control.Monad.Except
-import qualified Data.Map.Strict as M
+import qualified Data.HashMap.Strict as M
 import Language.Mimsa.Core
 import Language.Mimsa.Types.Error.StoreError
 import Language.Mimsa.Types.Store

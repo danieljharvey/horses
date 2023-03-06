@@ -13,8 +13,8 @@ where
 import Control.Monad.Reader
 import Control.Monad.State
 import qualified Data.List.NonEmpty as NE
-import Data.Map.Strict (Map)
-import qualified Data.Map.Strict as M
+import Data.HashMap.Strict (HashMap)
+import qualified Data.HashMap.Strict as M
 import Data.Maybe
 import Language.Mimsa.Core
 import Language.Mimsa.Transform.FindUses

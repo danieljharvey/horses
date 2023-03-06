@@ -5,7 +5,7 @@ module Language.Mimsa.Modules.Parse (parseModule) where
 
 import Control.Monad.Except
 import Data.Bifunctor
-import Data.Map.Strict (Map)
+import Data.HashMap.Strict (HashMap)
 import Data.Text (Text)
 import Language.Mimsa.Core (Annotation, Module, ModuleHash)
 import qualified Language.Mimsa.Core as Parser

@@ -7,7 +7,7 @@ module Test.Actions.Build
 where
 
 import Control.Monad.IO.Class
-import qualified Data.Map.Strict as M
+import qualified Data.HashMap.Strict as M
 import qualified Data.Set as S
 import Data.Text (Text)
 import qualified Language.Mimsa.Actions.Helpers.Build as Actions

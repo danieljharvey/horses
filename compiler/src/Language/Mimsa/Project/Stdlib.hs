@@ -9,8 +9,8 @@ module Language.Mimsa.Project.Stdlib
   )
 where
 
-import Data.Map.Strict (Map)
-import qualified Data.Map.Strict as M
+import Data.HashMap.Strict (HashMap)
+import qualified Data.HashMap.Strict as M
 import Data.Text (Text)
 import qualified Data.Text as T
 import qualified Language.Mimsa.Actions.Helpers.Parse as Actions

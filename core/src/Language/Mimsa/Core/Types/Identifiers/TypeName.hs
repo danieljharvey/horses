@@ -12,6 +12,7 @@ module Language.Mimsa.Core.Types.Identifiers.TypeName
   )
 where
 
+import Data.Hashable
 import qualified Data.Aeson as JSON
 import qualified Data.Char as Ch
 import Data.OpenApi
@@ -34,7 +35,8 @@ newtype TypeName = TypeName Text
       ToSchema,
       JSON.FromJSONKey,
       JSON.ToJSON,
-      JSON.ToJSONKey
+      JSON.ToJSONKey,
+      Hashable
     )
 
 instance JSON.FromJSON TypeName where

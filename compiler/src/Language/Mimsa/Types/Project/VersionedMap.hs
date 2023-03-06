@@ -3,23 +3,24 @@
 
 module Language.Mimsa.Types.Project.VersionedMap where
 
+import Data.Hashable
 import qualified Data.Aeson as JSON
 import Data.List (nub)
 import Data.List.NonEmpty (NonEmpty)
 import qualified Data.List.NonEmpty as NE
-import Data.Map.Strict (Map)
-import qualified Data.Map.Strict as M
+import Data.HashMap.Strict (HashMap)
+import qualified Data.HashMap.Strict as M
 
 ------
--- A versioned Map is a Map whose contents are a unique nonempty list
+-- A versioned HashMap is a HashMap whose contents are a unique nonempty list
 -- When adding a new item, it goes at the end, removing previous occurances
 ------
 
-newtype VersionedMap k a = VersionedMap {getVersionedMap :: Map k (NonEmpty a)}
+newtype VersionedMap k a = VersionedMap {getVersionedMap :: HashMap k (NonEmpty a)}
   deriving newtype (Eq, Ord, Show, Monoid)
   deriving newtype (JSON.ToJSON, JSON.FromJSON)
 
-instance (Ord k, Eq a) => Semigroup (VersionedMap k a) where
+instance (Hashable k, Eq a) => Semigroup (VersionedMap k a) where
   (VersionedMap a) <> (VersionedMap b) =
     VersionedMap (M.unionWith combineUnique a b)
 
@@ -32,5 +33,5 @@ combineUnique as bs =
    in NE.fromList . reverse . nub . reverse $ as' <> bs'
 
 -- remove an item from a versioned map
-delete :: (Ord k) => k -> VersionedMap k a -> VersionedMap k a
+delete :: (Hashable k) => k -> VersionedMap k a -> VersionedMap k a
 delete key = VersionedMap . M.delete key . getVersionedMap

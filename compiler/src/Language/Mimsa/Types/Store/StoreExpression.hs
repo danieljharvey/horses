@@ -6,7 +6,7 @@
 module Language.Mimsa.Types.Store.StoreExpression where
 
 import qualified Data.Aeson as JSON
-import Data.Map.Strict (Map)
+import Data.HashMap.Strict (HashMap)
 import GHC.Generics
 import Language.Mimsa.Core
 import Language.Mimsa.Types.Store.ExprHash

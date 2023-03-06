@@ -8,8 +8,8 @@ where
 import Data.Bifunctor
 import Data.Either (isLeft)
 import qualified Data.List.NonEmpty as NE
-import Data.Map.Strict (Map)
-import qualified Data.Map.Strict as M
+import Data.HashMap.Strict (HashMap)
+import qualified Data.HashMap.Strict as M
 import qualified Data.Set as S
 import Language.Mimsa.Core
 import Language.Mimsa.Typechecker.Elaborate

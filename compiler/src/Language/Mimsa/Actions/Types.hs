@@ -14,7 +14,7 @@ where
 import Control.Monad.Except
 import Control.Monad.State
 import Data.Hashable
-import Data.Map.Strict (Map)
+import Data.HashMap.Strict (HashMap)
 import Data.Text (Text)
 import qualified Data.Text as T
 import Language.Mimsa.Core

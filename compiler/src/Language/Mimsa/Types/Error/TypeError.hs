@@ -16,8 +16,8 @@ module Language.Mimsa.Types.Error.TypeError
 where
 
 import Data.Foldable (fold)
-import Data.Map.Strict (Map)
-import qualified Data.Map.Strict as M
+import Data.HashMap.Strict (HashMap)
+import qualified Data.HashMap.Strict as M
 import Data.Maybe
 import Data.Set (Set)
 import qualified Data.Set as S

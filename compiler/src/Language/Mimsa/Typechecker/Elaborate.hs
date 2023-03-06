@@ -17,7 +17,7 @@ import Data.Bifunctor
 import Data.Foldable
 import Data.Functor
 import qualified Data.List.NonEmpty as NE
-import qualified Data.Map.Strict as M
+import qualified Data.HashMap.Strict as M
 import Data.Maybe (listToMaybe)
 import GHC.Natural
 import Language.Mimsa.Core

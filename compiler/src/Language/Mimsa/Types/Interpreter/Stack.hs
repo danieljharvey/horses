@@ -1,25 +1,33 @@
 {-# LANGUAGE DerivingStrategies #-}
 {-# LANGUAGE OverloadedStrings #-}
-
+{-# LANGUAGE DeriveAnyClass #-}
+{-# LANGUAGE DeriveGeneric #-}
+  {-# LANGUAGE FlexibleContexts #-}
+    {-# LANGUAGE UndecidableInstances #-}
 module Language.Mimsa.Types.Interpreter.Stack (StackFrame (..), ExprData (..)) where
 
-import Data.Map.Strict (Map)
-import qualified Data.Map.Strict as M
+import Data.HashMap.Strict (HashMap)
+import qualified Data.HashMap.Strict as M
 import qualified Data.Text as T
 import Language.Mimsa.Core
 import Language.Mimsa.Types.Typechecker.Unique
+import Data.Hashable
+import GHC.Generics
 
 data StackFrame var ann = StackFrame
-  { sfVariables :: Map var (Expr (var, Unique) (ExprData var ann)),
-    sfInfix :: Map InfixOp (Expr (var, Unique) (ExprData var ann))
+  { sfVariables :: HashMap var (Expr (var, Unique) (ExprData var ann)),
+    sfInfix :: HashMap InfixOp (Expr (var, Unique) (ExprData var ann))
   }
-  deriving stock (Eq, Ord, Show)
+  deriving stock (Eq, Ord, Show, Generic)
 
-instance (Ord var) => Semigroup (StackFrame var ann) where
+instance (Eq ann, Hashable var,
+  Hashable (Expr (var, Unique) (ExprData var ann))) => Hashable (StackFrame var ann)
+
+instance (Hashable var) => Semigroup (StackFrame var ann) where
   (StackFrame varA infixA) <> (StackFrame varB infixB) =
     StackFrame (varA <> varB) (infixA <> infixB)
 
-instance (Ord var) => Monoid (StackFrame var ann) where
+instance (Hashable var) => Monoid (StackFrame var ann) where
   mempty = StackFrame mempty mempty
 
 instance (Printer var) => Printer (StackFrame var ann) where
@@ -38,8 +46,8 @@ data ExprData var ann = ExprData
   }
   deriving stock (Eq, Ord, Show)
 
-instance (Ord var, Semigroup ann) => Semigroup (ExprData var ann) where
+instance (Hashable var, Semigroup ann) => Semigroup (ExprData var ann) where
   (ExprData sfA isRecA annA) <> (ExprData sfB isRecB annB) = ExprData (sfA <> sfB) (isRecA || isRecB) (annA <> annB)
 
-instance (Ord var, Monoid ann) => Monoid (ExprData var ann) where
+instance (Hashable var, Monoid ann) => Monoid (ExprData var ann) where
   mempty = ExprData mempty False mempty

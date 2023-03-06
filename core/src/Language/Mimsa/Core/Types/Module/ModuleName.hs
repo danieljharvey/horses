@@ -11,6 +11,7 @@ module Language.Mimsa.Core.Types.Module.ModuleName
   )
 where
 
+import Data.Hashable
 import qualified Data.Aeson as JSON
 import qualified Data.Char as Ch
 import Data.OpenApi
@@ -30,7 +31,8 @@ newtype ModuleName = ModuleName Text
     ( Show,
       JSON.FromJSONKey,
       JSON.ToJSON,
-      JSON.ToJSONKey
+      JSON.ToJSONKey,
+      Hashable
     )
 
 instance JSON.FromJSON ModuleName where

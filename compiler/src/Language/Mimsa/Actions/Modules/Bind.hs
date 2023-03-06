@@ -6,7 +6,7 @@ module Language.Mimsa.Actions.Modules.Bind
   )
 where
 
-import Data.Map.Strict (Map)
+import Data.HashMap.Strict (HashMap)
 import Data.Text (Text)
 import qualified Language.Mimsa.Actions.Modules.RunTests as Actions
 import qualified Language.Mimsa.Actions.Modules.Typecheck as Actions

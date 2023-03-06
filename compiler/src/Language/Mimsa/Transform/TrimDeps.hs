@@ -1,6 +1,6 @@
 module Language.Mimsa.Transform.TrimDeps where
 
-import qualified Data.Map.Strict as M
+import qualified Data.HashMap.Strict as M
 import Language.Mimsa.Core
 import Language.Mimsa.Transform.FindUses
 import Language.Mimsa.Types.Store

@@ -5,7 +5,7 @@ module Test.Data.Prelude (prelude, preludeHash) where
 -- hard coded basic Prelude module used for tests
 
 import Data.Functor
-import qualified Data.Map.Strict as M
+import qualified Data.HashMap.Strict as M
 import qualified Data.Set as S
 import Language.Mimsa.Core
 import Language.Mimsa.Modules.HashModule

@@ -22,7 +22,7 @@ module Test.Codegen.Shared
 where
 
 import Data.Functor
-import qualified Data.Map.Strict as M
+import qualified Data.HashMap.Strict as M
 import Data.Text (Text)
 import qualified Data.Text as T
 import Language.Mimsa.Core

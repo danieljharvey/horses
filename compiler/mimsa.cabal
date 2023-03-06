@@ -193,6 +193,7 @@ library
     , servant-server
     , text
     , transformers
+    , unordered-containers
     , wasm
     , writer-cps-mtl
 
@@ -279,6 +280,7 @@ test-suite mimsa-test
     , text
     , transformers
     , typed-process
+    , unordered-containers
     , wasm
 
   default-language: Haskell2010

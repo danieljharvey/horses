@@ -8,8 +8,8 @@ where
 
 import Data.Coerce
 import Data.Functor
-import Data.Map.Strict (Map)
-import qualified Data.Map.Strict as M
+import Data.HashMap.Strict (HashMap)
+import qualified Data.HashMap.Strict as M
 import qualified Data.Set as S
 import qualified Data.Text as T
 import Language.Mimsa.Core

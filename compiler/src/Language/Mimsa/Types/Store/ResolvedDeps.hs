@@ -3,8 +3,8 @@
 
 module Language.Mimsa.Types.Store.ResolvedDeps where
 
-import Data.Map.Strict (Map)
-import qualified Data.Map.Strict as M
+import Data.HashMap.Strict (HashMap)
+import qualified Data.HashMap.Strict as M
 import Language.Mimsa.Core
 import Language.Mimsa.Types.Store.ExprHash
 import Language.Mimsa.Types.Store.StoreExpression

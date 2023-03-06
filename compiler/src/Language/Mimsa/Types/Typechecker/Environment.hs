@@ -3,18 +3,18 @@
 
 module Language.Mimsa.Types.Typechecker.Environment where
 
-import Data.Map.Strict (Map)
+import Data.HashMap.Strict (HashMap)
 import Language.Mimsa.Core
 import Language.Mimsa.Types.Typechecker.Scheme (Scheme)
 import Prettyprinter
 
 -- everything we need in typechecking environment
 data Environment = Environment
-  { getSchemes :: Map TypeIdentifier Scheme,
-    getDataTypes :: Map (Maybe ModuleName, TypeName) DataType,
-    getInfix :: Map InfixOp Scheme,
-    getTypeVarsInScope :: Map TyVar Int, -- used for scoping type variables
-    getNamespacedSchemes :: Map ModuleHash (Map Name Scheme) -- Name should probably be DefIdentifier or something so we can do Infix in future
+  { getSchemes :: HashMap TypeIdentifier Scheme,
+    getDataTypes :: HashMap (Maybe ModuleName, TypeName) DataType,
+    getInfix :: HashMap InfixOp Scheme,
+    getTypeVarsInScope :: HashMap TyVar Int, -- used for scoping type variables
+    getNamespacedSchemes :: HashMap ModuleHash (HashMap Name Scheme) -- Name should probably be DefIdentifier or something so we can do Infix in future
   }
   deriving stock (Eq, Ord, Show)
 

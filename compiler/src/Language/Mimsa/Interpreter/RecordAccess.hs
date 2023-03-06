@@ -2,7 +2,7 @@ module Language.Mimsa.Interpreter.RecordAccess (interpretRecordAccess, interpret
 
 import Control.Monad.Except
 import qualified Data.List.NonEmpty as NE
-import qualified Data.Map.Strict as M
+import qualified Data.HashMap.Strict as M
 import Data.Maybe (listToMaybe)
 import GHC.Natural
 import Language.Mimsa.Core

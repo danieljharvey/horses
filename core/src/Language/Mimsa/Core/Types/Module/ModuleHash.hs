@@ -5,6 +5,7 @@
 
 module Language.Mimsa.Core.Types.Module.ModuleHash where
 
+import Data.Hashable
 import qualified Data.Aeson as JSON
 import Data.OpenApi
 import Data.Text (Text)
@@ -24,7 +25,8 @@ newtype ModuleHash = ModuleHash Text
       JSON.FromJSONKey,
       JSON.ToJSON,
       JSON.ToJSONKey,
-      FromHttpApiData
+      FromHttpApiData,
+      Hashable
     )
 
 instance Show ModuleHash where

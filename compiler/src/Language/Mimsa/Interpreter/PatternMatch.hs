@@ -6,7 +6,7 @@ where
 
 import Control.Monad.Except
 import qualified Data.List.NonEmpty as NE
-import qualified Data.Map.Strict as M
+import qualified Data.HashMap.Strict as M
 import Data.Maybe (fromMaybe)
 import Data.Monoid
 import qualified Data.Set as S

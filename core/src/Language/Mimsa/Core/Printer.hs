@@ -12,6 +12,7 @@ where
 -- prettyPrint is for debug output
 -- prettyDoc returns a Prettyprinter doc for nicer output
 
+import qualified Data.HashMap.Strict as HM
 import qualified Data.List.NonEmpty as NE
 import Data.Map.Strict (Map)
 import qualified Data.Map.Strict as M
@@ -71,6 +72,12 @@ instance (Printer k, Printer v) => Printer (Map k v) where
   prettyDoc map' =
     let printRow (k, v) = "  " <> prettyDoc k <> ":" <+> prettyDoc v
      in encloseSep lbrace rbrace comma (printRow <$> M.toList map')
+
+instance (Printer k, Printer v) => Printer (HM.HashMap k v) where
+  prettyDoc map' =
+    let printRow (k, v) = "  " <> prettyDoc k <> ":" <+> prettyDoc v
+     in encloseSep lbrace rbrace comma (printRow <$> HM.toList map')
+
 
 instance (Printer a, Printer b) => Printer (a, b) where
   prettyDoc (a, b) = tupled [prettyDoc a, prettyDoc b]

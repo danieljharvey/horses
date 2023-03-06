@@ -6,8 +6,8 @@
 module Language.Mimsa.Types.Store.Store where
 
 import qualified Data.Aeson as JSON
-import Data.Map.Strict (Map)
-import qualified Data.Map.Strict as M
+import Data.HashMap.Strict (HashMap)
+import qualified Data.HashMap.Strict as M
 import qualified Data.Text as T
 import Language.Mimsa.Core
 import Language.Mimsa.Types.Store.ExprHash

@@ -7,8 +7,8 @@ module Language.Mimsa.Store.ResolvedDeps
 where
 
 import Data.Either (partitionEithers)
-import Data.Map.Strict (Map)
-import qualified Data.Map.Strict as M
+import Data.HashMap.Strict (HashMap)
+import qualified Data.HashMap.Strict as M
 import Language.Mimsa.Core
 import Language.Mimsa.Types.Error
 import Language.Mimsa.Types.Store

@@ -4,7 +4,7 @@ module Language.Mimsa.Actions.Helpers.NumberStoreExpression (numberStoreExpressi
 
 import Control.Monad.Except
 import Data.Bifunctor
-import Data.Map.Strict (Map)
+import Data.HashMap.Strict (HashMap)
 import Language.Mimsa.Core
 import Language.Mimsa.Typechecker.NumberVars
 import Language.Mimsa.Types.Error

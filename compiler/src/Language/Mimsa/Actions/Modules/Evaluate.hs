@@ -4,7 +4,7 @@ module Language.Mimsa.Actions.Modules.Evaluate
 where
 
 import Data.Foldable
-import qualified Data.Map.Strict as M
+import qualified Data.HashMap.Strict as M
 import Data.Maybe (fromJust)
 import qualified Data.Set as S
 import qualified Language.Mimsa.Actions.Interpret as Actions

@@ -3,8 +3,8 @@
 
 module Language.Mimsa.Types.Error.InterpreterError (InterpreterError (..)) where
 
-import Data.Map.Strict (Map)
-import qualified Data.Map.Strict as M
+import Data.HashMap.Strict (HashMap)
+import qualified Data.HashMap.Strict as M
 import qualified Data.Text as T
 import GHC.Natural
 import Language.Mimsa.Core
@@ -16,9 +16,9 @@ type InterpretExpr var ann = Expr (var, Unique) (ExprData var ann)
 
 data InterpreterError var ann
   = UnknownInterpreterError
-  | CouldNotFindVar (Map var (InterpretExpr var ann)) var
-  | CouldNotFindInfix (Map InfixOp (InterpretExpr var ann)) InfixOp
-  | CouldNotFindGlobal (Map ExprHash (InterpretExpr var ann)) ExprHash
+  | CouldNotFindVar (HashMap var (InterpretExpr var ann)) var
+  | CouldNotFindInfix (HashMap InfixOp (InterpretExpr var ann)) InfixOp
+  | CouldNotFindGlobal (HashMap ExprHash (InterpretExpr var ann)) ExprHash
   | AdditionWithNonNumber (InterpretExpr var ann)
   | SubtractionWithNonNumber (InterpretExpr var ann)
   | ComparisonWithNonNumber Operator (InterpretExpr var ann)
@@ -27,7 +27,7 @@ data InterpreterError var ann
   | PredicateForIfMustBeABoolean (InterpretExpr var ann)
   | CannotDestructureAsRecord (InterpretExpr var ann) Name
   | CannotDestructureAsTuple (InterpretExpr var ann) Natural
-  | CannotFindMemberInRecord (Map Name (InterpretExpr var ann)) Name
+  | CannotFindMemberInRecord (HashMap Name (InterpretExpr var ann)) Name
   | CannotFindMemberInTuple [InterpretExpr var ann] Natural
   | PatternMatchFailure (InterpretExpr var ann)
   deriving stock (Eq, Ord, Show)

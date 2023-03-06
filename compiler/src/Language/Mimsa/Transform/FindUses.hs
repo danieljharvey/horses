@@ -3,8 +3,8 @@
 
 module Language.Mimsa.Transform.FindUses (findUses, memberInUses, numberOfUses, Uses (..)) where
 
-import Data.Map.Strict (Map)
-import qualified Data.Map.Strict as M
+import Data.HashMap.Strict (HashMap)
+import qualified Data.HashMap.Strict as M
 import Data.Monoid
 import Language.Mimsa.Core
 

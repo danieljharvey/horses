@@ -10,7 +10,7 @@ where
 import Control.Monad.Except
 import Data.Foldable
 import Data.Hashable
-import qualified Data.Map.Strict as M
+import qualified Data.HashMap.Strict as M
 import qualified Data.Text as T
 import qualified Data.Text.IO as T
 import qualified Language.Mimsa.Actions.Compile as Actions

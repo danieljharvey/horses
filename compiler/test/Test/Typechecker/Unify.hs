@@ -10,7 +10,7 @@ import Control.Monad.Except
 import Control.Monad.State.Strict (runState)
 import Data.Either (isLeft, isRight)
 import qualified Data.List.NonEmpty as NE
-import qualified Data.Map.Strict as M
+import qualified Data.HashMap.Strict as M
 import Language.Mimsa.Core
 import Language.Mimsa.Typechecker.TcMonad
 import Language.Mimsa.Typechecker.Unify

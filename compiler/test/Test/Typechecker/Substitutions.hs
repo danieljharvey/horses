@@ -5,7 +5,7 @@ module Test.Typechecker.Substitutions
   )
 where
 
-import qualified Data.Map.Strict as M
+import qualified Data.HashMap.Strict as M
 import Language.Mimsa.Core
 import Language.Mimsa.Types.Typechecker.Substitutions
 import Test.Hspec
