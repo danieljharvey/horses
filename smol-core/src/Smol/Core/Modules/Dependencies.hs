@@ -24,18 +24,18 @@ import Smol.Core
 import Smol.Core.Modules.HashModule
 import Smol.Core.Modules.Monad
 import Smol.Core.Modules.Uses
-import Smol.Core.Types.Error
+import qualified Smol.Core.Types.Module.Entity as E
+import Smol.Core.Types.Module.DefIdentifier
+import Smol.Core.Types.Module.Module
+import Smol.Core.Modules.ModuleError
+import Smol.Core.Types.Module.ModuleHash
 
 data DepType ann
-  = DTExpr (Expr Name ann)
-  | DTData DataType
+  = DTExpr (Expr ParseDep ann)
+  | DTData (DataType ParseDep ann)
   deriving stock (Eq, Ord, Show)
 
-instance (Printer ann) => Printer (DepType ann) where
-  prettyPrint (DTExpr expr) = prettyPrint expr
-  prettyPrint (DTData dt) = prettyPrint dt
-
-filterExprs :: Map k (DepType ann) -> Map k (Expr Name ann)
+filterExprs :: Map k (DepType ann) -> Map k (Expr ParseDep ann)
 filterExprs =
   M.mapMaybe
     ( \case
@@ -43,7 +43,7 @@ filterExprs =
         _ -> Nothing
     )
 
-filterDataTypes :: Map k (DepType ann) -> Map k DataType
+filterDataTypes :: Map k (DepType ann) -> Map k (DataType ParseDep ann)
 filterDataTypes =
   M.mapMaybe
     ( \case
@@ -51,33 +51,32 @@ filterDataTypes =
         _ -> Nothing
     )
 
-filterDefs :: Set Entity -> Set DefIdentifier
+filterDefs :: Set E.Entity -> Set DefIdentifier
 filterDefs =
   S.fromList
     . mapMaybe
       ( \case
-          EName name -> Just (DIName name)
-          EInfix infixOp -> Just (DIInfix infixOp)
+          E.EVar name -> Just (DIName name)
           _ -> Nothing
       )
     . S.toList
 
-filterConstructors :: Set Entity -> Set TyCon
+filterConstructors :: Set E.Entity -> Set Constructor
 filterConstructors =
   S.fromList
     . mapMaybe
       ( \case
-          EConstructor tyCon -> Just tyCon
+          E.EConstructor tyCon -> Just tyCon
           _ -> Nothing
       )
     . S.toList
 
-filterTypes :: Set Entity -> Set TypeName
+filterTypes :: Set E.Entity -> Set TypeName
 filterTypes =
   S.fromList
     . mapMaybe
       ( \case
-          EType typeName -> Just typeName
+          E.EType typeName -> Just typeName
           _ -> Nothing
       )
     . S.toList
@@ -85,15 +84,15 @@ filterTypes =
 -- get the vars used by each def
 -- explode if there's not available
 getDependencies ::
-  (MonadError (Error Annotation) m) =>
-  (Expr Name ann -> Set Entity) ->
+  (MonadError ModuleError m) =>
+  (Expr ParseDep ann -> Set E.Entity) ->
   Module ann ->
   m
     ( Map
         DefIdentifier
         ( DepType ann,
           Set DefIdentifier,
-          Set Entity
+          Set E.Entity
         )
     )
 getDependencies getUses mod' = do
@@ -102,7 +101,7 @@ getDependencies getUses mod' = do
       (getExprDependencies getUses mod')
       (moExpressions mod')
   typeDeps <-
-    mapKeys DIType
+    M.mapKeys DIType
       <$> traverse
         (getTypeDependencies mod')
         (moDataTypes mod')
@@ -110,10 +109,10 @@ getDependencies getUses mod' = do
 
 -- get all dependencies of a type definition
 getTypeDependencies ::
-  (MonadError (Error Annotation) m) =>
+  (MonadError ModuleError m) =>
   Module ann ->
-  DataType ->
-  m (DepType ann, Set DefIdentifier, Set Entity)
+  DataType ParseDep ann ->
+  m (DepType ann, Set DefIdentifier, Set E.Entity)
 getTypeDependencies mod' dt = do
   let allUses = extractDataTypeUses dt
   typeDefIds <- getTypeUses mod' allUses
@@ -121,9 +120,9 @@ getTypeDependencies mod' dt = do
   pure (DTData dt, typeDefIds <> exprDefIds, allUses)
 
 getTypeUses ::
-  (MonadError (Error Annotation) m) =>
+  (MonadError ModuleError m) =>
   Module ann ->
-  Set Entity ->
+  Set E.Entity ->
   m (Set DefIdentifier)
 getTypeUses mod' uses =
   let typeDeps = filterTypes uses
@@ -143,11 +142,11 @@ getTypeUses mod' uses =
                   )
                   typeDeps
            in pure (S.map DIType localTypeDeps)
-        else throwError (ModuleErr (CannotFindTypes unknownTypeDeps))
+        else throwError (CannotFindTypes unknownTypeDeps)
 
 findTypenameInModule ::
   Module ann ->
-  TyCon ->
+  Constructor ->
   Maybe TypeName
 findTypenameInModule mod' tyCon =
   let lookupInDataType (DataType typeName _ constructors) =
@@ -157,14 +156,14 @@ findTypenameInModule mod' tyCon =
 -- get typenames where we can, ignore missing ones as they're from another
 -- module
 -- (fingers crosseD!???!)
-findTypesForConstructors :: Module ann -> Set TyCon -> Set TypeName
+findTypesForConstructors :: Module ann -> Set Constructor -> Set TypeName
 findTypesForConstructors mod' =
   S.fromList . mapMaybe (findTypenameInModule mod') . S.toList
 
 getConstructorUses ::
-  (MonadError (Error Annotation) m) =>
+  (MonadError ModuleError m) =>
   Module ann ->
-  Set Entity ->
+  Set E.Entity ->
   m (Set DefIdentifier)
 getConstructorUses mod' uses = do
   let typeDeps = findTypesForConstructors mod' (filterConstructors uses)
@@ -184,14 +183,14 @@ getConstructorUses mod' uses = do
                   )
                   typeDeps
            in pure (S.map DIType localTypeDeps)
-        else throwError (ModuleErr (CannotFindTypes unknownTypeDeps))
+        else throwError (CannotFindTypes unknownTypeDeps)
 
 getExprDependencies ::
-  (MonadError (Error Annotation) m) =>
-  (Expr Name ann -> Set Entity) ->
+  (MonadError ModuleError m) =>
+  (Expr ParseDep ann -> Set E.Entity) ->
   Module ann ->
-  Expr Name ann ->
-  m (DepType ann, Set DefIdentifier, Set Entity)
+  Expr ParseDep ann ->
+  m (DepType ann, Set DefIdentifier, Set E.Entity)
 getExprDependencies getUses mod' expr = do
   let allUses = getUses expr
   exprDefIds <- getExprDeps mod' allUses
@@ -200,9 +199,9 @@ getExprDependencies getUses mod' expr = do
   pure (DTExpr expr, exprDefIds <> typeDefIds <> consDefIds, allUses)
 
 getExprDeps ::
-  (MonadError (Error Annotation) m) =>
+  (MonadError ModuleError m) =>
   Module ann ->
-  Set Entity ->
+  Set E.Entity ->
   m (Set DefIdentifier)
 getExprDeps mod' uses =
   let nameDeps = filterDefs uses
@@ -222,13 +221,13 @@ getExprDeps mod' uses =
                   )
                   nameDeps
            in pure localNameDeps
-        else throwError (ModuleErr (CannotFindValues unknownNameDeps))
+        else throwError (CannotFindValues unknownNameDeps)
 
 -- starting at a root module,
 -- create a map of each expr hash along with the modules it needs
 -- so that we can typecheck them all
 getModuleDeps ::
-  (MonadError (Error Annotation) m, Show ann) =>
+  (MonadError ModuleError m, Show ann) =>
   Map ModuleHash (Module ann) ->
   Module ann ->
   m

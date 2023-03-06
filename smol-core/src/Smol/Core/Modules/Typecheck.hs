@@ -6,6 +6,10 @@
 
 module Smol.Core.Modules.Typecheck (typecheckAllModules) where
 
+import Smol.Core.Types.Module.Module
+import Smol.Core.Types.Module.ModuleName
+import Smol.Core.Types.Module.DefIdentifier
+import Smol.Core.Types.Module.ModuleHash
 import Control.Monad.Except
 import Data.Bifunctor
 import Data.Coerce
@@ -22,21 +26,14 @@ import Smol.Core.Modules.Dependencies
 import Smol.Core.Modules.HashModule
 import Smol.Core.Modules.Monad
 import Smol.Core.Modules.Uses
-import Smol.Core.Typechecker.CreateEnv
-import Smol.Core.Typechecker.DataTypes
-import Smol.Core.Typechecker.Elaborate
-import Smol.Core.Typechecker.NumberVars
-import Smol.Core.Typechecker.Typecheck
-import Smol.Core.Types.Error
-import Smol.Core.Types.Store.ExprHash
-import Smol.Core.Types.Typechecker
+import Smol.Core.Modules.ModuleError
 
 -- given the upstream modules, typecheck a module
 -- 1. recursively fetch imports from Reader environment
 -- 2. setup builder input
 -- 3. do it!
 typecheckAllModules ::
-  (MonadError (Error Annotation) m) =>
+  (MonadError ModuleError m) =>
   Map ModuleHash (Module Annotation) ->
   Text ->
   Module Annotation ->
@@ -68,7 +65,7 @@ typecheckAllModules modules rootModuleInput rootModule = do
           }
   -- go!
   Build.stOutputs
-    <$> Build.doJobs
+    <$> Build.doJobsPure
       ( \deps (input, mod') ->
           typecheckAllModuleDefs deps input mod'
       )
@@ -76,7 +73,7 @@ typecheckAllModules modules rootModuleInput rootModule = do
 
 --- typecheck a single module
 typecheckAllModuleDefs ::
-  (MonadError (Error Annotation) m) =>
+  (MonadError ModuleError m) =>
   Map ModuleHash (Module (Type Annotation)) ->
   Text ->
   Module Annotation ->
@@ -104,7 +101,7 @@ typecheckAllModuleDefs typecheckedDeps input inputModule = do
   -- go!
   typecheckedDefs <-
     Build.stOutputs
-      <$> Build.doJobs (typecheckOneDef input inputModule typecheckedDeps) state
+      <$> Build.doJobsPure (typecheckOneDef input inputModule typecheckedDeps) state
 
   -- replace input module with typechecked versions
   pure $
@@ -134,7 +131,7 @@ getModuleType modName mod' =
         )
         Nothing
 
-addNamespaceToType :: ModuleName -> Set TypeName -> MonoType -> MonoType
+addNamespaceToType :: ModuleName -> Set TypeName -> Type Annotation -> Type Annotation
 addNamespaceToType modName swapTypes =
   addNS
   where
@@ -183,7 +180,7 @@ getModuleDataTypesByConstructor inputModule =
           (moDataTypes inputModule)
    in mapKeys coerce exportedDts
 
-filterNameDefs :: Map DefIdentifier a -> Map Name a
+filterNameDefs :: Map DefIdentifier a -> Map Identifier a
 filterNameDefs =
   filterMapKeys
     ( \case
@@ -191,16 +188,8 @@ filterNameDefs =
         _ -> Nothing
     )
 
-filterInfixDefs :: Map DefIdentifier a -> Map InfixOp a
-filterInfixDefs =
-  filterMapKeys
-    ( \case
-        DIInfix infixOp -> Just infixOp
-        _ -> Nothing
-    )
-
 createTypecheckEnvironment ::
-  (MonadError (Error Annotation) m) =>
+  (MonadError ModuleError m) =>
   Module Annotation ->
   Map DefIdentifier (Expr Name MonoType) ->
   Map ModuleHash (Module (Type Annotation)) ->
@@ -221,7 +210,6 @@ createTypecheckEnvironment inputModule deps typecheckedModules = do
     createEnv
       (getTypeFromAnn <$> filterNameDefs (deps <> importedDeps))
       (makeTypeDeclMap typecheckedModules importedTypes inputModule)
-      (getTypeFromAnn <$> filterInfixDefs (deps <> importedDeps))
       (getModuleTypes inputModule typecheckedModules)
 
 getModuleTypes ::
@@ -258,7 +246,7 @@ namesOnly =
 
 -- given types for other required definition, typecheck a definition
 typecheckOneDef ::
-  (MonadError (Error Annotation) m) =>
+  (MonadError ModuleError m) =>
   Text ->
   Module Annotation ->
   Map ModuleHash (Module (Type Annotation)) ->
@@ -288,7 +276,7 @@ _keyDeps _mod =
 -- typechecking in this context means "does this data type make sense"
 -- and "do we know about all external datatypes it mentions"
 typecheckOneTypeDef ::
-  (MonadError (Error Annotation) m) =>
+  (MonadError ModuleError m) =>
   Text ->
   Module Annotation ->
   Map ModuleHash (Module (Type Annotation)) ->
@@ -303,7 +291,6 @@ typecheckOneTypeDef input _inputModule _typecheckedModules _typeDeps (def, dt) =
   let action = do
         validateConstructorsArentBuiltIns ann dt
         validateDataTypeVariables ann dt
-  -- validateDataTypeUses (keyDeps inputModule typeDeps) ann dt
 
   -- typecheck it
   liftEither $
@@ -346,34 +333,6 @@ validateDataTypeVariables ann (DataType typeName vars constructors) =
           throwError $
             TypeVariablesNotInDataType ann typeName unavailableVars availableVars
 
--- type Broken a = Broken (Maybe a a)
--- should not make sense because it's using `Maybe` wrong
-_validateDataTypeUses ::
-  (MonadError TypeError m) =>
-  Map (Maybe ModuleName, TypeName) DataType ->
-  Annotation ->
-  DataType ->
-  m ()
-_validateDataTypeUses deps ann (DataType _ _ constructors) = do
-  let allUses = foldMap (foldMap getConstructorUses) (M.elems constructors)
-  traverse_
-    ( \(modName, typeName, kind) -> do
-        let foundKind = lookupDepKind deps (modName, typeName)
-        if foundKind == kind
-          then pure ()
-          else throwError (KindMismatchInDataDeclaration ann modName typeName kind foundKind)
-    )
-    (S.toList allUses)
-
-lookupDepKind ::
-  Map (Maybe ModuleName, TypeName) DataType ->
-  (Maybe ModuleName, TypeName) ->
-  Int
-lookupDepKind deps defId =
-  case M.lookup defId deps of
-    Just (DataType _ vars _) -> length vars
-    Nothing -> 0
-
 -- which vars are used in this type?
 getVariablesInType :: Type ann -> Set Name
 getVariablesInType (MTVar _ (TVScopedVar _ name)) = S.singleton name
@@ -388,7 +347,7 @@ getConstructorUses other = withMonoidType getConstructorUses other
 
 -- given types for other required definition, typecheck a definition
 typecheckOneExprDef ::
-  (MonadError (Error Annotation) m) =>
+  (MonadError ModuleError m) =>
   Text ->
   Module Annotation ->
   Map ModuleHash (Module (Type Annotation)) ->

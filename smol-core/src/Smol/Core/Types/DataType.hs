@@ -6,7 +6,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE StandaloneDeriving #-}
 {-# LANGUAGE UndecidableInstances #-}
-
+  {-# LANGUAGE DeriveAnyClass #-}
 module Smol.Core.Types.DataType
   ( DataType (..),
   )
@@ -21,6 +21,7 @@ import Smol.Core.Types.Constructor
 import Smol.Core.Types.Identifier
 import Smol.Core.Types.Type
 import Smol.Core.Types.TypeName
+import Data.Aeson
 
 data DataType dep ann = DataType
   { dtName :: TypeName,
@@ -49,6 +50,18 @@ deriving stock instance
     Show (dep TypeName)
   ) =>
   Show (DataType dep ann)
+
+deriving anyclass instance
+  ( ToJSON ann,
+    ToJSON (dep Identifier),
+    ToJSON (dep TypeName)
+  ) => ToJSON (DataType dep ann)
+
+deriving anyclass instance
+  ( FromJSON ann,
+    FromJSON (dep Identifier),
+    FromJSON (dep TypeName)
+  ) => FromJSON (DataType dep ann)
 
 instance
   ( Printer (dep Identifier),
