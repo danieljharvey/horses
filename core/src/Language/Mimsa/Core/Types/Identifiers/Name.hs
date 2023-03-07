@@ -8,6 +8,7 @@ module Language.Mimsa.Core.Types.Identifiers.Name where
 
 import qualified Data.Aeson as JSON
 import qualified Data.Char as Ch
+import Data.Hashable
 import Data.OpenApi
 import Data.String
 import Data.Text (Text)
@@ -33,7 +34,8 @@ newtype Name = Name {getName' :: Text}
       JSON.ToJSON,
       FromHttpApiData,
       Semigroup,
-      Monoid
+      Monoid,
+      Hashable
     )
 
 instance JSON.FromJSON Name where

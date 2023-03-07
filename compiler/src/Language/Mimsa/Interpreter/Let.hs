@@ -1,5 +1,6 @@
 module Language.Mimsa.Interpreter.Let (interpretLet) where
 
+import Data.Hashable
 import Language.Mimsa.Core
 import Language.Mimsa.Interpreter.Monad
 import Language.Mimsa.Interpreter.Types
@@ -15,7 +16,7 @@ varFromIdent (Identifier _ var) = var
 -- this is NOT the one, we need some form of indirection so the closure can say
 -- "and look up whatever 'var' is pls"
 interpretLetExpr ::
-  (Ord var, Monoid ann) =>
+  (Hashable var, Ord var, Monoid ann) =>
   InterpretFn var ann ->
   (var, Unique) ->
   InterpretExpr var ann ->
@@ -32,7 +33,7 @@ interpretLetExpr interpretFn var expr = do
     _ -> pure intExpr
 
 interpretLet ::
-  (Ord var, Monoid ann) =>
+  (Hashable var, Ord var, Monoid ann) =>
   InterpretFn var ann ->
   Identifier (var, Unique) (ExprData var ann) ->
   InterpretExpr var ann ->

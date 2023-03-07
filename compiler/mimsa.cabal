@@ -168,7 +168,7 @@ library
   build-depends:
     , aeson
     , backends
-    , base                >=4.7 && <5
+    , base                  >=4.7 && <5
     , bifunctors
     , binary
     , bytestring
@@ -193,6 +193,7 @@ library
     , servant-server
     , text
     , transformers
+    , unordered-containers
     , wasm
     , writer-cps-mtl
 

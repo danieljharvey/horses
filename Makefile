@@ -111,3 +111,9 @@ generate-swagger: install
 .PHONY: format-cabal
 format-cabal:
 	@cabal-fmt -i $(CABAL_FILES)
+
+.PHONY: cabal-freeze
+cabal-freeze:
+	rm cabal.project.freeze || true
+	cabal update
+	cabal freeze --enable-tests --enable-benchmarks --minimize-conflict-set

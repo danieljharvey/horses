@@ -4,6 +4,9 @@ module Language.Mimsa.Actions.Interpret (interpreter) where
 
 import Control.Monad.Except
 import Data.Bifunctor
+import Data.HashMap.Strict (HashMap)
+import qualified Data.HashMap.Strict as HM
+import Data.Hashable
 import Data.Map.Strict (Map)
 import qualified Data.Map.Strict as M
 import qualified Data.Set as S
@@ -19,6 +22,9 @@ import Language.Mimsa.Store
 import Language.Mimsa.Types.Error
 import Language.Mimsa.Types.Interpreter.Stack
 import Language.Mimsa.Types.Store
+
+toHashMap :: (Ord k, Hashable k) => Map k a -> HashMap k a
+toHashMap = HM.fromList . M.toList
 
 -- get all the deps
 -- change var to InterpretVar to point at imports
@@ -59,7 +65,11 @@ interpretAll ::
   Map ExprHash (StoreExpression Annotation) ->
   Actions.ActionM (Map ExprHash (InterpretExpr Name Annotation))
 interpretAll inputStoreExpressions = do
-  let action depMap se =
+  let action ::
+        Map ExprHash (Map ExprHash (InterpretExpr Name Annotation)) ->
+        StoreExpression Annotation ->
+        Actions.ActionM (Map ExprHash (InterpretExpr Name Annotation))
+      action depMap se =
         case storeExpression se of
           Just expr -> do
             -- get us out of this Map of Maps situation
@@ -71,10 +81,13 @@ interpretAll inputStoreExpressions = do
 
             -- tag each `var` with it's location if it is an import
             let withImports = addEmptyStackFrames numberedSe
+
             -- get exprhashes for any infixOps we need
-            let infixHashes = storeInfixes se
+            let infixHashes = HM.fromList $ M.toList $ storeInfixes se
+
             -- interpret se
-            interpreted <- liftEither (first InterpreterErr (interpret flatDeps infixHashes withImports))
+            interpreted <- liftEither (first InterpreterErr (interpret (toHashMap flatDeps) infixHashes withImports))
+
             -- we need to accumulate all deps
             -- as we go, so pass them up too
             let allDeps = flatDeps <> M.singleton (getStoreExpressionHash se) interpreted
