@@ -6,9 +6,9 @@
 
 module Language.Mimsa.Core.Types.Identifiers.Name where
 
-import Data.Hashable
 import qualified Data.Aeson as JSON
 import qualified Data.Char as Ch
+import Data.Hashable
 import Data.OpenApi
 import Data.String
 import Data.Text (Text)
