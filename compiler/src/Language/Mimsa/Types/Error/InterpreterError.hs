@@ -3,6 +3,8 @@
 
 module Language.Mimsa.Types.Error.InterpreterError (InterpreterError (..)) where
 
+import Data.HashMap.Strict (HashMap)
+import qualified Data.HashMap.Strict as HM
 import Data.Map.Strict (Map)
 import qualified Data.Map.Strict as M
 import qualified Data.Text as T
@@ -16,9 +18,9 @@ type InterpretExpr var ann = Expr (var, Unique) (ExprData var ann)
 
 data InterpreterError var ann
   = UnknownInterpreterError
-  | CouldNotFindVar (Map var (InterpretExpr var ann)) var
-  | CouldNotFindInfix (Map InfixOp (InterpretExpr var ann)) InfixOp
-  | CouldNotFindGlobal (Map ExprHash (InterpretExpr var ann)) ExprHash
+  | CouldNotFindVar (HashMap var (InterpretExpr var ann)) var
+  | CouldNotFindInfix (HashMap InfixOp (InterpretExpr var ann)) InfixOp
+  | CouldNotFindGlobal (HashMap ExprHash (InterpretExpr var ann)) ExprHash
   | AdditionWithNonNumber (InterpretExpr var ann)
   | SubtractionWithNonNumber (InterpretExpr var ann)
   | ComparisonWithNonNumber Operator (InterpretExpr var ann)
@@ -42,15 +44,15 @@ instance (Show ann, Show var, Printer ann, Printer var) => Printer (InterpreterE
   prettyPrint (CouldNotFindVar items name) =
     "Could not find var " <> prettyPrint name <> " in " <> itemList
     where
-      itemList = "[ " <> T.intercalate ", " (prettyPrint <$> M.keys items) <> " ]"
+      itemList = "[ " <> T.intercalate ", " (prettyPrint <$> HM.keys items) <> " ]"
   prettyPrint (CouldNotFindInfix items infixOp) =
     "Could not find infix " <> prettyPrint infixOp <> " in " <> itemList
     where
-      itemList = "[ " <> T.intercalate ", " (prettyPrint <$> M.keys items) <> " ]"
+      itemList = "[ " <> T.intercalate ", " (prettyPrint <$> HM.keys items) <> " ]"
   prettyPrint (CouldNotFindGlobal items name) =
     "Could not find global " <> prettyPrint name <> " in " <> itemList
     where
-      itemList = "[ " <> T.intercalate ", " (prettyPrint <$> M.keys items) <> " ]"
+      itemList = "[ " <> T.intercalate ", " (prettyPrint <$> HM.keys items) <> " ]"
   prettyPrint UnknownInterpreterError = "Unknown interpreter 2 error"
   prettyPrint (AdditionWithNonNumber a) =
     "Addition expected number but got this: " <> prettyPrint a

@@ -2,7 +2,8 @@ module Language.Mimsa.Interpreter.Interpret (interpret, addEmptyStackFrames) whe
 
 import Control.Monad.Reader
 import Data.Functor
-import Data.Map.Strict (Map)
+import Data.HashMap.Strict (HashMap)
+import Data.Hashable
 import Language.Mimsa.Core
 import Language.Mimsa.Interpreter.App
 import Language.Mimsa.Interpreter.If
@@ -17,20 +18,20 @@ import Language.Mimsa.Types.Interpreter.Stack
 import Language.Mimsa.Types.Store.ExprHash
 import Language.Mimsa.Types.Typechecker.Unique
 
-initialStack :: (Ord var) => StackFrame var ann
+initialStack :: (Ord var, Hashable var) => StackFrame var ann
 initialStack = StackFrame mempty mempty
 
 addEmptyStackFrames ::
-  (Ord var, Monoid ann) =>
+  (Hashable var, Monoid ann) =>
   Expr (var, Unique) ann ->
   Expr (var, Unique) (ExprData var ann)
 addEmptyStackFrames expr =
   expr $> mempty
 
 interpret ::
-  (Eq ann, Ord var, Show var, Printer var, Monoid ann, Show ann) =>
-  Map ExprHash (InterpretExpr var ann) ->
-  Map InfixOp ExprHash ->
+  (Eq ann, Ord var, Hashable var, Show var, Printer var, Monoid ann, Show ann) =>
+  HashMap ExprHash (InterpretExpr var ann) ->
+  HashMap InfixOp ExprHash ->
   InterpretExpr var ann ->
   Either (InterpreterError var ann) (InterpretExpr var ann)
 interpret deps infixes expr =
@@ -39,14 +40,14 @@ interpret deps infixes expr =
 -- somewhat pointless separate function to make debug logging each value out
 -- easier
 interpretExpr ::
-  (Eq ann, Ord var, Show var, Printer var, Monoid ann, Show ann) =>
+  (Eq ann, Ord var, Hashable var, Show var, Printer var, Monoid ann, Show ann) =>
   InterpretExpr var ann ->
   InterpreterM var ann (InterpretExpr var ann)
 interpretExpr =
   interpretExpr'
 
 interpretExpr' ::
-  (Eq ann, Ord var, Show var, Printer var, Monoid ann, Show ann) =>
+  (Eq ann, Ord var, Hashable var, Show var, Printer var, Monoid ann, Show ann) =>
   InterpretExpr var ann ->
   InterpreterM var ann (InterpretExpr var ann)
 interpretExpr' (MyLiteral _ val) = pure (MyLiteral mempty val)

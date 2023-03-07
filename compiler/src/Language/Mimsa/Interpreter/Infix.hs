@@ -1,6 +1,7 @@
 module Language.Mimsa.Interpreter.Infix (interpretInfix) where
 
 import Control.Monad.Except
+import Data.Hashable
 import Language.Mimsa.Core
 import Language.Mimsa.Interpreter.Monad
 import Language.Mimsa.Interpreter.SimpleExpr
@@ -9,7 +10,7 @@ import Language.Mimsa.Types.Error.InterpreterError
 
 -- | this assumes that
 interpretInfix ::
-  (Ord var, Monoid ann) =>
+  (Hashable var, Monoid ann) =>
   InterpretFn var ann ->
   Operator ->
   InterpretExpr var ann ->
@@ -80,7 +81,7 @@ interpretInfix interpretFn operator a b = do
 
 -- | lift a numeric comparison into the Expr type
 numericComparison ::
-  (Ord var, Monoid ann) =>
+  (Hashable var, Monoid ann) =>
   (Int -> Int -> Bool) ->
   (InterpretExpr var ann -> InterpreterError var ann) ->
   InterpretExpr var ann ->
@@ -96,7 +97,7 @@ numericComparison f withErr plainA plainB = do
     Left e -> throwError e
 
 interpretStringConcat ::
-  (Ord var, Monoid ann) =>
+  (Hashable var, Monoid ann) =>
   InterpretExpr var ann ->
   InterpretExpr var ann ->
   InterpreterM var ann (InterpretExpr var ann)
@@ -110,7 +111,7 @@ interpretStringConcat plainA plainB = do
     Left e -> throwError e
 
 interpretArrayConcat ::
-  (Ord var, Monoid ann) =>
+  (Hashable var, Monoid ann) =>
   InterpretExpr var ann ->
   InterpretExpr var ann ->
   InterpreterM var ann (InterpretExpr var ann)
