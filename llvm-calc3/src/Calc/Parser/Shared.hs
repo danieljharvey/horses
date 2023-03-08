@@ -1,3 +1,5 @@
+{-# LANGUAGE OverloadedStrings #-}
+
 module Calc.Parser.Shared
   ( inBrackets,
     myLexeme,
@@ -5,6 +7,7 @@ module Calc.Parser.Shared
     stringLiteral,
     addLocation,
     addTypeLocation,
+    maybePred,
   )
 where
 
@@ -14,6 +17,7 @@ import Calc.TypeUtils
 import Calc.Types.Annotation
 import Data.Functor (($>))
 import Data.Text (Text)
+import qualified Data.Text as T
 import Text.Megaparsec
 import Text.Megaparsec.Char
 import qualified Text.Megaparsec.Char.Lexer as L
@@ -48,3 +52,10 @@ myLexeme = L.lexeme (L.space space1 empty empty)
 
 stringLiteral :: Text -> Parser ()
 stringLiteral s = myLexeme (string s) $> ()
+
+maybePred :: (Show a) => Parser a -> (a -> Maybe b) -> Parser b
+maybePred parser predicate' = try $ do
+  a <- parser
+  case predicate' a of
+    Just b -> pure b
+    _ -> fail $ T.unpack $ "Predicate did not hold for " <> T.pack (show a)

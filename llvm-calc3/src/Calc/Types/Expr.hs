@@ -4,6 +4,7 @@
 
 module Calc.Types.Expr (Expr (..), Op (..)) where
 
+import Calc.Types.Identifier
 import Calc.Types.Prim
 import Prettyprinter ((<+>))
 import qualified Prettyprinter as PP
@@ -12,6 +13,7 @@ data Expr ann
   = EPrim ann Prim
   | EInfix ann Op (Expr ann) (Expr ann)
   | EIf ann (Expr ann) (Expr ann) (Expr ann)
+  | EVar ann Identifier
   deriving stock (Eq, Ord, Show, Functor, Foldable, Traversable)
 
 -- when on multilines, indent by `i`, if not then nothing
@@ -27,6 +29,7 @@ instance PP.Pretty (Expr ann) where
     PP.pretty a <+> PP.pretty op <+> PP.pretty b
   pretty (EIf _ predExpr thenExpr elseExpr) =
     "if" <+> PP.pretty predExpr <+> "then" <+> indentMulti 2 (PP.pretty thenExpr) <+> "else" <+> indentMulti 2 (PP.pretty elseExpr)
+  pretty (EVar _ ident) = PP.pretty ident
 
 data Op
   = OpAdd

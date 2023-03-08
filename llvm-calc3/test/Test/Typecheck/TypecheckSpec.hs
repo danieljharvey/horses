@@ -12,6 +12,7 @@ import Control.Monad
 import Data.Foldable (traverse_)
 import Data.Text (Text)
 import Test.Hspec
+import Calc.Types.Function
 
 testTypecheck :: (Text, Text) -> Spec
 testTypecheck (input, result) = it (show input) $ do
@@ -29,31 +30,50 @@ testFailing (input, result) = it (show input) $ do
       getOuterAnnotation <$> elaborate (void expr)
         `shouldBe` Left result
 
+testSucceedingFunction :: (Text, Type ()) -> Spec
+testSucceedingFunction (input,fn) =
+    it (show input) $ do
+          case parseFunctionAndFormatError input of
+            Left e -> error (show e)
+            Right parsedFn ->
+              fnAnn <$> elaborateFunction (void parsedFn)
+                                      `shouldBe` Right fn
+
+
 spec :: Spec
 spec = do
   describe "TypecheckSpec" $ do
-    let succeeding =
-          [ ("42", "Integer"),
-            ("True", "Boolean"),
-            ("1 + 1", "Integer"),
-            ("6 * 9", "Integer"),
-            ("1 - 10", "Integer"),
-            ("2 == 2", "Boolean"),
-            ("if True then 1 else 2", "Integer"),
-            ("if False then True else False", "Boolean")
-          ]
+    describe "Function" $ do
+      let succeeding = [ ("function one () { 1 }", TFunction () [] (TPrim () TInt)),
+                        ("function not (bool: Boolean) { if bool then False else True }",
+                          TFunction () [TPrim () TBool] (TPrim () TBool))]
 
-    describe "Successfully typechecking expressions" $ do
-      traverse_ testTypecheck succeeding
+      describe "Successfully typechecking functions" $ do
+        traverse_ testSucceedingFunction succeeding
 
-    let failing =
-          [ ("if 1 then 1 else 2", PredicateIsNotBoolean () (TPrim () TInt)),
-            ("if True then 1 else True", TypeMismatch (TPrim () TInt) (TPrim () TBool)),
-            ("1 + True", InfixTypeMismatch OpAdd [(TPrim () TInt, TPrim () TBool)]),
-            ("True + False", InfixTypeMismatch OpAdd [(TPrim () TInt, TPrim () TBool), (TPrim () TInt, TPrim () TBool)]),
-            ("1 * False", InfixTypeMismatch OpMultiply [(TPrim () TInt, TPrim () TBool)]),
-            ("True - 1", InfixTypeMismatch OpSubtract [(TPrim () TInt, TPrim () TBool)])
-          ]
+    describe "Expr" $ do
+      let succeeding =
+            [ ("42", "Integer"),
+              ("True", "Boolean"),
+              ("1 + 1", "Integer"),
+              ("6 * 9", "Integer"),
+              ("1 - 10", "Integer"),
+              ("2 == 2", "Boolean"),
+              ("if True then 1 else 2", "Integer"),
+              ("if False then True else False", "Boolean")
+            ]
 
-    describe "Failing typechecking expressions" $ do
-      traverse_ testFailing failing
+      describe "Successfully typechecking expressions" $ do
+        traverse_ testTypecheck succeeding
+
+      let failing =
+            [ ("if 1 then 1 else 2", PredicateIsNotBoolean () (TPrim () TInt)),
+              ("if True then 1 else True", TypeMismatch (TPrim () TInt) (TPrim () TBool)),
+              ("1 + True", InfixTypeMismatch OpAdd [(TPrim () TInt, TPrim () TBool)]),
+              ("True + False", InfixTypeMismatch OpAdd [(TPrim () TInt, TPrim () TBool), (TPrim () TInt, TPrim () TBool)]),
+              ("1 * False", InfixTypeMismatch OpMultiply [(TPrim () TInt, TPrim () TBool)]),
+              ("True - 1", InfixTypeMismatch OpSubtract [(TPrim () TInt, TPrim () TBool)])
+            ]
+
+      describe "Failing typechecking expressions" $ do
+        traverse_ testFailing failing

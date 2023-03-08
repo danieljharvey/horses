@@ -5,11 +5,14 @@ module Calc.Parser
     parseExprAndFormatError,
     parseType,
     parseTypeAndFormatError,
+    parseFunction,
+    parseFunctionAndFormatError,
     replFilename,
   )
 where
 
 import Calc.Parser.Expr
+import Calc.Parser.Function
 import Calc.Parser.Type
 import Calc.Parser.Types
 import Data.Bifunctor (first)
@@ -36,10 +39,18 @@ parseExpr = parse (space *> exprParser <* eof) replFilename
 parseExprAndFormatError :: Text -> Either Text ParserExpr
 parseExprAndFormatError = parseAndFormat (space *> exprParser <* eof)
 
--- parse expr, using it all up
+-- parse type, using it all up
 parseType :: Text -> Either ParseErrorType ParserType
 parseType = parse (space *> typeParser <* eof) replFilename
 
 -- | `parseType`, but format error to text
 parseTypeAndFormatError :: Text -> Either Text ParserType
 parseTypeAndFormatError = parseAndFormat (space *> typeParser <* eof)
+
+-- parse function, using it all up
+parseFunction :: Text -> Either ParseErrorType ParserFunction
+parseFunction = parse (space *> functionParser <* eof) replFilename
+
+-- | `parseType`, but format error to text
+parseFunctionAndFormatError :: Text -> Either Text ParserFunction
+parseFunctionAndFormatError = parseAndFormat (space *> functionParser <* eof)

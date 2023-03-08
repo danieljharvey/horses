@@ -2,6 +2,7 @@
 
 module Calc.Parser.Expr (exprParser) where
 
+import Calc.Parser.Identifier
 import Calc.Parser.Primitives
 import Calc.Parser.Shared
 import Calc.Parser.Types
@@ -19,6 +20,7 @@ exprPart =
   inBrackets (addLocation exprParser)
     <|> primParser
     <|> ifParser
+    <|> varParser
     <?> "term"
 
 table :: [[Operator Parser (Expr Annotation)]]
@@ -41,3 +43,6 @@ ifParser = addLocation $ do
   thenExpr <- exprParser
   stringLiteral "else"
   EIf mempty predExpr thenExpr <$> exprParser
+
+varParser :: Parser (Expr Annotation)
+varParser = addLocation $ EVar mempty <$> identifierParser

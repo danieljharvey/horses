@@ -36,6 +36,7 @@ common shared
     , diagnose
     , directory
     , file-embed
+    , hashable
     , haskeline
     , llvm-hs-pretty
     , llvm-hs-pure
@@ -47,6 +48,7 @@ common shared
     , string-conversions
     , text
     , unix
+    , unordered-containers
 
 library
   import:           shared

@@ -1,7 +1,8 @@
 {-# LANGUAGE DerivingStrategies #-}
 
-module Calc.Typecheck.Elaborate (elaborate) where
+module Calc.Typecheck.Elaborate (elaborate, elaborateFunction) where
 
+import Data.Bifunctor (second)
 import Calc.ExprUtils
 import Calc.TypeUtils
 import Calc.Typecheck.Error
@@ -10,18 +11,30 @@ import Calc.Types.Prim
 import Calc.Types.Type
 import Control.Monad.Except
 import Data.Functor
+import Calc.Types.Function
+import Calc.Typecheck.Types
+
+elaborateFunction :: Function ann ->
+    Either (TypeError ann) (Function (Type ann))
+elaborateFunction (Function ann args name expr) =
+  runTypecheckM mempty $ do
+    exprA <- withFunctionArgs args (infer expr)
+    let argsA = fmap (second (\ty -> fmap (const ty) ty)) args
+    let tyFn = TFunction ann (snd <$> args) (getOuterAnnotation exprA)
+    pure (Function tyFn argsA name exprA)
 
 elaborate :: Expr ann -> Either (TypeError ann) (Expr (Type ann))
-elaborate = infer
+elaborate = runTypecheckM mempty  . infer
 
-check :: Type ann -> Expr ann -> Either (TypeError ann) (Expr (Type ann))
+check :: Type ann -> Expr ann -> TypecheckM ann (Expr (Type ann))
 check ty expr = do
   exprA <- infer expr
   if void (getOuterAnnotation exprA) == void ty
     then pure (expr $> ty)
     else throwError (TypeMismatch ty (getOuterAnnotation exprA))
 
-inferIf :: ann -> Expr ann -> Expr ann -> Expr ann -> Either (TypeError ann) (Expr (Type ann))
+inferIf :: ann -> Expr ann -> Expr ann -> Expr ann ->
+      TypecheckM ann (Expr (Type ann))
 inferIf ann predExpr thenExpr elseExpr = do
   predA <- infer predExpr
   case getOuterAnnotation predA of
@@ -36,7 +49,7 @@ inferInfix ::
   Op ->
   Expr ann ->
   Expr ann ->
-  Either (TypeError ann) (Expr (Type ann))
+  TypecheckM ann (Expr (Type ann))
 inferInfix ann OpEquals a b = do
   elabA <- infer a
   elabB <- infer b
@@ -86,11 +99,14 @@ inferInfix ann op a b = do
         )
   pure (EInfix ty op elabA elabB)
 
-infer :: Expr ann -> Either (TypeError ann) (Expr (Type ann))
+infer :: Expr ann -> TypecheckM ann (Expr (Type ann))
 infer (EPrim ann prim) =
   pure (EPrim (typeFromPrim ann prim) prim)
 infer (EIf ann predExpr thenExpr elseExpr) =
   inferIf ann predExpr thenExpr elseExpr
+infer (EVar ann var) = do
+  ty <- lookupVar ann var
+  pure (EVar ty var)
 infer (EInfix ann op a b) =
   inferInfix ann op a b
 

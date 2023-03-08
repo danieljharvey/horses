@@ -21,6 +21,7 @@ import qualified LLVM.IRBuilder.Monad as LLVM
 printFunction :: (LLVM.MonadModuleBuilder m) => Type ann -> m LLVM.Operand
 printFunction (TPrim _ TInt) = LLVM.extern "printint" [LLVM.i32] LLVM.void
 printFunction (TPrim _ TBool) = LLVM.extern "printbool" [LLVM.i1] LLVM.void
+printFunction (TFunction _ _ tyRet) = printFunction tyRet -- maybe this should be an error instead
 
 -- | given our `Expr` type, turn it into an LLVM module
 toLLVM :: Expr (Type ann) -> LLVM.Module
@@ -44,6 +45,7 @@ toLLVM expr =
 typeToLLVM :: Type ann -> LLVM.Type
 typeToLLVM (TPrim _ TBool) = LLVM.i1
 typeToLLVM (TPrim _ TInt) = LLVM.i32
+typeToLLVM (TFunction {}) = error "typeToLLVM TFunction"
 
 exprToLLVM ::
   ( LLVM.MonadIRBuilder m,
@@ -53,6 +55,7 @@ exprToLLVM ::
   Expr (Type ann) ->
   m LLVM.Operand
 exprToLLVM (EPrim _ prim) = pure $ primToLLVM prim
+exprToLLVM (EVar {}) = error "exprToLLVM EVar"
 exprToLLVM (EIf tyReturn predExpr thenExpr elseExpr) = mdo
   -- create IR for predicate
   irPred <- exprToLLVM predExpr

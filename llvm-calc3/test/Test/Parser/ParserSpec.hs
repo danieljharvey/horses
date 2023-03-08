@@ -5,6 +5,7 @@ module Test.Parser.ParserSpec (spec) where
 import Calc
 import Data.Foldable (traverse_)
 import Data.Functor
+import Data.String
 import qualified Data.Text as T
 import Test.Hspec
 
@@ -13,6 +14,9 @@ int = EPrim mempty . PInt
 
 bool :: (Monoid ann) => Bool -> Expr ann
 bool = EPrim mempty . PBool
+
+var :: (Monoid ann) => String -> Expr ann
+var = EVar mempty . Identifier . fromString
 
 spec :: Spec
 spec = do
@@ -26,6 +30,25 @@ spec = do
         ( \(str, expr) -> it (T.unpack str) $ do
             case parseTypeAndFormatError str of
               Right parsedExp -> parsedExp $> () `shouldBe` expr
+              Left e -> error (T.unpack e)
+        )
+        strings
+
+    describe "Function" $ do
+      let strings =
+            [ ("function one() { 1 }", Function () [] "one" (int 1)),
+              ( "function sum (a: Integer, b: Integer) { a + b }",
+                Function ()
+                  [("a", TPrim () TInt), ("b", TPrim () TInt)]
+                  "sum"
+                  ( EInfix () OpAdd (var "a") (var "b")
+                  )
+              )
+            ]
+      traverse_
+        ( \(str, fn) -> it (T.unpack str) $ do
+            case parseFunctionAndFormatError str of
+              Right parsedFn -> parsedFn $> () `shouldBe` fn
               Left e -> error (T.unpack e)
         )
         strings
@@ -49,7 +72,8 @@ spec = do
                   (int 3)
               ),
               ("1 == 2", EInfix () OpEquals (int 1) (int 2)),
-              ("if True then 1 else 2", EIf () (bool True) (int 1) (int 2))
+              ("if True then 1 else 2", EIf () (bool True) (int 1) (int 2)),
+              ("a + 1", EInfix () OpAdd (var "a") (int 1))
             ]
       traverse_
         ( \(str, expr) -> it (T.unpack str) $ do
