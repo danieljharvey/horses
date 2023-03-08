@@ -34,6 +34,11 @@ spec = do
         )
         strings
 
+    describe "Module" $ do
+      let _strings = [("function increment(a: Integer) { a + 1 } 42",
+                                Module [Function () [("a", TPrim () TInt)] "increment" (EInfix () OpAdd (var "a") (int 1))] (int 42))]
+
+      error "fail"
     describe "Function" $ do
       let strings =
             [ ("function one() { 1 }", Function () [] "one" (int 1)),

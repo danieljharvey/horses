@@ -1,6 +1,8 @@
 module Calc.Types.Module where
 
 import Calc.Types.Function
-import Data.Map.Strict (Map)
+import Calc.Types.Expr
 
-newtype Module ann = Module {mdFunctions :: Map FunctionName (Function ann)}
+data Module ann =
+    Module {mdFunctions :: [Function ann],
+      mdExpr :: Expr ann}
