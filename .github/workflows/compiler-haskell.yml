@@ -88,7 +88,6 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-1-cabal-global-${{ matrix.plan.ghc }}
 
-
       - name: Cache .cabal-work
         uses: actions/cache@v3
         with:
@@ -96,7 +95,6 @@ jobs:
           key: ${{ runner.os }}-1-cabal-work-${{ matrix.plan.ghc }}-${{ hashFiles('**.freeze') }}
           restore-keys: |
             ${{ runner.os }}-1-cabal-work-${{ matrix.plan.ghc }}
-
 
       - name: Cache cabal-installed programs in ~/.local/bin
         id: cabal-programs
@@ -106,6 +104,9 @@ jobs:
           key: ${{ runner.os }}-1-cabal-programs-${{ matrix.plan.ghc }}-${{ hashFiles('**.freeze') }}
           restore-keys: |
             ${{ runner.os }}-1-cabal-programs-${{ matrix.plan.ghc }}
+
+      - name: Cabal update
+        run: cabal update
 
       - name: Test core
         run: make test-core
