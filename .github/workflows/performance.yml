@@ -48,6 +48,9 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-1-cabal-work-${{ matrix.plan.ghc }}
 
+      - name: Cabal update
+        run: cabal update
+
       - name: Run benchmarks
         run: make bench
 
