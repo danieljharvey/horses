@@ -52,11 +52,11 @@ exprToLLVM ::
   ) =>
   Expr (Type ann) ->
   m LLVM.Operand
-exprToLLVM (EPrim _ prim) = 
+exprToLLVM (EPrim _ prim) =
   pure $ primToLLVM prim
 exprToLLVM (EIf tyReturn predExpr thenExpr elseExpr) =
   ifToLLVM tyReturn predExpr thenExpr elseExpr
-exprToLLVM (EInfix _ op a b) = 
+exprToLLVM (EInfix _ op a b) =
   infixToLLVM op a b
 
 ifToLLVM ::
