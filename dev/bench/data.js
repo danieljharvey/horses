@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1678295506848,
+  "lastUpdate": 1678829625942,
   "repoUrl": "https://github.com/danieljharvey/mimsa",
   "entries": {
     "Store benchmarks in Github Pages": [
@@ -215,6 +215,50 @@ window.BENCHMARK_DATA = {
           {
             "name": "evaluate/evaluate parsing 2",
             "value": 0.2431858024999997,
+            "unit": "Time (ms)"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "danieljamesharvey@gmail.com",
+            "name": "Daniel Harvey",
+            "username": "danieljharvey"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "dec448b89d3f6d82142c4974d77ad6292c8e724f",
+          "message": "Tidy LLVM calc (#904)\n\n* Tidy calc 2\r\n\r\n* Format",
+          "timestamp": "2023-03-14T21:29:58Z",
+          "tree_id": "aafe55f4a4399d9e7c359c609a821a843a8b3af7",
+          "url": "https://github.com/danieljharvey/mimsa/commit/dec448b89d3f6d82142c4974d77ad6292c8e724f"
+        },
+        "date": 1678829625329,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "build stdlib/allFns",
+            "value": 0.10698058099999523,
+            "unit": "Time (ms)"
+          },
+          {
+            "name": "evaluate/evaluate big looping thing",
+            "value": 0.12457483035714463,
+            "unit": "Time (ms)"
+          },
+          {
+            "name": "evaluate/evaluate parsing",
+            "value": 0.03206147861274643,
+            "unit": "Time (ms)"
+          },
+          {
+            "name": "evaluate/evaluate parsing 2",
+            "value": 0.18798196820000124,
             "unit": "Time (ms)"
           }
         ]
