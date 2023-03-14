@@ -52,8 +52,21 @@ exprToLLVM ::
   ) =>
   Expr (Type ann) ->
   m LLVM.Operand
-exprToLLVM (EPrim _ prim) = pure $ primToLLVM prim
-exprToLLVM (EIf tyReturn predExpr thenExpr elseExpr) = mdo
+exprToLLVM (EPrim _ prim) = 
+  pure $ primToLLVM prim
+exprToLLVM (EIf tyReturn predExpr thenExpr elseExpr) =
+  ifToLLVM tyReturn predExpr thenExpr elseExpr
+exprToLLVM (EInfix _ op a b) = 
+  infixToLLVM op a b
+
+ifToLLVM ::
+  (LLVM.MonadIRBuilder m, LLVM.MonadModuleBuilder m, MonadFix m) =>
+  Type ann ->
+  Expr (Type ann) ->
+  Expr (Type ann) ->
+  Expr (Type ann) ->
+  m LLVM.Operand
+ifToLLVM tyReturn predExpr thenExpr elseExpr = mdo
   -- create IR for predicate
   irPred <- exprToLLVM predExpr
 
@@ -87,19 +100,29 @@ exprToLLVM (EIf tyReturn predExpr thenExpr elseExpr) = mdo
   doneBlock <- LLVM.block `LLVM.named` "done"
   -- load the result and return it
   LLVM.load irReturnValue 0
-exprToLLVM (EInfix _ OpAdd a b) = do
+
+infixToLLVM ::
+  ( LLVM.MonadIRBuilder m,
+    LLVM.MonadModuleBuilder m,
+    MonadFix m
+  ) =>
+  Op ->
+  Expr (Type ann) ->
+  Expr (Type ann) ->
+  m LLVM.Operand
+infixToLLVM OpAdd a b = do
   lhs <- exprToLLVM a
   rhs <- exprToLLVM b
   LLVM.add lhs rhs
-exprToLLVM (EInfix _ OpSubtract a b) = do
+infixToLLVM OpSubtract a b = do
   lhs <- exprToLLVM a
   rhs <- exprToLLVM b
   LLVM.sub lhs rhs
-exprToLLVM (EInfix _ OpMultiply a b) = do
+infixToLLVM OpMultiply a b = do
   lhs <- exprToLLVM a
   rhs <- exprToLLVM b
   LLVM.mul lhs rhs
-exprToLLVM (EInfix _ OpEquals a b) = do
+infixToLLVM OpEquals a b = do
   lhs <- exprToLLVM a
   rhs <- exprToLLVM b
   LLVM.icmp LLVM.EQ lhs rhs
