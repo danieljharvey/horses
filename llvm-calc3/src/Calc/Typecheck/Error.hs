@@ -4,20 +4,20 @@
 
 module Calc.Typecheck.Error (TypeError (..), typeErrorDiagnostic) where
 
-import qualified Data.HashSet as HS
 import Calc.SourceSpan
 import Calc.TypeUtils
 import Calc.Types.Annotation
 import Calc.Types.Expr
+import Calc.Types.Identifier
 import Calc.Types.Type
+import Data.HashSet (HashSet)
+import qualified Data.HashSet as HS
 import Data.Maybe (catMaybes, mapMaybe)
 import Data.Text (Text)
 import qualified Data.Text as T
 import qualified Error.Diagnose as Diag
 import qualified Prettyprinter as PP
 import qualified Prettyprinter.Render.Text as PP
-import Calc.Types.Identifier
-import Data.HashSet (HashSet)
 
 data TypeError ann
   = PredicateIsNotBoolean ann (Type ann)
@@ -114,32 +114,30 @@ typeErrorDiagnostic input e =
                 ( mapMaybe makeThis pairs
                 )
                 []
-
         (VarNotFound ann identifier existing) ->
-           Diag.Err
-                Nothing
-                "Variable not found!"
-                ( catMaybes [                (,)
-                  <$> positionFromAnnotation
-                    filename
-                    input
-                    ann
-                  <*> pure
-                    ( Diag.This (prettyPrint $ "Could not find identifier " <> PP.pretty identifier)
-                    )]
-
-
-
-
-                )
-                [Diag.Note $ "Available in scope: " <> prettyPrint (prettyHashset existing)]
-
+          Diag.Err
+            Nothing
+            "Variable not found!"
+            ( catMaybes
+                [ (,)
+                    <$> positionFromAnnotation
+                      filename
+                      input
+                      ann
+                    <*> pure
+                      ( Diag.This (prettyPrint $ "Could not find identifier " <> PP.pretty identifier)
+                      )
+                ]
+            )
+            [Diag.Note $ "Available in scope: " <> prettyPrint (prettyHashset existing)]
    in Diag.addReport diag report
 
 -- | becomes "a, b, c, d"
 prettyHashset :: (PP.Pretty a) => HashSet a -> PP.Doc ann
-prettyHashset hs = PP.concatWith (PP.surround PP.comma)
-  (PP.pretty <$> HS.toList hs)
+prettyHashset hs =
+  PP.concatWith
+    (PP.surround PP.comma)
+    (PP.pretty <$> HS.toList hs)
 
 renderWithWidth :: Int -> PP.Doc ann -> Text
 renderWithWidth w doc = PP.renderStrict (PP.layoutPretty layoutOptions (PP.unAnnotate doc))

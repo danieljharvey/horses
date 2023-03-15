@@ -7,12 +7,15 @@ module Calc.Parser
     parseTypeAndFormatError,
     parseFunction,
     parseFunctionAndFormatError,
+    parseModule,
+    parseModuleAndFormatError,
     replFilename,
   )
 where
 
 import Calc.Parser.Expr
 import Calc.Parser.Function
+import Calc.Parser.Module
 import Calc.Parser.Type
 import Calc.Parser.Types
 import Data.Bifunctor (first)
@@ -54,3 +57,11 @@ parseFunction = parse (space *> functionParser <* eof) replFilename
 -- | `parseType`, but format error to text
 parseFunctionAndFormatError :: Text -> Either Text ParserFunction
 parseFunctionAndFormatError = parseAndFormat (space *> functionParser <* eof)
+
+-- parse module, using it all up
+parseModule :: Text -> Either ParseErrorType ParserModule
+parseModule = parse (space *> moduleParser <* eof) replFilename
+
+-- | `parseModule`, but format error to text
+parseModuleAndFormatError :: Text -> Either Text ParserModule
+parseModuleAndFormatError = parseAndFormat (space *> moduleParser <* eof)

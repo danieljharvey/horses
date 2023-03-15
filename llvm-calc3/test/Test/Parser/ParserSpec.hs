@@ -35,15 +35,34 @@ spec = do
         strings
 
     describe "Module" $ do
-      let _strings = [("function increment(a: Integer) { a + 1 } 42",
-                                Module [Function () [("a", TPrim () TInt)] "increment" (EInfix () OpAdd (var "a") (int 1))] (int 42))]
+      let strings =
+            [ ("42", Module [] (int 42)),
+              ( "function increment(a: Integer) { a + 1 } 42",
+                Module [Function () [("a", TPrim () TInt)] "increment" (EInfix () OpAdd (var "a") (int 1))] (int 42)
+              ),
+              ( "function increment(a: Integer) { a + 1 } function decrement(a: Integer) { a - 1} 42",
+                Module
+                  [ Function () [("a", TPrim () TInt)] "increment" (EInfix () OpAdd (var "a") (int 1)),
+                    Function () [("a", TPrim () TInt)] "decrement" (EInfix () OpSubtract (var "a") (int 1))
+                  ]
+                  (int 42)
+              )
+            ]
 
-      error "fail"
+      traverse_
+        ( \(str, module') -> it (T.unpack str) $ do
+            case parseModuleAndFormatError str of
+              Right parsedMod -> parsedMod $> () `shouldBe` module'
+              Left e -> error (T.unpack e)
+        )
+        strings
+
     describe "Function" $ do
       let strings =
             [ ("function one() { 1 }", Function () [] "one" (int 1)),
               ( "function sum (a: Integer, b: Integer) { a + b }",
-                Function ()
+                Function
+                  ()
                   [("a", TPrim () TInt), ("b", TPrim () TInt)]
                   "sum"
                   ( EInfix () OpAdd (var "a") (var "b")
@@ -78,7 +97,8 @@ spec = do
               ),
               ("1 == 2", EInfix () OpEquals (int 1) (int 2)),
               ("if True then 1 else 2", EIf () (bool True) (int 1) (int 2)),
-              ("a + 1", EInfix () OpAdd (var "a") (int 1))
+              ("a + 1", EInfix () OpAdd (var "a") (int 1)),
+              ("add(1,2)", EApply () "add" [int 1, int 2])
             ]
       traverse_
         ( \(str, expr) -> it (T.unpack str) $ do

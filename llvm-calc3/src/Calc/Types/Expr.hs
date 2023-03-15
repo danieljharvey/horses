@@ -4,6 +4,7 @@
 
 module Calc.Types.Expr (Expr (..), Op (..)) where
 
+import Calc.Types.FunctionName
 import Calc.Types.Identifier
 import Calc.Types.Prim
 import Prettyprinter ((<+>))
@@ -14,6 +15,7 @@ data Expr ann
   | EInfix ann Op (Expr ann) (Expr ann)
   | EIf ann (Expr ann) (Expr ann) (Expr ann)
   | EVar ann Identifier
+  | EApply ann FunctionName [Expr ann]
   deriving stock (Eq, Ord, Show, Functor, Foldable, Traversable)
 
 -- when on multilines, indent by `i`, if not then nothing

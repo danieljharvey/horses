@@ -1,25 +1,24 @@
 {-# LANGUAGE OverloadedStrings #-}
 
 module Calc.Parser.Identifier
-  ( identifierParser
+  ( identifierParser,
   )
 where
 
+import Calc.Parser.Shared
+import Calc.Parser.Types
+import Calc.Types
 import Control.Monad
 import qualified Data.Char as Char
 import Data.Set (Set)
 import qualified Data.Set as S
 import Data.Text (Text)
-import Calc.Parser.Shared
-import Calc.Types
 import Text.Megaparsec
-import Calc.Parser.Types
 
 protectedNames :: Set Text
 protectedNames =
   S.fromList
-    [
-      "if",
+    [ "if",
       "then",
       "else",
       "function"
@@ -43,5 +42,3 @@ identifierParserInternal =
   maybePred
     (takeWhile1P (Just "variable name") Char.isAlphaNum)
     (filterProtectedNames >=> safeMkIdentifier)
-
-

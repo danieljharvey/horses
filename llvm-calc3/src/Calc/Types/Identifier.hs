@@ -1,17 +1,17 @@
 {-# LANGUAGE DerivingStrategies #-}
-  {-# LANGUAGE GeneralisedNewtypeDeriving #-}
-module Calc.Types.Identifier (Identifier(..),safeMkIdentifier) where
+{-# LANGUAGE GeneralisedNewtypeDeriving #-}
 
+module Calc.Types.Identifier (Identifier (..), safeMkIdentifier) where
+
+import qualified Data.Char as Ch
 import Data.Hashable
-
-import Data.Text (Text)
 import Data.String
+import Data.Text (Text)
 import qualified Data.Text as T
 import qualified Prettyprinter as PP
-import qualified Data.Char as Ch
 
 newtype Identifier = Identifier Text
-  deriving newtype (Eq,Ord,Show, Hashable)
+  deriving newtype (Eq, Ord, Show, Hashable)
 
 instance IsString Identifier where
   fromString = Identifier . T.pack

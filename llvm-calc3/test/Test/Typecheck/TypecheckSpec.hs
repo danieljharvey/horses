@@ -7,12 +7,13 @@ import Calc.Parser
 import Calc.Typecheck.Elaborate
 import Calc.Typecheck.Error
 import Calc.Types.Expr
+import Calc.Types.Function
+import Calc.Types.Module
 import Calc.Types.Type
 import Control.Monad
 import Data.Foldable (traverse_)
 import Data.Text (Text)
 import Test.Hspec
-import Calc.Types.Function
 
 testTypecheck :: (Text, Text) -> Spec
 testTypecheck (input, result) = it (show input) $ do
@@ -31,25 +32,44 @@ testFailing (input, result) = it (show input) $ do
         `shouldBe` Left result
 
 testSucceedingFunction :: (Text, Type ()) -> Spec
-testSucceedingFunction (input,fn) =
-    it (show input) $ do
-          case parseFunctionAndFormatError input of
-            Left e -> error (show e)
-            Right parsedFn ->
-              fnAnn <$> elaborateFunction (void parsedFn)
-                                      `shouldBe` Right fn
+testSucceedingFunction (input, fn) =
+  it (show input) $ do
+    case parseFunctionAndFormatError input of
+      Left e -> error (show e)
+      Right parsedFn ->
+        fnAnn <$> elaborateFunction (void parsedFn)
+          `shouldBe` Right fn
 
+testSucceedingModule :: (Text, Type ()) -> Spec
+testSucceedingModule (input, md) =
+  it (show input) $ do
+    case parseModuleAndFormatError input of
+      Left e -> error (show e)
+      Right parsedMod ->
+        getOuterAnnotation . mdExpr <$> elaborateModule (void parsedMod)
+          `shouldBe` Right md
 
 spec :: Spec
 spec = do
   describe "TypecheckSpec" $ do
     describe "Function" $ do
-      let succeeding = [ ("function one () { 1 }", TFunction () [] (TPrim () TInt)),
-                        ("function not (bool: Boolean) { if bool then False else True }",
-                          TFunction () [TPrim () TBool] (TPrim () TBool))]
+      let succeeding =
+            [ ("function one () { 1 }", TFunction () [] (TPrim () TInt)),
+              ( "function not (bool: Boolean) { if bool then False else True }",
+                TFunction () [TPrim () TBool] (TPrim () TBool)
+              )
+            ]
 
       describe "Successfully typechecking functions" $ do
         traverse_ testSucceedingFunction succeeding
+
+    describe "Module" $ do
+      let succeeding =
+            [ ("function ignore() { 1 } 42", TPrim () TInt),
+              ("function increment(a: Integer) { a + 1 } increment(41)", TPrim () TInt)
+            ]
+      describe "Successfully typechecking modules" $ do
+        traverse_ testSucceedingModule succeeding
 
     describe "Expr" $ do
       let succeeding =

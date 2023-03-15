@@ -68,6 +68,9 @@ library
     Calc.Interpreter
     Calc.Parser
     Calc.Parser.Expr
+    Calc.Parser.Function
+    Calc.Parser.Identifier
+    Calc.Parser.Module
     Calc.Parser.Primitives
     Calc.Parser.Shared
     Calc.Parser.Type
@@ -76,10 +79,14 @@ library
     Calc.SourceSpan
     Calc.Typecheck.Elaborate
     Calc.Typecheck.Error
+    Calc.Typecheck.Types
     Calc.Types
     Calc.Types.Annotation
     Calc.Types.Expr
     Calc.Types.Function
+    Calc.Types.FunctionName
+    Calc.Types.Identifier
+    Calc.Types.Module
     Calc.Types.Prim
     Calc.Types.Type
     Calc.TypeUtils
@@ -124,7 +131,7 @@ test-suite smol-core-tests
   main-is:          Main.hs
   default-language: Haskell2010
 
-executable llvm-calc2
+executable llvm-calc3
   main-is:          Main.hs
   other-modules:
     Calc
@@ -158,8 +165,9 @@ executable llvm-calc2
     , diagnose
     , directory
     , file-embed
+    , hashable
     , haskeline
-    , llvm-calc2
+    , llvm-calc3
     , llvm-hs-pretty
     , llvm-hs-pure
     , megaparsec

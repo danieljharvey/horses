@@ -1,21 +1,28 @@
 {-# LANGUAGE DerivingStrategies #-}
 
-module Calc.Typecheck.Elaborate (elaborate, elaborateFunction) where
+module Calc.Typecheck.Elaborate (elaborate, elaborateFunction, elaborateModule) where
 
-import Data.Bifunctor (second)
 import Calc.ExprUtils
 import Calc.TypeUtils
 import Calc.Typecheck.Error
+import Calc.Typecheck.Types
 import Calc.Types.Expr
+import Calc.Types.Function
+import Calc.Types.Module
 import Calc.Types.Prim
 import Calc.Types.Type
 import Control.Monad.Except
+import Data.Bifunctor (second)
 import Data.Functor
-import Calc.Types.Function
-import Calc.Typecheck.Types
 
-elaborateFunction :: Function ann ->
-    Either (TypeError ann) (Function (Type ann))
+elaborateModule ::
+  Module ann ->
+  Either (TypeError ann) (Module (Type ann))
+elaborateModule _ = error "sdfsdjklfjkldsfjklsdfjkldsfjkl"
+
+elaborateFunction ::
+  Function ann ->
+  Either (TypeError ann) (Function (Type ann))
 elaborateFunction (Function ann args name expr) =
   runTypecheckM mempty $ do
     exprA <- withFunctionArgs args (infer expr)
@@ -24,7 +31,7 @@ elaborateFunction (Function ann args name expr) =
     pure (Function tyFn argsA name exprA)
 
 elaborate :: Expr ann -> Either (TypeError ann) (Expr (Type ann))
-elaborate = runTypecheckM mempty  . infer
+elaborate = runTypecheckM mempty . infer
 
 check :: Type ann -> Expr ann -> TypecheckM ann (Expr (Type ann))
 check ty expr = do
@@ -33,8 +40,12 @@ check ty expr = do
     then pure (expr $> ty)
     else throwError (TypeMismatch ty (getOuterAnnotation exprA))
 
-inferIf :: ann -> Expr ann -> Expr ann -> Expr ann ->
-      TypecheckM ann (Expr (Type ann))
+inferIf ::
+  ann ->
+  Expr ann ->
+  Expr ann ->
+  Expr ann ->
+  TypecheckM ann (Expr (Type ann))
 inferIf ann predExpr thenExpr elseExpr = do
   predA <- infer predExpr
   case getOuterAnnotation predA of

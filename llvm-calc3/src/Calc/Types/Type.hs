@@ -22,5 +22,5 @@ instance PP.Pretty (Type ann) where
   pretty (TPrim _ prim) = PP.pretty prim
   pretty (TFunction _ args ret) =
     "(" <> prettyArgs <> ") -> " <> PP.pretty ret
-      where
-        prettyArgs = PP.concatWith (PP.surround PP.comma) (PP.pretty <$> args)
+    where
+      prettyArgs = PP.concatWith (PP.surround PP.comma) (PP.pretty <$> args)
