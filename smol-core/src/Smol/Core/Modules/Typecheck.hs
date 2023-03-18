@@ -6,27 +6,28 @@
 
 module Smol.Core.Modules.Typecheck (typecheckAllModules) where
 
-import Smol.Core.Types.Module.Module
-import Smol.Core.Types.Module.ModuleName
-import Smol.Core.Types.Module.DefIdentifier
-import Smol.Core.Types.Module.ModuleHash
+-- import Smol.Core.Types.Module.ModuleName
+-- import Smol.Core.Types.Module.DefIdentifier
+
 import Control.Monad.Except
-import Data.Bifunctor
-import Data.Coerce
-import Data.Foldable
+-- import Data.Bifunctor
+-- import Data.Coerce
+-- import Data.Foldable
 import Data.Map.Strict (Map)
-import qualified Data.Map.Strict as M
-import Data.Maybe
-import Data.Set (Set)
-import qualified Data.Set as S
+-- import qualified Data.Map.Strict as M
+-- import Data.Maybe
+-- import Data.Set (Set)
+-- import qualified Data.Set as S
 import Data.Text (Text)
-import qualified Builder as Build
+-- import qualified Builder as Build
 import Smol.Core
-import Smol.Core.Modules.Dependencies
-import Smol.Core.Modules.HashModule
-import Smol.Core.Modules.Monad
-import Smol.Core.Modules.Uses
+-- import Smol.Core.Modules.Dependencies
+-- import Smol.Core.Modules.HashModule
+-- import Smol.Core.Modules.Monad
+-- import Smol.Core.Modules.Uses
 import Smol.Core.Modules.ModuleError
+import Smol.Core.Types.Module.Module
+import Smol.Core.Types.Module.ModuleHash
 
 -- given the upstream modules, typecheck a module
 -- 1. recursively fetch imports from Reader environment
@@ -37,8 +38,11 @@ typecheckAllModules ::
   Map ModuleHash (Module Annotation) ->
   Text ->
   Module Annotation ->
-  m (Map ModuleHash (Module (Type Annotation)))
-typecheckAllModules modules rootModuleInput rootModule = do
+  m (Map ModuleHash (Module (Type ParseDep Annotation)))
+typecheckAllModules _modules _rootModuleInput _rootModule = do
+  pure mempty
+
+{-
   -- create initial state for builder
   -- we tag each StoreExpression we've found with the deps it needs
   inputWithDeps <- getModuleDeps modules rootModule
@@ -71,6 +75,9 @@ typecheckAllModules modules rootModuleInput rootModule = do
       )
       state
 
+-}
+
+{-
 --- typecheck a single module
 typecheckAllModuleDefs ::
   (MonadError ModuleError m) =>
@@ -135,9 +142,9 @@ addNamespaceToType :: ModuleName -> Set TypeName -> Type Annotation -> Type Anno
 addNamespaceToType modName swapTypes =
   addNS
   where
-    addNS old@(MTConstructor ann Nothing typeName) =
+    addNS old@(TConstructor ann Nothing typeName) =
       if S.member typeName swapTypes
-        then MTConstructor ann (Just modName) typeName
+        then TConstructor ann (Just modName) typeName
         else old
     addNS other = mapType addNS other
 
@@ -380,3 +387,5 @@ typecheckOneExprDef input inputModule typecheckedModules deps (def, expr) = do
         (typecheck typeMap env numberedExpr)
 
   pure (first fst typedExpr)
+
+-}

@@ -7,12 +7,12 @@ import qualified Test.IR.FromExprSpec
 import qualified Test.IR.IRSpec
 import qualified Test.IR.PatternSpec
 import qualified Test.Interpreter.InterpreterSpec
+import qualified Test.Modules.ModulesSpec
 import qualified Test.ParserSpec
 import qualified Test.Typecheck.ExhaustivenessSpec
 import qualified Test.Typecheck.NestingMonadSpec
 import qualified Test.Typecheck.SubtypeSpec
 import qualified Test.TypecheckSpec
-import qualified Test.Modules.ModulesSpec
 
 main :: IO ()
 main = hspec $ do

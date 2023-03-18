@@ -1,17 +1,16 @@
 module Smol.Core.Modules.HashModule (serializeModule, deserializeModule) where
 
-import Data.Bifunctor
-import Data.Coerce
-import Data.Functor
-import Smol.Core
-import Smol.Core.Types.Module.Module
-import Smol.Core.Types.Module.ModuleHash
 import Crypto.Hash (SHA256 (..), hashWith)
 import qualified Data.Aeson as JSON
+import Data.Bifunctor
 import Data.ByteArray.Encoding (Base (Base16), convertToBase)
 import qualified Data.ByteString.Lazy as LBS
 import Data.ByteString.Lazy.Char8 (toStrict)
+import Data.Coerce
+import Data.Functor
 import Data.Text.Encoding
+import Smol.Core.Types.Module.Module
+import Smol.Core.Types.Module.ModuleHash
 
 -- we remove annotations before producing the hash
 -- so formatting does not affect it

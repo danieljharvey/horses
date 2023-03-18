@@ -5,10 +5,10 @@ module Language.Mimsa.Modules.Pretty (modulePretty, filterExported) where
 import Data.Map.Strict (Map)
 import qualified Data.Map.Strict as M
 import qualified Data.Set as S
-import Smol.Core
 import Language.Mimsa.Typechecker.Elaborate
 import Language.Mimsa.Types.Typechecker
 import Prettyprinter
+import Smol.Core
 
 -- | display types for module in a nice way
 modulePretty :: Module (Type Annotation) -> Doc a

@@ -2,17 +2,15 @@
 
 module Smol.Core.Modules.ModuleError (ModuleError (..), moduleErrorDiagnostic) where
 
-import qualified Data.Text as T
 import Data.Set (Set)
 import Data.Text (Text)
+import qualified Data.Text as T
 import qualified Error.Diagnose as Diag
 import Smol.Core.Typecheck
+import Smol.Core.Types
 import Smol.Core.Types.Module.DefIdentifier
 import Smol.Core.Types.Module.ModuleHash
 import Smol.Core.Types.Module.ModuleName
-
-import Smol.Core.Types.TypeName
-import Smol.Core.Types
 
 data ModuleError
   = DuplicateDefinition DefIdentifier

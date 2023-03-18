@@ -15,8 +15,8 @@ where
 import Data.Map.Strict (Map)
 import qualified Data.Map.Strict as M
 import qualified Data.Set as S
-import Smol.Core
 import Language.Mimsa.Typechecker.Elaborate
+import Smol.Core
 
 lookupModuleDef :: Module (Type Annotation) -> DefIdentifier -> Maybe (Expr Name (Type Annotation))
 lookupModuleDef mod' defId =

@@ -85,6 +85,14 @@ library
     Smol.Core.IR.ToLLVM.Helpers
     Smol.Core.IR.ToLLVM.Patterns
     Smol.Core.IR.ToLLVM.ToLLVM
+    Smol.Core.Modules.Dependencies
+    Smol.Core.Modules.FromParts
+    Smol.Core.Modules.HashModule
+    Smol.Core.Modules.ModuleError
+    Smol.Core.Modules.Monad
+    Smol.Core.Modules.ResolveDeps
+    Smol.Core.Modules.Typecheck
+    Smol.Core.Modules.Uses
     Smol.Core.Parser
     Smol.Core.Parser.DataType
     Smol.Core.Parser.Expr
@@ -160,6 +168,13 @@ test-suite smol-core-tests
     Smol.Core.IR.ToLLVM.Helpers
     Smol.Core.IR.ToLLVM.Patterns
     Smol.Core.IR.ToLLVM.ToLLVM
+    Smol.Core.Modules.Dependencies
+    Smol.Core.Modules.FromParts
+    Smol.Core.Modules.HashModule
+    Smol.Core.Modules.ModuleError
+    Smol.Core.Modules.Monad
+    Smol.Core.Modules.Typecheck
+    Smol.Core.Modules.Uses
     Smol.Core.Parser
     Smol.Core.Parser.DataType
     Smol.Core.Parser.Expr
@@ -214,6 +229,7 @@ test-suite smol-core-tests
     Test.IR.PatternSpec
     Test.IR.RawSamples
     Test.IR.Samples
+    Test.Modules.ModulesSpec
     Test.ParserSpec
     Test.Typecheck.ExhaustivenessSpec
     Test.Typecheck.NestingMonadSpec

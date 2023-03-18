@@ -18,13 +18,13 @@ import Data.Set (Set)
 import qualified Data.Set as S
 import Data.Text (Text)
 import qualified Language.Mimsa.Actions.Helpers.Build as Build
-import Smol.Core
 import Language.Mimsa.Modules.Dependencies
 import Language.Mimsa.Modules.HashModule
 import Language.Mimsa.Modules.Uses
 import Language.Mimsa.Store
 import Language.Mimsa.Types.Error
 import Language.Mimsa.Types.Store
+import Smol.Core
 
 data CompiledModule ann = CompiledModule
   { cmStore :: Store ann,

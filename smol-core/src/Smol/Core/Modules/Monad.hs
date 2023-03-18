@@ -19,10 +19,10 @@ import Data.Map.Strict (Map)
 import qualified Data.Map.Strict as M
 import qualified Data.Set as S
 import Smol.Core
+import Smol.Core.Modules.ModuleError
+import Smol.Core.Types.Module.DefIdentifier
 import Smol.Core.Types.Module.Module
 import Smol.Core.Types.Module.ModuleHash
-import Smol.Core.Types.Module.DefIdentifier
-import Smol.Core.Modules.ModuleError
 
 lookupModule ::
   (MonadError ModuleError m) =>

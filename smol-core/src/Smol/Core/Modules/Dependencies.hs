@@ -22,12 +22,12 @@ import Data.Set (Set)
 import qualified Data.Set as S
 import Smol.Core
 import Smol.Core.Modules.HashModule
+import Smol.Core.Modules.ModuleError
 import Smol.Core.Modules.Monad
 import Smol.Core.Modules.Uses
-import qualified Smol.Core.Types.Module.Entity as E
 import Smol.Core.Types.Module.DefIdentifier
+import qualified Smol.Core.Types.Module.Entity as E
 import Smol.Core.Types.Module.Module
-import Smol.Core.Modules.ModuleError
 import Smol.Core.Types.Module.ModuleHash
 
 data DepType ann

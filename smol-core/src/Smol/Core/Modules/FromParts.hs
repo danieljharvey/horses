@@ -11,11 +11,11 @@ import Data.Map.Strict (Map)
 import qualified Data.Map.Strict as M
 import qualified Data.Set as S
 import Smol.Core
+import Smol.Core.Modules.ModuleError
 import Smol.Core.Modules.Monad
+import Smol.Core.Types.Module.DefIdentifier
 import Smol.Core.Types.Module.Module
 import Smol.Core.Types.Module.ModuleHash
-import Smol.Core.Modules.ModuleError
-import Smol.Core.Types.Module.DefIdentifier
 
 moduleFromModuleParts ::
   ( MonadError ModuleError m,
@@ -55,7 +55,6 @@ addModulePart modules part mod' =
               M.singleton typeName dt
                 <> moDataTypes mod'
           }
-
     ModuleExport modItem -> do
       -- get whatever is inside
       innerModule <- addModulePart modules modItem mod'
@@ -118,7 +117,7 @@ addAnnotation mt expr =
   -- add type annotation to expression
   case mt of
     Just typeAnnotation ->
-      EAnn 
+      EAnn
         (getTypeAnnotation typeAnnotation)
         typeAnnotation
         expr
