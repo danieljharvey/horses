@@ -29,6 +29,24 @@
 
         haskellPackages = haskell.packages.${compilerVersion};
 
+        newCompilerVersion = "ghc961";
+
+        # fix things
+        newHaskell = pkgs.haskell // {
+          packages = pkgs.haskell.packages // {
+            "${newCompilerVersion}" =
+              pkgs.haskell.packages."${newCompilerVersion}".override {
+                overrides = self: super: {
+                  # On aarch64-darwin, this creates a cycle for some reason; didn't look too much into it.
+                  ghcid = pkgs.haskell.lib.dontCheck (pkgs.haskell.lib.overrideCabal super.ghcid (drv: { enableSeparateBinOutput = false; }));
+                };
+
+              };
+          };
+        };
+
+        newHaskellPackages = newHaskell.packages.${compilerVersion};
+
         jailbreakUnbreak = pkg:
           pkgs.haskell.lib.doJailbreak (pkg.overrideAttrs (_: { meta = { }; }));
 
@@ -41,7 +59,7 @@
 
         devShell = pkgs.mkShell {
           buildInputs = with haskellPackages; [
-            ghc
+            newHaskellPackages.ghc
             hlint
             haskell-language-server
             ormolu
