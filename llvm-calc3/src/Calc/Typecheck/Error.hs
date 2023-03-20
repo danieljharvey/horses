@@ -8,6 +8,7 @@ import Calc.SourceSpan
 import Calc.TypeUtils
 import Calc.Types.Annotation
 import Calc.Types.Expr
+import Calc.Types.FunctionName
 import Calc.Types.Identifier
 import Calc.Types.Type
 import Data.HashSet (HashSet)
@@ -24,6 +25,7 @@ data TypeError ann
   | InfixTypeMismatch Op [(Type ann, Type ann)]
   | TypeMismatch (Type ann) (Type ann)
   | VarNotFound ann Identifier (HashSet Identifier)
+  | FunctionNotFound ann FunctionName (HashSet FunctionName)
   deriving stock (Eq, Ord, Show)
 
 positionFromAnnotation ::
@@ -126,6 +128,22 @@ typeErrorDiagnostic input e =
                       ann
                     <*> pure
                       ( Diag.This (prettyPrint $ "Could not find identifier " <> PP.pretty identifier)
+                      )
+                ]
+            )
+            [Diag.Note $ "Available in scope: " <> prettyPrint (prettyHashset existing)]
+        (FunctionNotFound ann fnName existing) ->
+          Diag.Err
+            Nothing
+            "Function not found!"
+            ( catMaybes
+                [ (,)
+                    <$> positionFromAnnotation
+                      filename
+                      input
+                      ann
+                    <*> pure
+                      ( Diag.This (prettyPrint $ "Could not find function " <> PP.pretty fnName)
                       )
                 ]
             )

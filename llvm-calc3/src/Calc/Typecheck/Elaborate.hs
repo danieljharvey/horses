@@ -1,6 +1,6 @@
 {-# LANGUAGE DerivingStrategies #-}
 {-# LANGUAGE NamedFieldPuns #-}
-
+{-# LANGUAGE ScopedTypeVariables #-}
 module Calc.Typecheck.Elaborate (elaborate, elaborateFunction, elaborateModule) where
 
 import Calc.ExprUtils
@@ -17,25 +17,31 @@ import Data.Bifunctor (second)
 import Data.Functor
 
 elaborateModule ::
+  forall ann.
   Module ann ->
-  Either (TypeError ann) (Module (Type ann))
+  TypecheckM ann (Module (Type ann))
 elaborateModule (Module {mdFunctions, mdExpr}) = do
-  elabFunctions <- traverse elaborateFunction mdFunctions
-  elabExpr <- elaborate mdExpr
-  pure (Module elabFunctions elabExpr)
+  let withFunctions :: TypecheckM ann a -> TypecheckM ann a
+      withFunctions computation =     foldM 
+                                  ( \result fn -> do
+                                      elabFn <- elaborateFunction fn
+                                      withFunction (fnFunctionName elabFn) (fnAnn elabFn) (pure result)
+                                  )
+                                  computation
+                                  mdFunctions
+  pure undefined
 
 elaborateFunction ::
   Function ann ->
-  Either (TypeError ann) (Function (Type ann))
-elaborateFunction (Function ann args name expr) =
-  runTypecheckM mempty $ do
-    exprA <- withFunctionArgs args (infer expr)
-    let argsA = fmap (second (\ty -> fmap (const ty) ty)) args
-    let tyFn = TFunction ann (snd <$> args) (getOuterAnnotation exprA)
-    pure (Function tyFn argsA name exprA)
+  TypecheckM ann (Function (Type ann))
+elaborateFunction (Function ann args name expr) = do
+  exprA <- withFunctionArgs args (infer expr)
+  let argsA = fmap (second (\ty -> fmap (const ty) ty)) args
+  let tyFn = TFunction ann (snd <$> args) (getOuterAnnotation exprA)
+  pure (Function tyFn argsA name exprA)
 
 elaborate :: Expr ann -> Either (TypeError ann) (Expr (Type ann))
-elaborate = runTypecheckM mempty . infer
+elaborate = runTypecheckM (TypecheckEnv mempty mempty) . infer
 
 check :: Type ann -> Expr ann -> TypecheckM ann (Expr (Type ann))
 check ty expr = do
@@ -119,7 +125,16 @@ infer (EPrim ann prim) =
   pure (EPrim (typeFromPrim ann prim) prim)
 infer (EIf ann predExpr thenExpr elseExpr) =
   inferIf ann predExpr thenExpr elseExpr
-infer (EApply {}) = error "EApply infer"
+infer (EApply ann fnName args) = do
+  fn <- lookupFunction ann fnName
+  (ty,elabArgs) <- case fn of
+    TFunction _ tArgs tReturn -> do
+      when (length args /= length tArgs) (error "wrong length")
+      elabArgs <- zipWithM check tArgs args -- check each arg against type
+      pure (tReturn, elabArgs)
+    _ -> error "wrong type"
+  pure (EApply (ty $> ann) fnName elabArgs)
+
 infer (EVar ann var) = do
   ty <- lookupVar ann var
   pure (EVar ty var)

@@ -1,7 +1,17 @@
 {-# LANGUAGE DerivingStrategies #-}
 {-# LANGUAGE GeneralisedNewtypeDeriving #-}
 
-module Calc.Typecheck.Types (TypecheckM (..), runTypecheckM, TypecheckEnv, lookupVar, withVar, withFunctionArgs) where
+module Calc.Typecheck.Types
+  ( TypecheckM (..),
+    runTypecheckM,
+    TypecheckEnv (..),
+    lookupVar,
+    withVar,
+    lookupFunction,
+    withFunctionArgs,
+    withFunction,
+  )
+where
 
 import Calc.Typecheck.Error
 import Calc.Types.Function
@@ -13,7 +23,10 @@ import Data.Bifunctor (first)
 import Data.HashMap.Strict (HashMap)
 import qualified Data.HashMap.Strict as HM
 
-type TypecheckEnv ann = HashMap Identifier (Type ann)
+data TypecheckEnv ann = TypecheckEnv
+  { tceVars :: HashMap Identifier (Type ann),
+    tceFunctions :: HashMap FunctionName (Type ann)
+  }
 
 newtype TypecheckM ann a = TypecheckM
   { getTypecheckM ::
@@ -27,28 +40,62 @@ newtype TypecheckM ann a = TypecheckM
       MonadError (TypeError ann)
     )
 
-runTypecheckM :: TypecheckEnv ann -> TypecheckM ann a -> Either (TypeError ann) a
+runTypecheckM ::
+  TypecheckEnv ann ->
+  TypecheckM ann a ->
+  Either (TypeError ann) a
 runTypecheckM env action =
   runReaderT (getTypecheckM action) env
+
+withFunction :: FunctionName -> Type ann -> TypecheckM ann a -> TypecheckM ann a
+withFunction fnName ty =
+  local
+    ( \tce ->
+        tce
+          { tceFunctions =
+              HM.insert fnName ty (tceFunctions tce)
+          }
+    )
+
+-- | look up a saved identifier "in the environment"
+lookupFunction :: ann -> FunctionName -> TypecheckM ann (Type ann)
+lookupFunction ann fnName = do
+  maybeType <- asks (HM.lookup fnName . tceFunctions)
+  case maybeType of
+    Just found -> pure found
+    Nothing -> do
+      allFunctions <- asks (HM.keysSet . tceFunctions)
+      throwError (FunctionNotFound ann fnName allFunctions)
 
 -- | look up a saved identifier "in the environment"
 lookupVar :: ann -> Identifier -> TypecheckM ann (Type ann)
 lookupVar ann identifier = do
-  maybeType <- asks (HM.lookup identifier)
+  maybeType <- asks (HM.lookup identifier . tceVars)
   case maybeType of
     Just found -> pure found
     Nothing -> do
-      allIdentifiers <- asks HM.keysSet
+      allIdentifiers <- asks (HM.keysSet . tceVars)
       throwError (VarNotFound ann identifier allIdentifiers)
 
 -- | add an identifier to the environment
 withVar :: Identifier -> Type ann -> TypecheckM ann a -> TypecheckM ann a
 withVar identifier ty =
-  local (HM.insert identifier ty)
+  local
+    ( \tce ->
+        tce
+          { tceVars =
+              HM.insert identifier ty (tceVars tce)
+          }
+    )
 
 withFunctionArgs :: [(ArgumentName, Type ann)] -> TypecheckM ann a -> TypecheckM ann a
 withFunctionArgs args =
-  local (\hm -> hm <> HM.fromList tidiedArgs)
+  local
+    ( \tce ->
+        tce
+          { tceVars = tceVars tce <> HM.fromList tidiedArgs
+          }
+    )
   where
     tidiedArgs =
       fmap (first (\(ArgumentName arg) -> Identifier arg)) args

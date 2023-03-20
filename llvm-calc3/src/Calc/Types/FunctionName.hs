@@ -6,13 +6,14 @@ module Calc.Types.FunctionName
   )
 where
 
+import Data.Hashable
 import Data.String
 import Data.Text (Text)
 import qualified Data.Text as T
 import qualified Prettyprinter as PP
 
 newtype FunctionName = FunctionName Text
-  deriving newtype (Eq, Ord, Show)
+  deriving newtype (Eq, Ord, Show, Hashable)
 
 instance IsString FunctionName where
   fromString = FunctionName . T.pack

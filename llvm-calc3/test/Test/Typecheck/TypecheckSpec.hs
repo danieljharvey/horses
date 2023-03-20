@@ -6,6 +6,7 @@ import Calc.ExprUtils
 import Calc.Parser
 import Calc.Typecheck.Elaborate
 import Calc.Typecheck.Error
+import Calc.Typecheck.Types
 import Calc.Types.Expr
 import Calc.Types.Function
 import Calc.Types.Module
@@ -14,6 +15,9 @@ import Control.Monad
 import Data.Foldable (traverse_)
 import Data.Text (Text)
 import Test.Hspec
+
+runTC :: TypecheckM ann a -> Either (TypeError ann) a
+runTC = runTypecheckM (TypecheckEnv mempty mempty)
 
 testTypecheck :: (Text, Text) -> Spec
 testTypecheck (input, result) = it (show input) $ do
@@ -37,7 +41,7 @@ testSucceedingFunction (input, fn) =
     case parseFunctionAndFormatError input of
       Left e -> error (show e)
       Right parsedFn ->
-        fnAnn <$> elaborateFunction (void parsedFn)
+        fnAnn <$> runTC (elaborateFunction (void parsedFn))
           `shouldBe` Right fn
 
 testSucceedingModule :: (Text, Type ()) -> Spec
@@ -46,7 +50,7 @@ testSucceedingModule (input, md) =
     case parseModuleAndFormatError input of
       Left e -> error (show e)
       Right parsedMod ->
-        getOuterAnnotation . mdExpr <$> elaborateModule (void parsedMod)
+        getOuterAnnotation . mdExpr <$> runTC (elaborateModule (void parsedMod))
           `shouldBe` Right md
 
 spec :: Spec
