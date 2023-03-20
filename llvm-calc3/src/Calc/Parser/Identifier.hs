@@ -2,6 +2,7 @@
 
 module Calc.Parser.Identifier
   ( identifierParser,
+    functionNameParser,
   )
 where
 
@@ -42,3 +43,8 @@ identifierParserInternal =
   maybePred
     (takeWhile1P (Just "variable name") Char.isAlphaNum)
     (filterProtectedNames >=> safeMkIdentifier)
+
+functionNameParser :: Parser FunctionName
+functionNameParser = do
+  (Identifier fnName) <- identifierParser
+  pure (FunctionName fnName)

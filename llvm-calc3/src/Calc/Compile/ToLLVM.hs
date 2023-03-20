@@ -56,6 +56,7 @@ exprToLLVM ::
   m LLVM.Operand
 exprToLLVM (EPrim _ prim) = pure $ primToLLVM prim
 exprToLLVM (EVar {}) = error "exprToLLVM EVar"
+exprToLLVM (EApply {}) = error "exprToLLVM EApply"
 exprToLLVM (EIf tyReturn predExpr thenExpr elseExpr) = mdo
   -- create IR for predicate
   irPred <- exprToLLVM predExpr

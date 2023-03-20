@@ -66,7 +66,8 @@ spec = do
     describe "Module" $ do
       let succeeding =
             [ ("function ignore() { 1 } 42", TPrim () TInt),
-              ("function increment(a: Integer) { a + 1 } increment(41)", TPrim () TInt)
+              ("function increment(a: Integer) { a + 1 } increment(41)", TPrim () TInt),
+              ("function inc(a: Integer) { a + 1 } function inc2(a: Integer) { inc(a) } inc2(41)", TPrim () TInt)
             ]
       describe "Successfully typechecking modules" $ do
         traverse_ testSucceedingModule succeeding

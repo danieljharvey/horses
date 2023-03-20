@@ -98,7 +98,8 @@ spec = do
               ("1 == 2", EInfix () OpEquals (int 1) (int 2)),
               ("if True then 1 else 2", EIf () (bool True) (int 1) (int 2)),
               ("a + 1", EInfix () OpAdd (var "a") (int 1)),
-              ("add(1,2)", EApply () "add" [int 1, int 2])
+              ("add(1,2)", EApply () "add" [int 1, int 2]),
+              ("go()", EApply () "go" [])
             ]
       traverse_
         ( \(str, expr) -> it (T.unpack str) $ do

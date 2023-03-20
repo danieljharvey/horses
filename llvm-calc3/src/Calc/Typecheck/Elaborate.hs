@@ -1,4 +1,5 @@
 {-# LANGUAGE DerivingStrategies #-}
+{-# LANGUAGE NamedFieldPuns #-}
 
 module Calc.Typecheck.Elaborate (elaborate, elaborateFunction, elaborateModule) where
 
@@ -18,7 +19,10 @@ import Data.Functor
 elaborateModule ::
   Module ann ->
   Either (TypeError ann) (Module (Type ann))
-elaborateModule _ = error "sdfsdjklfjkldsfjklsdfjkldsfjkl"
+elaborateModule (Module {mdFunctions, mdExpr}) = do
+  elabFunctions <- traverse elaborateFunction mdFunctions
+  elabExpr <- elaborate mdExpr
+  pure (Module elabFunctions elabExpr)
 
 elaborateFunction ::
   Function ann ->
@@ -115,6 +119,7 @@ infer (EPrim ann prim) =
   pure (EPrim (typeFromPrim ann prim) prim)
 infer (EIf ann predExpr thenExpr elseExpr) =
   inferIf ann predExpr thenExpr elseExpr
+infer (EApply {}) = error "EApply infer"
 infer (EVar ann var) = do
   ty <- lookupVar ann var
   pure (EVar ty var)

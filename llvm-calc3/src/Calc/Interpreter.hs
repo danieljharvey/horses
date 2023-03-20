@@ -38,6 +38,7 @@ interpret ::
   m (Expr ann)
 interpret (EPrim ann p) = pure (EPrim ann p)
 interpret (EVar _ ident) = error $ "var " <> show ident
+interpret (EApply _ _ _) = error "apply"
 interpret (EInfix ann op a b) =
   interpretInfix ann op a b
 interpret (EIf ann predExpr thenExpr elseExpr) = do

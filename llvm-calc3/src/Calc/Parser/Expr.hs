@@ -20,6 +20,7 @@ exprPart =
   inBrackets (addLocation exprParser)
     <|> primParser
     <|> ifParser
+    <|> try applyParser
     <|> varParser
     <?> "term"
 
@@ -46,3 +47,11 @@ ifParser = addLocation $ do
 
 varParser :: Parser (Expr Annotation)
 varParser = addLocation $ EVar mempty <$> identifierParser
+
+applyParser :: Parser (Expr Annotation)
+applyParser = addLocation $ do
+  fnName <- functionNameParser
+  stringLiteral "("
+  args <- sepBy exprParser (stringLiteral ",")
+  stringLiteral ")"
+  pure (EApply mempty fnName args)

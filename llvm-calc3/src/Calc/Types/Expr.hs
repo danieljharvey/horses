@@ -32,6 +32,9 @@ instance PP.Pretty (Expr ann) where
   pretty (EIf _ predExpr thenExpr elseExpr) =
     "if" <+> PP.pretty predExpr <+> "then" <+> indentMulti 2 (PP.pretty thenExpr) <+> "else" <+> indentMulti 2 (PP.pretty elseExpr)
   pretty (EVar _ ident) = PP.pretty ident
+  pretty (EApply _ fn args) = PP.pretty fn <> "(" <> PP.cat pArgs <> ")"
+    where
+      pArgs = PP.punctuate "," (PP.pretty <$> args)
 
 data Op
   = OpAdd

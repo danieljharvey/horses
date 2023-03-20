@@ -1,6 +1,6 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-module Calc.Parser.Function (functionParser) where
+module Calc.Parser.Function (functionParser, functionNameParser) where
 
 import Calc.Parser.Expr
 import Calc.Parser.Identifier
@@ -13,23 +13,28 @@ import Calc.Types.Identifier
 import Calc.Types.Type
 import Text.Megaparsec
 
+argumentNameParser :: Parser ArgumentName
+argumentNameParser = do
+  (Identifier fnName) <- identifierParser
+  pure (ArgumentName fnName)
+
 functionParser :: Parser (Function Annotation)
 functionParser =
   withLocation (\ann (args, fnName, expr) -> Function ann args fnName expr) innerParser
   where
     innerParser = do
       stringLiteral "function"
-      (Identifier fnName) <- identifierParser
+      fnName <- functionNameParser
       stringLiteral "("
       args <- sepBy argTypeParser (stringLiteral ",")
       stringLiteral ")"
       stringLiteral "{"
       expr <- exprParser
       stringLiteral "}"
-      pure (args, FunctionName fnName, expr)
+      pure (args, fnName, expr)
 
 argTypeParser :: Parser (ArgumentName, Type Annotation)
 argTypeParser = do
-  (Identifier arg) <- identifierParser
+  arg <- argumentNameParser
   stringLiteral ":"
-  (,) (ArgumentName arg) <$> typeParser
+  (,) arg <$> typeParser
