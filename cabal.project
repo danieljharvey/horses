@@ -14,7 +14,7 @@ packages:
   llvm-calc4/llvm-calc4.cabal,
   vendored/**/*.cabal
 
-with-compiler: ghc-9.4.4
+with-compiler: ghc-9.6.1
 
 package diagnose
   flags: +megaparsec-compat

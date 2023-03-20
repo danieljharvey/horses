@@ -45,7 +45,7 @@
           };
         };
 
-        newHaskellPackages = newHaskell.packages.${compilerVersion};
+        newHaskellPackages = newHaskell.packages.${newCompilerVersion};
 
         jailbreakUnbreak = pkg:
           pkgs.haskell.lib.doJailbreak (pkg.overrideAttrs (_: { meta = { }; }));
@@ -59,13 +59,13 @@
 
         devShell = pkgs.mkShell {
           buildInputs = with haskellPackages; [
-            newHaskellPackages.ghc
             hlint
             haskell-language-server
             ormolu
             ghcid
             cabal-fmt
             cabal-install
+            newHaskellPackages.ghc
             pkgs.zlib # used by `digest` package
             pkgs.nodejs-18_x
             pkgs.clang_14
