@@ -17,7 +17,7 @@ import Data.Text (Text)
 import Test.Hspec
 
 runTC :: TypecheckM ann a -> Either (TypeError ann) a
-runTC = runTypecheckM (TypecheckEnv mempty mempty)
+runTC = runTypecheckM (TypecheckEnv mempty)
 
 testTypecheck :: (Text, Text) -> Spec
 testTypecheck (input, result) = it (show input) $ do

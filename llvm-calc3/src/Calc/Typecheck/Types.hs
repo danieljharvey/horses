@@ -9,7 +9,7 @@ module Calc.Typecheck.Types
     withVar,
     lookupFunction,
     withFunctionArgs,
-    withFunction,
+    storeFunction,
   )
 where
 
@@ -19,26 +19,31 @@ import Calc.Types.Identifier
 import Calc.Types.Type
 import Control.Monad.Except
 import Control.Monad.Reader
+import Control.Monad.State
 import Data.Bifunctor (first)
 import Data.HashMap.Strict (HashMap)
 import qualified Data.HashMap.Strict as HM
 
-data TypecheckEnv ann = TypecheckEnv
-  { tceVars :: HashMap Identifier (Type ann),
-    tceFunctions :: HashMap FunctionName (Type ann)
+newtype TypecheckEnv ann = TypecheckEnv
+  { tceVars :: HashMap Identifier (Type ann)
   }
+  deriving stock (Eq, Ord, Show)
+
+newtype TypecheckState ann = TypecheckState
+  {tcsFunctions :: HashMap FunctionName (Type ann)}
   deriving stock (Eq, Ord, Show)
 
 newtype TypecheckM ann a = TypecheckM
   { getTypecheckM ::
-      ReaderT (TypecheckEnv ann) (Either (TypeError ann)) a
+      ReaderT (TypecheckEnv ann) (StateT (TypecheckState ann) (Either (TypeError ann))) a
   }
   deriving newtype
     ( Functor,
       Applicative,
       Monad,
       MonadReader (TypecheckEnv ann),
-      MonadError (TypeError ann)
+      MonadError (TypeError ann),
+      MonadState (TypecheckState ann)
     )
 
 runTypecheckM ::
@@ -46,30 +51,29 @@ runTypecheckM ::
   TypecheckM ann a ->
   Either (TypeError ann) a
 runTypecheckM env action =
-  runReaderT (getTypecheckM action) env
+  evalStateT (runReaderT (getTypecheckM action) env) (TypecheckState mempty)
 
-withFunction ::
+storeFunction ::
   FunctionName ->
   Type ann ->
-  TypecheckM ann a ->
-  TypecheckM ann a
-withFunction fnName ty =
-  local
-    ( \tce ->
-        tce
-          { tceFunctions =
-              HM.insert fnName ty (tceFunctions tce)
+  TypecheckM ann ()
+storeFunction fnName ty =
+  modify
+    ( \tcs ->
+        tcs
+          { tcsFunctions =
+              HM.insert fnName ty (tcsFunctions tcs)
           }
     )
 
 -- | look up a saved identifier "in the environment"
 lookupFunction :: ann -> FunctionName -> TypecheckM ann (Type ann)
 lookupFunction ann fnName = do
-  maybeType <- asks (HM.lookup fnName . tceFunctions)
+  maybeType <- gets (HM.lookup fnName . tcsFunctions)
   case maybeType of
     Just found -> pure found
     Nothing -> do
-      allFunctions <- asks (HM.keysSet . tceFunctions)
+      allFunctions <- gets (HM.keysSet . tcsFunctions)
       throwError (FunctionNotFound ann fnName allFunctions)
 
 -- | look up a saved identifier "in the environment"

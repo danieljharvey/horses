@@ -22,31 +22,16 @@ elaborateModule ::
   Module ann ->
   TypecheckM ann (Module (Type ann))
 elaborateModule (Module {mdFunctions, mdExpr}) = do
-  
-  let withFns start = 
-         foldr (\ fn comp -> do
-            elabFn <- elaborateFunction fn
-            withFunction (fnFunctionName elabFn) (fnAnn elabFn) comp) start mdFunctions
-  
-  stuff <- withFns (infer mdExpr)
+  fns <-
+    traverse
+      ( \fn -> do
+          elabFn <- elaborateFunction fn
+          storeFunction (fnFunctionName elabFn) (fnAnn elabFn)
+          pure elabFn
+      )
+      mdFunctions
 
-  pure (Module [] stuff)
-  {-
-  let withFunctions computation =
-        foldr
-          ( \fn inputs -> do
-              elabFn <- elaborateFunction fn
-              (elabbed, comp) <- inputs
-              (,) (elabbed <> [elabFn])
-                <$> withFunction
-                  (fnFunctionName elabFn)
-                  (fnAnn elabFn)
-                  (pure comp)
-          )
-          ((,) [] <$> computation)
-          mdFunctions
-  uncurry Module <$> withFunctions (infer mdExpr)
--}
+  Module fns <$> (infer mdExpr)
 
 elaborateFunction ::
   Function ann ->
@@ -58,7 +43,7 @@ elaborateFunction (Function ann args name expr) = do
   pure (Function tyFn argsA name exprA)
 
 elaborate :: Expr ann -> Either (TypeError ann) (Expr (Type ann))
-elaborate = runTypecheckM (TypecheckEnv mempty mempty) . infer
+elaborate = runTypecheckM (TypecheckEnv mempty) . infer
 
 check :: Type ann -> Expr ann -> TypecheckM ann (Expr (Type ann))
 check ty expr = do
