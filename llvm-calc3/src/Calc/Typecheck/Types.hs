@@ -27,6 +27,7 @@ data TypecheckEnv ann = TypecheckEnv
   { tceVars :: HashMap Identifier (Type ann),
     tceFunctions :: HashMap FunctionName (Type ann)
   }
+  deriving stock (Eq, Ord, Show)
 
 newtype TypecheckM ann a = TypecheckM
   { getTypecheckM ::
@@ -47,7 +48,11 @@ runTypecheckM ::
 runTypecheckM env action =
   runReaderT (getTypecheckM action) env
 
-withFunction :: FunctionName -> Type ann -> TypecheckM ann a -> TypecheckM ann a
+withFunction ::
+  FunctionName ->
+  Type ann ->
+  TypecheckM ann a ->
+  TypecheckM ann a
 withFunction fnName ty =
   local
     ( \tce ->

@@ -1,6 +1,7 @@
 {-# LANGUAGE DerivingStrategies #-}
 {-# LANGUAGE NamedFieldPuns #-}
 {-# LANGUAGE ScopedTypeVariables #-}
+
 module Calc.Typecheck.Elaborate (elaborate, elaborateFunction, elaborateModule) where
 
 import Calc.ExprUtils
@@ -21,15 +22,31 @@ elaborateModule ::
   Module ann ->
   TypecheckM ann (Module (Type ann))
 elaborateModule (Module {mdFunctions, mdExpr}) = do
-  let withFunctions :: TypecheckM ann a -> TypecheckM ann a
-      withFunctions computation =     foldM 
-                                  ( \result fn -> do
-                                      elabFn <- elaborateFunction fn
-                                      withFunction (fnFunctionName elabFn) (fnAnn elabFn) (pure result)
-                                  )
-                                  computation
-                                  mdFunctions
-  pure undefined
+  
+  let withFns start = 
+         foldr (\ fn comp -> do
+            elabFn <- elaborateFunction fn
+            withFunction (fnFunctionName elabFn) (fnAnn elabFn) comp) start mdFunctions
+  
+  stuff <- withFns (infer mdExpr)
+
+  pure (Module [] stuff)
+  {-
+  let withFunctions computation =
+        foldr
+          ( \fn inputs -> do
+              elabFn <- elaborateFunction fn
+              (elabbed, comp) <- inputs
+              (,) (elabbed <> [elabFn])
+                <$> withFunction
+                  (fnFunctionName elabFn)
+                  (fnAnn elabFn)
+                  (pure comp)
+          )
+          ((,) [] <$> computation)
+          mdFunctions
+  uncurry Module <$> withFunctions (infer mdExpr)
+-}
 
 elaborateFunction ::
   Function ann ->
@@ -127,14 +144,13 @@ infer (EIf ann predExpr thenExpr elseExpr) =
   inferIf ann predExpr thenExpr elseExpr
 infer (EApply ann fnName args) = do
   fn <- lookupFunction ann fnName
-  (ty,elabArgs) <- case fn of
+  (ty, elabArgs) <- case fn of
     TFunction _ tArgs tReturn -> do
       when (length args /= length tArgs) (error "wrong length")
       elabArgs <- zipWithM check tArgs args -- check each arg against type
       pure (tReturn, elabArgs)
     _ -> error "wrong type"
   pure (EApply (ty $> ann) fnName elabArgs)
-
 infer (EVar ann var) = do
   ty <- lookupVar ann var
   pure (EVar ty var)
