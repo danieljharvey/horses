@@ -1,6 +1,5 @@
 module Language.Mimsa.Interpreter.App (interpretApp) where
 
-import Data.Hashable
 import Language.Mimsa.Core
 import Language.Mimsa.Interpreter.Monad
 import Language.Mimsa.Interpreter.Types
@@ -10,7 +9,7 @@ varFromIdent :: Identifier var ann -> var
 varFromIdent (Identifier _ var) = var
 
 interpretApp ::
-  (Hashable var, Eq ann) =>
+  (Ord var, Eq ann) =>
   InterpretFn var ann ->
   ExprData var ann ->
   InterpretExpr var ann ->

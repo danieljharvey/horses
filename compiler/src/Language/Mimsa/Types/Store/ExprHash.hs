@@ -6,7 +6,6 @@
 module Language.Mimsa.Types.Store.ExprHash where
 
 import qualified Data.Aeson as JSON
-import Data.Hashable
 import Data.OpenApi
 import Data.Text (Text)
 import qualified Data.Text as T
@@ -25,8 +24,7 @@ newtype ExprHash = ExprHash Text
       JSON.FromJSONKey,
       JSON.ToJSON,
       JSON.ToJSONKey,
-      FromHttpApiData,
-      Hashable
+      FromHttpApiData
     )
 
 instance Show ExprHash where
