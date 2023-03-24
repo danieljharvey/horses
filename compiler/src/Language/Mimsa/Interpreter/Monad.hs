@@ -11,8 +11,7 @@ where
 
 import Control.Monad.Except
 import Control.Monad.Reader
-import qualified Data.HashMap.Strict as HM
-import Data.Hashable
+import qualified Data.Map.Strict as M
 import Language.Mimsa.Core
 import Language.Mimsa.Interpreter.Types
 import Language.Mimsa.Types.Error.InterpreterError
@@ -31,7 +30,7 @@ withNewStackFrame sf =
     (\ire -> ire {ireStack = sf})
 
 extendStackFrame ::
-  (Hashable var) =>
+  (Ord var) =>
   [ ( (var, Unique),
       InterpretExpr var ann
     )
@@ -53,12 +52,12 @@ getCurrentStackFrame = asks ireStack
 lookupInGlobals :: ExprHash -> InterpreterM var ann (InterpretExpr var ann)
 lookupInGlobals exprHash = do
   globals <- asks ireGlobals
-  case HM.lookup exprHash globals of
+  case M.lookup exprHash globals of
     Just found -> pure found
     _ -> throwError (CouldNotFindGlobal globals exprHash)
 
 lookupVar ::
-  (Hashable var, Monoid ann, Show var, Show ann) =>
+  (Ord var, Monoid ann, Show var, Show ann) =>
   (var, Unique) ->
   InterpreterM var ann (InterpretExpr var ann)
 lookupVar (var, maybeExprHash) =
@@ -71,7 +70,7 @@ lookupVar (var, maybeExprHash) =
         other -> pure other
     _ -> do
       (StackFrame entries _) <- getCurrentStackFrame
-      case HM.lookup var entries of
+      case M.lookup var entries of
         Just myLam@(MyLambda (ExprData _ isRec _) _ _) ->
           -- when we save functions on the stack we save them as
           -- \letName -> function
@@ -102,23 +101,23 @@ addOperator infixOp expr = do
 findOperator :: InfixOp -> InterpreterM var ann (InterpretExpr var ann)
 findOperator infixOp = do
   (StackFrame _ infixes) <- getCurrentStackFrame
-  case HM.lookup infixOp infixes of
+  case M.lookup infixOp infixes of
     Just entry -> pure entry
     _ -> do
       allInfixes <- asks ireInfixes
-      case HM.lookup infixOp allInfixes of
+      case M.lookup infixOp allInfixes of
         Just infixHash -> lookupInGlobals infixHash
         _ -> throwError (CouldNotFindInfix infixes infixOp)
 
 addOperatorToFrame :: InfixOp -> InterpretExpr var ann -> StackFrame var ann -> StackFrame var ann
 addOperatorToFrame infixOp expr (StackFrame entries infixes) =
-  StackFrame entries (HM.singleton infixOp expr <> infixes)
+  StackFrame entries (M.singleton infixOp expr <> infixes)
 
 addVarToFrame ::
-  (Hashable var) =>
+  (Ord var) =>
   (var, Unique) ->
   InterpretExpr var ann ->
   StackFrame var ann ->
   StackFrame var ann
 addVarToFrame (var, _) expr (StackFrame entries infixes) =
-  StackFrame (HM.singleton var expr <> entries) infixes
+  StackFrame (M.singleton var expr <> entries) infixes

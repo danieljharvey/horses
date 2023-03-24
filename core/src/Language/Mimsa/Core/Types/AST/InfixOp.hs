@@ -5,7 +5,6 @@
 module Language.Mimsa.Core.Types.AST.InfixOp where
 
 import qualified Data.Aeson as JSON
-import Data.Hashable
 import Data.String
 import Data.Text (Text)
 import qualified Data.Text as T
@@ -21,8 +20,7 @@ newtype InfixOp = InfixOp Text
       JSON.ToJSON,
       JSON.ToJSONKey,
       JSON.FromJSON,
-      JSON.FromJSONKey,
-      Hashable
+      JSON.FromJSONKey
     )
 
 -------------

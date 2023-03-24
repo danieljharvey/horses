@@ -5,7 +5,6 @@ module Language.Mimsa.Interpreter.PatternMatch
 where
 
 import Control.Monad.Except
-import Data.Hashable
 import qualified Data.List.NonEmpty as NE
 import qualified Data.Map.Strict as M
 import Data.Maybe (fromMaybe)
@@ -19,7 +18,7 @@ import Language.Mimsa.Types.Error.InterpreterError
 import Language.Mimsa.Types.Typechecker.Unique
 
 interpretLetPattern ::
-  (Hashable var) =>
+  (Ord var) =>
   InterpretFn var ann ->
   InterpretPattern var ann ->
   InterpretExpr var ann ->
@@ -34,7 +33,7 @@ interpretLetPattern interpretFn pat expr body = do
   extendStackFrame bindings (interpretFn body)
 
 interpretPatternMatch ::
-  (Hashable var) =>
+  (Ord var) =>
   InterpretFn var ann ->
   InterpretExpr var ann ->
   [(InterpretPattern var ann, InterpretExpr var ann)] ->
