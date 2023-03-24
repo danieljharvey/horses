@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1678829625942,
+  "lastUpdate": 1679671017172,
   "repoUrl": "https://github.com/danieljharvey/mimsa",
   "entries": {
     "Store benchmarks in Github Pages": [
@@ -259,6 +259,50 @@ window.BENCHMARK_DATA = {
           {
             "name": "evaluate/evaluate parsing 2",
             "value": 0.18798196820000124,
+            "unit": "Time (ms)"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "danieljamesharvey@gmail.com",
+            "name": "Daniel Harvey",
+            "username": "danieljharvey"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "881b752bb761450221acb5a84f473227c8afbb53",
+          "message": "Revert \"Use HashMap in interpreter (#899)\" (#908)\n\nThis reverts commit d6a5d1933b82268458b1489c1d087e96b0d8e8fc.",
+          "timestamp": "2023-03-24T14:59:57Z",
+          "tree_id": "8628528ab13b9bf360905b5fb460471c3db2898a",
+          "url": "https://github.com/danieljharvey/mimsa/commit/881b752bb761450221acb5a84f473227c8afbb53"
+        },
+        "date": 1679671016726,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "build stdlib/allFns",
+            "value": 0.10615539660000943,
+            "unit": "Time (ms)"
+          },
+          {
+            "name": "evaluate/evaluate big looping thing",
+            "value": 0.0977574597333386,
+            "unit": "Time (ms)"
+          },
+          {
+            "name": "evaluate/evaluate parsing",
+            "value": 0.03212904264215883,
+            "unit": "Time (ms)"
+          },
+          {
+            "name": "evaluate/evaluate parsing 2",
+            "value": 0.23512219797145398,
             "unit": "Time (ms)"
           }
         ]
