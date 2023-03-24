@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1679671017172,
+  "lastUpdate": 1679671946667,
   "repoUrl": "https://github.com/danieljharvey/mimsa",
   "entries": {
     "Store benchmarks in Github Pages": [
@@ -303,6 +303,50 @@ window.BENCHMARK_DATA = {
           {
             "name": "evaluate/evaluate parsing 2",
             "value": 0.23512219797145398,
+            "unit": "Time (ms)"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "29139614+renovate[bot]@users.noreply.github.com",
+            "name": "renovate[bot]",
+            "username": "renovate[bot]"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "194fbd74690e815f1ac1daa82849377a692dca6c",
+          "message": "Update mrkkrp/ormolu-action action to v11 (#907)\n\nCo-authored-by: renovate[bot] <29139614+renovate[bot]@users.noreply.github.com>",
+          "timestamp": "2023-03-24T15:28:04Z",
+          "tree_id": "631c43c508656e46540ace0d85d214d3db9bcd71",
+          "url": "https://github.com/danieljharvey/mimsa/commit/194fbd74690e815f1ac1daa82849377a692dca6c"
+        },
+        "date": 1679671945880,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "build stdlib/allFns",
+            "value": 0.14713450328572106,
+            "unit": "Time (ms)"
+          },
+          {
+            "name": "evaluate/evaluate big looping thing",
+            "value": 0.12798349697619235,
+            "unit": "Time (ms)"
+          },
+          {
+            "name": "evaluate/evaluate parsing",
+            "value": 0.040398443821428244,
+            "unit": "Time (ms)"
+          },
+          {
+            "name": "evaluate/evaluate parsing 2",
+            "value": 0.29043014959999597,
             "unit": "Time (ms)"
           }
         ]
