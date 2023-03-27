@@ -5,9 +5,11 @@ module Language.Mimsa.Core.Types.Identifiers
     module Language.Mimsa.Core.Types.Identifiers.TyVar,
     module Language.Mimsa.Core.Types.Identifiers.TypeName,
     module Language.Mimsa.Core.Types.Identifiers.TestName,
+    module Language.Mimsa.Core.Types.Identifiers.GlobalName,
   )
 where
 
+import Language.Mimsa.Core.Types.Identifiers.GlobalName
 import Language.Mimsa.Core.Types.Identifiers.Name
 import Language.Mimsa.Core.Types.Identifiers.TestName
 import Language.Mimsa.Core.Types.Identifiers.TyCon

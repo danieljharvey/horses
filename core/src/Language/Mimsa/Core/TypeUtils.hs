@@ -34,8 +34,8 @@ withMonoidType f (MTRecord _ as (Just a)) =
     <> f a
 withMonoidType f (MTFunction _ a b) =
   f a <> f b
-withMonoidType f (MTGlobals _ globs rest expr) =
-  mconcat (f <$> M.elems globs) <> maybe mempty f rest <> f expr
+withMonoidType f (MTGlobals _ globs expr) =
+  f globs <> f expr
 
 mapType :: (Type ann -> Type ann) -> Type ann -> Type ann
 mapType _ mt@MTVar {} = mt
@@ -50,8 +50,8 @@ mapType f (MTRecord ann as a) =
   MTRecord ann (f <$> as) (f <$> a)
 mapType f (MTFunction ann a b) =
   MTFunction ann (f a) (f b)
-mapType f (MTGlobals ann globs rest expr) =
-  MTGlobals ann (f <$> globs) (f <$> rest) (f expr)
+mapType f (MTGlobals ann globs expr) =
+  MTGlobals ann (f globs) (f expr)
 
 -- lift a monadic action over a type
 bindType ::
@@ -79,8 +79,7 @@ bindType f mt = case mt of
     pure (MTConstructor ann modName name)
   MTTypeApp ann func arg ->
     MTTypeApp ann <$> f func <*> f arg
-  MTGlobals ann globs rest expr ->
+  MTGlobals ann globs expr ->
     MTGlobals ann
-      <$> traverse f globs
-      <*> traverse f rest
+      <$> f globs
       <*> f expr

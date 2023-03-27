@@ -55,7 +55,7 @@ fromMonoType gs mt =
     mtCons@MTConstructor {} -> case varsFromDataType mtCons of
       Just (_, typeName, args) -> fromType gs typeName args
       Nothing -> error "could not work out datatype"
-    (MTGlobals _ _ _ inner) -> fromMonoType gs inner
+    (MTGlobals _ _ inner) -> fromMonoType gs inner
 
 -- | take the args for the type and apply them to the type
 typeApply :: [MonoType] -> DataType -> Map TyCon [Type ()]

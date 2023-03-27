@@ -53,6 +53,7 @@ interpretExpr' (MyLiteral _ val) = pure (MyLiteral mempty val)
 interpretExpr' (MyAnnotation _ _ expr) = interpretExpr' expr
 interpretExpr' (MyLet _ ident expr body) =
   interpretLet interpretExpr ident expr body
+interpretExpr' (MyGlobal _ _) = error "interpret not implemented for global"
 interpretExpr' (MyVar _ _ var) =
   lookupVar var >>= interpretExpr
 interpretExpr' (MyLambda (ExprData current isRec ann) ident body) = do

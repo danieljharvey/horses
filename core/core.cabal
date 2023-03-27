@@ -55,6 +55,7 @@ library
     Language.Mimsa.Core.Types.AST.StringType
     Language.Mimsa.Core.Types.Identifiers
     Language.Mimsa.Core.Types.Identifiers.Name
+    Language.Mimsa.Core.Types.Identifiers.GlobalName
     Language.Mimsa.Core.Types.Identifiers.TestName
     Language.Mimsa.Core.Types.Identifiers.TyCon
     Language.Mimsa.Core.Types.Identifiers.TypeIdentifier

@@ -37,6 +37,7 @@ extractUsesTyped expr =
 extractUses_ :: (Eq ann) => Expr Name ann -> Set Entity
 extractUses_ (MyVar _ (Just modName) a) = S.singleton (ENamespacedName modName a)
 extractUses_ (MyVar _ _ a) = S.singleton (EName a)
+extractUses_ (MyGlobal {}) = mempty -- types capture these (hopefully)
 extractUses_ (MyAnnotation _ mt expr) =
   extractUses_ expr <> extractTypeUses mt
 extractUses_ (MyIf _ a b c) =

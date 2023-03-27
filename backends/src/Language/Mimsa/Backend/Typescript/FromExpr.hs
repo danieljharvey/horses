@@ -235,6 +235,7 @@ toTSBody expr' =
     (MyAnnotation _ _ expr) -> toTSBody expr
     (MyLet _ ident letExpr letBody) ->
       toLet ident letExpr letBody
+    (MyGlobal _ _) -> error "globals not implemented in TS yet"
     (MyLetPattern _ pat letExpr letBody) ->
       toLetPattern pat letExpr letBody
     (MyTuple _ a as) -> do

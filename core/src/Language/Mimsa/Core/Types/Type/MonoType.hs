@@ -87,8 +87,7 @@ data Type ann
       }
   | MTGlobals
       { typAnn :: ann,
-        typGlobals :: Map Name (Type ann),
-        typRest :: Maybe (Type ann),
+        typGlobals :: Type ann, -- usually an MTRecord
         typInner :: Type ann
       }
   deriving stock (Eq, Ord, Show, Functor, Foldable, Generic)
@@ -103,7 +102,7 @@ getAnnotationForType (MTRecord ann _ _) = ann
 getAnnotationForType (MTConstructor ann _ _) = ann
 getAnnotationForType (MTArray ann _) = ann
 getAnnotationForType (MTTypeApp ann _ _) = ann
-getAnnotationForType (MTGlobals ann _ _ _) = ann
+getAnnotationForType (MTGlobals ann _ _) = ann
 
 instance Printer (Type ann) where
   prettyDoc = renderMonoType
@@ -131,8 +130,8 @@ renderMonoType mt@(MTTypeApp _ func arg) =
        in align $ sep ([typeName] <> (withParens <$> vars))
     Nothing ->
       align $ sep [renderMonoType func, renderMonoType arg]
-renderMonoType (MTGlobals _ parts rest expr) =
-  renderRecord parts rest <> " => " <> renderMonoType expr
+renderMonoType (MTGlobals _ globs expr) =
+  renderMonoType globs <> " => " <> renderMonoType expr
 
 renderRecord :: Map Name (Type ann) -> Maybe (Type ann) -> Doc style
 renderRecord as Nothing =

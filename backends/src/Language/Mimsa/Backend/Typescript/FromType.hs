@@ -82,4 +82,4 @@ toTSType' _ (MTRecord _ as (Just rest)) = do
   (tsItems, generics) <- toTSTypeRecord as
   (tsRest, genRest) <- toTSType rest
   pure (TSTypeAnd tsItems tsRest, generics <> genRest)
-toTSType' b (MTGlobals _ _ _ expr) = toTSType' b expr
+toTSType' b (MTGlobals _ _ expr) = toTSType' b expr

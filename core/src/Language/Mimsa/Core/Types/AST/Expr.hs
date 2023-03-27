@@ -138,6 +138,8 @@ data Expr var ann
       }
   | -- | name
     MyTypedHole {expAnn :: ann, expTypedHoleName :: var}
+  | -- | Use a global
+    MyGlobal {expAnn :: ann, expGlobal :: GlobalName}
   deriving stock (Eq, Ord, Show, Functor, Foldable, Generic)
   deriving anyclass (JSON.FromJSON, JSON.ToJSON)
 
@@ -350,6 +352,7 @@ instance Printer (Expr Name ann) where
     prettyDoc modName <> "." <> prettyDoc var
   prettyDoc (MyVar _ Nothing var) =
     prettyDoc var
+  prettyDoc (MyGlobal _ glob) = "!" <> prettyDoc glob
   prettyDoc (MyLet _ var expr1 expr2) =
     prettyLet var expr1 expr2
   prettyDoc (MyLetPattern _ pat expr body) =

@@ -179,6 +179,7 @@ markImports ::
   App var ann (NumberedExpr var ann)
 markImports (MyVar ann modName var) =
   MyVar ann modName <$> getVar ann var modName
+markImports (MyGlobal ann glob) = pure (MyGlobal ann glob)
 markImports (MyAnnotation ann mt expr) =
   MyAnnotation ann mt
     <$> markImports expr

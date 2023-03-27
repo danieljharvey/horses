@@ -28,7 +28,7 @@ startElaborate expr expected = do
 
 spec :: Spec
 spec = do
-  describe "Elaborate" $ do
+  fdescribe "Elaborate" $ do
     describe "basic cases" $ do
       it "infers int" $ do
         let expr = int 1
@@ -144,6 +144,25 @@ spec = do
                 (MyVar (MTFunction mempty mtBool mtBool) Nothing "dec")
         startElaborate expr expected
 
+      it "infers a global from an annotation" $ do
+        let tyInt = MTPrim mempty MTInt
+        let expr = MyAnnotation mempty tyInt (MyGlobal mempty "dog")
+            expected = MyAnnotation tyInt (MTPrim tyInt MTInt) (MyGlobal tyInt "dog")
+
+        startElaborate expr expected
+
+      it "infers a global from use" $ do
+        let tyInt = MTPrim mempty MTInt
+        let expr = MyIf mempty (bool True) (int 1) (MyGlobal mempty "dog")
+            expected =
+              MyIf
+                tyInt
+                (MyLiteral (MTPrim mempty MTBool) (MyBool True))
+                (MyLiteral tyInt (MyInt 1))
+                (MyGlobal tyInt "dog")
+
+        startElaborate expr expected
+
       it "infers let binding with recursion 1" $ do
         let expr =
               MyLet
@@ -164,6 +183,7 @@ spec = do
                     )
                 )
                 (MyApp mempty (MyVar mempty Nothing "dec") (bool False))
+
             expected =
               MyLet
                 mtBool

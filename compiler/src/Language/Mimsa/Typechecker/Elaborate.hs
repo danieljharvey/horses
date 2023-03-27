@@ -239,26 +239,17 @@ inferRecursiveLetBinding env ann ident expr body = do
         inferBody
     )
 
-unifyTypeOrError :: MonoType -> MonoType -> TypeError -> ElabM ()
-unifyTypeOrError got expected typeErr =
-  do
-    _ <- unify got expected `catchError` \_ -> throwError typeErr
-    pure ()
-
-inferIf :: Environment -> Annotation -> TcExpr -> TcExpr -> TcExpr -> ElabM ElabExpr
-inferIf env ann condition thenExpr elseExpr = do
-  condExpr <- infer env condition
-
-  -- check condition matches Boolean now as we can raise
-  -- a more accurate error, we ignore any substitutions as we'll use the constraint
-  -- below to create them later and learn about variables etc
-  unifyTypeOrError
-    (expAnn condExpr)
-    (MTPrim mempty MTBool)
-    (IfPredicateIsNotBoolean ann (expAnn condExpr))
+inferIf :: Environment -> TcExpr -> TcExpr -> TcExpr -> ElabM ElabExpr
+inferIf env condition thenExpr elseExpr = do
+  condExpr <-
+    check
+      env
+      condition
+      (MTPrim mempty MTBool)
 
   thenExpr' <- infer env thenExpr
-  elseExpr' <- infer env elseExpr
+  elseExpr' <- check env elseExpr (getTypeFromAnn thenExpr')
+
   tell
     [ -- check the two clauses have the same reply type
       ShouldEqual
@@ -770,6 +761,8 @@ check env expr mt =
   case (expr, mt) of
     (MyLambda ann ident body, MTFunction _ tyBinder tyBody) ->
       checkLambda env ann ident body tyBinder tyBody
+    (MyGlobal ann glob, ty) ->
+      pure (MyGlobal (ty $> ann) glob)
     _ -> do
       typedExpr <- infer env expr
       subs <- unify (expAnn typedExpr) mt
@@ -785,6 +778,7 @@ infer env inferExpr =
     (MyAnnotation _ann mt expr) -> do
       elabExpr <- check env expr mt
       pure (MyAnnotation (expAnn elabExpr) (mt $> mt) elabExpr)
+    (MyGlobal _ann glob) -> error $ "can't infer type of global " <> show glob
     (MyVar ann maybeMod name) -> do
       mt <- inferVarFromScope env ann name
       pure (MyVar mt maybeMod name)
@@ -808,8 +802,8 @@ infer env inferExpr =
       inferLambda env ann binder body
     (MyApp ann function argument) ->
       inferApplication env ann function argument
-    (MyIf ann condition thenCase elseCase) ->
-      inferIf env ann condition thenCase elseCase
+    (MyIf _ condition thenCase elseCase) ->
+      inferIf env condition thenCase elseCase
     (MyTuple ann a as) -> do
       inferA <- infer env a
       inferAs <- traverse (infer env) as

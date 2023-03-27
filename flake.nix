@@ -51,6 +51,7 @@
             pkgs.nodejs-18_x
             pkgs.clang_14
             pkgs.llvmPackages_14.llvm
+            pkgs.nodePackages.ts-node
           ];
 
           # put clang_14 on the path

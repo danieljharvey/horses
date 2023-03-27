@@ -30,6 +30,7 @@ simpleExpr (MyArray _ as) = MyArray mempty (simpleExpr <$> as)
 simpleExpr (MyPatternMatch _ expr pats) =
   MyPatternMatch mempty (simpleExpr expr) (bimap simplePattern simpleExpr <$> pats)
 simpleExpr (MyTypedHole _ var) = MyTypedHole mempty var
+simpleExpr (MyGlobal _ glob) = MyGlobal mempty glob
 
 simplePattern :: Pattern var ann -> Pattern var ()
 simplePattern (PVar _ var) = PVar mempty var

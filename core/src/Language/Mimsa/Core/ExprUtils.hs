@@ -50,6 +50,7 @@ getAnnotation (MyConstructor ann _ _) = ann
 getAnnotation (MyTypedHole ann _) = ann
 getAnnotation (MyArray ann _) = ann
 getAnnotation (MyPatternMatch ann _ _) = ann
+getAnnotation (MyGlobal ann _) = ann
 
 -- | Given a function `f` that turns any piece of the expression in a Monoid
 -- `m`, flatten the entire expression into `m`
@@ -60,6 +61,7 @@ withMonoid ::
   m
 withMonoid f whole@(MyLiteral _ _) = snd (f whole)
 withMonoid f whole@MyVar {} = snd (f whole)
+withMonoid f whole@MyGlobal {} = snd (f whole)
 withMonoid f whole@(MyAnnotation _ _ expr) =
   let (go, m) = f whole
    in if not go
@@ -161,6 +163,7 @@ withMonoid f whole@(MyPatternMatch _ matchExpr matches) =
 mapExpr :: (Expr a b -> Expr a b) -> Expr a b -> Expr a b
 mapExpr _ (MyLiteral ann a) = MyLiteral ann a
 mapExpr _ (MyVar ann modName a) = MyVar ann modName a
+mapExpr _ (MyGlobal ann glob) = MyGlobal ann glob
 mapExpr f (MyAnnotation ann mt expr) =
   MyAnnotation ann mt (f expr)
 mapExpr f (MyLet ann binder bindExpr' inExpr) =
@@ -195,6 +198,7 @@ bindExpr _ (MyLiteral ann a) =
   pure $ MyLiteral ann a
 bindExpr _ (MyVar ann modName a) =
   pure $ MyVar ann modName a
+bindExpr _ (MyGlobal ann glob) = pure (MyGlobal ann glob)
 bindExpr f (MyAnnotation ann mt expr) =
   MyAnnotation ann mt <$> f expr
 bindExpr f (MyLet ann binder bindExpr' inExpr) =

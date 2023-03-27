@@ -58,7 +58,6 @@ data TypeErrorF var ann
   | PatternMatchErr (PatternMatchErrorF var ann)
   | NameNotFoundInScope ann (Set (var, Maybe ModuleName)) (Maybe ModuleName) var
   | VariableNotFound ann (Set TypeIdentifier) var
-  | IfPredicateIsNotBoolean ann (Type ann)
   | FunctionArgumentMismatch ann (Type ann) (Type ann)
   | ApplicationToNonFunction ann (Type ann)
   | UnscopedTypeVarFound ann TypeIdentifier
@@ -129,8 +128,6 @@ renderTypeError (UnificationError a b) =
   [ "Unification error",
     "Cannot match" <+> prettyDoc a <+> "and" <+> prettyDoc b
   ]
-renderTypeError (IfPredicateIsNotBoolean _ mt) =
-  ["Predicate for an if expression should be a boolean. This has type" <+> prettyDoc mt]
 renderTypeError (FunctionArgumentMismatch _ expected actual) =
   [ "Incorrect function argument. Expected "
       <> prettyDoc expected
@@ -314,30 +311,6 @@ typeErrorDiagnostic input e =
                       ]
                   )
                   ["These two values should be of the same type"]
-           in Diag.addReport diag report
-        (IfPredicateIsNotBoolean ann mt) ->
-          let report =
-                Diag.Err
-                  Nothing
-                  ("Predicate for an if expression should be a Boolean. This has type " <> prettyPrint mt)
-                  ( catMaybes
-                      [ (,)
-                          <$> positionFromAnnotation
-                            filename
-                            input
-                            (getAnnotationForType mt)
-                          <*> pure
-                            ( Diag.This ("This has type " <> prettyPrint mt <> " but should have type Boolean")
-                            ),
-                        (,)
-                          <$> positionFromAnnotation
-                            filename
-                            input
-                            ann
-                          <*> pure (Diag.Where "error in this expression")
-                      ]
-                  )
-                  ["Change the predicate to be a Boolean type (True or False)"]
            in Diag.addReport diag report
         (MissingRecordTypeMember ann missing _types) ->
           let report =

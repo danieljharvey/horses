@@ -67,6 +67,7 @@ foldExpr fn expression =
     foldExpr' (MyAnnotation ann mt expr) =
       f ann <> foldExpr fn expr <> f (getAnnotationForType mt)
     foldExpr' (MyVar ann _ _) = f ann
+    foldExpr' (MyGlobal ann _) = f ann
     foldExpr' (MyLet ann binder expr body) =
       f ann
         <> foldIdentifier fn binder

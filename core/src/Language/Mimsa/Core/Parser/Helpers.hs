@@ -74,6 +74,7 @@ mapOuterExprAnnotation f expr' =
     MyConstructor ann a b -> MyConstructor (f ann) a b
     MyTypedHole ann a -> MyTypedHole (f ann) a
     MyPatternMatch ann a b -> MyPatternMatch (f ann) a b
+    MyGlobal ann a -> MyGlobal (f ann) a
 
 -----
 
