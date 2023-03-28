@@ -10,8 +10,8 @@ module Language.Mimsa.Typechecker.Elaborate
   )
 where
 
+import Data.Coerce (coerce)
 import Control.Monad.Except
-import Control.Monad.State (State)
 import Control.Monad.Writer.CPS
 import Data.Bifunctor
 import Data.Foldable
@@ -33,14 +33,6 @@ import Language.Mimsa.Types.Error
 import Language.Mimsa.Types.Typechecker
 import Language.Mimsa.Types.Typechecker.Substitutions
 import Language.Mimsa.Types.Typechecker.Unique
-
-type ElabM =
-  ExceptT
-    TypeError
-    ( WriterT
-        [Constraint]
-        (State TypecheckState)
-    )
 
 type TcExpr = Expr (Name, Unique) Annotation
 
@@ -133,7 +125,7 @@ inferApplication env ann function argument = do
   argument' <- infer env argument
 
   -- run substitutions on the fn type so we can make better errors
-  (elabFunction, constraints) <- listen (infer env function)
+  (elabFunction, TypecheckWriter { tcwConstraints = constraints}) <- listen (infer env function)
   subst <- solve constraints
   let tyFunc = applySubst subst (getTypeFromAnn elabFunction)
 
@@ -156,11 +148,11 @@ inferApplication env ann function argument = do
     other ->
       throwError (ApplicationToNonFunction (getAnnotation function) other)
 
-  tell
-    [ ShouldEqual
+  tellConstraint $
+     ShouldEqual
         (getTypeFromAnn elabFunction)
         (MTFunction ann (getTypeFromAnn argument') tyRes)
-    ]
+
   pure (MyApp tyRes elabFunction argument')
 
 bindingIsRecursive :: Identifier (Name, Unique) ann -> TcExpr -> Bool
@@ -195,7 +187,7 @@ inferLetBinding env ann ident expr body = do
       let bindAnn = annotationFromIdentifier ident
           bindName = binderFromIdentifier ident
       -- we have to run substitutions on this before "saving" it
-      (inferExpr, constraints) <- listen (infer env expr)
+      (inferExpr, TypecheckWriter {tcwConstraints = constraints}) <- listen (infer env expr)
       subst <- solve constraints
       let tySubstExpr = applySubst subst (getTypeFromAnn inferExpr)
       let newEnv =
@@ -229,7 +221,8 @@ inferRecursiveLetBinding env ann ident expr body = do
         envFromVar bindName (Scheme [] tyExpr) <> env
 
   inferBody <- infer newEnv body
-  tell [ShouldEqual tyRecExpr (getTypeFromAnn inferExpr)]
+
+  tellConstraint $ ShouldEqual tyRecExpr (getTypeFromAnn inferExpr)
 
   pure
     ( MyLet
@@ -250,17 +243,18 @@ inferIf env condition thenExpr elseExpr = do
   thenExpr' <- infer env thenExpr
   elseExpr' <- check env elseExpr (getTypeFromAnn thenExpr')
 
-  tell
-    [ -- check the two clauses have the same reply type
+  tellConstraint $
+     -- check the two clauses have the same reply type
       ShouldEqual
         (getTypeFromAnn thenExpr')
-        (getTypeFromAnn elseExpr'),
+        (getTypeFromAnn elseExpr')
+  tellConstraint $
       -- we still need this constraint to learn about any variables
       -- from the comparison with Boolean
       ShouldEqual
         (getTypeFromAnn condExpr)
         (MTPrim (getAnnotation condition) MTBool)
-    ]
+
   pure
     ( MyIf
         (getTypeFromAnn thenExpr')
@@ -277,7 +271,7 @@ matchList mts = do
   foldl
     ( \ty' tyB' -> do
         tyA <- ty'
-        tell [ShouldEqual tyA tyB']
+        tellConstraint (ShouldEqual tyA tyB')
         pure tyB'
     )
     ( pure (NE.head mts)
@@ -304,11 +298,11 @@ inferPatternMatch env ann expr patterns = do
     traverse
       ( \(pat, patternExpr) -> do
           (inferPat, newEnv) <- inferPattern env pat
-          tell
-            [ ShouldEqual
+          tellConstraint
+            ( ShouldEqual
                 (getPatternTypeFromAnn inferPat)
                 (getTypeFromAnn inferExpr)
-            ]
+            )
           tyPatternExpr <- infer newEnv patternExpr
           pure (inferPat, tyPatternExpr)
       )
@@ -316,7 +310,7 @@ inferPatternMatch env ann expr patterns = do
   -- combine all patterns to check their types match
   tyMatchedPattern <- matchList (getPatternTypeFromAnn . fst <$> inferPatterns)
   -- match patterns with match expr
-  tell [ShouldEqual tyMatchedPattern (getTypeFromAnn inferExpr)]
+  tellConstraint $ ShouldEqual tyMatchedPattern (getTypeFromAnn inferExpr)
   -- combine all output expr types
   tyMatchedExprs <- matchList (getTypeFromAnn . snd <$> inferPatterns)
   -- remove (,unique) from var
@@ -372,7 +366,7 @@ inferPattern env (PConstructor ann modName tyCon args) = do
   tyTypeVars <- case M.lookup tyCon (snd consType) of
     Just (TypeConstructor _ _ dtTypeVars tyDtArgs) -> do
       let tyPairs = zip (getPatternTypeFromAnn <$> inferArgs) tyDtArgs
-      traverse_ (\(a, b) -> tell [ShouldEqual a b]) tyPairs
+      traverse_ (\(a, b) -> tellConstraint (ShouldEqual a b)) tyPairs
       pure dtTypeVars
     _ -> throwError UnknownTypeError
   checkArgsLength ann dt tyCon inferArgs
@@ -494,11 +488,10 @@ inferOperator env ann Equals a b = do
   case tyA of
     MTFunction {} -> throwError $ NoFunctionEquality tyA tyB
     _ -> do
-      tell
-        [ ShouldEqual
+      tellConstraint ( ShouldEqual
             tyA
             tyB -- Equals wants them to be the same
-        ]
+                     )
       pure
         ( MyInfix
             (MTPrim ann MTBool)
@@ -560,15 +553,16 @@ inferOperator env ann (Custom infixOp) a b = do
   tyFun <- lookupInfixOp env ann infixOp
   inferA <- infer env a
   inferB <- infer env b
-  tell
-    [ ShouldEqual
+  tellConstraint $
+     ShouldEqual
+
         tyFun
         ( MTFunction
             ann
             (getTypeFromAnn inferA)
             (MTFunction ann (getTypeFromAnn inferB) tyRes)
         )
-    ]
+
   pure (MyInfix tyRes (Custom infixOp) inferA inferB)
 
 -- | infix operator where inputs and output are the same
@@ -583,7 +577,11 @@ inferInfix env mt a b = do
   inferB <- infer env b
   let tyA = getTypeFromAnn inferA
       tyB = getTypeFromAnn inferB
-  tell [ShouldEqual tyA tyB, ShouldEqual tyB mt, ShouldEqual tyA mt]
+
+  tellConstraint $ ShouldEqual tyA tyB
+  tellConstraint $ ShouldEqual tyB mt
+  tellConstraint $ ShouldEqual tyA mt
+
   pure (mt, inferA, inferB)
 
 -- | infix operator where inputs match but output could be different
@@ -600,11 +598,11 @@ inferComparison env inputMt outputMt a b = do
   inferB <- infer env b
   let tyA = getTypeFromAnn inferA
       tyB = getTypeFromAnn inferB
-  tell
-    [ ShouldEqual tyA tyB,
-      ShouldEqual tyA inputMt,
-      ShouldEqual tyB inputMt
-    ]
+
+  tellConstraint $ ShouldEqual tyA tyB
+  tellConstraint $  ShouldEqual tyA inputMt
+  tellConstraint $      ShouldEqual tyB inputMt
+
   pure (outputMt, inferA, inferB)
 
 inferRecordAccess ::
@@ -628,15 +626,15 @@ inferRecordAccess env ann a name = do
         (MTVar ann' _) -> do
           tyRest <- getUnknown ann'
           tyItem <- getUnknown ann'
-          tell
-            [ ShouldEqual
+          tellConstraint $
+             ShouldEqual
                 (getTypeFromAnn inferItems)
                 ( MTRecord
                     ann'
                     (M.singleton name tyItem)
                     (Just tyRest)
                 )
-            ]
+
           pure tyItem
         _ -> throwError $ CannotMatchRecord env ann (getTypeFromAnn inferItems)
   mt <- inferRow (getTypeFromAnn inferItems)
@@ -677,9 +675,8 @@ inferLetPattern env ann pat expr body = do
   inferExpr <- infer env expr
   (inferPat, newEnv) <- inferPattern env pat
   inferBody <- infer newEnv body
-  tell
-    [ ShouldEqual (getPatternTypeFromAnn inferPat) (getTypeFromAnn inferExpr)
-    ]
+  tellConstraint $
+    ShouldEqual (getPatternTypeFromAnn inferPat) (getTypeFromAnn inferExpr)
 
   -- perform exhaustiveness checking at end so it doesn't mask more basic errors
   validatePatterns env ann [first fst pat]
@@ -761,8 +758,10 @@ check env expr mt =
   case (expr, mt) of
     (MyLambda ann ident body, MTFunction _ tyBinder tyBody) ->
       checkLambda env ann ident body tyBinder tyBody
-    (MyGlobal ann glob, ty) ->
-      pure (MyGlobal (ty $> ann) glob)
+    (MyGlobal ann glob, ty) -> do
+      let innerTy = ty $> ann
+          tyWithGlobal = MTGlobals ann (MTRecord ann (M.singleton (coerce glob) ty) Nothing)
+      pure (MyGlobal (tyWithGlobal innerTy) glob)
     _ -> do
       typedExpr <- infer env expr
       subs <- unify (expAnn typedExpr) mt

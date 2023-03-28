@@ -7,7 +7,7 @@ module Language.Mimsa.Typechecker.Typecheck
 where
 
 import Control.Monad.Except
-import Control.Monad.State (State, runState)
+import Control.Monad.State ( runState)
 import Control.Monad.Writer.CPS
 import Data.Map.Strict (Map)
 import Language.Mimsa.Core
@@ -20,22 +20,14 @@ import Language.Mimsa.Types.Typechecker
 import Language.Mimsa.Types.Typechecker.Substitutions
 import Language.Mimsa.Types.Typechecker.Unique
 
-type ElabM =
-  ExceptT
-    TypeError
-    ( WriterT
-        [Constraint]
-        (State TypecheckState)
-    )
-
 runElabM ::
   TypecheckState ->
   ElabM a ->
-  Either TypeError ([Constraint], TypecheckState, a)
+  Either TypeError (TypecheckWriter, TypecheckState, a)
 runElabM tcState value =
   case either' of
-    ((Right a, constraints), newTcState) ->
-      Right (constraints, newTcState, a)
+    ((Right a, tcWriter), newTcState) ->
+      Right (tcWriter, newTcState, a)
     ((Left e, _), _) -> Left e
   where
     either' =
@@ -57,7 +49,7 @@ typecheck ::
     )
 typecheck typeMap env expr = do
   let tcAction = do
-        (elabExpr, constraints) <- listen (elab env expr)
+        (elabExpr, TypecheckWriter { tcwConstraints = constraints}) <- listen (elab env expr)
         subs <- solve constraints
         typedHolesCheck typeMap subs
         pure (subs, constraints, elabExpr)

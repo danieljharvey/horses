@@ -12,6 +12,7 @@ import Language.Mimsa.Typechecker.NumberVars
 import Language.Mimsa.Typechecker.Typecheck
 import Test.Hspec
 import Test.Utils.Helpers
+import qualified Data.Map.Strict as M
 
 startElaborate ::
   Expr Name Annotation ->
@@ -146,20 +147,23 @@ spec = do
 
       it "infers a global from an annotation" $ do
         let tyInt = MTPrim mempty MTInt
+            withGlobal = MTGlobals mempty (MTRecord mempty (M.singleton "dog" tyInt) Nothing)
         let expr = MyAnnotation mempty tyInt (MyGlobal mempty "dog")
-            expected = MyAnnotation tyInt (MTPrim tyInt MTInt) (MyGlobal tyInt "dog")
+            expected = MyAnnotation (withGlobal tyInt) (MTPrim tyInt MTInt)
+                (MyGlobal (withGlobal tyInt) "dog")
 
         startElaborate expr expected
 
       it "infers a global from use" $ do
         let tyInt = MTPrim mempty MTInt
+            withGlobal = MTGlobals mempty (MTRecord mempty (M.singleton "dog" tyInt) Nothing)
         let expr = MyIf mempty (bool True) (int 1) (MyGlobal mempty "dog")
             expected =
               MyIf
-                tyInt
+                (withGlobal tyInt)
                 (MyLiteral (MTPrim mempty MTBool) (MyBool True))
                 (MyLiteral tyInt (MyInt 1))
-                (MyGlobal tyInt "dog")
+                (MyGlobal (withGlobal tyInt) "dog")
 
         startElaborate expr expected
 

@@ -147,6 +147,12 @@ unify tyA tyB =
     (a, b)
       | typeEquals a b ->
           pure mempty
+    (MTGlobals _ globA innerA, MTGlobals _ globB innerB) ->
+      unifyPairs (globA, globB) (innerA, innerB)
+    (MTGlobals _ globA _, innerB) ->
+      unify tyA (MTGlobals (getAnnotationForType innerB) globA innerB)
+    (innerA, MTGlobals _ globB _) ->
+      unify (MTGlobals (getAnnotationForType innerA) globB innerA) tyB
     (MTFunction _ l r, MTFunction _ l' r') ->
       unifyPairs (l, r) (l', r')
     (MTTuple _ a as, MTTuple _ a' as') ->

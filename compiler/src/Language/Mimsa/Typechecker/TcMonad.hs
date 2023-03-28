@@ -7,13 +7,18 @@ module Language.Mimsa.Typechecker.TcMonad
     addTypedHole,
     getTypedHoles,
     TypecheckState (..),
+    TypecheckWriter (..),
+    ElabM,
     variableToTypeIdentifier,
     getNextUniVar,
+    tellConstraint,
+    tellGlobal
   )
 where
 
+import Control.Monad.Writer.CPS
 import Control.Monad.Except
-import Control.Monad.State (MonadState, gets, modify)
+import Control.Monad.State (State, MonadState, gets, modify)
 import Data.Coerce
 import Data.Functor
 import Data.Map.Strict (Map)
@@ -26,10 +31,39 @@ import Language.Mimsa.Types.Typechecker
 import Language.Mimsa.Types.Typechecker.Substitutions
 import Language.Mimsa.Types.Typechecker.Unique
 
+type ElabM =
+  ExceptT
+    TypeError
+    ( WriterT
+        TypecheckWriter
+        (State TypecheckState)
+    )
+
+
 data TypecheckState = TypecheckState
   { tcsNum :: Int,
     tcsTypedHoles :: Map Name (Annotation, Int, Map Name MonoType)
   }
+
+data TypecheckWriter = TypecheckWriter {
+        tcwConstraints :: [Constraint],
+        tcwGlobals :: M.Map GlobalName MonoType
+                             }
+
+instance Semigroup TypecheckWriter where
+  (TypecheckWriter consA globA) <> (TypecheckWriter consB globB) =
+    TypecheckWriter (consA <> consB) (globA <> globB)
+
+instance Monoid TypecheckWriter where
+  mempty = TypecheckWriter mempty mempty
+
+tellConstraint :: (MonadWriter TypecheckWriter m) => Constraint -> m ()
+tellConstraint constraint =
+  tell (TypecheckWriter { tcwConstraints = [constraint], tcwGlobals = mempty })
+
+tellGlobal :: (MonadWriter TypecheckWriter m) => GlobalName -> MonoType -> m ()
+tellGlobal globalName ty
+  = tell (TypecheckWriter { tcwGlobals = M.singleton globalName ty, tcwConstraints = mempty })
 
 instantiate ::
   (MonadState TypecheckState m) => Annotation -> Scheme -> m MonoType

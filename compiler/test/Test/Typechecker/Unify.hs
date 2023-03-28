@@ -94,6 +94,12 @@ spec =
                 ]
           )
 
+    fdescribe "Globals" $ do
+      it "Always combines globals with something that has no globals" $ do
+        let tyInt = MTPrim mempty MTInt
+        runUnifier (MTGlobals mempty (MTRecord mempty (M.singleton "dog" tyInt) Nothing) tyInt,
+                tyInt) `shouldBe` Right mempty
+
     describe "Constructors" $ do
       it "Combines a Maybe" $ do
         runUnifier
@@ -181,7 +187,6 @@ spec =
             recordItems = M.fromList [("a", MTPrim mempty MTInt)]
         runUnifier (MTRecord mempty rowOne (Just $ MTRecord mempty rowTwo (Just $ unknown 3)), MTRecord mempty recordItems Nothing)
           `shouldSatisfy` isLeft
-
       it "Combines two RecordRows with different items" $ do
         let leftItems = M.singleton "a" (MTPrim mempty MTInt)
             rightItems = M.singleton "b" (MTPrim mempty MTString)
