@@ -9,6 +9,7 @@ module Language.Mimsa.Core.ExprUtils
     mapPattern,
     nameFromIdent,
     detailsFromIdent,
+    mapOuterExprAnnotation
   )
 where
 
@@ -51,6 +52,30 @@ getAnnotation (MyTypedHole ann _) = ann
 getAnnotation (MyArray ann _) = ann
 getAnnotation (MyPatternMatch ann _ _) = ann
 getAnnotation (MyGlobal ann _) = ann
+
+-- | modify the outer annotation of an expression
+-- useful for adding line numbers during parsing
+mapOuterExprAnnotation :: (ann -> ann) -> Expr a ann -> Expr a ann
+mapOuterExprAnnotation f expr' =
+  case expr' of
+    MyInfix ann a op b -> MyInfix (f ann) a op b
+    MyAnnotation ann expr mt -> MyAnnotation (f ann) expr mt
+    MyLiteral ann a -> MyLiteral (f ann) a
+    MyVar ann modName a -> MyVar (f ann) modName a
+    MyLet ann a b c -> MyLet (f ann) a b c
+    MyLetPattern ann a b c -> MyLetPattern (f ann) a b c
+    MyLambda ann a b -> MyLambda (f ann) a b
+    MyApp ann a b -> MyApp (f ann) a b
+    MyIf ann a b c -> MyIf (f ann) a b c
+    MyTuple ann a as -> MyTuple (f ann) a as
+    MyRecord ann as -> MyRecord (f ann) as
+    MyRecordAccess ann a b -> MyRecordAccess (f ann) a b
+    MyTupleAccess ann a b -> MyTupleAccess (f ann) a b
+    MyArray ann as -> MyArray (f ann) as
+    MyConstructor ann a b -> MyConstructor (f ann) a b
+    MyTypedHole ann a -> MyTypedHole (f ann) a
+    MyPatternMatch ann a b -> MyPatternMatch (f ann) a b
+    MyGlobal ann a -> MyGlobal (f ann) a
 
 -- | Given a function `f` that turns any piece of the expression in a Monoid
 -- `m`, flatten the entire expression into `m`

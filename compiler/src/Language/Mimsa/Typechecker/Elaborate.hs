@@ -761,6 +761,7 @@ check env expr mt =
     (MyGlobal ann glob, ty) -> do
       let innerTy = ty $> ann
           tyWithGlobal = MTGlobals ann (MTRecord ann (M.singleton (coerce glob) ty) Nothing)
+      tellGlobal glob ty
       pure (MyGlobal (tyWithGlobal innerTy) glob)
     _ -> do
       typedExpr <- infer env expr

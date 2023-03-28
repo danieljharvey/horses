@@ -6,6 +6,8 @@ module Language.Mimsa.Typechecker.Typecheck
   )
 where
 
+import Language.Mimsa.Typechecker.Unify
+import qualified Data.Map.Strict as M
 import Control.Monad.Except
 import Control.Monad.State ( runState)
 import Control.Monad.Writer.CPS
@@ -35,6 +37,18 @@ runElabM tcState value =
         (runWriterT (runExceptT value))
         tcState
 
+applyGlobal :: Map Name MonoType -> Expr (Name, Unique) MonoType -> ElabM (Expr (Name, Unique) MonoType)
+applyGlobal globals expr | M.null globals = pure expr
+applyGlobal globals expr = do
+  let tyAnn = getAnnotationForType (getAnnotation expr)
+      tyGlobals = MTGlobals tyAnn (MTRecord tyAnn globals Nothing)
+  newTy <- case getAnnotation expr of
+             ty@(MTGlobals _ _ rest)-> do
+               subs <- unify (tyGlobals rest) ty
+               pure $ applySubst subs ty
+             other ->pure (tyGlobals other)
+  pure (mapOuterExprAnnotation (const newTy) expr )
+
 -- run inference, and substitute everything possible
 typecheck ::
   Map Name MonoType ->
@@ -49,10 +63,12 @@ typecheck ::
     )
 typecheck typeMap env expr = do
   let tcAction = do
-        (elabExpr, TypecheckWriter { tcwConstraints = constraints}) <- listen (elab env expr)
+        (elabExpr, TypecheckWriter { tcwConstraints = constraints,
+                      tcwGlobals = globals}) <- listen (elab env expr)
         subs <- solve constraints
         typedHolesCheck typeMap subs
-        pure (subs, constraints, elabExpr)
+        elabExprWithGlobals <- applyGlobal globals elabExpr
+        pure (subs, constraints, elabExprWithGlobals)
   (_, _, (subs, constraints, tyExpr)) <- runElabM (defaultTcState env) tcAction
   let typedExpr = applySubst subs tyExpr
   pure (subs, constraints, typedExpr, getTypeFromAnn typedExpr)

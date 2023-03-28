@@ -47,7 +47,7 @@ data TypecheckState = TypecheckState
 
 data TypecheckWriter = TypecheckWriter {
         tcwConstraints :: [Constraint],
-        tcwGlobals :: M.Map GlobalName MonoType
+        tcwGlobals :: M.Map Name MonoType
                              }
 
 instance Semigroup TypecheckWriter where
@@ -63,7 +63,8 @@ tellConstraint constraint =
 
 tellGlobal :: (MonadWriter TypecheckWriter m) => GlobalName -> MonoType -> m ()
 tellGlobal globalName ty
-  = tell (TypecheckWriter { tcwGlobals = M.singleton globalName ty, tcwConstraints = mempty })
+  = tell (TypecheckWriter { tcwGlobals = M.singleton (coerce globalName) ty,
+      tcwConstraints = mempty })
 
 instantiate ::
   (MonadState TypecheckState m) => Annotation -> Scheme -> m MonoType
