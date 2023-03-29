@@ -15,12 +15,12 @@ module Language.Mimsa.Core.Parser.Helpers
   )
 where
 
-import Language.Mimsa.Core.ExprUtils (mapOuterExprAnnotation)
 import Data.Bifunctor (first)
 import qualified Data.List.NonEmpty as NE
 import qualified Data.Set as S
 import Data.Text (Text)
 import qualified Data.Text as T
+import Language.Mimsa.Core.ExprUtils (mapOuterExprAnnotation)
 import Language.Mimsa.Core.Parser.Lexeme
 import Language.Mimsa.Core.Parser.Types
 import Language.Mimsa.Core.Types.AST

@@ -9,7 +9,7 @@ module Language.Mimsa.Core.ExprUtils
     mapPattern,
     nameFromIdent,
     detailsFromIdent,
-    mapOuterExprAnnotation
+    mapOuterExprAnnotation,
   )
 where
 

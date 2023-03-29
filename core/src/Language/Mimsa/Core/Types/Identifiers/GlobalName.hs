@@ -4,7 +4,7 @@
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE OverloadedStrings #-}
 
-module Language.Mimsa.Core.Types.Identifiers.GlobalName (GlobalName(..)) where
+module Language.Mimsa.Core.Types.Identifiers.GlobalName (GlobalName (..)) where
 
 import qualified Data.Aeson as JSON
 import qualified Data.Char as Ch

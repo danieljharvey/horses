@@ -12,13 +12,13 @@ module Language.Mimsa.Typechecker.TcMonad
     variableToTypeIdentifier,
     getNextUniVar,
     tellConstraint,
-    tellGlobal
+    tellGlobal,
   )
 where
 
-import Control.Monad.Writer.CPS
 import Control.Monad.Except
-import Control.Monad.State (State, MonadState, gets, modify)
+import Control.Monad.State (MonadState, State, gets, modify)
+import Control.Monad.Writer.CPS
 import Data.Coerce
 import Data.Functor
 import Data.Map.Strict (Map)
@@ -39,16 +39,15 @@ type ElabM =
         (State TypecheckState)
     )
 
-
 data TypecheckState = TypecheckState
   { tcsNum :: Int,
     tcsTypedHoles :: Map Name (Annotation, Int, Map Name MonoType)
   }
 
-data TypecheckWriter = TypecheckWriter {
-        tcwConstraints :: [Constraint],
-        tcwGlobals :: M.Map Name MonoType
-                             }
+data TypecheckWriter = TypecheckWriter
+  { tcwConstraints :: [Constraint],
+    tcwGlobals :: M.Map Name MonoType
+  }
 
 instance Semigroup TypecheckWriter where
   (TypecheckWriter consA globA) <> (TypecheckWriter consB globB) =
@@ -59,12 +58,16 @@ instance Monoid TypecheckWriter where
 
 tellConstraint :: (MonadWriter TypecheckWriter m) => Constraint -> m ()
 tellConstraint constraint =
-  tell (TypecheckWriter { tcwConstraints = [constraint], tcwGlobals = mempty })
+  tell (TypecheckWriter {tcwConstraints = [constraint], tcwGlobals = mempty})
 
 tellGlobal :: (MonadWriter TypecheckWriter m) => GlobalName -> MonoType -> m ()
-tellGlobal globalName ty
-  = tell (TypecheckWriter { tcwGlobals = M.singleton (coerce globalName) ty,
-      tcwConstraints = mempty })
+tellGlobal globalName ty =
+  tell
+    ( TypecheckWriter
+        { tcwGlobals = M.singleton (coerce globalName) ty,
+          tcwConstraints = mempty
+        }
+    )
 
 instantiate ::
   (MonadState TypecheckState m) => Annotation -> Scheme -> m MonoType

@@ -97,8 +97,11 @@ spec =
     fdescribe "Globals" $ do
       it "Always combines globals with something that has no globals" $ do
         let tyInt = MTPrim mempty MTInt
-        runUnifier (MTGlobals mempty (MTRecord mempty (M.singleton "dog" tyInt) Nothing) tyInt,
-                tyInt) `shouldBe` Right mempty
+        runUnifier
+          ( MTGlobals mempty (MTRecord mempty (M.singleton "dog" tyInt) Nothing) tyInt,
+            tyInt
+          )
+          `shouldBe` Right mempty
 
     describe "Constructors" $ do
       it "Combines a Maybe" $ do

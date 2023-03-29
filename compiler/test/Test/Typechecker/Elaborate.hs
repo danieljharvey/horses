@@ -6,13 +6,13 @@ module Test.Typechecker.Elaborate
 where
 
 import Data.Bifunctor
+import qualified Data.Map.Strict as M
 import Language.Mimsa.Core
 import Language.Mimsa.Typechecker.Elaborate
 import Language.Mimsa.Typechecker.NumberVars
 import Language.Mimsa.Typechecker.Typecheck
 import Test.Hspec
 import Test.Utils.Helpers
-import qualified Data.Map.Strict as M
 
 startElaborate ::
   Expr Name Annotation ->
@@ -149,7 +149,10 @@ spec = do
         let tyInt = MTPrim mempty MTInt
             withGlobal = MTGlobals mempty (MTRecord mempty (M.singleton "dog" tyInt) Nothing)
         let expr = MyAnnotation mempty tyInt (MyGlobal mempty "dog")
-            expected = MyAnnotation (withGlobal tyInt) (MTPrim tyInt MTInt)
+            expected =
+              MyAnnotation
+                (withGlobal tyInt)
+                (MTPrim tyInt MTInt)
                 (MyGlobal (withGlobal tyInt) "dog")
 
         startElaborate expr expected
@@ -164,6 +167,24 @@ spec = do
                 (MyLiteral (MTPrim mempty MTBool) (MyBool True))
                 (MyLiteral tyInt (MyInt 1))
                 (MyGlobal (withGlobal tyInt) "dog")
+
+        startElaborate expr expected
+
+      it "global types propagate up through syntax tree" $ do
+        let tyInt = MTPrim mempty MTInt
+            withGlobal = MTGlobals mempty (MTRecord mempty (M.singleton "dog" tyInt) Nothing)
+        let expr =
+              MyIf
+                mempty
+                (bool True)
+                (int 1)
+                (MyInfix mempty Add (int 1) (MyGlobal mempty "dog"))
+            expected =
+              MyIf
+                (withGlobal tyInt)
+                (MyLiteral (MTPrim mempty MTBool) (MyBool True))
+                (MyLiteral tyInt (MyInt 1))
+                (MyInfix (withGlobal tyInt) Add (MyGlobal (withGlobal tyInt) "dog") (MyLiteral tyInt (MyInt 1)))
 
         startElaborate expr expected
 

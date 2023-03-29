@@ -10,10 +10,10 @@ module Language.Mimsa.Typechecker.Elaborate
   )
 where
 
-import Data.Coerce (coerce)
 import Control.Monad.Except
 import Control.Monad.Writer.CPS
 import Data.Bifunctor
+import Data.Coerce (coerce)
 import Data.Foldable
 import Data.Functor
 import qualified Data.List.NonEmpty as NE
@@ -125,7 +125,7 @@ inferApplication env ann function argument = do
   argument' <- infer env argument
 
   -- run substitutions on the fn type so we can make better errors
-  (elabFunction, TypecheckWriter { tcwConstraints = constraints}) <- listen (infer env function)
+  (elabFunction, TypecheckWriter {tcwConstraints = constraints}) <- listen (infer env function)
   subst <- solve constraints
   let tyFunc = applySubst subst (getTypeFromAnn elabFunction)
 
@@ -149,9 +149,9 @@ inferApplication env ann function argument = do
       throwError (ApplicationToNonFunction (getAnnotation function) other)
 
   tellConstraint $
-     ShouldEqual
-        (getTypeFromAnn elabFunction)
-        (MTFunction ann (getTypeFromAnn argument') tyRes)
+    ShouldEqual
+      (getTypeFromAnn elabFunction)
+      (MTFunction ann (getTypeFromAnn argument') tyRes)
 
   pure (MyApp tyRes elabFunction argument')
 
@@ -244,16 +244,16 @@ inferIf env condition thenExpr elseExpr = do
   elseExpr' <- check env elseExpr (getTypeFromAnn thenExpr')
 
   tellConstraint $
-     -- check the two clauses have the same reply type
-      ShouldEqual
-        (getTypeFromAnn thenExpr')
-        (getTypeFromAnn elseExpr')
+    -- check the two clauses have the same reply type
+    ShouldEqual
+      (getTypeFromAnn thenExpr')
+      (getTypeFromAnn elseExpr')
   tellConstraint $
-      -- we still need this constraint to learn about any variables
-      -- from the comparison with Boolean
-      ShouldEqual
-        (getTypeFromAnn condExpr)
-        (MTPrim (getAnnotation condition) MTBool)
+    -- we still need this constraint to learn about any variables
+    -- from the comparison with Boolean
+    ShouldEqual
+      (getTypeFromAnn condExpr)
+      (MTPrim (getAnnotation condition) MTBool)
 
   pure
     ( MyIf
@@ -488,10 +488,11 @@ inferOperator env ann Equals a b = do
   case tyA of
     MTFunction {} -> throwError $ NoFunctionEquality tyA tyB
     _ -> do
-      tellConstraint ( ShouldEqual
+      tellConstraint
+        ( ShouldEqual
             tyA
             tyB -- Equals wants them to be the same
-                     )
+        )
       pure
         ( MyInfix
             (MTPrim ann MTBool)
@@ -554,14 +555,13 @@ inferOperator env ann (Custom infixOp) a b = do
   inferA <- infer env a
   inferB <- infer env b
   tellConstraint $
-     ShouldEqual
-
-        tyFun
-        ( MTFunction
-            ann
-            (getTypeFromAnn inferA)
-            (MTFunction ann (getTypeFromAnn inferB) tyRes)
-        )
+    ShouldEqual
+      tyFun
+      ( MTFunction
+          ann
+          (getTypeFromAnn inferA)
+          (MTFunction ann (getTypeFromAnn inferB) tyRes)
+      )
 
   pure (MyInfix tyRes (Custom infixOp) inferA inferB)
 
@@ -574,9 +574,12 @@ inferInfix ::
   ElabM (MonoType, ElabExpr, ElabExpr)
 inferInfix env mt a b = do
   inferA <- infer env a
-  inferB <- infer env b
   let tyA = getTypeFromAnn inferA
-      tyB = getTypeFromAnn inferB
+
+  -- we check rather than infer where possible to raise errors early
+  -- if possible
+  inferB <- check env b tyA
+  let tyB = getTypeFromAnn inferB
 
   tellConstraint $ ShouldEqual tyA tyB
   tellConstraint $ ShouldEqual tyB mt
@@ -600,8 +603,8 @@ inferComparison env inputMt outputMt a b = do
       tyB = getTypeFromAnn inferB
 
   tellConstraint $ ShouldEqual tyA tyB
-  tellConstraint $  ShouldEqual tyA inputMt
-  tellConstraint $      ShouldEqual tyB inputMt
+  tellConstraint $ ShouldEqual tyA inputMt
+  tellConstraint $ ShouldEqual tyB inputMt
 
   pure (outputMt, inferA, inferB)
 
@@ -627,13 +630,13 @@ inferRecordAccess env ann a name = do
           tyRest <- getUnknown ann'
           tyItem <- getUnknown ann'
           tellConstraint $
-             ShouldEqual
-                (getTypeFromAnn inferItems)
-                ( MTRecord
-                    ann'
-                    (M.singleton name tyItem)
-                    (Just tyRest)
-                )
+            ShouldEqual
+              (getTypeFromAnn inferItems)
+              ( MTRecord
+                  ann'
+                  (M.singleton name tyItem)
+                  (Just tyRest)
+              )
 
           pure tyItem
         _ -> throwError $ CannotMatchRecord env ann (getTypeFromAnn inferItems)
