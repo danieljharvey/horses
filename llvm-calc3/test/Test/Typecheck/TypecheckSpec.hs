@@ -12,6 +12,7 @@ import Calc.Types.Function
 import Calc.Types.Module
 import Calc.Types.Type
 import Control.Monad
+import Data.Either (isLeft)
 import Data.Foldable (traverse_)
 import Data.Text (Text)
 import Test.Hspec
@@ -53,6 +54,15 @@ testSucceedingModule (input, md) =
         getOuterAnnotation . mdExpr <$> runTC (elaborateModule (void parsedMod))
           `shouldBe` Right md
 
+testFailingModule :: Text -> Spec
+testFailingModule input =
+  it (show input) $ do
+    case parseModuleAndFormatError input of
+      Left e -> error (show e)
+      Right parsedMod ->
+        runTC (elaborateModule (void parsedMod))
+          `shouldSatisfy` isLeft
+
 spec :: Spec
 spec = do
   describe "TypecheckSpec" $ do
@@ -75,6 +85,12 @@ spec = do
             ]
       describe "Successfully typechecking modules" $ do
         traverse_ testSucceedingModule succeeding
+
+      let failing =
+            [ "function increment(b: Boolean) { a + 1 } increment(41)"
+            ]
+      describe "Failing typechecking modules" $ do
+        traverse_ testFailingModule failing
 
     describe "Expr" $ do
       let succeeding =

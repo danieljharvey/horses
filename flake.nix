@@ -54,9 +54,9 @@
           ];
 
           # put clang_14 on the path
-          shellHook = with pkgs; ''
-            export PATH="${clang_14}/bin:$PATH"
-          '';
+          #shellHook = with pkgs; ''
+           # export PATH="${clang_14}/bin:$PATH"
+          #'';
 
           inputsFrom = builtins.attrValues self.packages.${system};
         };
