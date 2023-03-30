@@ -84,7 +84,6 @@ lookupVar identifier = do
       throwError (VarNotFound identifier allVars)
 
 interpretInfix ::
-  (Show ann) =>
   ann ->
   Op ->
   Expr ann ->
@@ -103,14 +102,10 @@ interpretInfix ann op a b = do
   iB <- interpret b
   interpretInfix ann op iA iB
 
--- | just keep reducing the thing until the smallest thing
-interpret ::
-  (Show ann) =>
-  Expr ann ->
-  InterpretM ann (Expr ann)
-interpret (EPrim ann p) = pure (EPrim ann p)
-interpret (EVar _ ident) = lookupVar ident
-interpret (EApply _ fnName args) = do
+-- | look up the function, adds the arguments into the Reader environment
+-- then interpret the function body
+interpretApply :: FunctionName -> [Expr ann] -> InterpretM ann (Expr ann)
+interpretApply fnName args = do
   fn <- gets (M.lookup fnName . isFunctions)
   case fn of
     Just (Function {fnArgs, fnBody}) ->
@@ -118,6 +113,17 @@ interpret (EApply _ fnName args) = do
     Nothing -> do
       allFnNames <- gets (M.keys . isFunctions)
       throwError (FunctionNotFound fnName allFnNames)
+
+-- | just keep reducing the thing until the smallest thing
+interpret ::
+  Expr ann ->
+  InterpretM ann (Expr ann)
+interpret (EPrim ann p) =
+  pure (EPrim ann p)
+interpret (EVar _ ident) =
+  lookupVar ident
+interpret (EApply _ fnName args) =
+  interpretApply fnName args
 interpret (EInfix ann op a b) =
   interpretInfix ann op a b
 interpret (EIf ann predExpr thenExpr elseExpr) = do
@@ -128,7 +134,6 @@ interpret (EIf ann predExpr thenExpr elseExpr) = do
     other -> throwError (NonBooleanPredicate ann other)
 
 interpretModule ::
-  (Show ann) =>
   Module ann ->
   InterpretM ann (Expr ann)
 interpretModule (Module {mdExpr, mdFunctions}) = do

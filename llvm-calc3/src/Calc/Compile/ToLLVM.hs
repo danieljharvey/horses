@@ -1,5 +1,6 @@
 {-# LANGUAGE DerivingStrategies #-}
 {-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE GeneralisedNewtypeDeriving #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE RecursiveDo #-}
 
@@ -8,6 +9,8 @@ module Calc.Compile.ToLLVM (toLLVM) where
 import Calc.ExprUtils
 import Calc.Types
 import Control.Monad.Fix
+import Control.Monad.Reader
+import Data.Map.Strict (Map)
 import qualified LLVM.AST as LLVM hiding (function)
 import qualified LLVM.AST.IntegerPredicate as LLVM
 import qualified LLVM.AST.Type as LLVM
@@ -16,6 +19,9 @@ import qualified LLVM.IRBuilder.Instruction as LLVM
 import qualified LLVM.IRBuilder.Module as LLVM
 import qualified LLVM.IRBuilder.Monad as LLVM
 
+newtype OutputEnv = OutputEnv
+  {oeVars :: Map Identifier LLVM.Operand}
+
 -- import the correct output function from our standard library
 -- depending on the output type of our expression
 printFunction :: (LLVM.MonadModuleBuilder m) => Type ann -> m LLVM.Operand
@@ -23,10 +29,10 @@ printFunction (TPrim _ TInt) = LLVM.extern "printint" [LLVM.i32] LLVM.void
 printFunction (TPrim _ TBool) = LLVM.extern "printbool" [LLVM.i1] LLVM.void
 printFunction (TFunction _ _ tyRet) = printFunction tyRet -- maybe this should be an error instead
 
--- | given our `Expr` type, turn it into an LLVM module
-toLLVM :: Expr (Type ann) -> LLVM.Module
-toLLVM expr =
-  LLVM.buildModule "example" $ do
+-- | given our `Module` type, turn it into an LLVM module
+toLLVM :: (MonadReader OutputEnv m) => Module (Type ann) -> m LLVM.Module
+toLLVM (Module {mdExpr = expr}) =
+  pure $ LLVM.buildModule "example" $  do
     -- get the printing function for our `expr`'s return type
     printFn <- printFunction (getOuterAnnotation expr)
 

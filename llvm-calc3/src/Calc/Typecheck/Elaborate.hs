@@ -20,8 +20,8 @@ import Data.Functor
 elaborateModule ::
   forall ann.
   Module ann ->
-  TypecheckM ann (Module (Type ann))
-elaborateModule (Module {mdFunctions, mdExpr}) = do
+  Either (TypeError ann) (Module (Type ann))
+elaborateModule (Module {mdFunctions, mdExpr}) = runTypecheckM (TypecheckEnv mempty) $ do
   fns <-
     traverse
       ( \fn -> do
@@ -31,7 +31,7 @@ elaborateModule (Module {mdFunctions, mdExpr}) = do
       )
       mdFunctions
 
-  Module fns <$> (infer mdExpr)
+  Module fns <$> infer mdExpr
 
 elaborateFunction ::
   Function ann ->

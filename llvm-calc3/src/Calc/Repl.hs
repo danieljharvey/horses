@@ -41,11 +41,11 @@ repl = do
         Nothing -> return ()
         Just ":quit" -> return ()
         Just input -> do
-          case parseExpr (T.pack input) of
+          case parseModule (T.pack input) of
             Left bundle -> do
               printDiagnostic (fromErrorBundle bundle input)
               loop
-            Right expr -> case elaborate expr of
+            Right expr -> case elaborateModule expr of
               Left typeErr -> do
                 printDiagnostic (typeErrorDiagnostic (T.pack input) typeErr)
                 loop

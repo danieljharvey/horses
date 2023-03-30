@@ -51,7 +51,7 @@ testSucceedingModule (input, md) =
     case parseModuleAndFormatError input of
       Left e -> error (show e)
       Right parsedMod ->
-        getOuterAnnotation . mdExpr <$> runTC (elaborateModule (void parsedMod))
+        getOuterAnnotation . mdExpr <$> elaborateModule (void parsedMod)
           `shouldBe` Right md
 
 testFailingModule :: Text -> Spec
@@ -60,7 +60,7 @@ testFailingModule input =
     case parseModuleAndFormatError input of
       Left e -> error (show e)
       Right parsedMod ->
-        runTC (elaborateModule (void parsedMod))
+        elaborateModule (void parsedMod)
           `shouldSatisfy` isLeft
 
 spec :: Spec

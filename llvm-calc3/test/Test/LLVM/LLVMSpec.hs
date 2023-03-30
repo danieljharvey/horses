@@ -17,10 +17,10 @@ run = fmap Run.rrResult . Run.run
 
 testCompileIR :: (Text, Text) -> Spec
 testCompileIR (input, result) = it (show input) $ do
-  case parseExprAndFormatError input of
+  case parseModuleAndFormatError input of
     Left e -> error (show e)
-    Right expr ->
-      case elaborate expr of
+    Right module' ->
+      case elaborateModule module' of
         Left e -> error (show e)
         Right typedExpr -> do
           resp <- run (toLLVM typedExpr)
@@ -29,7 +29,7 @@ testCompileIR (input, result) = it (show input) $ do
 spec :: Spec
 spec = do
   describe "LLVMSpec" $ do
-    let testVals =
+    let testExprs =
           [ ("42", "42"),
             ("(1 + 1)", "2"),
             ("1 + 2 + 3 + 4 + 5 + 6", "21"),
@@ -37,8 +37,10 @@ spec = do
             ("100 - 1", "99"),
             ("if False then 1 else 2", "2"),
             ("if 1 == 1 then 7 else 10", "7"),
-            ("if 2 == 1 then True else False", "False")
+            ("if 2 == 1 then True else False", "False"),
+            ("function increment(a: Integer) { a + 1 } increment(41)", "42"),
+            ("function sum(a: Integer, b: Integer) { a + b } sum(20,22)", "42")
           ]
 
-    describe "From expressions" $ do
-      traverse_ testCompileIR testVals
+    describe "From modules" $ do
+      traverse_ testCompileIR testExprs
