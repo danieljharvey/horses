@@ -49,10 +49,14 @@ repl = do
               Left typeErr -> do
                 printDiagnostic (typeErrorDiagnostic (T.pack input) typeErr)
                 loop
-              Right typedExpr -> do
-                resp <- liftIO $ fmap Run.rrResult (Run.run (moduleToLLVM typedExpr))
-                liftIO $ putStrLn (T.unpack resp)
-                loop
+              Right typedExpr -> case moduleToLLVM typedExpr of
+                Left llvmErr -> do
+                  liftIO $ print llvmErr
+                  loop
+                Right mod' -> do
+                  resp <- liftIO $ fmap Run.rrResult (Run.run mod')
+                  liftIO $ putStrLn (T.unpack resp)
+                  loop
 
 printDiagnostic :: (MonadIO m) => Diag.Diagnostic Text -> m ()
 printDiagnostic =

@@ -3,12 +3,14 @@
 {-# LANGUAGE NamedFieldPuns #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE RecursiveDo #-}
-  {-# LANGUAGE TupleSections #-}
-module Calc.Compile.ToLLVM (moduleToLLVM, OutputState (..)) where
+{-# LANGUAGE TupleSections #-}
+
+module Calc.Compile.ToLLVM (moduleToLLVM, OutputError (..), OutputState (..)) where
 
 import Calc.ExprUtils
 import Calc.TypeUtils
 import Calc.Types
+import Control.Monad.Except
 import Control.Monad.State
 import Data.Foldable (traverse_)
 import Data.Map.Strict (Map)
@@ -28,6 +30,48 @@ data OutputState = OutputState
     osVars :: Map Identifier LLVM.Operand
   }
 
+data OutputError
+  = CantFindVar Identifier
+  | CantFindFunction FunctionName
+  deriving stock (Eq, Ord, Show)
+
+lookupFunction ::
+  ( MonadError OutputError m,
+    MonadState OutputState m
+  ) =>
+  FunctionName ->
+  m LLVM.Operand
+lookupFunction fnName = do
+  maybeOp <- gets (M.lookup fnName . osFunctions)
+  case maybeOp of
+    Just found -> pure found
+    Nothing -> throwError (CantFindFunction fnName)
+
+saveFunction ::
+  (MonadState OutputState m) =>
+  FunctionName ->
+  LLVM.Operand ->
+  m ()
+saveFunction fnName operand =
+  modify
+    ( \os ->
+        os {osFunctions = M.singleton fnName operand <> osFunctions os}
+    )
+
+saveArgs :: (MonadState OutputState m) => Map Identifier LLVM.Operand -> m ()
+saveArgs args =
+  modify
+    ( \os ->
+        os {osVars = args <> osVars os}
+    )
+
+lookupArg :: (MonadState OutputState m, MonadError OutputError m) => Identifier -> m LLVM.Operand
+lookupArg identifier = do
+  maybeArg <- gets (M.lookup identifier . osVars)
+  case maybeArg of
+    Just op -> pure op
+    Nothing -> throwError (CantFindVar identifier)
+
 -- import the correct output function from our standard library
 -- depending on the output type of our expression
 printFunction :: (LLVM.MonadModuleBuilder m) => Type ann -> m LLVM.Operand
@@ -36,12 +80,13 @@ printFunction (TPrim _ TBool) = LLVM.extern "printbool" [LLVM.i1] LLVM.void
 printFunction (TFunction _ _ tyRet) = printFunction tyRet -- maybe this should be an error instead
 
 -- | given our `Module` type, turn it into an LLVM module
-moduleToLLVM :: Module (Type ann) -> LLVM.Module
+moduleToLLVM :: Module (Type ann) -> Either OutputError LLVM.Module
 moduleToLLVM (Module {mdExpr = expr, mdFunctions}) =
-  flip evalState (OutputState mempty mempty) $ LLVM.buildModuleT "example" $ do
+  flip evalStateT (OutputState mempty mempty) $ LLVM.buildModuleT "example" $ do
     -- get the printing function for our `expr`'s return type
     printFn <- printFunction (getOuterAnnotation expr)
 
+    -- create all our functions
     traverse_ functionToLLVM mdFunctions
 
     -- create a function called `main` that will be the entry point to our
@@ -60,15 +105,18 @@ functionArgToLLVM ::
   (ArgumentName, Type (Type ann)) ->
   (LLVM.Type, LLVM.ParameterName)
 functionArgToLLVM (ArgumentName argName, ty) =
-  (typeToLLVM (getOuterTypeAnnotation ty), LLVM.ParameterName (fromString (T.unpack argName)))
+  let llvmType = typeToLLVM (getOuterTypeAnnotation ty)
+      paramName = LLVM.ParameterName (fromString (T.unpack argName))
+   in (llvmType, paramName)
 
 functionToLLVM ::
   ( LLVM.MonadModuleBuilder m,
     MonadFix m,
-    MonadState OutputState m
+    MonadState OutputState m,
+    MonadError OutputError m
   ) =>
   Function (Type ann) ->
-  m LLVM.Operand
+  m ()
 functionToLLVM (Function {fnAnn, fnFunctionName, fnBody, fnArgs}) = do
   let argTypes = functionArgToLLVM <$> fnArgs
       retType = case fnAnn of
@@ -91,39 +139,6 @@ functionToLLVM (Function {fnAnn, fnFunctionName, fnBody, fnArgs}) = do
 
     LLVM.ret ourExpression
   saveFunction fnFunctionName llvmFunction
-  pure llvmFunction
-
-findFunction :: (MonadState OutputState m) => FunctionName -> m LLVM.Operand
-findFunction fnName = do
-  maybeOp <- gets (M.lookup fnName . osFunctions)
-  case maybeOp of
-    Just found -> pure found
-    Nothing -> error $ "could not find " <> show fnName
-
-saveFunction ::
-  (MonadState OutputState m) =>
-  FunctionName ->
-  LLVM.Operand ->
-  m ()
-saveFunction fnName operand =
-  modify
-    ( \os ->
-        os {osFunctions = M.singleton fnName operand <> osFunctions os}
-    )
-
-saveArgs :: (MonadState OutputState m) => Map Identifier LLVM.Operand -> m ()
-saveArgs args =
-  modify
-    ( \os ->
-        os {osVars = args <> osVars os}
-    )
-
-findArg :: (MonadState OutputState m) => Identifier -> m LLVM.Operand
-findArg identifier = do
-  maybeArg <- gets (M.lookup identifier . osVars)
-  case maybeArg of
-    Just op -> pure op
-    Nothing -> error $ "could not find " <> show identifier
 
 functionNameToLLVM :: FunctionName -> LLVM.Name
 functionNameToLLVM (FunctionName fnName) =
@@ -139,7 +154,8 @@ ifToLLVM ::
   ( MonadFix m,
     LLVM.MonadIRBuilder m,
     LLVM.MonadModuleBuilder m,
-    MonadState OutputState m
+    MonadState OutputState m,
+    MonadError OutputError m
   ) =>
   Type ann ->
   Expr (Type ann) ->
@@ -185,6 +201,7 @@ infixToLLVM ::
   ( MonadState OutputState m,
     LLVM.MonadModuleBuilder m,
     LLVM.MonadIRBuilder m,
+    MonadError OutputError m,
     MonadFix m
   ) =>
   Op ->
@@ -212,6 +229,7 @@ exprToLLVM ::
   ( LLVM.MonadIRBuilder m,
     LLVM.MonadModuleBuilder m,
     MonadState OutputState m,
+    MonadError OutputError m,
     MonadFix m
   ) =>
   Expr (Type ann) ->
@@ -219,11 +237,11 @@ exprToLLVM ::
 exprToLLVM (EPrim _ prim) =
   pure $ primToLLVM prim
 exprToLLVM (EVar _ var) =
-  findArg var
+  lookupArg var
 exprToLLVM (EApply _ fnName args) = do
-  irFunc <- findFunction fnName
+  irFunc <- lookupFunction fnName
   irArgs <- traverse exprToLLVM args
-  LLVM.call irFunc ((, []) <$> irArgs)
+  LLVM.call irFunc ((,[]) <$> irArgs)
 exprToLLVM (EIf tyReturn predExpr thenExpr elseExpr) =
   ifToLLVM tyReturn predExpr thenExpr elseExpr
 exprToLLVM (EInfix _ op a b) =

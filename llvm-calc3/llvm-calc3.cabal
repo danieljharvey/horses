@@ -50,17 +50,7 @@ common shared
     , unix
     , unordered-containers
 
-library
-  import:           shared
-
-  -- Modules included in this executable, other than Main.
-  -- other-modules:
-
-  -- LANGUAGE extensions used by modules in this package.
-  -- other-extensions:
-  hs-source-dirs:   src
-  default-language: Haskell2010
-  exposed-modules:
+  other-modules:
     Calc
     Calc.Compile.RunLLVM
     Calc.Compile.ToLLVM
@@ -91,6 +81,17 @@ library
     Calc.Types.Type
     Calc.TypeUtils
 
+library
+  import:           shared
+
+  -- Modules included in this executable, other than Main.
+  -- other-modules:
+
+  -- LANGUAGE extensions used by modules in this package.
+  -- other-extensions:
+  hs-source-dirs:   src
+  default-language: Haskell2010
+
 test-suite smol-core-tests
   import:           shared
   type:             exitcode-stdio-1.0
@@ -100,68 +101,18 @@ test-suite smol-core-tests
     , hspec       >=2.8.3 && <3
     , hspec-core  >=2.8.3 && <3
 
-  other-modules:
-    Calc
-    Calc.Compile.RunLLVM
-    Calc.Compile.ToLLVM
-    Calc.ExprUtils
-    Calc.Interpreter
-    Calc.Parser
-    Calc.Parser.Expr
-    Calc.Parser.Primitives
-    Calc.Parser.Shared
-    Calc.Parser.Type
-    Calc.Parser.Types
-    Calc.Repl
-    Calc.SourceSpan
-    Calc.Typecheck.Elaborate
-    Calc.Typecheck.Error
-    Calc.Types
-    Calc.Types.Annotation
-    Calc.Types.Expr
-    Calc.Types.Function
-    Calc.Types.Prim
-    Calc.Types.Type
-    Calc.TypeUtils
-    Test.Interpreter.InterpreterSpec
-    Test.LLVM.LLVMSpec
-    Test.Parser.ParserSpec
-    Test.Typecheck.TypecheckSpec
-
   main-is:          Main.hs
   default-language: Haskell2010
 
 executable llvm-calc3
   main-is:          Main.hs
-  other-modules:
-    Calc
-    Calc.Compile.RunLLVM
-    Calc.Compile.ToLLVM
-    Calc.ExprUtils
-    Calc.Interpreter
-    Calc.Parser
-    Calc.Parser.Expr
-    Calc.Parser.Primitives
-    Calc.Parser.Shared
-    Calc.Parser.Type
-    Calc.Parser.Types
-    Calc.Repl
-    Calc.SourceSpan
-    Calc.Typecheck.Elaborate
-    Calc.Typecheck.Error
-    Calc.Types
-    Calc.Types.Annotation
-    Calc.Types.Expr
-    Calc.Types.Function
-    Calc.Types.Prim
-    Calc.Types.Type
-    Calc.TypeUtils
-
+  import:           shared
   hs-source-dirs:   app
   hs-source-dirs:   src
   ghc-options:      -threaded -rtsopts -with-rtsopts=-N
   build-depends:
     , base
+    , containers
     , diagnose
     , directory
     , file-embed
@@ -178,5 +129,6 @@ executable llvm-calc3
     , string-conversions
     , text
     , unix
+    , unordered-containers
 
   default-language: Haskell2010

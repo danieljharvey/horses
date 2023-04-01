@@ -12,8 +12,10 @@ import qualified LLVM.AST as LLVM
 import Test.Hspec
 
 -- run the code, get the output, die
-run :: LLVM.Module -> IO Text
-run = fmap Run.rrResult . Run.run
+run :: Either OutputError LLVM.Module -> IO Text
+run eitherMod = case eitherMod of
+  Right mod' -> fmap Run.rrResult (Run.run mod')
+  Left e -> error (show e)
 
 testCompileIR :: (Text, Text) -> Spec
 testCompileIR (input, result) = it (show input) $ do
