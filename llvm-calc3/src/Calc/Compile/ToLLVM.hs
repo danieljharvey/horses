@@ -1,15 +1,13 @@
 {-# LANGUAGE DerivingStrategies #-}
 {-# LANGUAGE FlexibleContexts #-}
-{-# LANGUAGE GeneralisedNewtypeDeriving #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE RecursiveDo #-}
 
-module Calc.Compile.ToLLVM (toLLVM) where
+module Calc.Compile.ToLLVM (moduleToLLVM, OutputEnv(..)) where
 
 import Calc.ExprUtils
 import Calc.Types
 import Control.Monad.Fix
-import Control.Monad.Reader
 import Data.Map.Strict (Map)
 import qualified LLVM.AST as LLVM hiding (function)
 import qualified LLVM.AST.IntegerPredicate as LLVM
@@ -30,9 +28,9 @@ printFunction (TPrim _ TBool) = LLVM.extern "printbool" [LLVM.i1] LLVM.void
 printFunction (TFunction _ _ tyRet) = printFunction tyRet -- maybe this should be an error instead
 
 -- | given our `Module` type, turn it into an LLVM module
-toLLVM :: (MonadReader OutputEnv m) => Module (Type ann) -> m LLVM.Module
-toLLVM (Module {mdExpr = expr}) =
-  pure $ LLVM.buildModule "example" $  do
+moduleToLLVM :: Module (Type ann) -> LLVM.Module
+moduleToLLVM (Module {mdExpr = expr}) =
+  LLVM.buildModule "example" $  do
     -- get the printing function for our `expr`'s return type
     printFn <- printFunction (getOuterAnnotation expr)
 

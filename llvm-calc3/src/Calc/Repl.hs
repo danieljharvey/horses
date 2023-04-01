@@ -50,7 +50,7 @@ repl = do
                 printDiagnostic (typeErrorDiagnostic (T.pack input) typeErr)
                 loop
               Right typedExpr -> do
-                resp <- liftIO $ fmap Run.rrResult (Run.run (toLLVM typedExpr))
+                resp <- liftIO $ fmap Run.rrResult (Run.run (moduleToLLVM typedExpr))
                 liftIO $ putStrLn (T.unpack resp)
                 loop
 

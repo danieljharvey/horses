@@ -23,7 +23,7 @@ testCompileIR (input, result) = it (show input) $ do
       case elaborateModule module' of
         Left e -> error (show e)
         Right typedExpr -> do
-          resp <- run (toLLVM typedExpr)
+          resp <- run (moduleToLLVM typedExpr)
           resp `shouldBe` result
 
 spec :: Spec
