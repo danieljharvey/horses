@@ -38,8 +38,10 @@ spec = do
             ("if False then 1 else 2", "2"),
             ("if 1 == 1 then 7 else 10", "7"),
             ("if 2 == 1 then True else False", "False"),
+            ("function one() { 1 } function two() { 2 } one() + two()", "3"),
             ("function increment(a: Integer) { a + 1 } increment(41)", "42"),
-            ("function sum(a: Integer, b: Integer) { a + b } sum(20,22)", "42")
+            ("function sum(a: Integer, b: Integer) { a + b } sum(20,22)", "42"),
+            ("function inc(a: Integer) { a + 1 } inc(inc(inc(inc(0))))", "4")
           ]
 
     describe "From modules" $ do
