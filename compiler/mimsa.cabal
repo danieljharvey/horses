@@ -117,6 +117,7 @@ library
     Language.Mimsa.Typechecker.FlattenRow
     Language.Mimsa.Typechecker.Generalise
     Language.Mimsa.Typechecker.NormaliseTypes
+    Language.Mimsa.Typechecker.Globals
     Language.Mimsa.Typechecker.NumberVars
     Language.Mimsa.Typechecker.OutputTypes
     Language.Mimsa.Typechecker.ScopeTypeVar

@@ -70,6 +70,11 @@ spec = parallel $ do
       it "Parses a namespaced variable name" $
         testParse "Console.log"
           `shouldBe` Right (MyVar mempty (Just "Console") "log")
+
+      it "Parses a global" $
+        testParse "!dog!"
+          `shouldBe` Right (MyGlobal mempty "dog")
+
       it "Does not accept 'let' as a variable name" $
         isLeft (testParse "let")
           `shouldBe` True

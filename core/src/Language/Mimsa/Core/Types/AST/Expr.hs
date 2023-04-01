@@ -75,8 +75,8 @@ data Expr var ann
     MyInfix
       { expAnn :: ann,
         expOperator :: Operator,
-        expExpr :: Expr var ann,
-        expBody :: Expr var ann
+        expOne :: Expr var ann,
+        expTwo :: Expr var ann
       }
   | -- | binder, body
     MyLambda

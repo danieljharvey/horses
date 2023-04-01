@@ -3,6 +3,7 @@
 module Language.Mimsa.Core.Parser.Identifiers
   ( varParser,
     nameParser,
+    globalParser,
     nameParserInt,
     infixOpParser,
     tyConParser,
@@ -48,6 +49,18 @@ namespacedVarParser =
 
 identifier :: Parser Text
 identifier = takeWhile1P (Just "variable name") Char.isAlphaNum
+
+---
+
+-- `dog?`, `log?`, `a?`
+globalParser :: Parser ParserExpr
+globalParser =
+  myLexeme (withLocation MyGlobal $ globalNameParser <* myString "?")
+    where
+      globalNameParser
+          = GlobalName <$> identifier
+
+---
 
 nameParser :: Parser Name
 nameParser =

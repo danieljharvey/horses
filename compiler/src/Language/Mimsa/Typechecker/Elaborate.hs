@@ -10,6 +10,8 @@ module Language.Mimsa.Typechecker.Elaborate
   )
 where
 
+import Debug.Trace
+import Language.Mimsa.Typechecker.Globals (addGlobal)
 import Control.Monad.Except
 import Control.Monad.Writer.CPS
 import Data.Bifunctor
@@ -241,6 +243,7 @@ inferIf env condition thenExpr elseExpr = do
       (MTPrim mempty MTBool)
 
   thenExpr' <- infer env thenExpr
+
   elseExpr' <- check env elseExpr (getTypeFromAnn thenExpr')
 
   tellConstraint $
@@ -248,6 +251,7 @@ inferIf env condition thenExpr elseExpr = do
     ShouldEqual
       (getTypeFromAnn thenExpr')
       (getTypeFromAnn elseExpr')
+
   tellConstraint $
     -- we still need this constraint to learn about any variables
     -- from the comparison with Boolean
@@ -758,14 +762,15 @@ checkLambda env ann ident body tyBinder tyBody = do
 
 check :: Environment -> TcExpr -> MonoType -> ElabM ElabExpr
 check env expr mt =
-  case (expr, mt) of
+  addGlobal $ case (expr, mt) of
     (MyLambda ann ident body, MTFunction _ tyBinder tyBody) ->
       checkLambda env ann ident body tyBinder tyBody
     (MyGlobal ann glob, ty) -> do
-      let innerTy = ty $> ann
+      let
           tyWithGlobal = MTGlobals ann (MTRecord ann (M.singleton (coerce glob) ty) Nothing)
+      traceShowM $ "tell " <> show glob <> " :: " <> show ty
       tellGlobal glob ty
-      pure (MyGlobal (tyWithGlobal innerTy) glob)
+      pure (MyGlobal (tyWithGlobal ty) glob)
     _ -> do
       typedExpr <- infer env expr
       subs <- unify (expAnn typedExpr) mt
@@ -776,7 +781,7 @@ infer ::
   TcExpr ->
   ElabM ElabExpr
 infer env inferExpr =
-  case inferExpr of
+  addGlobal $ case inferExpr of
     (MyLiteral ann a) -> inferLiteral ann a
     (MyAnnotation _ann mt expr) -> do
       elabExpr <- check env expr mt

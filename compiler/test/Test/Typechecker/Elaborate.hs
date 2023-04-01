@@ -5,6 +5,8 @@ module Test.Typechecker.Elaborate
   )
 where
 
+import Language.Mimsa.Types.Error.TypeError
+import Data.Functor
 import Data.Bifunctor
 import qualified Data.Map.Strict as M
 import Language.Mimsa.Core
@@ -26,6 +28,19 @@ startElaborate expr expected = do
           $ numberedExpr
   (fmap . fmap) recoverAnn result `shouldBe` Right expr
   result `shouldBe` Right expected
+
+expectError ::
+  Expr Name Annotation ->
+  TypeError ->
+  IO ()
+expectError expr expectedErr = do
+  let numberedExpr = fromRight (addNumbersToStoreExpression expr mempty)
+  let result =
+        fmap (\(_, _, a, _) -> first fst a)
+          . typecheck mempty mempty
+          $ numberedExpr
+  result `shouldBe` Left expectedErr
+
 
 spec :: Spec
 spec = do
@@ -179,14 +194,33 @@ spec = do
                 (bool True)
                 (int 1)
                 (MyInfix mempty Add (int 1) (MyGlobal mempty "dog"))
+
             expected =
               MyIf
                 (withGlobal tyInt)
                 (MyLiteral (MTPrim mempty MTBool) (MyBool True))
                 (MyLiteral tyInt (MyInt 1))
-                (MyInfix (withGlobal tyInt) Add (MyGlobal (withGlobal tyInt) "dog") (MyLiteral tyInt (MyInt 1)))
+                (MyInfix (withGlobal tyInt) Add
+                    (MyLiteral tyInt (MyInt 1))
+                    (MyGlobal (withGlobal tyInt) "dog") )
 
         startElaborate expr expected
+
+      it "conflicting global types create an error" $ do
+        let expr = unsafeParseExpr "if dog? then 1 else dog?" $> mempty
+        expectError expr UnknownTypeError
+
+      it "conflicting regular types" $ do
+        let tyInt = MTPrim mempty MTInt
+            tyBool = MTPrim mempty MTBool
+        let expr = unsafeParseExpr "\\a -> if True then (a : Boolean) else (a : Int)" $> mempty
+        expectError expr (UnificationError tyInt tyBool)
+
+      it "conflicting globals error" $ do
+        let tyInt = MTPrim mempty MTInt
+            tyBool = MTPrim mempty MTBool
+        let expr = unsafeParseExpr "if True then (dog? : Boolean) else (dog? : Int)" $> mempty
+        expectError expr (UnificationError tyInt tyBool)
 
       it "infers let binding with recursion 1" $ do
         let expr =

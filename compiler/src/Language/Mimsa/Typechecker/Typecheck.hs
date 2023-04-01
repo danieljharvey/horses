@@ -6,17 +6,16 @@ module Language.Mimsa.Typechecker.Typecheck
   )
 where
 
+import Language.Mimsa.Typechecker.Globals
 import Control.Monad.Except
 import Control.Monad.State (runState)
 import Control.Monad.Writer.CPS
 import Data.Map.Strict (Map)
-import qualified Data.Map.Strict as M
 import Language.Mimsa.Core
 import Language.Mimsa.Typechecker.Elaborate
 import Language.Mimsa.Typechecker.Solve
 import Language.Mimsa.Typechecker.TcMonad
 import Language.Mimsa.Typechecker.TypedHoles
-import Language.Mimsa.Typechecker.Unify
 import Language.Mimsa.Types.Error
 import Language.Mimsa.Types.Typechecker
 import Language.Mimsa.Types.Typechecker.Substitutions
@@ -36,18 +35,6 @@ runElabM tcState value =
       runState
         (runWriterT (runExceptT value))
         tcState
-
-applyGlobal :: Map Name MonoType -> Expr (Name, Unique) MonoType -> ElabM (Expr (Name, Unique) MonoType)
-applyGlobal globals expr | M.null globals = pure expr
-applyGlobal globals expr = do
-  let tyAnn = getAnnotationForType (getAnnotation expr)
-      tyGlobals = MTGlobals tyAnn (MTRecord tyAnn globals Nothing)
-  newTy <- case getAnnotation expr of
-    ty@(MTGlobals _ _ rest) -> do
-      subs <- unify (tyGlobals rest) ty
-      pure $ applySubst subs ty
-    other -> pure (tyGlobals other)
-  pure (mapOuterExprAnnotation (const newTy) expr)
 
 -- run inference, and substitute everything possible
 typecheck ::
