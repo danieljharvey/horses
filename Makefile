@@ -104,6 +104,10 @@ format:
 hlint:
 	@hlint $(HS_FILES)
 
+.PHONY: run-server
+run-server:
+	cabal run server:exe:mimsa-server
+
 .PHONY: generate-swagger
 generate-swagger: install
 	$(shell cabal list-bin server:exe:mimsa-server) generate-swagger
