@@ -38,7 +38,6 @@ export const Feedback: React.FC<Props> = ({ feedback }) => {
       )
 
     case 'ShowModuleData':
-      console.log(feedback.moduleData)
       return (
         <FlexColumnSpaced>
           <Code codeType="type">

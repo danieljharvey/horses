@@ -3,6 +3,7 @@ import type {
   ModuleHash,
   ProjectData,
   GetModuleResponse,
+  BindModuleRequest,
 } from '../../types'
 
 export const storeProjectData = (
@@ -27,8 +28,16 @@ export const fetchModuleSuccess = (
   fetched: GetModuleResponse
 ) => ({ type: 'FetchModuleSuccess' as const, fetched })
 
+export const bindModule = (
+  bindModuleRequest: BindModuleRequest
+) => ({
+  type: 'BindModule' as const,
+  bindModuleRequest,
+})
+
 export type ProjectAction =
   | ReturnType<typeof initialise>
   | ReturnType<typeof storeProjectData>
   | ReturnType<typeof fetchModuleSuccess>
   | ReturnType<typeof fetchModule>
+  | ReturnType<typeof bindModule>
