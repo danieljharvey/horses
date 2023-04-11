@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1679671946667,
+  "lastUpdate": 1681232282996,
   "repoUrl": "https://github.com/danieljharvey/mimsa",
   "entries": {
     "Store benchmarks in Github Pages": [
@@ -347,6 +347,50 @@ window.BENCHMARK_DATA = {
           {
             "name": "evaluate/evaluate parsing 2",
             "value": 0.29043014959999597,
+            "unit": "Time (ms)"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "danieljamesharvey@gmail.com",
+            "name": "Daniel Harvey",
+            "username": "danieljharvey"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "ef2f0844ff88e2cbfcf798749da48500acfc3712",
+          "message": "LLVM Calc part 3 - functions (#911)\n\n* Function and Module types\r\n\r\n* Typecheck that function\r\n\r\n* Start parsing module\r\n\r\n* Parse modules\r\n\r\n* Ready to typecheck\r\n\r\n* Typechecking nearly done\r\n\r\n* Yes\r\n\r\n* Typecheck module\r\n\r\n* Interpret a function\r\n\r\n* Halfway through LLVM codegen\r\n\r\n* sdfsdf\r\n\r\n* It works\r\n\r\n* Tidy cabal",
+          "timestamp": "2023-04-11T17:40:22+01:00",
+          "tree_id": "76fb6e16c4fcd797e22022cfa336ed29dad8dad0",
+          "url": "https://github.com/danieljharvey/mimsa/commit/ef2f0844ff88e2cbfcf798749da48500acfc3712"
+        },
+        "date": 1681232282469,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "build stdlib/allFns",
+            "value": 0.10496719023332152,
+            "unit": "Time (ms)"
+          },
+          {
+            "name": "evaluate/evaluate big looping thing",
+            "value": 0.09586311043332586,
+            "unit": "Time (ms)"
+          },
+          {
+            "name": "evaluate/evaluate parsing",
+            "value": 0.032038017340680104,
+            "unit": "Time (ms)"
+          },
+          {
+            "name": "evaluate/evaluate parsing 2",
+            "value": 0.23120186251430822,
             "unit": "Time (ms)"
           }
         ]
