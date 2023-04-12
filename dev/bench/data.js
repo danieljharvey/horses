@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1681232282996,
+  "lastUpdate": 1681287741883,
   "repoUrl": "https://github.com/danieljharvey/mimsa",
   "entries": {
     "Store benchmarks in Github Pages": [
@@ -391,6 +391,50 @@ window.BENCHMARK_DATA = {
           {
             "name": "evaluate/evaluate parsing 2",
             "value": 0.23120186251430822,
+            "unit": "Time (ms)"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "danieljamesharvey@gmail.com",
+            "name": "Daniel Harvey",
+            "username": "danieljharvey"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "b51d9b2be64687fbb74005cbb911658526a0b678",
+          "message": "Add empty calc4 and add to CI (#916)\n\n* Add empty calc4 and add to CI\r\n\r\n* Fix swagger build",
+          "timestamp": "2023-04-12T09:20:11+01:00",
+          "tree_id": "4a74940a96c6799543a31024b2f99f13d0088a90",
+          "url": "https://github.com/danieljharvey/mimsa/commit/b51d9b2be64687fbb74005cbb911658526a0b678"
+        },
+        "date": 1681287740632,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "build stdlib/allFns",
+            "value": 0.1321392929404766,
+            "unit": "Time (ms)"
+          },
+          {
+            "name": "evaluate/evaluate big looping thing",
+            "value": 0.11809117051190793,
+            "unit": "Time (ms)"
+          },
+          {
+            "name": "evaluate/evaluate parsing",
+            "value": 0.0387637835285713,
+            "unit": "Time (ms)"
+          },
+          {
+            "name": "evaluate/evaluate parsing 2",
+            "value": 0.25433931920000247,
             "unit": "Time (ms)"
           }
         ]
