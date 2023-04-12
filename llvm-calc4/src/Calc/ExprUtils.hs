@@ -17,6 +17,7 @@ getOuterAnnotation (EPrim ann _) = ann
 getOuterAnnotation (EIf ann _ _ _) = ann
 getOuterAnnotation (EVar ann _) = ann
 getOuterAnnotation (EApply ann _ _) = ann
+getOuterAnnotation (ETuple ann _ _ ) = ann
 
 -- | modify the outer annotation of an expression
 -- useful for adding line numbers during parsing
@@ -28,6 +29,7 @@ mapOuterExprAnnotation f expr' =
     EIf ann a b c -> EIf (f ann) a b c
     EVar ann a -> EVar (f ann) a
     EApply ann a b -> EApply (f ann) a b
+    ETuple ann a b -> ETuple (f ann) a b
 
 -- | Given a function that changes `Expr` values, apply it throughout
 -- an AST tree
@@ -38,3 +40,4 @@ mapExpr _ (EVar ann a) = EVar ann a
 mapExpr f (EApply ann fn args) = EApply ann fn (f <$> args)
 mapExpr f (EIf ann predExpr thenExpr elseExpr) =
   EIf ann (f predExpr) (f thenExpr) (f elseExpr)
+mapExpr f (ETuple ann a as) = ETuple ann (f a) (f <$> as)

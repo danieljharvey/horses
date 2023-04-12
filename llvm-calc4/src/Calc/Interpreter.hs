@@ -126,6 +126,7 @@ interpret (EApply _ fnName args) =
   interpretApply fnName args
 interpret (EInfix ann op a b) =
   interpretInfix ann op a b
+interpret (ETuple {}) = error "interpret ETuple"
 interpret (EIf ann predExpr thenExpr elseExpr) = do
   predA <- interpret predExpr
   case predA of

@@ -128,6 +128,7 @@ infer (EPrim ann prim) =
   pure (EPrim (typeFromPrim ann prim) prim)
 infer (EIf ann predExpr thenExpr elseExpr) =
   inferIf ann predExpr thenExpr elseExpr
+infer (ETuple {}) = error "infer ETuple"
 infer (EApply ann fnName args) = do
   fn <- lookupFunction ann fnName
   (ty, elabArgs) <- case fn of

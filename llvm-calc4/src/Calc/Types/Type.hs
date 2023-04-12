@@ -5,6 +5,7 @@
 module Calc.Types.Type (Type (..), TypePrim (..)) where
 
 import qualified Prettyprinter as PP
+import qualified Data.List.NonEmpty as NE
 
 data TypePrim = TBool | TInt
   deriving stock (Eq, Ord, Show)
@@ -16,6 +17,7 @@ instance PP.Pretty TypePrim where
 data Type ann
   = TPrim ann TypePrim
   | TFunction ann [Type ann] (Type ann)
+  | TTuple ann (Type ann) (NE.NonEmpty (Type ann))
   deriving stock (Eq, Ord, Show, Functor)
 
 instance PP.Pretty (Type ann) where
@@ -24,3 +26,12 @@ instance PP.Pretty (Type ann) where
     "(" <> prettyArgs <> ") -> " <> PP.pretty ret
     where
       prettyArgs = PP.concatWith (PP.surround PP.comma) (PP.pretty <$> args)
+  pretty (TTuple _ a as) =
+    "(" <> PP.cat (PP.punctuate "," (PP.pretty <$> tupleItems a as)) <> ")"
+      where
+        tupleItems :: a -> NE.NonEmpty a -> [a]
+        tupleItems b bs = b : NE.toList bs
+
+
+
+

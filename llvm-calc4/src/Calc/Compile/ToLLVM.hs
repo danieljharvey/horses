@@ -80,6 +80,7 @@ lookupArg identifier = do
 printFunction :: (LLVM.MonadModuleBuilder m) => Type ann -> m LLVM.Operand
 printFunction (TPrim _ TInt) = LLVM.extern "printint" [LLVM.i32] LLVM.void
 printFunction (TPrim _ TBool) = LLVM.extern "printbool" [LLVM.i1] LLVM.void
+printFunction (TTuple {}) = error "printFunction TTuple"
 printFunction (TFunction _ _ tyRet) = printFunction tyRet -- maybe this should be an error instead
 
 -- | given our `Module` type, turn it into an LLVM module
@@ -152,6 +153,7 @@ functionNameToLLVM (FunctionName fnName) =
 typeToLLVM :: Type ann -> LLVM.Type
 typeToLLVM (TPrim _ TBool) = LLVM.i1
 typeToLLVM (TPrim _ TInt) = LLVM.i32
+typeToLLVM TTuple {} = error "typeToLLVM TTuple"
 typeToLLVM (TFunction _ tyArgs tyRet) =
   LLVM.FunctionType (typeToLLVM tyRet) (typeToLLVM <$> tyArgs) False
 
@@ -243,6 +245,7 @@ exprToLLVM (EPrim _ prim) =
   pure $ primToLLVM prim
 exprToLLVM (EVar _ var) =
   lookupArg var
+exprToLLVM (ETuple {}) = error "exprToLLVM ETuple"
 exprToLLVM (EApply _ fnName args) = do
   irFunc <- lookupFunction fnName
   irArgs <- traverse exprToLLVM args
