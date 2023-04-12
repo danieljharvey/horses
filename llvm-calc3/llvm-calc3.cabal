@@ -92,7 +92,7 @@ library
   hs-source-dirs:   src
   default-language: Haskell2010
 
-test-suite smol-core-tests
+test-suite llvm-calc3-tests
   import:           shared
   type:             exitcode-stdio-1.0
   hs-source-dirs:   test
@@ -103,6 +103,11 @@ test-suite smol-core-tests
 
   main-is:          Main.hs
   default-language: Haskell2010
+  other-modules:
+    Test.Interpreter.InterpreterSpec
+    Test.LLVM.LLVMSpec
+    Test.Parser.ParserSpec
+    Test.Typecheck.TypecheckSpec
 
 executable llvm-calc3
   main-is:          Main.hs

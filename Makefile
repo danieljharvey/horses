@@ -80,6 +80,14 @@ test-llvm-calc:
 test-llvm-calc2:
 	cabal run llvm-calc2:tests
 
+.PHONY: test-llvm-calc3
+test-llvm-calc3:
+	cabal run llvm-calc3:tests
+
+.PHONY: test-llvm-calc4
+test-llvm-calc4:
+	cabal run llvm-calc4:tests
+
 .PHONY: test-backends
 test-backends:
 	cabal run backends:test:backends-tests

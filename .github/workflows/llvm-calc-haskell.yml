@@ -7,6 +7,8 @@ on:
     paths:
       - "llvm-calc/**"
       - "llvm-calc2/**"
+      - "llvm-calc3/**"
+      - "llvm-calc4/**"
       - "vendored/**"
       - "cabal.project"
       - "cabal.project.freeze"
@@ -17,6 +19,8 @@ on:
     paths:
       - "llvm-calc/**"
       - "llvm-calc2/**"
+      - "llvm-calc3/**"
+      - "llvm-calc4/**"
       - "vendored/**"
       - "cabal.project"
       - "cabal.project.freeze"
@@ -60,4 +64,11 @@ jobs:
 
       - name: Test llvm-calc2
         run: make test-llvm-calc2
+
+      - name: Test llvm-calc3
+        run: make test-llvm-calc3
+
+      - name: Test llvm-calc4
+        run: make test-llvm-calc4
+
 

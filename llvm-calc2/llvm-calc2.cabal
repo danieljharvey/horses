@@ -48,6 +48,29 @@ common shared
     , text
     , unix
 
+  other-modules:
+    Calc
+    Calc.Compile.RunLLVM
+    Calc.Compile.ToLLVM
+    Calc.ExprUtils
+    Calc.Interpreter
+    Calc.Parser
+    Calc.Parser.Expr
+    Calc.Parser.Primitives
+    Calc.Parser.Shared
+    Calc.Parser.Type
+    Calc.Parser.Types
+    Calc.Repl
+    Calc.SourceSpan
+    Calc.Typecheck.Elaborate
+    Calc.Typecheck.Error
+    Calc.Types
+    Calc.Types.Annotation
+    Calc.Types.Expr
+    Calc.Types.Prim
+    Calc.Types.Type
+    Calc.TypeUtils
+
 library
   import:           shared
 
@@ -58,30 +81,8 @@ library
   -- other-extensions:
   hs-source-dirs:   src
   default-language: Haskell2010
-  exposed-modules:
-    Calc
-    Calc.Compile.RunLLVM
-    Calc.Compile.ToLLVM
-    Calc.ExprUtils
-    Calc.Interpreter
-    Calc.Parser
-    Calc.Parser.Expr
-    Calc.Parser.Primitives
-    Calc.Parser.Shared
-    Calc.Parser.Type
-    Calc.Parser.Types
-    Calc.Repl
-    Calc.SourceSpan
-    Calc.Typecheck.Elaborate
-    Calc.Typecheck.Error
-    Calc.Types
-    Calc.Types.Annotation
-    Calc.Types.Expr
-    Calc.Types.Prim
-    Calc.Types.Type
-    Calc.TypeUtils
 
-test-suite smol-core-tests
+test-suite llvm-calc2-tests
   import:           shared
   type:             exitcode-stdio-1.0
   hs-source-dirs:   test
@@ -91,27 +92,6 @@ test-suite smol-core-tests
     , hspec-core  >=2.8.3 && <3
 
   other-modules:
-    Calc
-    Calc.Compile.RunLLVM
-    Calc.Compile.ToLLVM
-    Calc.ExprUtils
-    Calc.Interpreter
-    Calc.Parser
-    Calc.Parser.Expr
-    Calc.Parser.Primitives
-    Calc.Parser.Shared
-    Calc.Parser.Type
-    Calc.Parser.Types
-    Calc.Repl
-    Calc.SourceSpan
-    Calc.Typecheck.Elaborate
-    Calc.Typecheck.Error
-    Calc.Types
-    Calc.Types.Annotation
-    Calc.Types.Expr
-    Calc.Types.Prim
-    Calc.Types.Type
-    Calc.TypeUtils
     Test.Interpreter.InterpreterSpec
     Test.LLVM.LLVMSpec
     Test.Parser.ParserSpec
@@ -122,29 +102,6 @@ test-suite smol-core-tests
 
 executable llvm-calc2
   main-is:          Main.hs
-  other-modules:
-    Calc
-    Calc.Compile.RunLLVM
-    Calc.Compile.ToLLVM
-    Calc.ExprUtils
-    Calc.Interpreter
-    Calc.Parser
-    Calc.Parser.Expr
-    Calc.Parser.Primitives
-    Calc.Parser.Shared
-    Calc.Parser.Type
-    Calc.Parser.Types
-    Calc.Repl
-    Calc.SourceSpan
-    Calc.Typecheck.Elaborate
-    Calc.Typecheck.Error
-    Calc.Types
-    Calc.Types.Annotation
-    Calc.Types.Expr
-    Calc.Types.Prim
-    Calc.Types.Type
-    Calc.TypeUtils
-
   hs-source-dirs:   app
   hs-source-dirs:   src
   ghc-options:      -threaded -rtsopts -with-rtsopts=-N
