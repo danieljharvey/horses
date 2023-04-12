@@ -9,6 +9,7 @@ packages:
   llvm-calc/llvm-calc.cabal,
   llvm-calc2/llvm-calc2.cabal,
   llvm-calc3/llvm-calc3.cabal,
+  llvm-calc4/llvm-calc4.cabal,
   vendored/**/*.cabal
 
 with-compiler: ghc-9.4.4
