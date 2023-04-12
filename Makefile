@@ -113,7 +113,8 @@ hlint:
 	@hlint $(HS_FILES)
 
 .PHONY: generate-swagger
-generate-swagger: install
+generate-swagger:
+	@cabal build server:exe:mimsa-server
 	$(shell cabal list-bin server:exe:mimsa-server) generate-swagger
 
 .PHONY: format-cabal
