@@ -1,7 +1,8 @@
 {-# LANGUAGE OverloadedStrings #-}
-
+  {-# LANGUAGE LambdaCase #-}
 module Test.Parser.ParserSpec (spec) where
 
+import qualified Data.List.NonEmpty as NE
 import Calc
 import Data.Foldable (traverse_)
 import Data.Functor
@@ -18,13 +19,30 @@ bool = EPrim mempty . PBool
 var :: (Monoid ann) => String -> Expr ann
 var = EVar mempty . Identifier . fromString
 
+tuple :: (Monoid ann) => [Expr ann] -> Expr ann
+tuple = \case
+  (a : b : rest) -> ETuple mempty a (b NE.:| rest)
+  _ -> error "not enough items for tuple"
+
+tyInt :: (Monoid ann) => Type ann
+tyInt = TPrim mempty TInt
+
+tyBool :: (Monoid ann) => Type ann
+tyBool = TPrim mempty TBool
+
+tyTuple :: (Monoid ann) => [Type ann] -> Type ann
+tyTuple = \case
+  (a : b : rest) -> TTuple mempty a (b NE.:| rest)
+  _ -> error "not enough items for tyTuple"
+
 spec :: Spec
 spec = do
   describe "ParserSpec" $ do
     describe "Type" $ do
       let strings =
-            [ ("Boolean", TPrim () TBool),
-              ("Integer", TPrim () TInt)
+            [ ("Boolean", tyBool),
+              ("Integer", tyInt),
+              ("(Boolean, Boolean, Integer)", tyTuple [tyBool, tyBool, tyInt])
             ]
       traverse_
         ( \(str, expr) -> it (T.unpack str) $ do
@@ -83,6 +101,7 @@ spec = do
               ("1 + 2", EInfix () OpAdd (int 1) (int 2)),
               ("True", EPrim () (PBool True)),
               ("False", EPrim () (PBool False)),
+              ("(1,2,True)", tuple [int 1, int 2, bool True]),
               ( "1 + 2 + 3",
                 EInfix
                   ()
