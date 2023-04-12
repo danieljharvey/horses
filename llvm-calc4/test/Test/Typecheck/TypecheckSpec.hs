@@ -101,7 +101,9 @@ spec = do
               ("1 - 10", "Integer"),
               ("2 == 2", "Boolean"),
               ("if True then 1 else 2", "Integer"),
-              ("if False then True else False", "Boolean")
+              ("if False then True else False", "Boolean"),
+              ("(1,2,True)", "(Integer,Integer,Boolean)"),
+              ("case (1,2,3) of (a,b,_) -> a + b", "Integer")
             ]
 
       describe "Successfully typechecking expressions" $ do

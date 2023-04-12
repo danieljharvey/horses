@@ -1,7 +1,8 @@
 {-# LANGUAGE OverloadedStrings #-}
 
 module Calc.Parser.Primitives
-  ( primParser,
+  ( primExprParser,
+    primParser,
     intParser,
   )
 where
@@ -37,10 +38,18 @@ falseParser = stringLiteral "False" $> False
 
 ---
 
-primParser :: Parser ParserExpr
-primParser =
+primExprParser :: Parser ParserExpr
+primExprParser =
   myLexeme $
     addLocation $
       EPrim mempty . PInt <$> intParser
         <|> EPrim mempty <$> truePrimParser
         <|> EPrim mempty <$> falsePrimParser
+
+----
+
+primParser :: Parser Prim
+primParser =
+  PInt <$> intParser
+    <|> truePrimParser
+    <|> falsePrimParser

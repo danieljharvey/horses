@@ -246,6 +246,7 @@ exprToLLVM (EPrim _ prim) =
 exprToLLVM (EVar _ var) =
   lookupArg var
 exprToLLVM (ETuple {}) = error "exprToLLVM ETuple"
+exprToLLVM (EPatternMatch {}) = error "exprToLLVM EPatternMatch"
 exprToLLVM (EApply _ fnName args) = do
   irFunc <- lookupFunction fnName
   irArgs <- traverse exprToLLVM args

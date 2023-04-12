@@ -6,10 +6,11 @@ module Calc.Types.Expr (Expr (..), Op (..)) where
 
 import Calc.Types.FunctionName
 import Calc.Types.Identifier
+import Calc.Types.Pattern
 import Calc.Types.Prim
+import qualified Data.List.NonEmpty as NE
 import Prettyprinter ((<+>))
 import qualified Prettyprinter as PP
-import qualified Data.List.NonEmpty as NE
 
 data Expr ann
   = EPrim ann Prim
@@ -18,6 +19,7 @@ data Expr ann
   | EVar ann Identifier
   | EApply ann FunctionName [Expr ann]
   | ETuple ann (Expr ann) (NE.NonEmpty (Expr ann))
+  | EPatternMatch ann (Expr ann) (NE.NonEmpty (Pattern ann, Expr ann))
   deriving stock (Eq, Ord, Show, Functor, Foldable, Traversable)
 
 -- when on multilines, indent by `i`, if not then nothing
@@ -39,9 +41,49 @@ instance PP.Pretty (Expr ann) where
       pArgs = PP.punctuate "," (PP.pretty <$> args)
   pretty (ETuple _ a as) =
     "(" <> PP.cat (PP.punctuate "," (PP.pretty <$> tupleItems a as)) <> ")"
-      where
-          tupleItems :: a -> NE.NonEmpty a -> [a]
-          tupleItems b bs = b : NE.toList bs
+    where
+      tupleItems :: a -> NE.NonEmpty a -> [a]
+      tupleItems b bs = b : NE.toList bs
+  pretty (EPatternMatch _ matchExp patterns) =
+    prettyPatternMatch matchExp patterns
+
+prettyPatternMatch ::
+  Expr ann ->
+  NE.NonEmpty (Pattern ann, Expr ann) ->
+  PP.Doc style
+prettyPatternMatch sumExpr matches =
+  "match"
+    <+> printSubExpr sumExpr
+    <+> "with"
+    <+> PP.line
+      <> PP.indent
+        2
+        ( PP.align $
+            PP.vsep
+              ( zipWith
+                  (<+>)
+                  (" " : repeat "|")
+                  (printMatch <$> NE.toList matches)
+              )
+        )
+  where
+    printMatch (construct, expr') =
+      PP.pretty construct
+        <+> "->"
+        <+> PP.line
+          <> indentMulti 4 (printSubExpr expr')
+
+-- print simple things with no brackets, and complex things inside brackets
+printSubExpr :: Expr ann -> PP.Doc style
+printSubExpr expr = case expr of
+  all'@EIf {} -> inParens all'
+  all'@EApply {} -> inParens all'
+  all'@ETuple {} -> inParens all'
+  all'@EPatternMatch {} -> inParens all'
+  a -> PP.pretty a
+
+inParens :: Expr ann -> PP.Doc style
+inParens = PP.parens . PP.pretty
 
 data Op
   = OpAdd
