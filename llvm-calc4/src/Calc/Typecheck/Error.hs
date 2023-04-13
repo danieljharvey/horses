@@ -4,12 +4,14 @@
 
 module Calc.Typecheck.Error (TypeError (..), typeErrorDiagnostic) where
 
+import Calc.PatternUtils
 import Calc.SourceSpan
 import Calc.TypeUtils
 import Calc.Types.Annotation
 import Calc.Types.Expr
 import Calc.Types.FunctionName
 import Calc.Types.Identifier
+import Calc.Types.Pattern
 import Calc.Types.Type
 import Data.HashSet (HashSet)
 import qualified Data.HashSet as HS
@@ -28,6 +30,7 @@ data TypeError ann
   | FunctionNotFound ann FunctionName (HashSet FunctionName)
   | FunctionArgumentLengthMismatch ann Int Int -- expected, actual
   | NonFunctionTypeFound ann (Type ann)
+  | PatternMismatch (Pattern ann) (Type ann)
   deriving stock (Eq, Ord, Show)
 
 positionFromAnnotation ::
@@ -180,6 +183,17 @@ typeErrorDiagnostic input e =
                 ]
             )
             [Diag.Note $ "Available in scope: " <> prettyPrint (prettyHashset existing)]
+        (PatternMismatch pat ty) ->
+          Diag.Err
+            Nothing
+            "Pattern mismatch!"
+            ( catMaybes
+                [ (,)
+                    <$> positionFromAnnotation filename input (getPatternAnnotation pat)
+                    <*> pure (Diag.This (prettyPrint $ "This should have type " <> PP.pretty ty))
+                ]
+            )
+            []
         (FunctionNotFound ann fnName existing) ->
           Diag.Err
             Nothing

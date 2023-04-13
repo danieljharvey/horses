@@ -6,15 +6,14 @@ module Calc.Parser.Pattern
   )
 where
 
-import Calc.Parser.Primitives
 import Calc.Parser.Identifier
-import qualified Data.List.NonEmpty as NE
-import Calc.Types.Pattern
+import Calc.Parser.Primitives
 import Calc.Parser.Shared
+import Calc.Parser.Types
 import Calc.Types
+import qualified Data.List.NonEmpty as NE
 import Text.Megaparsec
 import Text.Megaparsec.Char
-import Calc.Parser.Types
 
 type ParserPattern = Pattern Annotation
 
@@ -23,8 +22,7 @@ patternParser =
   label
     "pattern match"
     ( orInBrackets
-        (
-          try patTupleParser
+        ( try patTupleParser
             <|> try patWildcardParser
             <|> try patVariableParser
             <|> patLitParser
@@ -63,4 +61,3 @@ patTupleParser = label "tuple" $
 
 patLitParser :: Parser ParserPattern
 patLitParser = withLocation PLiteral primParser
-
