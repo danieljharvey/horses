@@ -4,6 +4,7 @@
 
 module Calc.Typecheck.Elaborate (elaborate, elaborateFunction, elaborateModule) where
 
+import Data.Foldable (foldrM)
 import Calc.ExprUtils
 import Calc.PatternUtils
 import Calc.TypeUtils
@@ -56,15 +57,23 @@ elaborate = runTypecheckM (TypecheckEnv mempty) . infer
 check :: Type ann -> Expr ann -> TypecheckM ann (Expr (Type ann))
 check ty expr = do
   exprA <- infer expr
-  if void (getOuterAnnotation exprA) == void ty
-    then pure (expr $> ty)
-    else throwError (TypeMismatch ty (getOuterAnnotation exprA))
+  _ <- checkTypeIsEqual ty (getOuterAnnotation exprA)
+  pure (expr $> ty)
+
+-- simple check for now
+checkTypeIsEqual :: Type ann -> Type ann -> TypecheckM ann (Type ann)
+checkTypeIsEqual tyA tyB
+  = if void tyA == void tyB
+       then pure tyA
+       else throwError (TypeMismatch tyA tyB)
+
+checkTypesAreEqual :: NE.NonEmpty (Type ann) -> TypecheckM ann (Type ann)
+checkTypesAreEqual tys =
+  foldrM checkTypeIsEqual (NE.head tys) (NE.tail tys)
 
 -- given the type of the expression in a pattern match,
 -- check that the pattern makes sense with it
 checkPattern ::
-  ( Show ann
-  ) =>
   Type ann ->
   Pattern ann ->
   TypecheckM
@@ -172,15 +181,15 @@ infer (ETuple ann fstExpr restExpr) = do
           (getOuterAnnotation typedFst)
           (getOuterAnnotation <$> typedRest)
   pure $ ETuple typ typedFst typedRest
-infer (EPatternMatch ann matchExpr pats) = do
+infer (EPatternMatch _ann matchExpr pats) = do
   elabExpr <- infer matchExpr
   let withPair (pat, patExpr) = do
         (elabPat, newVars) <- checkPattern (getOuterAnnotation elabExpr) pat
-        elabPatExpr <- withNewVars newVars (infer patExpr)
+        elabPatExpr <- withVars (M.toList newVars) (infer patExpr)
         pure (elabPat, elabPatExpr)
   elabPats <- traverse withPair pats
   let allTypes = getOuterAnnotation . snd <$> elabPats
-  typ <- combineMany allTypes
+  typ <- checkTypesAreEqual allTypes
   pure (EPatternMatch typ elabExpr elabPats)
 infer (EApply ann fnName args) = do
   fn <- lookupFunction ann fnName

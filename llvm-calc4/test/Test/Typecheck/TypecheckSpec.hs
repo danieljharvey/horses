@@ -2,6 +2,7 @@
 
 module Test.Typecheck.TypecheckSpec (spec) where
 
+import Test.Helpers
 import Calc.ExprUtils
 import Calc.Parser
 import Calc.Typecheck.Elaborate
@@ -68,9 +69,9 @@ spec = do
   describe "TypecheckSpec" $ do
     describe "Function" $ do
       let succeeding =
-            [ ("function one () { 1 }", TFunction () [] (TPrim () TInt)),
+            [ ("function one () { 1 }", TFunction () [] tyInt),
               ( "function not (bool: Boolean) { if bool then False else True }",
-                TFunction () [TPrim () TBool] (TPrim () TBool)
+                TFunction () [tyBool ] tyBool
               )
             ]
 
@@ -79,8 +80,8 @@ spec = do
 
     describe "Module" $ do
       let succeeding =
-            [ ("function ignore() { 1 } 42", TPrim () TInt),
-              ("function increment(a: Integer) { a + 1 } increment(41)", TPrim () TInt),
+            [ ("function ignore() { 1 } 42", tyInt ),
+              ("function increment(a: Integer) { a + 1 } increment(41)", tyInt ),
               ("function inc(a: Integer) { a + 1 } function inc2(a: Integer) { inc(a) } inc2(41)", TPrim () TInt)
             ]
       describe "Successfully typechecking modules" $ do
@@ -103,19 +104,21 @@ spec = do
               ("if True then 1 else 2", "Integer"),
               ("if False then True else False", "Boolean"),
               ("(1,2,True)", "(Integer,Integer,Boolean)"),
-              ("case (1,2,3) of (a,b,_) -> a + b", "Integer")
+              ("case (1,2,3) of (a,b,_) -> a + b", "Integer"),
+              ("case (1,True) of (2,b) -> b | _ -> False", "Boolean")
             ]
 
       describe "Successfully typechecking expressions" $ do
         traverse_ testTypecheck succeeding
 
       let failing =
-            [ ("if 1 then 1 else 2", PredicateIsNotBoolean () (TPrim () TInt)),
-              ("if True then 1 else True", TypeMismatch (TPrim () TInt) (TPrim () TBool)),
-              ("1 + True", InfixTypeMismatch OpAdd [(TPrim () TInt, TPrim () TBool)]),
-              ("True + False", InfixTypeMismatch OpAdd [(TPrim () TInt, TPrim () TBool), (TPrim () TInt, TPrim () TBool)]),
+            [ ("if 1 then 1 else 2", PredicateIsNotBoolean () tyInt ),
+              ("if True then 1 else True", TypeMismatch tyInt tyBool),
+              ("1 + True", InfixTypeMismatch OpAdd [(tyInt, tyBool)]),
+              ("True + False", InfixTypeMismatch OpAdd [(tyInt, tyBool), (tyInt,tyBool)]),
               ("1 * False", InfixTypeMismatch OpMultiply [(TPrim () TInt, TPrim () TBool)]),
-              ("True - 1", InfixTypeMismatch OpSubtract [(TPrim () TInt, TPrim () TBool)])
+              ("True - 1", InfixTypeMismatch OpSubtract [(TPrim () TInt, TPrim () TBool)]),
+              ("case (1,True) of (a, False) -> a | (_,c) -> c", TypeMismatch tyBool tyInt)
             ]
 
       describe "Failing typechecking expressions" $ do

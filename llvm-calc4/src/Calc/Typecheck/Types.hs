@@ -7,6 +7,7 @@ module Calc.Typecheck.Types
     TypecheckEnv (..),
     lookupVar,
     withVar,
+    withVars,
     lookupFunction,
     withFunctionArgs,
     storeFunction,
@@ -97,14 +98,16 @@ withVar identifier ty =
           }
     )
 
-withFunctionArgs :: [(ArgumentName, Type ann)] -> TypecheckM ann a -> TypecheckM ann a
-withFunctionArgs args =
+withVars :: [(Identifier, Type ann)] -> TypecheckM ann a -> TypecheckM ann a
+withVars args =
   local
     ( \tce ->
         tce
-          { tceVars = tceVars tce <> HM.fromList tidiedArgs
+          { tceVars = tceVars tce <> HM.fromList args
           }
     )
-  where
-    tidiedArgs =
-      fmap (first (\(ArgumentName arg) -> Identifier arg)) args
+
+withFunctionArgs :: [(ArgumentName, Type ann)] ->
+    TypecheckM ann a -> TypecheckM ann a
+withFunctionArgs = withVars .
+      fmap (first (\(ArgumentName arg) -> Identifier arg))
