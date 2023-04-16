@@ -73,6 +73,8 @@ interpret (IInfix ann op a b) = do
   rA <- interpret a
   rB <- interpret b
   interpretInfix ann op rA rB
+interpret (IArray ann as) =
+  IArray ann <$> traverse interpret as
 interpret (IApp _ (ILambda _ _ fn) arg) =
   interpret arg >>= interpret . fn
 interpret (IApp annA (IConstructor annB constructor) arg) =

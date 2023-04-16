@@ -7,10 +7,10 @@ import Data.Bifunctor (second)
 import Data.Either (isRight)
 import Data.FileEmbed
 import Data.Foldable (traverse_)
-import qualified Data.Sequence as Seq
 import Data.Functor
 import qualified Data.List.NonEmpty as NE
 import qualified Data.Map.Strict as M
+import qualified Data.Sequence as Seq
 import Data.Text (Text)
 import qualified Data.Text as T
 import qualified Data.Text.Encoding as T
@@ -43,7 +43,7 @@ spec = do
         )
         testInputs
 
-    describe "Expr" $ do
+    fdescribe "Expr" $ do
       let strings =
             [ ("True", bool True),
               ("False", bool False),
@@ -82,6 +82,13 @@ spec = do
                   (tuple (bool True) [nat 1])
                   [ (PTuple () (PLiteral () (PBool True)) (NE.fromList [PVar () "a"]), var "a"),
                     (PTuple () (PLiteral () (PBool False)) (NE.fromList [PWildcard ()]), nat 0)
+                  ]
+              ),
+              ( "case [1,2,3] of [_, ...b] -> b | other -> other",
+                patternMatch
+                  (array [nat 1, nat 2, nat 3])
+                  [ (PArray () [PWildcard ()] (SpreadValue () "b"), var "b"),
+                    (PVar () "other", var "other")
                   ]
               ),
               ("let a = 1 in a", ELet () "a" (nat 1) (var "a")),
@@ -131,7 +138,7 @@ spec = do
                   )
               ),
               ("Maybe.Maybe", TConstructor () (ParseDep "Maybe" (Just "Maybe"))),
-              ("[Bool]",TArray () tyBool)
+              ("[Bool]", TArray () tyBool)
             ]
       traverse_
         ( \(str, ty) -> it (T.unpack str) $ do

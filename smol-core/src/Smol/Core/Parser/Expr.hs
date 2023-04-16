@@ -2,10 +2,10 @@
 
 module Smol.Core.Parser.Expr (expressionParser) where
 
-import qualified Data.Sequence as Seq
 import Data.Functor (($>))
 import qualified Data.List.NonEmpty as NE
 import qualified Data.Map.Strict as M
+import qualified Data.Sequence as Seq
 import Data.Text (Text)
 import Data.Void
 import Smol.Core.Parser.Identifiers
@@ -35,8 +35,8 @@ expressionParser =
 
 complexParser :: Parser ParserExpr
 complexParser =
-  arrayParser <|>
-    try letParser
+  arrayParser
+    <|> try letParser
     <|> globalLetParser
     --    <|> letPatternParser
     <|> try appParser

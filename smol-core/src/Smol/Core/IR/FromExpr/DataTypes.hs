@@ -37,6 +37,8 @@ patternTypeInMemory (Smol.PVar ty _) =
   toRepresentation ty
 patternTypeInMemory (Smol.PTuple ty _ _) =
   toRepresentation ty
+patternTypeInMemory (Smol.PArray ty _ _) =
+  toRepresentation ty
 patternTypeInMemory (Smol.PWildcard ty) =
   toRepresentation ty
 patternTypeInMemory (Smol.PConstructor ty c _) =

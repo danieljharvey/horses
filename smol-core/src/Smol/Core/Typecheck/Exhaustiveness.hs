@@ -78,9 +78,9 @@ getVariables (PTuple _ a as) =
   M.unionWith (+) (getVariables a) (foldMap getVariables as)
 {-getVariables (PRecord _ as) =
 foldr (M.unionWith (+)) mempty (getVariables <$> as) -}
-{-getVariables (PArray _ as spread) =
-let vars = [getSpreadVariables spread] <> (getVariables <$> as)
- in foldr (M.unionWith (+)) mempty vars -}
+getVariables (PArray _ as spread) =
+  let vars = [getSpreadVariables spread] <> (getVariables <$> as)
+   in foldr (M.unionWith (+)) mempty vars
 getVariables (PConstructor _ _ args) =
   foldr (M.unionWith (+)) mempty (getVariables <$> args)
 
@@ -88,11 +88,13 @@ getVariables (PConstructor _ _ args) =
   M.unionWith (+) (getStringPartVariables a) (getStringPartVariables as)
 -}
 
-{-
-getSpreadVariables :: (Ord var) => Spread var Annotation -> Map var Int
+getSpreadVariables ::
+  Spread ResolvedDep (ResolvedType Annotation) ->
+  Map (ResolvedDep Identifier) Int
 getSpreadVariables (SpreadValue _ a) = M.singleton a 1
 getSpreadVariables _ = mempty
 
+{-
 getStringPartVariables :: (Ord var) => StringPart var Annotation -> Map var Int
 getStringPartVariables (StrWildcard _) = mempty
 getStringPartVariables (StrValue _ a) = M.singleton a 1
@@ -127,6 +129,7 @@ generateFromPattern ::
 generateFromPattern (PLiteral ty _) = generateFromType ty
 generateFromPattern (PWildcard _) = pure mempty
 generateFromPattern (PVar _ _) = pure mempty
+generateFromPattern (PArray {}) = error "generateFromPattern PArray"
 generateFromPattern (PTuple ty a as) = do
   genAs <- traverse (\pat -> NE.toList <$> generateAlways (getPatternAnnotation pat) pat) (NE.cons a as)
   let tuple ne = PTuple ty (NE.head ne) (NE.fromList $ NE.tail ne)

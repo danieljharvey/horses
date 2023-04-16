@@ -30,7 +30,7 @@ monoidType _ TUnknown {} = mempty
 monoidType _ TConstructor {} = mempty
 monoidType f (TFunc _ closure from to) =
   foldMap f closure <> f from <> f to
-monoidType f  (TArray _ as) =
+monoidType f (TArray _ as) =
   f as
 monoidType f (TTuple _ a as) =
   f a <> foldMap f as

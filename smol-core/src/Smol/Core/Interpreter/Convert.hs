@@ -39,7 +39,8 @@ fromExpr (EIf ann predE thenE elseE) =
   IIf ann (fromExpr predE) (fromExpr thenE) (fromExpr elseE)
 fromExpr (ELet ann ident expr rest) =
   fromExpr (EApp ann (ELambda ann ident rest) expr)
-fromExpr (EArray {}) = error "fromExpr EArray"
+fromExpr (EArray ann as) =
+  IArray ann (fromExpr <$> as)
 fromExpr (EGlobalLet ann ident expr rest) =
   IGlobalLet ann ident (fromExpr expr) (fromExpr rest)
 fromExpr (EGlobal ann ident) = IGlobal ann ident
@@ -91,6 +92,7 @@ toExpr (IRecord ann as) = ERecord ann (toExpr <$> as)
 toExpr (IRecordAccess ann a ident) = ERecordAccess ann (toExpr a) ident
 toExpr (IAnn ann mt expr) = EAnn ann mt (toExpr expr)
 toExpr (ITuple ann a as) = ETuple ann (toExpr a) (toExpr <$> as)
+toExpr (IArray ann as) = EArray ann (toExpr <$> as)
 
 patternVars :: Pattern Identity ann -> Set Identifier
 patternVars (PVar _ v) = S.singleton (runIdentity v)

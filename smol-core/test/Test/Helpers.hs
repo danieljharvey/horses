@@ -14,6 +14,7 @@ module Test.Helpers
     nat,
     var,
     tuple,
+    array,
     unit,
     identifier,
     constructor,
@@ -27,6 +28,7 @@ where
 import Data.Foldable (foldl')
 import Data.Functor
 import qualified Data.List.NonEmpty as NE
+import qualified Data.Sequence as Seq
 import Data.Text (Text)
 import GHC.Natural
 import Smol.Core
@@ -113,6 +115,9 @@ patternMatch ::
   Expr dep ann
 patternMatch expr pats =
   EPatternMatch mempty expr (NE.fromList pats)
+
+array :: (Monoid ann) => [Expr dep ann] -> Expr dep ann
+array as = EArray mempty (Seq.fromList as)
 
 ------
 

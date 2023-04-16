@@ -16,12 +16,12 @@ module Smol.Core.Types.Expr
   )
 where
 
-import Data.Sequence (Seq)
 import Control.Monad.Identity
 import Data.Aeson (FromJSON, ToJSON)
 import qualified Data.List.NonEmpty as NE
 import Data.Map.Strict
 import qualified Data.Map.Strict as M
+import Data.Sequence (Seq)
 import GHC.Generics (Generic)
 import Prettyprinter ((<+>))
 import qualified Prettyprinter as PP

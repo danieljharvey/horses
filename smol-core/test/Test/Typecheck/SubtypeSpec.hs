@@ -92,15 +92,20 @@ spec = do
             `shouldBe` Right expected
 
       describe "Combine" $ do
-        let inputs = [("1","2","1 | 2"),
-                        ("1 | 2", "2", "1 | 2"),
-                        ("1 | 2", "3", "1 | 2 | 3")
-                     ]
+        let inputs =
+              [ ("1", "2", "1 | 2"),
+                ("1 | 2", "2", "1 | 2"),
+                ("1 | 2", "3", "1 | 2 | 3")
+              ]
         traverse_
-          (\(one,two,result) -> it ( show one <> " <> " <> show two) $ do
-              let a = combine (fromParsedType (unsafeParseType one))
-                        (fromParsedType (unsafeParseType two))
-              fst <$> runWriterT a  `shouldBe` Right (fromParsedType (unsafeParseType result))) inputs
+          ( \(one, two, result) -> it (show one <> " <> " <> show two) $ do
+              let a =
+                    combine
+                      (fromParsedType (unsafeParseType one))
+                      (fromParsedType (unsafeParseType two))
+              fst <$> runWriterT a `shouldBe` Right (fromParsedType (unsafeParseType result))
+          )
+          inputs
 
       fdescribe "Valid pairs" $ do
         let validPairs =
@@ -112,7 +117,7 @@ spec = do
                 ("Maybe", "Maybe"),
                 ("Maybe 1", "Maybe a"),
                 ("{ item: 1 }", "{}"),
-                ("[1 | 2]","[Nat]")
+                ("[1 | 2]", "[Nat]")
               ]
         traverse_
           ( \(lhs, rhs) -> it (show lhs <> " <: " <> show rhs) $ do

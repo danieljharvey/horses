@@ -6,6 +6,7 @@ module Smol.Core.Parser.Pattern
   )
 where
 
+import Data.Either (partitionEithers)
 import qualified Data.List.NonEmpty as NE
 import Data.Text (Text)
 import Data.Void
@@ -20,6 +21,8 @@ type Parser = Parsec Void Text
 
 type ParserPattern = Pattern ParseDep Annotation
 
+type ParserSpread = Spread ParseDep Annotation
+
 patternParser :: Parser ParserPattern
 patternParser =
   label
@@ -32,7 +35,7 @@ patternParser =
             <|> try litParser
             -- <|> try recordParser
             <|> try constructorParser
-            -- <|> try arrayParser
+            <|> try arrayParser
         )
     )
 
@@ -114,7 +117,6 @@ constructorParser =
 
 ---
 
-{-
 arrayParser :: Parser ParserPattern
 arrayParser =
   let itemParser =
@@ -131,8 +133,8 @@ arrayParser =
    in withLocation (\loc (as, spread) -> PArray loc as spread) parser
 
 getParts ::
-  [Either (Spread Name Annotation) (Pattern Name Annotation)] ->
-  Either String ([Pattern Name Annotation], Spread Name Annotation)
+  [Either ParserSpread ParserPattern] ->
+  Either String ([ParserPattern], ParserSpread)
 getParts as = case reverse as of
   ((Left spr) : rest) ->
     case partitionEithers rest of
@@ -142,29 +144,26 @@ getParts as = case reverse as of
   es -> case partitionEithers es of
     ([], pats) -> pure (reverse pats, NoSpread)
     _ -> Left "Cannot have more than one spread in an array pattern"
--}
 
 ---
 
-{-
-spreadParser :: Parser (Spread Name Annotation)
+spreadParser :: Parser ParserSpread
 spreadParser =
   try spreadValueParser
     <|> try spreadWildcardParser
 
-spreadWildcardParser :: Parser (Spread Name Annotation)
+spreadWildcardParser :: Parser ParserSpread
 spreadWildcardParser =
   let parser =
         myString "..."
    in withLocation (\loc _ -> SpreadWildcard loc) parser
 
-spreadValueParser :: Parser (Spread Name Annotation)
+spreadValueParser :: Parser ParserSpread
 spreadValueParser =
   let parser = do
         myString "..."
-        nameParser
+        emptyParseDep <$> Identifiers.identifierParser
    in withLocation SpreadValue parser
--}
 
 ---
 

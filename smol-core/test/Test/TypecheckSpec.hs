@@ -108,9 +108,11 @@ spec = do
               ("(\\pair -> case pair of (a,b) -> a + b : (Nat,Nat) -> Nat)", "(Nat,Nat) -> Nat"),
               ("let id = (\\i -> i : i -> i); case (Just 1) of Just a -> Just (id a) | Nothing -> Nothing", "Maybe 1"),
               ("[1,2]", "[ 1 | 2 ]"),
-              ("[1,2,3,4]","[1 | 4 | 2 | 3]"),
+              ("[1,2,3,4]", "[1 | 4 | 2 | 3]"),
               ("[True]", "[True]"),
-              ("([1,2,3,4] : [Nat])", "[Nat]")
+              ("([1,2,3,4] : [Nat])", "[Nat]"),
+              ("case ([1,2,3] : [Nat]) of [a] -> [a] | [_,...b] -> b", "[Nat]"),
+              ("case ([1,2]: [Nat]) of [a,...] -> a | _ -> 0", "Nat")
             ]
       traverse_
         ( \(inputExpr, expectedType) -> it (T.unpack inputExpr <> " :: " <> T.unpack expectedType) $ do

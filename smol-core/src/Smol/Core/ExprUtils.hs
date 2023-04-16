@@ -92,6 +92,7 @@ bindExpr f (EPatternMatch ann patExpr pats) =
 mapPattern :: (Pattern dep ann -> Pattern dep ann) -> Pattern dep ann -> Pattern dep ann
 mapPattern _ (PLiteral ann l) = PLiteral ann l
 mapPattern _ (PWildcard a) = PWildcard a
+mapPattern f (PArray ann as spread) = PArray ann (f <$> as) spread -- do we need to map spread somehow
 mapPattern _ (PVar ann a) = PVar ann a
 mapPattern f (PTuple ann a as) = PTuple ann (f a) (f <$> as)
 mapPattern f (PConstructor ann constructor as) =
@@ -101,6 +102,7 @@ patternMonoid :: (Monoid a) => (Pattern dep ann -> a) -> Pattern dep ann -> a
 patternMonoid _ PLiteral {} = mempty
 patternMonoid _ PWildcard {} = mempty
 patternMonoid _ PVar {} = mempty
+patternMonoid f (PArray _ as _) = foldMap f as
 patternMonoid f (PTuple _ a as) =
   f a <> foldMap f (NE.toList as)
 patternMonoid f (PConstructor _ _ as) =
@@ -144,8 +146,16 @@ mapPatternDep resolve = go
     go (PWildcard a) = PWildcard a
     go (PVar ann a) = PVar ann (resolve a)
     go (PTuple ann a as) = PTuple ann (go a) (go <$> as)
+    go (PArray ann as spread) = PArray ann (go <$> as) (mapSpreadDep resolve spread)
     go (PConstructor ann constructor as) =
       PConstructor ann (resolve constructor) (go <$> as)
+
+mapSpreadDep :: (forall a. depA a -> depB a) -> Spread depA ann -> Spread depB ann
+mapSpreadDep resolve = go
+  where
+    go NoSpread = NoSpread
+    go (SpreadWildcard ann) = SpreadWildcard ann
+    go (SpreadValue ann a) = SpreadValue ann (resolve a)
 
 mapTypeDep :: (forall a. depA a -> depB a) -> Type depA ann -> Type depB ann
 mapTypeDep resolve = go

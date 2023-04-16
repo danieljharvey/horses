@@ -37,6 +37,7 @@ destructurePattern fromIdentifier =
        in mconcat <$> traverseInd (\pat i -> destructInner (path <> [i]) pat) pats
     destructInner _ (Smol.PWildcard _) = pure mempty
     destructInner _ (Smol.PLiteral _ _) = pure mempty
+    destructInner _ (Smol.PArray {}) = error "destructInner PArray"
     destructInner path (Smol.PConstructor _ _ pArgs) = do
       -- get DataTypeInMemory from `ty`
       -- use it to work out where to reach into Struct to find data
@@ -59,6 +60,7 @@ predicatesFromPattern fromPrim =
   where
     predicatesInner _ (Smol.PWildcard _) = pure mempty
     predicatesInner _ (Smol.PVar _ _) = pure mempty
+    predicatesInner _ (Smol.PArray {}) = error "predicatesInner PArray"
     predicatesInner path (Smol.PLiteral _ prim) =
       case NE.nonEmpty path of
         Just nePath ->
