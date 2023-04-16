@@ -14,7 +14,7 @@ import Control.Monad.Except
 import Control.Monad.Reader
 import Control.Monad.State
 import Control.Monad.Writer.CPS
-import Data.Foldable (foldl')
+import Data.Foldable (foldl',toList)
 import Data.Functor
 import qualified Data.List.NonEmpty as NE
 import Data.Map.Strict (Map)
@@ -241,6 +241,12 @@ infer inferExpr = do
               (getExprAnnotation typedFst)
               (getExprAnnotation <$> typedRest)
       pure $ ETuple typ typedFst typedRest
+    (EArray ann as) -> do
+      typedAs <- traverse infer as
+      ty <- case NE.nonEmpty (reverse $ toList typedAs) of
+              Nothing -> error "what type is empty list"
+              Just tyAs -> combineMany (getExprAnnotation <$> tyAs)
+      pure (EArray (TArray ann ty) typedAs)
     (EGlobalLet _ann ident value rest) -> do
       ((tyVal, tyRest), globs) <- listenToGlobals $ do
         tyVal <- infer value

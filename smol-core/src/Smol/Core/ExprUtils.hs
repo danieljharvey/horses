@@ -38,6 +38,7 @@ mapOuterExprAnnotation f expr' =
     EApp ann a b -> EApp (f ann) a b
     EIf ann a b c -> EIf (f ann) a b c
     ETuple ann a b -> ETuple (f ann) a b
+    EArray ann a -> EArray (f ann) a
     EGlobal ann a -> EGlobal (f ann) a
     EGlobalLet ann a b c -> EGlobalLet (f ann) a b c
     ERecord ann a -> ERecord (f ann) a
@@ -56,6 +57,7 @@ mapExpr f (EApp ann fn arg) = EApp ann (f fn) (f arg)
 mapExpr f (EIf ann predExp thenExp elseExp) =
   EIf ann (f predExp) (f thenExp) (f elseExp)
 mapExpr f (ETuple ann a as) = ETuple ann (f a) (f <$> as)
+mapExpr f (EArray ann as) = EArray ann (f <$> as)
 mapExpr _ (EGlobal ann ident) = EGlobal ann ident
 mapExpr f (EGlobalLet ann ident expr rest) =
   EGlobalLet ann ident (f expr) (f rest)
@@ -77,6 +79,7 @@ bindExpr f (EApp ann fn arg) = EApp ann <$> f fn <*> f arg
 bindExpr f (EIf ann predExp thenExp elseExp) =
   EIf ann <$> f predExp <*> f thenExp <*> f elseExp
 bindExpr f (ETuple ann a as) = ETuple ann <$> f a <*> traverse f as
+bindExpr f (EArray ann as) = EArray ann <$> traverse f as
 bindExpr _ (EGlobal ann ident) = pure $ EGlobal ann ident
 bindExpr f (EGlobalLet ann ident expr rest) =
   EGlobalLet ann ident <$> f expr <*> f rest
@@ -124,6 +127,7 @@ mapExprDep resolve = go
     go (EIf ann predExp thenExp elseExp) =
       EIf ann (go predExp) (go thenExp) (go elseExp)
     go (ETuple ann a as) = ETuple ann (go a) (go <$> as)
+    go (EArray ann as) = EArray ann (go <$> as)
     go (EGlobal ann ident) = EGlobal ann ident
     go (EGlobalLet ann ident expr rest) =
       EGlobalLet ann ident (go expr) (go rest)
@@ -148,6 +152,7 @@ mapTypeDep resolve = go
   where
     go (TVar ann v) = TVar ann (resolve v)
     go (TTuple ann a as) = TTuple ann (go a) (go <$> as)
+    go (TArray ann as) = TArray ann (go as)
     go (TLiteral ann a) = TLiteral ann a
     go (TPrim ann p) = TPrim ann p
     go (TFunc ann env a b) = TFunc ann (go <$> env) (go a) (go b)

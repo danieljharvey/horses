@@ -16,6 +16,7 @@ module Smol.Core.Types.Expr
   )
 where
 
+import Data.Sequence (Seq)
 import Control.Monad.Identity
 import Data.Aeson (FromJSON, ToJSON)
 import qualified Data.List.NonEmpty as NE
@@ -68,6 +69,7 @@ data Expr dep ann
   | EVar ann (dep Identifier)
   | EConstructor ann (dep Constructor)
   | ETuple ann (Expr dep ann) (NE.NonEmpty (Expr dep ann))
+  | EArray ann (Seq (Expr dep ann))
   | EGlobal ann Identifier
   | EGlobalLet ann Identifier (Expr dep ann) (Expr dep ann)
   | ERecord ann (Map Identifier (Expr dep ann))

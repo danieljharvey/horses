@@ -39,6 +39,7 @@ fromExpr (EIf ann predE thenE elseE) =
   IIf ann (fromExpr predE) (fromExpr thenE) (fromExpr elseE)
 fromExpr (ELet ann ident expr rest) =
   fromExpr (EApp ann (ELambda ann ident rest) expr)
+fromExpr (EArray {}) = error "fromExpr EArray"
 fromExpr (EGlobalLet ann ident expr rest) =
   IGlobalLet ann ident (fromExpr expr) (fromExpr rest)
 fromExpr (EGlobal ann ident) = IGlobal ann ident

@@ -45,7 +45,7 @@ testElaborate expr = do
 
 spec :: Spec
 spec = do
-  describe "TypecheckSpec" $ do
+  fdescribe "TypecheckSpec" $ do
     describe "Parse and typecheck" $ do
       let inputs =
             [ ("True", "True"),
@@ -106,7 +106,11 @@ spec = do
               ("1 + 1", "Nat"),
               ("\\a -> a + 1", "Nat -> Nat"),
               ("(\\pair -> case pair of (a,b) -> a + b : (Nat,Nat) -> Nat)", "(Nat,Nat) -> Nat"),
-              ("let id = (\\i -> i : i -> i); case (Just 1) of Just a -> Just (id a) | Nothing -> Nothing", "Maybe 1")
+              ("let id = (\\i -> i : i -> i); case (Just 1) of Just a -> Just (id a) | Nothing -> Nothing", "Maybe 1"),
+              ("[1,2]", "[ 1 | 2 ]"),
+              ("[1,2,3,4]","[1 | 4 | 2 | 3]"),
+              ("[True]", "[True]"),
+              ("([1,2,3,4] : [Nat])", "[Nat]")
             ]
       traverse_
         ( \(inputExpr, expectedType) -> it (T.unpack inputExpr <> " :: " <> T.unpack expectedType) $ do

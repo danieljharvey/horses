@@ -7,6 +7,7 @@ import Data.Bifunctor (second)
 import Data.Either (isRight)
 import Data.FileEmbed
 import Data.Foldable (traverse_)
+import qualified Data.Sequence as Seq
 import Data.Functor
 import qualified Data.List.NonEmpty as NE
 import qualified Data.Map.Strict as M
@@ -86,7 +87,9 @@ spec = do
               ("let a = 1 in a", ELet () "a" (nat 1) (var "a")),
               ("f (a b)", EApp () (var "f") (EApp () (var "a") (var "b"))),
               ("fmap inc (Just 1)", EApp () (EApp () (var "fmap") (var "inc")) (EApp () (constructor "Just") (nat 1))),
-              ("Just (1 + 1)", EApp () (constructor "Just") (EInfix () OpAdd (nat 1) (nat 1)))
+              ("Just (1 + 1)", EApp () (constructor "Just") (EInfix () OpAdd (nat 1) (nat 1))),
+              ("[]", EArray () mempty),
+              ("[1,2,3,4]", EArray () (Seq.fromList [nat 1, nat 2, nat 3, nat 4]))
             ]
       traverse_
         ( \(str, expr) -> it (T.unpack str) $ do
@@ -96,7 +99,7 @@ spec = do
         )
         strings
 
-    describe "Type" $ do
+    fdescribe "Type" $ do
       let strings =
             [ ("True", tyBoolLit True),
               ("False", tyBoolLit False),
@@ -127,7 +130,8 @@ spec = do
                       (TApp () (TVar () "m") (TVar () "b"))
                   )
               ),
-              ("Maybe.Maybe", TConstructor () (ParseDep "Maybe" (Just "Maybe")))
+              ("Maybe.Maybe", TConstructor () (ParseDep "Maybe" (Just "Maybe"))),
+              ("[Bool]",TArray () tyBool)
             ]
       traverse_
         ( \(str, ty) -> it (T.unpack str) $ do

@@ -85,6 +85,14 @@ combine a b =
       (TLiteral ann (TLBool bA), TLiteral _ (TLBool bB))
         | bA /= bB ->
             pure $ TPrim ann TPBool -- don't have True | False, it's silly
+      (TUnion ann _ _ , TLiteral _ (TLInt _)) ->
+        if memberOf b a then pure a
+                        else pure $ TUnion ann a b
+      (TLiteral _ (TLInt _), TUnion ann _ _) ->
+        if memberOf a b then pure b
+                        else pure $ TUnion ann b a
+      (TUnion ann _ _ , TUnion  {} ) ->
+         pure $ TUnion ann a b -- we're not deduping because we are lazy
       _ -> throwError (TCTypeMismatch a b)
 
 typeEquals :: ResolvedType ann -> ResolvedType ann -> Bool
@@ -157,6 +165,8 @@ isSubtypeOf (TTuple annA fstA restA) (TTuple _annB fstB restB) =
     tyFst <- isSubtypeOf fstA fstB
     tyRest <- neZipWithM isSubtypeOf restA restB
     pure (TTuple annA tyFst tyRest)
+isSubtypeOf (TArray _ a) (TArray _ b)
+  = isSubtypeOf a b
 isSubtypeOf tA@(TApp tyAnn lA lB) tB@(TApp _ rA rB) = do
   -- need to check for variables in here
   let result =

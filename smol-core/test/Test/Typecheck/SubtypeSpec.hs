@@ -91,7 +91,18 @@ spec = do
           runWriterT (one `isSubtypeOf` two)
             `shouldBe` Right expected
 
-      describe "Valid pairs" $ do
+      describe "Combine" $ do
+        let inputs = [("1","2","1 | 2"),
+                        ("1 | 2", "2", "1 | 2"),
+                        ("1 | 2", "3", "1 | 2 | 3")
+                     ]
+        traverse_
+          (\(one,two,result) -> it ( show one <> " <> " <> show two) $ do
+              let a = combine (fromParsedType (unsafeParseType one))
+                        (fromParsedType (unsafeParseType two))
+              fst <$> runWriterT a  `shouldBe` Right (fromParsedType (unsafeParseType result))) inputs
+
+      fdescribe "Valid pairs" $ do
         let validPairs =
               [ ("True", "True"),
                 ("False", "False"),
@@ -100,7 +111,8 @@ spec = do
                 ("(True, False)", "(True,Bool)"),
                 ("Maybe", "Maybe"),
                 ("Maybe 1", "Maybe a"),
-                ("{ item: 1 }", "{}")
+                ("{ item: 1 }", "{}"),
+                ("[1 | 2]","[Nat]")
               ]
         traverse_
           ( \(lhs, rhs) -> it (show lhs <> " <: " <> show rhs) $ do

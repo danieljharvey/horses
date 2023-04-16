@@ -81,7 +81,7 @@ simpleTypeParser =
           <|> try tVarParser
           <|> try tyPrimitiveParser
           <|> try tyRecordParser
-          --        <|> try arrayParser
+          <|> tyArrayParser
           <|> try adtParser
    in orInBrackets parsers
 
@@ -227,6 +227,14 @@ tyRecordItemParser = do
   myString ":"
   expr <- typeParser
   pure (name, expr)
+
+tyArrayParser :: Parser (ParsedType Annotation)
+tyArrayParser = withLocation TArray $ do
+  myString "["
+  args <- typeParser
+  myString "]"
+  pure args
+
 
 {-
 tyRecordRowParser :: Parser (ParsedType Annotation)
