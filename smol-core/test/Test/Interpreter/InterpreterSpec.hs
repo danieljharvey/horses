@@ -26,8 +26,8 @@ doInterpret =
 
 spec :: Spec
 spec = do
-  fdescribe "InterpreterSpec" $ do
-    describe "interpret" $ do
+  describe "InterpreterSpec" $ do
+    fdescribe "interpret" $ do
       let cases =
             [ ("a", "a"),
               ("1 + 1", "2"),
@@ -43,7 +43,8 @@ spec = do
               ("global dog = 100; dog! + 1", "101"),
               ("global dog = 100; global dog = 200; dog!", "200"),
               ("let id = \\a -> a; (id 1, id 2, id 3)", "(1,2,3)"),
-              ("[1,2 + 3]", "[1,5]")
+              ("[1,2 + 3]", "[1,5]"),
+              ("case [1,2,3] of [_, ...rest] -> rest | _ -> [42]", "[2,3]")
             ]
       traverse_
         ( \(input, expect) ->

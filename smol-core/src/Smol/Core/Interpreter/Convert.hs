@@ -96,4 +96,9 @@ toExpr (IArray ann as) = EArray ann (toExpr <$> as)
 
 patternVars :: Pattern Identity ann -> Set Identifier
 patternVars (PVar _ v) = S.singleton (runIdentity v)
+patternVars (PArray _ as spread) =
+  mconcat (patternVars <$> as)
+    <> case spread of
+      SpreadValue _ a -> S.singleton (runIdentity a)
+      _ -> mempty
 patternVars other = patternMonoid patternVars other

@@ -43,7 +43,7 @@ spec = do
         )
         testInputs
 
-    fdescribe "Expr" $ do
+    describe "Expr" $ do
       let strings =
             [ ("True", bool True),
               ("False", bool False),
@@ -106,7 +106,7 @@ spec = do
         )
         strings
 
-    fdescribe "Type" $ do
+    describe "Type" $ do
       let strings =
             [ ("True", tyBoolLit True),
               ("False", tyBoolLit False),

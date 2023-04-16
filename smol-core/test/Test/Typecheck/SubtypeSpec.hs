@@ -107,7 +107,7 @@ spec = do
           )
           inputs
 
-      fdescribe "Valid pairs" $ do
+      describe "Valid pairs" $ do
         let validPairs =
               [ ("True", "True"),
                 ("False", "False"),

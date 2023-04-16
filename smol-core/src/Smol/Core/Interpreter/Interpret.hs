@@ -5,10 +5,12 @@ module Smol.Core.Interpreter.Interpret (interpret, emptyEnv, InterpretEnv (..)) 
 
 import Control.Monad.Identity
 import Control.Monad.Reader
+import Data.Foldable (toList)
 import qualified Data.List.NonEmpty as NE
 import Data.Map.Strict (Map)
 import qualified Data.Map.Strict as M
 import Data.Monoid
+import qualified Data.Sequence as Seq
 import Smol.Core.Interpreter.Convert
 import Smol.Core.Interpreter.Types
 import Smol.Core.Types
@@ -120,6 +122,7 @@ interpretPatternMatch expr' patterns = do
   let foldF (pat, patExpr) = case patternMatches pat intExpr of
         Just bindings -> First (Just (patExpr, bindings))
         _ -> First Nothing
+
   -- get first matching pattern
   case getFirst (foldMap foldF patterns) of
     Just (patExpr, bindings) ->
@@ -163,24 +166,23 @@ patternMatches (PConstructor _ pTyCon pArgs) (IApp ann fn val) = do
       let allPairs = zip pArgs args
       nice <- traverse (uncurry patternMatches) allPairs
       pure (mconcat nice)
-
-{-
-patternMatches (PArray _ pAs NoSpread) (MyArray _ as)
+patternMatches (PArray _ pAs NoSpread) (IArray _ as)
   | length pAs == length as = do
-    let allPairs = zip pAs as
-    nice <- traverse (uncurry patternMatches) allPairs
-    pure (mconcat nice)
-patternMatches (PArray _ pAs (SpreadWildcard _)) (MyArray _ as)
+      let allPairs = zip pAs (toList as)
+      nice <- traverse (uncurry patternMatches) allPairs
+      pure (mconcat nice)
+patternMatches (PArray _ pAs (SpreadWildcard _)) (IArray _ as)
   | length pAs <= length as = do
-    let allPairs = zip pAs as
-    nice <- traverse (uncurry patternMatches) allPairs
-    pure (mconcat nice)
-patternMatches (PArray _ pAs (SpreadValue _ a)) (MyArray ann as)
+      let allPairs = zip pAs (toList as)
+      nice <- traverse (uncurry patternMatches) allPairs
+      pure (mconcat nice)
+patternMatches (PArray _ pAs (SpreadValue _ a)) (IArray ann as)
   | length pAs <= length as = do
-    let binding = (a, MyArray ann (drop (length pAs) as))
-    let allPairs = zip pAs as
-    nice <- traverse (uncurry patternMatches) allPairs
-    pure (mconcat nice <> [binding])
+      let binding = (runIdentity a, IArray ann (Seq.fromList $ drop (length pAs) (toList as)))
+          allPairs = zip pAs (toList as)
+      nice <- traverse (uncurry patternMatches) allPairs
+      pure (mconcat nice <> [binding])
+{-
 patternMatches (PString _ pA pAs) (MyLiteral _ (MyString (StringType str))) | not (T.null str) =
   do
     let bindingA = case pA of
