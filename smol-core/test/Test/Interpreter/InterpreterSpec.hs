@@ -27,7 +27,7 @@ doInterpret =
 spec :: Spec
 spec = do
   describe "InterpreterSpec" $ do
-    fdescribe "interpret" $ do
+    describe "interpret" $ do
       let cases =
             [ ("a", "a"),
               ("1 + 1", "2"),

@@ -7,6 +7,8 @@ module Smol.Core.Typecheck.Subtype
     combine,
     combineTypeMaps,
     generaliseLiteral,
+    isNatLiteral,
+    isIntLiteral,
   )
 where
 
@@ -119,12 +121,12 @@ isLiteralSubtypeOf _ _ = False
 
 -- | this is a sign we're encoding unions all wrong I think, but let's just
 -- follow this through
-isNatLiteral :: ResolvedType ann -> Bool
+isNatLiteral :: Type dep ann -> Bool
 isNatLiteral (TUnion _ a b) = isNatLiteral a && isNatLiteral b
 isNatLiteral (TLiteral _ (TLInt a)) | a >= 0 = True
 isNatLiteral _ = False
 
-isIntLiteral :: ResolvedType ann -> Bool
+isIntLiteral :: Type dep ann -> Bool
 isIntLiteral (TUnion _ a b) = isIntLiteral a && isIntLiteral b
 isIntLiteral (TLiteral _ (TLInt _)) = True
 isIntLiteral _ = False

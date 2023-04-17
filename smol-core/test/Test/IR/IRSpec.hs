@@ -121,6 +121,14 @@ spec = do
         describe "IR compile" $ do
           traverse_ testCompileIR testVals
 
+      describe "Arrays and matching" $ do
+        let testVals =
+              [ ("let arr = [20,22]; (case arr of [a,b] -> a + b | _ -> 0)", "42")
+              ]
+
+        describe "IR compile" $ do
+          traverse_ testCompileIR testVals
+
       describe "Datatypes" $ do
         let testVals =
               [ ("(\\ord -> case ord of GT -> 21 | EQ -> 23 | LT -> 42 : Ord -> Nat) LT", "42"), -- constructor with no args
