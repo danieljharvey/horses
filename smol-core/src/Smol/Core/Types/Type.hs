@@ -17,12 +17,12 @@ module Smol.Core.Types.Type
     renderType,
   )
 where
-import Data.Word (Word64)
 
 import Data.Aeson (FromJSON, FromJSONKey, ToJSON)
 import qualified Data.List.NonEmpty as NE
 import Data.Map.Strict
 import qualified Data.Map.Strict as M
+import Data.Word (Word64)
 import GHC.Generics (Generic)
 import Prettyprinter ((<+>))
 import qualified Prettyprinter as PP

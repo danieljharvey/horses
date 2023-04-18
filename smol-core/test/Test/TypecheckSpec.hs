@@ -29,10 +29,13 @@ getLeft :: (Show a) => Either e a -> e
 getLeft (Left e) = e
 getLeft (Right a) = error (show a)
 
-removeLambdaEnv :: Type dep ann -> Type dep ann
-removeLambdaEnv (TFunc ann _ fn arg) =
-  TFunc ann mempty (removeLambdaEnv fn) (removeLambdaEnv arg)
-removeLambdaEnv other = mapType removeLambdaEnv other
+-- simplify type for equality check
+-- remove anything that can't be described in a type signature
+simplifyType :: Type dep ann -> Type dep ann
+simplifyType (TFunc ann _ fn arg) =
+  TFunc ann mempty (simplifyType fn) (simplifyType arg)
+simplifyType (TArray ann _ as) = TArray ann 0 (simplifyType as)
+simplifyType other = mapType simplifyType other
 
 testElaborate ::
   (Ord ann, Show ann, Monoid ann) =>
@@ -118,8 +121,8 @@ spec = do
         ( \(inputExpr, expectedType) -> it (T.unpack inputExpr <> " :: " <> T.unpack expectedType) $ do
             case (,) <$> first (T.pack . show) (evalExpr inputExpr) <*> parseTypeAndFormatError expectedType of
               Right (te, typ) ->
-                let result = removeLambdaEnv (getExprAnnotation te) $> ()
-                    expected = fromParsedType (removeLambdaEnv typ $> ())
+                let result = simplifyType (getExprAnnotation te) $> ()
+                    expected = fromParsedType (simplifyType typ $> ())
                  in result `shouldBe` expected
               other -> error (show other)
         )

@@ -10,11 +10,10 @@ module Smol.Core.IR.FromExpr.Expr
   )
 where
 
-import Data.Foldable (toList)
-import Smol.Core.Typecheck.Subtype
 import Control.Monad.Identity
 import Control.Monad.State
 import Data.Bifunctor
+import Data.Foldable (toList)
 import qualified Data.List.NonEmpty as NE
 import Data.Map.Strict (Map)
 import qualified Data.Map.Strict as M
@@ -28,6 +27,7 @@ import Smol.Core.IR.FromExpr.Types
 import Smol.Core.IR.IRExpr
 import Smol.Core.Typecheck (builtInTypes, flattenConstructorApplication)
 import Smol.Core.Typecheck.Shared (getExprAnnotation)
+import Smol.Core.Typecheck.Subtype
 import Smol.Core.Types.Constructor
 import Smol.Core.Types.Expr
 import Smol.Core.Types.GetPath
@@ -268,15 +268,20 @@ fromExpr (EConstructor ty constructor) = do
 fromExpr (EArray ty items) = do
   irType <- fromType ty
   let setCount = IRSetTo [0] IRInt32 (IRPrim $ IRPrimInt32 $ fromIntegral $ length items)
-  setItems <- traverseInd (\item i -> do
-      tyItem <- fromType (getExprAnnotation item)
-      irItem <- fromExpr item
-      pure $ IRSetTo [1,i] tyItem irItem) (toList items)
-  pure $ IRInitialiseDataType
-          (IRAlloc irType)
-          irType
-          irType
-          ([setCount] <> setItems)
+  setItems <-
+    traverseInd
+      ( \item i -> do
+          tyItem <- fromType (getExprAnnotation item)
+          irItem <- fromExpr item
+          pure $ IRSetTo [1, i] tyItem irItem
+      )
+      (toList items)
+  pure $
+    IRInitialiseDataType
+      (IRAlloc irType)
+      irType
+      irType
+      ([setCount] <> setItems)
 fromExpr expr = error ("fuck: " <> show expr)
 
 -- | given an env type, put all it's items in scope

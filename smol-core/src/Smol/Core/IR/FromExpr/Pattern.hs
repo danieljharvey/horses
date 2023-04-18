@@ -38,8 +38,8 @@ destructurePattern fromIdentifier =
     destructInner _ (Smol.PWildcard _) = pure mempty
     destructInner _ (Smol.PLiteral _ _) = pure mempty
     destructInner path (Smol.PArray _ as _) =
-        let pathSoFar = path <> [1] -- arrays are length-indexed so actually (lengthInt, [items])
-         in mconcat <$> traverseInd (\pat i -> destructInner (pathSoFar <> [i]) pat) as
+      let pathSoFar = path <> [1] -- arrays are length-indexed so actually (lengthInt, [items])
+       in mconcat <$> traverseInd (\pat i -> destructInner (pathSoFar <> [i]) pat) as
     destructInner path (Smol.PConstructor _ _ pArgs) = do
       -- get DataTypeInMemory from `ty`
       -- use it to work out where to reach into Struct to find data
@@ -63,8 +63,12 @@ predicatesFromPattern fromPrim =
     predicatesInner _ (Smol.PWildcard _) = pure mempty
     predicatesInner _ (Smol.PVar _ _) = pure mempty
     predicatesInner path (Smol.PArray _ pats _) =
-       mconcat <$> traverseInd (\pat i ->
-          predicatesInner (path <> [1, i]) pat) pats
+      mconcat
+        <$> traverseInd
+          ( \pat i ->
+              predicatesInner (path <> [1, i]) pat
+          )
+          pats
     predicatesInner path (Smol.PLiteral _ prim) =
       case NE.nonEmpty path of
         Just nePath ->
