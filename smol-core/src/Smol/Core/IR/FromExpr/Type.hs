@@ -49,9 +49,9 @@ fromType ty@Smol.TApp {} = do
 fromType (Smol.TConstructor _ constructor) = do
   dt <- Compile.lookupTypeName constructor
   getIrTypeForDataType dt []
-fromType (Smol.TArray _ item) = do
+fromType (Smol.TArray _ size item) = do
   dtItem <- fromType item
-  pure $ IRStruct [IRInt32, IRArray 2 dtItem]
+  pure $ IRStruct [IRInt32, IRArray size dtItem]
 fromType union | isNatLiteral union = pure IRInt32
 fromType union | isIntLiteral union = pure IRInt32
 fromType other =
@@ -84,3 +84,4 @@ fromTypePrim :: Smol.TypePrim -> IRType
 fromTypePrim Smol.TPBool = IRInt2
 fromTypePrim Smol.TPNat = IRInt32
 fromTypePrim Smol.TPInt = IRInt32
+

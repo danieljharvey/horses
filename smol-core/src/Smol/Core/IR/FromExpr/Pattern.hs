@@ -62,7 +62,9 @@ predicatesFromPattern fromPrim =
   where
     predicatesInner _ (Smol.PWildcard _) = pure mempty
     predicatesInner _ (Smol.PVar _ _) = pure mempty
-    predicatesInner _ (Smol.PArray {}) = pure mempty --error "predicatesInner PArray"
+    predicatesInner path (Smol.PArray _ pats _) =
+       mconcat <$> traverseInd (\pat i ->
+          predicatesInner (path <> [1, i]) pat) pats
     predicatesInner path (Smol.PLiteral _ prim) =
       case NE.nonEmpty path of
         Just nePath ->

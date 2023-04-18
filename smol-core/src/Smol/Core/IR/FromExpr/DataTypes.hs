@@ -154,9 +154,9 @@ toRepresentation ty@Smol.TApp {} = do
     Left e -> error (show e)
 toRepresentation (Smol.TTuple _ tyHead tyTail) =
   DTTuple <$> traverse toRepresentation ([tyHead] <> NE.toList tyTail)
-toRepresentation (Smol.TArray _ a) = do
+toRepresentation (Smol.TArray _ size a) = do
   dtInner <- toRepresentation a
-  pure $ DTTuple [DTPrim Smol.TPInt, DTArray 2 dtInner]
+  pure $ DTTuple [DTPrim Smol.TPInt, DTArray size dtInner]
 toRepresentation union | isNatLiteral union = pure $ DTPrim Smol.TPInt
 toRepresentation union | isIntLiteral union = pure $ DTPrim Smol.TPInt
 toRepresentation ty = error ("can't make rep of " <> show ty)

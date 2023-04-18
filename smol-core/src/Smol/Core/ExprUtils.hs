@@ -162,7 +162,7 @@ mapTypeDep resolve = go
   where
     go (TVar ann v) = TVar ann (resolve v)
     go (TTuple ann a as) = TTuple ann (go a) (go <$> as)
-    go (TArray ann as) = TArray ann (go as)
+    go (TArray ann i as) = TArray ann i (go as)
     go (TLiteral ann a) = TLiteral ann a
     go (TPrim ann p) = TPrim ann p
     go (TFunc ann env a b) = TFunc ann (go <$> env) (go a) (go b)

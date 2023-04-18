@@ -80,8 +80,8 @@ substitute sub@(Substitution i ty) = \case
     TFunc ann (substitute sub <$> closure) (substitute sub fn) (substitute sub arg)
   TApp ann a b ->
     TApp ann (substitute sub a) (substitute sub b)
-  TArray ann as ->
-    TArray ann (substitute sub as)
+  TArray ann size as ->
+    TArray ann size (substitute sub as)
   TTuple ann tFst tRest ->
     TTuple ann (substitute sub tFst) (substitute sub <$> tRest)
   TGlobals ann tGlobs tBody ->

@@ -229,7 +229,7 @@ tyRecordItemParser = do
   pure (name, expr)
 
 tyArrayParser :: Parser (ParsedType Annotation)
-tyArrayParser = withLocation TArray $ do
+tyArrayParser = withLocation (`TArray` 0) $ do
   myString "["
   arg <- typeParser
   myString "]"

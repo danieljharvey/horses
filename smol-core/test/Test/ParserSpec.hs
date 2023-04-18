@@ -138,7 +138,7 @@ spec = do
                   )
               ),
               ("Maybe.Maybe", TConstructor () (ParseDep "Maybe" (Just "Maybe"))),
-              ("[Bool]", TArray () tyBool)
+              ("[Bool]", TArray () 0 tyBool)
             ]
       traverse_
         ( \(str, ty) -> it (T.unpack str) $ do

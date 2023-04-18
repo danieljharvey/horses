@@ -183,9 +183,9 @@ isSubtypeOf (TTuple annA fstA restA) (TTuple _annB fstB restB) =
     tyFst <- isSubtypeOf fstA fstB
     tyRest <- neZipWithM isSubtypeOf restA restB
     pure (TTuple annA tyFst tyRest)
-isSubtypeOf (TArray ann a) (TArray _ b) = do
+isSubtypeOf (TArray ann i a) (TArray _ _ b) = do
   inner <- isSubtypeOf a b
-  pure (TArray ann inner)
+  pure (TArray ann i inner) -- should we checking array length?
 isSubtypeOf tA@(TApp tyAnn lA lB) tB@(TApp _ rA rB) = do
   -- need to check for variables in here
   let result =

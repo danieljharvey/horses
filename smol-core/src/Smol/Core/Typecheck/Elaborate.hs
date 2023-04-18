@@ -243,10 +243,11 @@ infer inferExpr = do
       pure $ ETuple typ typedFst typedRest
     (EArray ann as) -> do
       typedAs <- traverse infer as
+      let size = fromIntegral (length as)
       ty <- case NE.nonEmpty (reverse $ toList typedAs) of
         Nothing -> error "what type is empty list"
         Just tyAs -> combineMany (getExprAnnotation <$> tyAs)
-      pure (EArray (TArray ann ty) typedAs)
+      pure (EArray (TArray ann size ty) typedAs)
     (EGlobalLet _ann ident value rest) -> do
       ((tyVal, tyRest), globs) <- listenToGlobals $ do
         tyVal <- infer value
@@ -393,7 +394,7 @@ checkPattern checkTy checkPat = do
       case result of
         Left _ -> throwError (TCPatternMismatch pat ty)
         Right _ -> pure (PLiteral ty lit, mempty)
-    (ty@(TArray _ tyArr), PArray ann items spread) -> do
+    (ty@(TArray _ arrSize tyArr), PArray ann items spread) -> do
       inferEverything <- traverse (checkPattern tyArr) items
       (inferSpread, env2) <- case spread of
         SpreadValue _ binder -> do
@@ -410,6 +411,7 @@ checkPattern checkTy checkPat = do
         ( PArray
             ( TArray
                 ann
+                arrSize
                 tyArr
             )
             (fst <$> inferEverything)
