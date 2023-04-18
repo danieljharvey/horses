@@ -10,6 +10,8 @@ module Smol.Core.IR.FromExpr.Expr
   )
 where
 
+import Data.Foldable (toList)
+import Smol.Core.Typecheck.Subtype
 import Control.Monad.Identity
 import Control.Monad.State
 import Data.Bifunctor
@@ -64,6 +66,8 @@ getPrinter (TPrim _ TPNat) = irPrintInt
 getPrinter (TPrim _ TPBool) = irPrintBool
 getPrinter (TLiteral _ (TLBool _)) = irPrintBool
 getPrinter (TLiteral _ (TLInt _)) = irPrintInt
+getPrinter union | isNatLiteral union = irPrintInt
+getPrinter union | isIntLiteral union = irPrintInt
 getPrinter other = error ("could not find a printer for type " <> show other)
 
 getPrintFuncName ::
@@ -261,6 +265,18 @@ fromExpr (EConstructor ty constructor) = do
           specificStructType
           structType
           [setConsNum]
+fromExpr (EArray ty items) = do
+  irType <- fromType ty
+  let setCount = IRSetTo [0] IRInt32 (IRPrim $ IRPrimInt32 $ fromIntegral $ length items)
+  setItems <- traverseInd (\item i -> do
+      tyItem <- fromType (getExprAnnotation item)
+      irItem <- fromExpr item
+      pure $ IRSetTo [1,i] tyItem irItem) (toList items)
+  pure $ IRInitialiseDataType
+          (IRAlloc irType)
+          irType
+          irType
+          ([setCount] <> setItems)
 fromExpr expr = error ("fuck: " <> show expr)
 
 -- | given an env type, put all it's items in scope

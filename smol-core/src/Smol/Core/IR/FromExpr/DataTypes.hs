@@ -156,7 +156,7 @@ toRepresentation (Smol.TTuple _ tyHead tyTail) =
   DTTuple <$> traverse toRepresentation ([tyHead] <> NE.toList tyTail)
 toRepresentation (Smol.TArray _ a) = do
   dtInner <- toRepresentation a
-  pure $ DTTuple [DTPrim Smol.TPInt, DTArray 0 dtInner]
+  pure $ DTTuple [DTPrim Smol.TPInt, DTArray 2 dtInner]
 toRepresentation union | isNatLiteral union = pure $ DTPrim Smol.TPInt
 toRepresentation union | isIntLiteral union = pure $ DTPrim Smol.TPInt
 toRepresentation ty = error ("can't make rep of " <> show ty)

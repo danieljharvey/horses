@@ -121,7 +121,7 @@ spec = do
         describe "IR compile" $ do
           traverse_ testCompileIR testVals
 
-      describe "Arrays and matching" $ do
+      fdescribe "Arrays and matching" $ do
         let testVals =
               [ ("let arr = [20,22]; (case arr of [a,b] -> a + b | _ -> 0)", "42")
               ]

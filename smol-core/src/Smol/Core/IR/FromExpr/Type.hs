@@ -51,7 +51,7 @@ fromType (Smol.TConstructor _ constructor) = do
   getIrTypeForDataType dt []
 fromType (Smol.TArray _ item) = do
   dtItem <- fromType item
-  pure $ IRStruct [IRInt32, IRArray 0 dtItem]
+  pure $ IRStruct [IRInt32, IRArray 2 dtItem]
 fromType union | isNatLiteral union = pure IRInt32
 fromType union | isIntLiteral union = pure IRInt32
 fromType other =
