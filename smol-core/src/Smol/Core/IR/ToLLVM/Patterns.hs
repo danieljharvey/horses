@@ -49,12 +49,12 @@ predicatesToOperand input nePreds = do
     firstOp
     (NE.tail nePreds)
   where
-    compilePred (PathEquals (GetPath [] GetValue) prim) =
-      L.icmp IP.EQ input (irPrimToLLVM prim)
-    compilePred (PathEquals (GetPath as GetValue) prim) =
-      do
-        val <- loadFromStruct input as
-        L.icmp IP.EQ val (irPrimToLLVM prim)
+    compilePred (PathEquals (GetPath as GetValue) prim) = do
+      val <-
+        if null as
+          then pure input
+          else loadFromStruct input as
+      L.icmp IP.EQ val (irPrimToLLVM prim)
     compilePred (PathEquals (GetPath _ (GetArrayTail _)) _) =
       error "predicatesToOperand GetArrayTail"
 

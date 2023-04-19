@@ -348,10 +348,5 @@ irVarFromPath ::
 irVarFromPath llExpr ident (GetPath as GetValue) = do
   val <- if null as then pure llExpr else loadFromStruct llExpr as
   addVar ident val
-irVarFromPath llExpr ident (GetPath as (GetArrayTail drop)) = do
-  val <- if null as then pure llExpr else loadFromStruct llExpr as
-  -- get length (it's [0] in the array struct)
-  -- now create an array that is `drop` values less 
-  -- then `addVar` it to environment
-  -- great job!
-  error "oh no"
+irVarFromPath _llExpr _ident (GetPath _ (GetArrayTail _)) = do
+  error "spread on arrays not implemented as we'll need some sort of malloc"
