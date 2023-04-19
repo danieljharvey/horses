@@ -39,7 +39,7 @@ spec = do
     describe "ResolvedDeps" $ do
       it "No deps, marks uniques" $ do
         let expr = unsafeParseExpr "let a = 123 in a"
-            expected = undefined
+            expected = ELet () _
         resolveExprDeps expr `shouldBe` expected
     describe "Typecheck" $ do
       it "Typechecks Prelude successfully" $ do

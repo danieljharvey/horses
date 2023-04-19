@@ -7,6 +7,7 @@ module Smol.Core.Modules.Uses
   )
 where
 
+import Data.Foldable (toList)
 import qualified Data.List.NonEmpty as NE
 import Data.Set (Set)
 import qualified Data.Set as S
@@ -42,6 +43,7 @@ extractUses_ (EVar _ (ParseDep a Nothing)) =
   S.singleton (E.EVar a)
 extractUses_ (EAnn _ mt expr) =
   extractUses_ expr <> extractTypeUses mt
+extractUses_ (EArray _ as) = mconcat $ extractUses_ <$> toList as
 extractUses_ (EIf _ a b c) =
   extractUses_ a <> extractUses_ b <> extractUses_ c
 extractUses_ (ELet _ ident a b) =
@@ -98,6 +100,11 @@ extractPatternUses (PLiteral _ _) = mempty
 extractPatternUses (PVar _ (ParseDep a _)) = S.singleton (E.EVar a)
 extractPatternUses (PTuple _ a as) =
   extractPatternUses a <> foldMap extractPatternUses as
+extractPatternUses (PArray _ as spread) =
+  foldMap extractPatternUses as <> case spread of
+                                     NoSpread -> mempty
+                                     SpreadWildcard {} -> mempty
+                                     SpreadValue _ (ParseDep a _) -> S.singleton (E.EVar a)
 extractPatternUses (PConstructor _ (ParseDep tyCon maybeMod) args) =
   let modEntity = case maybeMod of
         Just modName -> S.singleton (E.ENamespacedConstructor modName tyCon)
