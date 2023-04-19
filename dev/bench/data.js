@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1681287741883,
+  "lastUpdate": 1681940205327,
   "repoUrl": "https://github.com/danieljharvey/mimsa",
   "entries": {
     "Store benchmarks in Github Pages": [
@@ -435,6 +435,50 @@ window.BENCHMARK_DATA = {
           {
             "name": "evaluate/evaluate parsing 2",
             "value": 0.25433931920000247,
+            "unit": "Time (ms)"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "danieljamesharvey@gmail.com",
+            "name": "Daniel Harvey",
+            "username": "danieljharvey"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "927fd580a092dbf57bd3c6c9ec0e1e3e2f8941ab",
+          "message": "Arrays in Smol (#919)\n\n* Typechecking arrays yo\r\n\r\n* Typecheck pattern matching arrays\r\n\r\n* Interpret pattern matching arrays\r\n\r\n* Lay out array in memory\r\n\r\n* Well, well, well\r\n\r\n* Now to implement spreads in pattern matching\r\n\r\n* Get ready for spread\r\n\r\n* More sensible GetPath structure\r\n\r\n* Now to do the actual business\r\n\r\n* Yeah",
+          "timestamp": "2023-04-19T22:16:34+01:00",
+          "tree_id": "04e9b814c6ef4b38efa2fe1a9251b4fa74c3ace6",
+          "url": "https://github.com/danieljharvey/mimsa/commit/927fd580a092dbf57bd3c6c9ec0e1e3e2f8941ab"
+        },
+        "date": 1681940204216,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "build stdlib/allFns",
+            "value": 0.12647116459524577,
+            "unit": "Time (ms)"
+          },
+          {
+            "name": "evaluate/evaluate big looping thing",
+            "value": 0.11298436714286071,
+            "unit": "Time (ms)"
+          },
+          {
+            "name": "evaluate/evaluate parsing",
+            "value": 0.035639134280879656,
+            "unit": "Time (ms)"
+          },
+          {
+            "name": "evaluate/evaluate parsing 2",
+            "value": 0.24593083590000334,
             "unit": "Time (ms)"
           }
         ]
