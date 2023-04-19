@@ -5,6 +5,7 @@ module Smol.Core.Parser.Expr (expressionParser) where
 import Data.Functor (($>))
 import qualified Data.List.NonEmpty as NE
 import qualified Data.Map.Strict as M
+import qualified Data.Sequence as Seq
 import Data.Text (Text)
 import Data.Void
 import Smol.Core.Parser.Identifiers
@@ -34,8 +35,8 @@ expressionParser =
 
 complexParser :: Parser ParserExpr
 complexParser =
-  --  arrayParser
-  try letParser
+  arrayParser
+    <|> try letParser
     <|> globalLetParser
     --    <|> letPatternParser
     <|> try appParser
@@ -133,6 +134,16 @@ tupleParser = label "tuple" $
     pure (ETuple mempty (NE.head neArgs) neTail)
 
 -----
+
+arrayParser :: Parser ParserExpr
+arrayParser = withLocation EArray $ do
+  myString "["
+  args <- Seq.fromList <$> sepBy expressionParser (myString ",")
+  myString "]"
+  pure args
+
+-----
+
 annotationParser :: Parser ParserExpr
 annotationParser =
   let innerParser = do

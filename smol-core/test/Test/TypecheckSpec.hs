@@ -29,10 +29,13 @@ getLeft :: (Show a) => Either e a -> e
 getLeft (Left e) = e
 getLeft (Right a) = error (show a)
 
-removeLambdaEnv :: Type dep ann -> Type dep ann
-removeLambdaEnv (TFunc ann _ fn arg) =
-  TFunc ann mempty (removeLambdaEnv fn) (removeLambdaEnv arg)
-removeLambdaEnv other = mapType removeLambdaEnv other
+-- simplify type for equality check
+-- remove anything that can't be described in a type signature
+simplifyType :: Type dep ann -> Type dep ann
+simplifyType (TFunc ann _ fn arg) =
+  TFunc ann mempty (simplifyType fn) (simplifyType arg)
+simplifyType (TArray ann _ as) = TArray ann 0 (simplifyType as)
+simplifyType other = mapType simplifyType other
 
 testElaborate ::
   (Ord ann, Show ann, Monoid ann) =>
@@ -106,14 +109,20 @@ spec = do
               ("1 + 1", "Nat"),
               ("\\a -> a + 1", "Nat -> Nat"),
               ("(\\pair -> case pair of (a,b) -> a + b : (Nat,Nat) -> Nat)", "(Nat,Nat) -> Nat"),
-              ("let id = (\\i -> i : i -> i); case (Just 1) of Just a -> Just (id a) | Nothing -> Nothing", "Maybe 1")
+              ("let id = (\\i -> i : i -> i); case (Just 1) of Just a -> Just (id a) | Nothing -> Nothing", "Maybe 1"),
+              ("[1,2]", "[ 1 | 2 ]"),
+              ("[1,2,3,4]", "[1 | 4 | 2 | 3]"),
+              ("[True]", "[True]"),
+              ("([1,2,3,4] : [Nat])", "[Nat]"),
+              ("case ([1,2,3] : [Nat]) of [a] -> [a] | [_,...b] -> b", "[Nat]"),
+              ("case ([1,2]: [Nat]) of [a,...] -> a | _ -> 0", "Nat")
             ]
       traverse_
         ( \(inputExpr, expectedType) -> it (T.unpack inputExpr <> " :: " <> T.unpack expectedType) $ do
             case (,) <$> first (T.pack . show) (evalExpr inputExpr) <*> parseTypeAndFormatError expectedType of
               Right (te, typ) ->
-                let result = removeLambdaEnv (getExprAnnotation te) $> ()
-                    expected = fromParsedType (removeLambdaEnv typ $> ())
+                let result = simplifyType (getExprAnnotation te) $> ()
+                    expected = fromParsedType (simplifyType typ $> ())
                  in result `shouldBe` expected
               other -> error (show other)
         )

@@ -21,11 +21,13 @@ import Smol.Core.Printer
 import Smol.Core.Types.Constructor
 import Smol.Core.Types.Identifier
 import Smol.Core.Types.Prim
+import Smol.Core.Types.Spread
 
 data Pattern dep ann
   = PWildcard ann
   | PVar ann (dep Identifier)
   | PTuple ann (Pattern dep ann) (NE.NonEmpty (Pattern dep ann))
+  | PArray ann [Pattern dep ann] (Spread dep ann)
   | PLiteral ann Prim
   | PConstructor ann (dep Constructor) [Pattern dep ann]
   deriving stock (Functor, Foldable, Generic, Traversable)
@@ -95,11 +97,14 @@ instance
      in prettyDoc tyCon <> prettyArgs
   prettyDoc (PTuple _ a as) =
     "(" <> PP.hsep (PP.punctuate ", " (prettyDoc <$> ([a] <> NE.toList as))) <> ")"
-
-{-
   prettyDoc (PArray _ as spread) =
-    "[" <> concatWith (\a b -> a <> ", " <> b) (prettyDoc <$> as) <> prettyDoc spread <> "]"
--}
+    "["
+      <> PP.concatWith
+        (\a b -> a <> ", " <> b)
+        (prettyDoc <$> as)
+      <> prettyDoc spread
+      <> "]"
+
 {-
   prettyDoc (PRecord _ map') =
     let items = M.toList map'

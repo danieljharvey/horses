@@ -9,6 +9,7 @@ module Smol.Core.IR.ToLLVM.Patterns
     patName,
     selectToOperand,
     GetPath (..),
+    GetValue (..),
     PatternPredicate (..),
   )
 where
@@ -48,12 +49,14 @@ predicatesToOperand input nePreds = do
     firstOp
     (NE.tail nePreds)
   where
-    compilePred (PathEquals (StructPath as) prim) =
-      do
-        val <- loadFromStruct input (NE.toList as)
-        L.icmp IP.EQ val (irPrimToLLVM prim)
-    compilePred (PathEquals ValuePath prim) =
-      L.icmp IP.EQ input (irPrimToLLVM prim)
+    compilePred (PathEquals (GetPath as GetValue) prim) = do
+      val <-
+        if null as
+          then pure input
+          else loadFromStruct input as
+      L.icmp IP.EQ val (irPrimToLLVM prim)
+    compilePred (PathEquals (GetPath _ (GetArrayTail _)) _) =
+      error "predicatesToOperand GetArrayTail"
 
 -- | captures the idea of "if this predicate then 0, if this predicate then
 -- 1..."

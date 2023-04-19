@@ -9,6 +9,7 @@ where
 import Control.Monad.Identity
 import qualified Data.List.NonEmpty as NE
 import Data.Map.Strict
+import Data.Sequence (Seq)
 import Smol.Core.Types
 
 -- | An IExpr is an Expr with a function Lambda
@@ -28,6 +29,7 @@ data IExpr ann
       ann
       (IExpr ann)
       (NE.NonEmpty (IExpr ann))
+  | IArray ann (Seq (IExpr ann))
   | IGlobal ann Identifier
   | IGlobalLet ann Identifier (IExpr ann) (IExpr ann)
   | IRecord ann (Map Identifier (IExpr ann))

@@ -65,7 +65,11 @@ substituteMany :: (Eq (dep Identifier)) => [Substitution dep ann] -> Type dep an
 substituteMany subs ty =
   foldl (flip substitute) ty subs
 
-substitute :: (Eq (dep Identifier)) => Substitution dep ann -> Type dep ann -> Type dep ann
+substitute ::
+  (Eq (dep Identifier)) =>
+  Substitution dep ann ->
+  Type dep ann ->
+  Type dep ann
 substitute sub@(Substitution i ty) = \case
   TVar _ a | Just a == getSubId i -> ty
   TVar ann a -> TVar ann a
@@ -76,6 +80,8 @@ substitute sub@(Substitution i ty) = \case
     TFunc ann (substitute sub <$> closure) (substitute sub fn) (substitute sub arg)
   TApp ann a b ->
     TApp ann (substitute sub a) (substitute sub b)
+  TArray ann size as ->
+    TArray ann size (substitute sub as)
   TTuple ann tFst tRest ->
     TTuple ann (substitute sub tFst) (substitute sub <$> tRest)
   TGlobals ann tGlobs tBody ->

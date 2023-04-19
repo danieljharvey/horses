@@ -22,6 +22,7 @@ import Data.Word (Word64)
 import Smol.Core.IR.FromExpr.Helpers
 import Smol.Core.IR.FromExpr.Types
 import Smol.Core.Typecheck.Substitute
+import Smol.Core.Typecheck.Subtype
 import qualified Smol.Core.Typecheck.Types as Smol
 import qualified Smol.Core.Types as Smol
 
@@ -36,6 +37,8 @@ patternTypeInMemory (Smol.PLiteral ty _) =
 patternTypeInMemory (Smol.PVar ty _) =
   toRepresentation ty
 patternTypeInMemory (Smol.PTuple ty _ _) =
+  toRepresentation ty
+patternTypeInMemory (Smol.PArray ty _ _) =
   toRepresentation ty
 patternTypeInMemory (Smol.PWildcard ty) =
   toRepresentation ty
@@ -151,6 +154,11 @@ toRepresentation ty@Smol.TApp {} = do
     Left e -> error (show e)
 toRepresentation (Smol.TTuple _ tyHead tyTail) =
   DTTuple <$> traverse toRepresentation ([tyHead] <> NE.toList tyTail)
+toRepresentation (Smol.TArray _ size a) = do
+  dtInner <- toRepresentation a
+  pure $ DTTuple [DTPrim Smol.TPInt, DTArray size dtInner]
+toRepresentation union | isNatLiteral union = pure $ DTPrim Smol.TPInt
+toRepresentation union | isIntLiteral union = pure $ DTPrim Smol.TPInt
 toRepresentation ty = error ("can't make rep of " <> show ty)
 
 data DataTypeInMemory

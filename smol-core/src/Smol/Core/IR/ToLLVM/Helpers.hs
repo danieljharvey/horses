@@ -42,7 +42,6 @@ where
 
 import Control.Monad.Identity
 import Control.Monad.State
-import qualified Data.List.NonEmpty as NE
 import Data.Map.Strict (Map)
 import qualified Data.Map.Strict as M
 import Data.String
@@ -346,8 +345,8 @@ irVarFromPath ::
   IRIdentifier ->
   GetPath ->
   m ()
-irVarFromPath llExpr ident (StructPath as) = do
-  val <- loadFromStruct llExpr (NE.toList as)
+irVarFromPath llExpr ident (GetPath as GetValue) = do
+  val <- if null as then pure llExpr else loadFromStruct llExpr as
   addVar ident val
-irVarFromPath llExpr ident ValuePath = do
-  addVar ident llExpr
+irVarFromPath _llExpr _ident (GetPath _ (GetArrayTail _)) = do
+  error "spread on arrays not implemented as we'll need some sort of malloc"

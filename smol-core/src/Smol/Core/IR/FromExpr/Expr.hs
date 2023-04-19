@@ -13,6 +13,7 @@ where
 import Control.Monad.Identity
 import Control.Monad.State
 import Data.Bifunctor
+import Data.Foldable (toList)
 import qualified Data.List.NonEmpty as NE
 import Data.Map.Strict (Map)
 import qualified Data.Map.Strict as M
@@ -26,6 +27,7 @@ import Smol.Core.IR.FromExpr.Types
 import Smol.Core.IR.IRExpr
 import Smol.Core.Typecheck (builtInTypes, flattenConstructorApplication)
 import Smol.Core.Typecheck.Shared (getExprAnnotation)
+import Smol.Core.Typecheck.Subtype
 import Smol.Core.Types.Constructor
 import Smol.Core.Types.Expr
 import Smol.Core.Types.GetPath
@@ -64,6 +66,8 @@ getPrinter (TPrim _ TPNat) = irPrintInt
 getPrinter (TPrim _ TPBool) = irPrintBool
 getPrinter (TLiteral _ (TLBool _)) = irPrintBool
 getPrinter (TLiteral _ (TLInt _)) = irPrintInt
+getPrinter union | isNatLiteral union = irPrintInt
+getPrinter union | isIntLiteral union = irPrintInt
 getPrinter other = error ("could not find a printer for type " <> show other)
 
 getPrintFuncName ::
@@ -178,13 +182,13 @@ fromExpr (EIf ty predExpr thenExpr elseExpr) = do
       ( NE.fromList
           [ IRMatchCase
               { irmcType = IRInt2,
-                irmcPatternPredicate = [PathEquals ValuePath (IRPrimInt2 True)],
+                irmcPatternPredicate = [PathEquals (GetPath [] GetValue) (IRPrimInt2 True)],
                 irmcGetPath = mempty,
                 irmcExpr = irThen
               },
             IRMatchCase
               { irmcType = IRInt2,
-                irmcPatternPredicate = [PathEquals ValuePath (IRPrimInt2 False)],
+                irmcPatternPredicate = [PathEquals (GetPath [] GetValue) (IRPrimInt2 False)],
                 irmcGetPath = mempty,
                 irmcExpr = irElse
               }
@@ -261,6 +265,23 @@ fromExpr (EConstructor ty constructor) = do
           specificStructType
           structType
           [setConsNum]
+fromExpr (EArray ty items) = do
+  irType <- fromType ty
+  let setCount = IRSetTo [0] IRInt32 (IRPrim $ IRPrimInt32 $ fromIntegral $ length items)
+  setItems <-
+    traverseInd
+      ( \item i -> do
+          tyItem <- fromType (getExprAnnotation item)
+          irItem <- fromExpr item
+          pure $ IRSetTo [1, i] tyItem irItem
+      )
+      (toList items)
+  pure $
+    IRInitialiseDataType
+      (IRAlloc irType)
+      irType
+      irType
+      ([setCount] <> setItems)
 fromExpr expr = error ("fuck: " <> show expr)
 
 -- | given an env type, put all it's items in scope

@@ -14,6 +14,7 @@ import Smol.Core.IR.FromExpr.DataTypes
 import qualified Smol.Core.IR.FromExpr.Helpers as Compile
 import Smol.Core.IR.FromExpr.Types
 import Smol.Core.IR.IRExpr
+import Smol.Core.Typecheck.Subtype (isIntLiteral, isNatLiteral)
 import qualified Smol.Core.Types as Smol
 
 typeFromEnv ::
@@ -48,6 +49,11 @@ fromType ty@Smol.TApp {} = do
 fromType (Smol.TConstructor _ constructor) = do
   dt <- Compile.lookupTypeName constructor
   getIrTypeForDataType dt []
+fromType (Smol.TArray _ size item) = do
+  dtItem <- fromType item
+  pure $ IRStruct [IRInt32, IRArray size dtItem]
+fromType union | isNatLiteral union = pure IRInt32
+fromType union | isIntLiteral union = pure IRInt32
 fromType other =
   error $ "could not calculate IR type from smol type: " <> show other
 

@@ -171,13 +171,13 @@ irBasicIf =
                             ( NE.fromList
                                 [ IRMatchCase
                                     { irmcType = IRInt2,
-                                      irmcPatternPredicate = [PathEquals ValuePath (IRPrimInt2 True)],
+                                      irmcPatternPredicate = [PathEquals (GetPath [] GetValue) (IRPrimInt2 True)],
                                       irmcGetPath = mempty,
                                       irmcExpr = IRPrim (IRPrimInt32 42)
                                     },
                                   IRMatchCase
                                     { irmcType = IRInt2,
-                                      irmcPatternPredicate = [PathEquals ValuePath (IRPrimInt2 False)],
+                                      irmcPatternPredicate = [PathEquals (GetPath [] GetValue) (IRPrimInt2 False)],
                                       irmcGetPath = mempty,
                                       irmcExpr = IRPrim (IRPrimInt32 21)
                                     }
@@ -234,22 +234,22 @@ irPatternMatch =
                                       [ IRMatchCase
                                           { irmcType = tyRightInt,
                                             irmcPatternPredicate =
-                                              [ PathEquals (StructPath $ NE.singleton 0) (IRPrimInt32 0),
-                                                PathEquals (StructPath $ NE.singleton 1) (IRPrimInt32 100)
+                                              [ PathEquals (GetPath [0] GetValue) (IRPrimInt32 0),
+                                                PathEquals (GetPath [1] GetValue) (IRPrimInt32 100)
                                               ],
                                             irmcGetPath = mempty,
                                             irmcExpr = IRPrim (IRPrimInt32 41)
                                           },
                                         IRMatchCase
                                           { irmcType = tyRightInt,
-                                            irmcPatternPredicate = [PathEquals (StructPath $ NE.singleton 0) (IRPrimInt32 0)],
-                                            irmcGetPath = M.singleton "a" (StructPath $ NE.singleton 1),
+                                            irmcPatternPredicate = [PathEquals (GetPath [0] GetValue) (IRPrimInt32 0)],
+                                            irmcGetPath = M.singleton "a" (GetPath [1] GetValue),
                                             irmcExpr = IRVar "a"
                                           },
                                         IRMatchCase
                                           { irmcType = tyLeftBool,
-                                            irmcPatternPredicate = [PathEquals (StructPath $ NE.singleton 0) (IRPrimInt32 1)],
-                                            irmcGetPath = M.singleton "e" (StructPath $ NE.singleton 1),
+                                            irmcPatternPredicate = [PathEquals (GetPath [0] GetValue) (IRPrimInt32 1)],
+                                            irmcGetPath = M.singleton "e" (GetPath [1] GetValue),
                                             irmcExpr = IRPrim (IRPrimInt32 69)
                                           }
                                       ]
@@ -283,7 +283,7 @@ irRecursive =
                             [ IRMatchCase
                                 { irmcType = IRInt32,
                                   irmcPatternPredicate =
-                                    [ PathEquals ValuePath (IRPrimInt32 10000)
+                                    [ PathEquals (GetPath [] GetValue) (IRPrimInt32 10000)
                                     ],
                                   irmcGetPath = mempty,
                                   irmcExpr = IRPrim $ IRPrimInt32 0

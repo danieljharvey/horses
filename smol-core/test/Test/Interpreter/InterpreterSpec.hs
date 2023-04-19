@@ -42,7 +42,9 @@ spec = do
               ("let stuff = { x: 1, y : 2 }; stuff.x + stuff.y", "3"),
               ("global dog = 100; dog! + 1", "101"),
               ("global dog = 100; global dog = 200; dog!", "200"),
-              ("let id = \\a -> a; (id 1, id 2, id 3)", "(1,2,3)")
+              ("let id = \\a -> a; (id 1, id 2, id 3)", "(1,2,3)"),
+              ("[1,2 + 3]", "[1,5]"),
+              ("case [1,2,3] of [_, ...rest] -> rest | _ -> [42]", "[2,3]")
             ]
       traverse_
         ( \(input, expect) ->

@@ -10,6 +10,7 @@ import Data.Foldable (traverse_)
 import Data.Functor
 import qualified Data.List.NonEmpty as NE
 import qualified Data.Map.Strict as M
+import qualified Data.Sequence as Seq
 import Data.Text (Text)
 import qualified Data.Text as T
 import qualified Data.Text.Encoding as T
@@ -83,10 +84,19 @@ spec = do
                     (PTuple () (PLiteral () (PBool False)) (NE.fromList [PWildcard ()]), nat 0)
                   ]
               ),
+              ( "case [1,2,3] of [_, ...b] -> b | other -> other",
+                patternMatch
+                  (array [nat 1, nat 2, nat 3])
+                  [ (PArray () [PWildcard ()] (SpreadValue () "b"), var "b"),
+                    (PVar () "other", var "other")
+                  ]
+              ),
               ("let a = 1 in a", ELet () "a" (nat 1) (var "a")),
               ("f (a b)", EApp () (var "f") (EApp () (var "a") (var "b"))),
               ("fmap inc (Just 1)", EApp () (EApp () (var "fmap") (var "inc")) (EApp () (constructor "Just") (nat 1))),
-              ("Just (1 + 1)", EApp () (constructor "Just") (EInfix () OpAdd (nat 1) (nat 1)))
+              ("Just (1 + 1)", EApp () (constructor "Just") (EInfix () OpAdd (nat 1) (nat 1))),
+              ("[]", EArray () mempty),
+              ("[1,2,3,4]", EArray () (Seq.fromList [nat 1, nat 2, nat 3, nat 4]))
             ]
       traverse_
         ( \(str, expr) -> it (T.unpack str) $ do
@@ -127,7 +137,8 @@ spec = do
                       (TApp () (TVar () "m") (TVar () "b"))
                   )
               ),
-              ("Maybe.Maybe", TConstructor () (ParseDep "Maybe" (Just "Maybe")))
+              ("Maybe.Maybe", TConstructor () (ParseDep "Maybe" (Just "Maybe"))),
+              ("[Bool]", TArray () 0 tyBool)
             ]
       traverse_
         ( \(str, ty) -> it (T.unpack str) $ do

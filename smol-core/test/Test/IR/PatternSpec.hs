@@ -11,7 +11,7 @@ import Smol.Core.ExprUtils
 import Smol.Core.IR.FromExpr.Pattern (predicatesFromPattern)
 import Smol.Core.IR.FromExpr.Types (FromExprState (..))
 import Smol.Core.Typecheck.Elaborate (builtInTypes)
-import Smol.Core.Types.GetPath (GetPath (StructPath, ValuePath))
+import Smol.Core.Types.GetPath
 import Smol.Core.Types.ParseDep
 import qualified Smol.Core.Types.Pattern as Smol
   ( Pattern (PConstructor, PLiteral, PTuple, PWildcard),
@@ -44,7 +44,7 @@ spec = do
           first (fmap parseDepToIdentity)
             <$> [ (Smol.PWildcard ty, []),
                   ( Smol.PLiteral ty (PBool True),
-                    [PathEquals ValuePath (PBool True)]
+                    [PathEquals (GetPath [] GetValue) (PBool True)]
                   ),
                   ( Smol.PTuple
                       ty
@@ -52,23 +52,23 @@ spec = do
                       ( NE.fromList
                           [Smol.PLiteral ty (PNat 1)]
                       ),
-                    [ PathEquals (StructPath $ NE.singleton 0) (PBool True),
-                      PathEquals (StructPath $ NE.singleton 1) (PNat 1)
+                    [ PathEquals (GetPath [0] GetValue) (PBool True),
+                      PathEquals (GetPath [1] GetValue) (PNat 1)
                     ]
                   ),
                   ( Smol.PConstructor
                       (tyCons "Maybe" [tyBool])
                       "Just"
                       [Smol.PLiteral ty (PBool True)],
-                    [ PathEquals (StructPath $ NE.singleton 0) (PInt 0),
-                      PathEquals (StructPath $ NE.singleton 1) (PBool True)
+                    [ PathEquals (GetPath [0] GetValue) (PInt 0),
+                      PathEquals (GetPath [1] GetValue) (PBool True)
                     ]
                   ),
                   ( Smol.PConstructor
                       (tyCons "Maybe" [tyBool])
                       "Nothing"
                       mempty,
-                    [PathEquals (StructPath $ NE.singleton 0) (PInt 1)]
+                    [PathEquals (GetPath [0] GetValue) (PInt 1)]
                   )
                 ]
     traverse_

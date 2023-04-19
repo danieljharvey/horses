@@ -121,6 +121,18 @@ spec = do
         describe "IR compile" $ do
           traverse_ testCompileIR testVals
 
+      describe "Arrays and matching" $ do
+        let testVals =
+              [ ("let arr = [20,22]; case arr of [a,b] -> a + b | _ -> 0", "42"),
+                ("let arr = [20,20,2]; case arr of [a,b,c] -> a + b + c | _ -> 0", "42"),
+                ("let arr = [1,100]; case arr of [100, a] -> 0 | [1,b] -> b | _ -> 0", "100"),
+                ("let arr = [1,2,3]; case arr of [_,_] -> 0 | _ -> 1", "1") -- ie, are we checking the length of the array?
+                -- ("let arr1 = [1,2,3]; let arr2 = case arr1 of [_,...rest] -> rest | _ -> [1]; case arr2 of [d,e] -> d + e | _ -> 0", "5") -- need malloc to dynamically create new array
+              ]
+
+        describe "IR compile" $ do
+          traverse_ testCompileIR testVals
+
       describe "Datatypes" $ do
         let testVals =
               [ ("(\\ord -> case ord of GT -> 21 | EQ -> 23 | LT -> 42 : Ord -> Nat) LT", "42"), -- constructor with no args

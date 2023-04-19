@@ -22,6 +22,7 @@ import Data.Aeson (FromJSON, FromJSONKey, ToJSON)
 import qualified Data.List.NonEmpty as NE
 import Data.Map.Strict
 import qualified Data.Map.Strict as M
+import Data.Word (Word64)
 import GHC.Generics (Generic)
 import Prettyprinter ((<+>))
 import qualified Prettyprinter as PP
@@ -58,6 +59,7 @@ data Type dep ann
   | TPrim ann TypePrim
   | TFunc ann (Map Identifier (Type dep ann)) (Type dep ann) (Type dep ann)
   | TTuple ann (Type dep ann) (NE.NonEmpty (Type dep ann))
+  | TArray ann Word64 (Type dep ann)
   | TVar ann (dep Identifier)
   | TUnknown ann Integer
   | TGlobals ann (Map Identifier (Type dep ann)) (Type dep ann)
@@ -124,6 +126,7 @@ renderType ::
 renderType (TPrim _ a) = prettyDoc a
 renderType (TLiteral _ l) = prettyDoc l
 renderType (TUnknown _ i) = "U" <> PP.pretty i
+renderType (TArray _ _ as) = "[" <> prettyDoc as <> "]"
 renderType (TUnion _ a b) = prettyDoc a <+> "|" <+> prettyDoc b
 renderType (TFunc _ _ a b) =
   withParens a <+> "->" <+> renderType b

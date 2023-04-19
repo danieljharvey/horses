@@ -14,7 +14,7 @@ import Control.Monad.Except
 import Control.Monad.Reader
 import Control.Monad.State
 import Control.Monad.Writer.CPS
-import Data.Foldable (foldl')
+import Data.Foldable (foldl', toList)
 import Data.Functor
 import qualified Data.List.NonEmpty as NE
 import Data.Map.Strict (Map)
@@ -241,6 +241,13 @@ infer inferExpr = do
               (getExprAnnotation typedFst)
               (getExprAnnotation <$> typedRest)
       pure $ ETuple typ typedFst typedRest
+    (EArray ann as) -> do
+      typedAs <- traverse infer as
+      let size = fromIntegral (length as)
+      ty <- case NE.nonEmpty (reverse $ toList typedAs) of
+        Nothing -> error "what type is empty list"
+        Just tyAs -> combineMany (getExprAnnotation <$> tyAs)
+      pure (EArray (TArray ann size ty) typedAs)
     (EGlobalLet _ann ident value rest) -> do
       ((tyVal, tyRest), globs) <- listenToGlobals $ do
         tyVal <- infer value
@@ -348,12 +355,16 @@ withRecursiveFn _ _ = id
 -- check that the pattern makes sense with it
 checkPattern ::
   ( Show ann,
+    Eq ann,
     MonadError (TCError ann) m,
     MonadReader (TCEnv ann) m
   ) =>
   ResolvedType ann ->
   Pattern ResolvedDep ann ->
-  m (Pattern ResolvedDep (ResolvedType ann), Map (ResolvedDep Identifier) (ResolvedType ann))
+  m
+    ( Pattern ResolvedDep (ResolvedType ann),
+      Map (ResolvedDep Identifier) (ResolvedType ann)
+    )
 checkPattern checkTy checkPat = do
   case (checkTy, checkPat) of
     (TTuple _ tA tRest, PTuple ann pA pRest) | length tRest == length pRest -> do
@@ -383,6 +394,30 @@ checkPattern checkTy checkPat = do
       case result of
         Left _ -> throwError (TCPatternMismatch pat ty)
         Right _ -> pure (PLiteral ty lit, mempty)
+    (ty@(TArray _ arrSize tyArr), PArray ann items spread) -> do
+      inferEverything <- traverse (checkPattern tyArr) items
+      (inferSpread, env2) <- case spread of
+        SpreadValue _ binder -> do
+          let env = M.singleton binder ty
+          pure
+            ( SpreadValue ty binder,
+              env
+            )
+        NoSpread -> pure (NoSpread, mempty)
+        SpreadWildcard _ -> do
+          pure (SpreadWildcard ty, mempty)
+      let newEnv = mconcat (snd <$> inferEverything) <> env2
+      pure
+        ( PArray
+            ( TArray
+                ann
+                arrSize
+                tyArr
+            )
+            (fst <$> inferEverything)
+            inferSpread,
+          newEnv
+        )
     (ty, PConstructor ann constructor args) -> do
       -- we don't check the constructor is valid yet
       let flattened = flattenConstructorType ty

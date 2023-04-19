@@ -38,6 +38,7 @@ mapOuterExprAnnotation f expr' =
     EApp ann a b -> EApp (f ann) a b
     EIf ann a b c -> EIf (f ann) a b c
     ETuple ann a b -> ETuple (f ann) a b
+    EArray ann a -> EArray (f ann) a
     EGlobal ann a -> EGlobal (f ann) a
     EGlobalLet ann a b c -> EGlobalLet (f ann) a b c
     ERecord ann a -> ERecord (f ann) a
@@ -56,6 +57,7 @@ mapExpr f (EApp ann fn arg) = EApp ann (f fn) (f arg)
 mapExpr f (EIf ann predExp thenExp elseExp) =
   EIf ann (f predExp) (f thenExp) (f elseExp)
 mapExpr f (ETuple ann a as) = ETuple ann (f a) (f <$> as)
+mapExpr f (EArray ann as) = EArray ann (f <$> as)
 mapExpr _ (EGlobal ann ident) = EGlobal ann ident
 mapExpr f (EGlobalLet ann ident expr rest) =
   EGlobalLet ann ident (f expr) (f rest)
@@ -77,6 +79,7 @@ bindExpr f (EApp ann fn arg) = EApp ann <$> f fn <*> f arg
 bindExpr f (EIf ann predExp thenExp elseExp) =
   EIf ann <$> f predExp <*> f thenExp <*> f elseExp
 bindExpr f (ETuple ann a as) = ETuple ann <$> f a <*> traverse f as
+bindExpr f (EArray ann as) = EArray ann <$> traverse f as
 bindExpr _ (EGlobal ann ident) = pure $ EGlobal ann ident
 bindExpr f (EGlobalLet ann ident expr rest) =
   EGlobalLet ann ident <$> f expr <*> f rest
@@ -89,6 +92,7 @@ bindExpr f (EPatternMatch ann patExpr pats) =
 mapPattern :: (Pattern dep ann -> Pattern dep ann) -> Pattern dep ann -> Pattern dep ann
 mapPattern _ (PLiteral ann l) = PLiteral ann l
 mapPattern _ (PWildcard a) = PWildcard a
+mapPattern f (PArray ann as spread) = PArray ann (f <$> as) spread -- do we need to map spread somehow
 mapPattern _ (PVar ann a) = PVar ann a
 mapPattern f (PTuple ann a as) = PTuple ann (f a) (f <$> as)
 mapPattern f (PConstructor ann constructor as) =
@@ -98,6 +102,7 @@ patternMonoid :: (Monoid a) => (Pattern dep ann -> a) -> Pattern dep ann -> a
 patternMonoid _ PLiteral {} = mempty
 patternMonoid _ PWildcard {} = mempty
 patternMonoid _ PVar {} = mempty
+patternMonoid f (PArray _ as _) = foldMap f as
 patternMonoid f (PTuple _ a as) =
   f a <> foldMap f (NE.toList as)
 patternMonoid f (PConstructor _ _ as) =
@@ -124,6 +129,7 @@ mapExprDep resolve = go
     go (EIf ann predExp thenExp elseExp) =
       EIf ann (go predExp) (go thenExp) (go elseExp)
     go (ETuple ann a as) = ETuple ann (go a) (go <$> as)
+    go (EArray ann as) = EArray ann (go <$> as)
     go (EGlobal ann ident) = EGlobal ann ident
     go (EGlobalLet ann ident expr rest) =
       EGlobalLet ann ident (go expr) (go rest)
@@ -140,14 +146,23 @@ mapPatternDep resolve = go
     go (PWildcard a) = PWildcard a
     go (PVar ann a) = PVar ann (resolve a)
     go (PTuple ann a as) = PTuple ann (go a) (go <$> as)
+    go (PArray ann as spread) = PArray ann (go <$> as) (mapSpreadDep resolve spread)
     go (PConstructor ann constructor as) =
       PConstructor ann (resolve constructor) (go <$> as)
+
+mapSpreadDep :: (forall a. depA a -> depB a) -> Spread depA ann -> Spread depB ann
+mapSpreadDep resolve = go
+  where
+    go NoSpread = NoSpread
+    go (SpreadWildcard ann) = SpreadWildcard ann
+    go (SpreadValue ann a) = SpreadValue ann (resolve a)
 
 mapTypeDep :: (forall a. depA a -> depB a) -> Type depA ann -> Type depB ann
 mapTypeDep resolve = go
   where
     go (TVar ann v) = TVar ann (resolve v)
     go (TTuple ann a as) = TTuple ann (go a) (go <$> as)
+    go (TArray ann i as) = TArray ann i (go as)
     go (TLiteral ann a) = TLiteral ann a
     go (TPrim ann p) = TPrim ann p
     go (TFunc ann env a b) = TFunc ann (go <$> env) (go a) (go b)
