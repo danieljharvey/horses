@@ -345,8 +345,13 @@ irVarFromPath ::
   IRIdentifier ->
   GetPath ->
   m ()
-irVarFromPath llExpr ident (GetPath [] _) = do
-  addVar ident llExpr
-irVarFromPath llExpr ident (GetPath as _) = do
-  val <- loadFromStruct llExpr as
+irVarFromPath llExpr ident (GetPath as GetValue) = do
+  val <- if null as then pure llExpr else loadFromStruct llExpr as
   addVar ident val
+irVarFromPath llExpr ident (GetPath as (GetArrayTail drop)) = do
+  val <- if null as then pure llExpr else loadFromStruct llExpr as
+  -- get length (it's [0] in the array struct)
+  -- now create an array that is `drop` values less 
+  -- then `addVar` it to environment
+  -- great job!
+  error "oh no"

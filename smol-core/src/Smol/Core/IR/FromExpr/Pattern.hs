@@ -39,11 +39,12 @@ destructurePattern fromIdentifier =
     destructInner _ (Smol.PLiteral _ _) = pure mempty
     destructInner path (Smol.PArray _ as spread) = do
       let pathSoFar = path <> [1] -- arrays are length-indexed so actually (lengthInt, [items])
-      spreadPath <- case spread of
-        Smol.NoSpread -> pure mempty
-        Smol.SpreadWildcard _ -> pure mempty
-        Smol.SpreadValue _ _ident -> pure mempty -- case NE.nonEmpty path of
-        --                                     Just nePath -> pure $ M.singleton (fromIdentifier (runIdentity ident))
+      let spreadPath = case spread of
+                            Smol.NoSpread -> mempty
+                            Smol.SpreadWildcard _ -> mempty
+                            Smol.SpreadValue _ ident ->
+                                M.singleton (fromIdentifier (runIdentity ident)) 
+                                    (GetPath path (GetArrayTail (fromIntegral $ length as)))
       mappend spreadPath . mconcat <$> traverseInd (\pat i -> destructInner (pathSoFar <> [i]) pat) as
     destructInner path (Smol.PConstructor _ _ pArgs) = do
       -- get DataTypeInMemory from `ty`
