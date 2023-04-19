@@ -37,18 +37,21 @@ destructurePattern fromIdentifier =
        in mconcat <$> traverseInd (\pat i -> destructInner (path <> [i]) pat) pats
     destructInner _ (Smol.PWildcard _) = pure mempty
     destructInner _ (Smol.PLiteral _ _) = pure mempty
-    destructInner path (Smol.PArray _ as _) =
+    destructInner path (Smol.PArray _ as spread) = do
       let pathSoFar = path <> [1] -- arrays are length-indexed so actually (lengthInt, [items])
-       in mconcat <$> traverseInd (\pat i -> destructInner (pathSoFar <> [i]) pat) as
+      spreadPath <- case spread of
+        Smol.NoSpread -> pure mempty
+        Smol.SpreadWildcard _ -> pure mempty
+        Smol.SpreadValue _ _ident -> pure mempty -- case NE.nonEmpty path of
+        --                                     Just nePath -> pure $ M.singleton (fromIdentifier (runIdentity ident))
+      mappend spreadPath . mconcat <$> traverseInd (\pat i -> destructInner (pathSoFar <> [i]) pat) as
     destructInner path (Smol.PConstructor _ _ pArgs) = do
       -- get DataTypeInMemory from `ty`
       -- use it to work out where to reach into Struct to find data
       -- then return path
       mconcat <$> traverseInd (\pat i -> destructInner (path <> [i + 1]) pat) pArgs
     destructInner path (Smol.PVar _ ident) =
-      case NE.nonEmpty path of
-        Just nePath -> pure $ M.singleton (fromIdentifier (runIdentity ident)) (StructPath nePath)
-        Nothing -> pure $ M.singleton (fromIdentifier (runIdentity ident)) ValuePath
+      pure $ M.singleton (fromIdentifier (runIdentity ident)) (GetPath path GetValue)
 
 predicatesFromPattern ::
   ( MonadState (FromExprState ann) m,
@@ -70,10 +73,7 @@ predicatesFromPattern fromPrim =
           )
           pats
     predicatesInner path (Smol.PLiteral _ prim) =
-      case NE.nonEmpty path of
-        Just nePath ->
-          pure [PathEquals (StructPath nePath) (fromPrim prim)]
-        Nothing -> pure [PathEquals ValuePath (fromPrim prim)]
+      pure [PathEquals (GetPath path GetValue) (fromPrim prim)]
     predicatesInner path (Smol.PTuple _ pHead pTail) =
       let pats = [pHead] <> NE.toList pTail
        in mconcat <$> traverseInd (\pat i -> predicatesInner (path <> [i]) pat) pats
@@ -84,15 +84,11 @@ predicatesFromPattern fromPrim =
         -- if no args, it's a primitive
         [] -> do
           prim <- primFromConstructor (runIdentity constructor)
-          case NE.nonEmpty path of
-            Just nePath -> pure [PathEquals (StructPath nePath) (fromPrim prim)]
-            Nothing -> pure [PathEquals ValuePath (fromPrim prim)]
+          pure [PathEquals (GetPath path GetValue) (fromPrim prim)]
         _ -> do
           -- if there's args it's a struct
           prim <- primFromConstructor (runIdentity constructor)
-          let constructorPath = case NE.nonEmpty path of
-                Just nePath -> PathEquals (StructPath $ nePath <> NE.singleton 0) (fromPrim prim)
-                Nothing -> PathEquals (StructPath (NE.singleton 0)) (fromPrim prim)
+          let constructorPath = PathEquals (GetPath (path <> [0]) GetValue) (fromPrim prim)
 
           -- work out predicates for rest of items
           predRest <- mconcat <$> traverseInd (\pat i -> predicatesInner (path <> [i + 1]) pat) pArgs

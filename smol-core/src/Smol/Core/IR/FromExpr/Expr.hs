@@ -182,13 +182,13 @@ fromExpr (EIf ty predExpr thenExpr elseExpr) = do
       ( NE.fromList
           [ IRMatchCase
               { irmcType = IRInt2,
-                irmcPatternPredicate = [PathEquals ValuePath (IRPrimInt2 True)],
+                irmcPatternPredicate = [PathEquals (GetPath [] GetValue) (IRPrimInt2 True)],
                 irmcGetPath = mempty,
                 irmcExpr = irThen
               },
             IRMatchCase
               { irmcType = IRInt2,
-                irmcPatternPredicate = [PathEquals ValuePath (IRPrimInt2 False)],
+                irmcPatternPredicate = [PathEquals (GetPath [] GetValue) (IRPrimInt2 False)],
                 irmcGetPath = mempty,
                 irmcExpr = irElse
               }

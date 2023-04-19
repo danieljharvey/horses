@@ -4,13 +4,15 @@
 
 module Smol.Core.Types.GetPath
   ( GetPath (..),
+    GetValue (..),
   )
 where
 
-import qualified Data.List.NonEmpty as NE
-
 -- how do we get at a given item that we've matched on
-data GetPath
-  = StructPath (NE.NonEmpty Integer)
-  | ValuePath
+data GetPath = GetPath [Integer] GetValue
+  deriving stock (Eq, Ord, Show)
+
+data GetValue
+  = GetValue -- fetch the item pointed to here
+  | GetArrayTail Integer -- fetch the array here, but drop X items
   deriving stock (Eq, Ord, Show)
