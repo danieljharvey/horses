@@ -102,9 +102,9 @@ extractPatternUses (PTuple _ a as) =
   extractPatternUses a <> foldMap extractPatternUses as
 extractPatternUses (PArray _ as spread) =
   foldMap extractPatternUses as <> case spread of
-                                     NoSpread -> mempty
-                                     SpreadWildcard {} -> mempty
-                                     SpreadValue _ (ParseDep a _) -> S.singleton (E.EVar a)
+    NoSpread -> mempty
+    SpreadWildcard {} -> mempty
+    SpreadValue _ (ParseDep a _) -> S.singleton (E.EVar a)
 extractPatternUses (PConstructor _ (ParseDep tyCon maybeMod) args) =
   let modEntity = case maybeMod of
         Just modName -> S.singleton (E.ENamespacedConstructor modName tyCon)
