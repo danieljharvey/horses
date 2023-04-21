@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1682112200089,
+  "lastUpdate": 1682112481650,
   "repoUrl": "https://github.com/danieljharvey/mimsa",
   "entries": {
     "Store benchmarks in Github Pages": [
@@ -831,6 +831,50 @@ window.BENCHMARK_DATA = {
           {
             "name": "evaluate/evaluate parsing 2",
             "value": 0.31103580620001026,
+            "unit": "Time (ms)"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "29139614+renovate[bot]@users.noreply.github.com",
+            "name": "renovate[bot]",
+            "username": "renovate[bot]"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "2b61557b54366d81d94896c800bc915b492d9bb7",
+          "message": "Update dependency typescript to v5 (#905)\n\nCo-authored-by: renovate[bot] <29139614+renovate[bot]@users.noreply.github.com>",
+          "timestamp": "2023-04-21T22:26:09+01:00",
+          "tree_id": "3ad6d0efe32129a27c9618ffac7bf05d37a08fda",
+          "url": "https://github.com/danieljharvey/mimsa/commit/2b61557b54366d81d94896c800bc915b492d9bb7"
+        },
+        "date": 1682112480941,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "build stdlib/allFns",
+            "value": 0.1053329956666648,
+            "unit": "Time (ms)"
+          },
+          {
+            "name": "evaluate/evaluate big looping thing",
+            "value": 0.09236142968333062,
+            "unit": "Time (ms)"
+          },
+          {
+            "name": "evaluate/evaluate parsing",
+            "value": 0.031574044419116785,
+            "unit": "Time (ms)"
+          },
+          {
+            "name": "evaluate/evaluate parsing 2",
+            "value": 0.20692466797141995,
             "unit": "Time (ms)"
           }
         ]
