@@ -3,7 +3,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 
 module Smol.Core.Modules.ResolveDeps
-  ( resolveExprDeps,
+  ( resolveModuleDeps,
   )
 where
 
@@ -19,26 +19,15 @@ import Smol.Core.Types.Module.DefIdentifier
 import Smol.Core.Types.Module.Module
 
 -- this is possibly only useful for testing
-resolveExprDeps :: (Eq ann) => Expr ParseDep ann -> Expr ResolvedDep ann
-resolveExprDeps expr =
-  -- create module with expr in
-  let myMod =
-        Module
-          { moExpressions = M.singleton (DIName "main") expr,
-            moExpressionExports = mempty,
-            moExpressionImports = mempty,
-            moDataTypes = mempty,
-            moDataTypeExports = mempty,
-            moDataTypeImports = mempty,
-            moNamedImports = mempty
-          }
-   in -- run get deps bullshit
-      case getDependencies extractUses myMod of
+resolveModuleDeps :: (Eq ann) => Module ParseDep ann -> Module ResolvedDep ann
+resolveModuleDeps parsedModule =
+      case getDependencies extractUses parseModule of
         Right map' ->
-          -- extract result
-          case M.lookup (DIName "main") map' of
-            Just (DTExpr newExpr, defIds, _entities) ->
-              resolve newExpr defIds
+          -- now we need to resolve each thing one by one
+          -- then remake the module with the shiny new shit in it
+          let resolveIt (DTData {},_,_) = error "not thinking about data yet"
+              resolveIt (DTExpr expr, defIds, _entities) =
+                resolve newExpr defIds
             _ -> error "did not find my boy"
         Left e -> error (show e)
 

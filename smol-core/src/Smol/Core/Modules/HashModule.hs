@@ -1,5 +1,6 @@
 module Smol.Core.Modules.HashModule (serializeModule, deserializeModule) where
 
+import Smol.Core.Types.TypeName
 import Crypto.Hash (SHA256 (..), hashWith)
 import qualified Data.Aeson as JSON
 import Data.Bifunctor
@@ -11,18 +12,23 @@ import Data.Functor
 import Data.Text.Encoding
 import Smol.Core.Types.Module.Module
 import Smol.Core.Types.Module.ModuleHash
+import Smol.Core.Types.Constructor
+import Smol.Core.Types.Identifier
 
 -- we remove annotations before producing the hash
 -- so formatting does not affect it
-hashModule :: Module ann -> (LBS.ByteString, ModuleHash)
+hashModule :: (JSON.ToJSON (dep TypeName), JSON.ToJSON (dep Constructor), JSON.ToJSON (dep Identifier)) =>
+    Module dep ann -> (LBS.ByteString, ModuleHash)
 hashModule mod' = second coerce . contentAndHash $ mod' $> ()
 
 -- this is the only encode we should be doing
-serializeModule :: Module ann -> (LBS.ByteString, ModuleHash)
+serializeModule :: (JSON.ToJSON (dep TypeName), JSON.ToJSON (dep Constructor), JSON.ToJSON (dep Identifier)) =>
+  Module dep ann -> (LBS.ByteString, ModuleHash)
 serializeModule = hashModule
 
 -- this is the only json decode we should be doing
-deserializeModule :: LBS.ByteString -> Maybe (Module ())
+deserializeModule :: (JSON.FromJSON (dep TypeName), JSON.FromJSON (dep Constructor), JSON.FromJSON (dep Identifier)) =>
+  LBS.ByteString -> Maybe (Module dep ())
 deserializeModule =
   JSON.decode
 

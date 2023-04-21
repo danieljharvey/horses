@@ -3,6 +3,7 @@
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE DerivingStrategies #-}
 {-# LANGUAGE FlexibleContexts #-}
+  {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE MonoLocalBinds #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE StandaloneDeriving #-}
@@ -16,12 +17,13 @@ module Smol.Core.Types.Module.Module
   )
 where
 
+import Smol.Core.Types.Constructor
 import Data.Aeson (FromJSON, ToJSON)
 import Data.Map.Strict (Map)
 import qualified Data.Map.Strict as M
 import Data.Set (Set)
 import qualified Data.Set as S
-import GHC.Generics
+import GHC.Generics (Generic)
 import Prettyprinter
 import Smol.Core.Printer
 import Smol.Core.Types.Annotated
@@ -76,34 +78,54 @@ data Import
 
 -- this is the checked module, it contains no duplicates and we don't care
 -- about ordering
-data Module ann = Module
-  { moExpressions :: Map DefIdentifier (ParsedExpr ann),
+data Module dep ann = Module
+  { moExpressions :: Map DefIdentifier (Expr dep ann),
     moExpressionExports :: Set DefIdentifier,
     moExpressionImports :: Map DefIdentifier ModuleHash, -- what we imported, where it's from
-    moDataTypes :: Map TypeName (DataType ParseDep ann),
+    moDataTypes :: Map TypeName (DataType dep ann),
     moDataTypeExports :: Set TypeName, -- which types to export
     moDataTypeImports :: Map TypeName ModuleHash, -- what we imported, where its from,
     moNamedImports :: Map ModuleName ModuleHash -- `import sdfsdf as Prelude`..
   }
-  deriving stock (Eq, Ord, Functor, Generic)
+  deriving stock ( Functor, Generic)
+
+deriving stock instance
+  (Eq ann,
+    Eq (dep TypeName),
+    Eq (dep Identifier),
+    Eq (dep Constructor)) => Eq (Module dep ann)
+
+deriving stock instance
+  (Ord ann,
+    Ord (dep TypeName),
+    Ord (dep Constructor),
+    Ord (dep Identifier)) => Ord (Module dep ann)
 
 deriving stock instance
   ( Show ann,
-    Show (DataType ParseDep ann)
+    Show (dep TypeName),
+    Show (dep Constructor),
+    Show (dep Identifier)
   ) =>
-  Show (Module ann)
+  Show (Module dep ann)
 
 deriving anyclass instance
   ( ToJSON ann,
-    ToJSON (DataType ParseDep ann)
+    ToJSON (dep TypeName),
+    ToJSON (dep Constructor),
+    ToJSON (dep Identifier)
   ) =>
-  ToJSON (Module ann)
+  ToJSON (Module dep ann)
 
 deriving anyclass instance
-  (FromJSON ann, FromJSON (DataType ParseDep ann)) =>
-  FromJSON (Module ann)
+  (FromJSON ann,
+    FromJSON (dep TypeName),
+    FromJSON (dep Constructor),
+    FromJSON (dep Identifier)
+  )=>
+  FromJSON (Module dep ann)
 
-instance Printer (Module ann) where
+instance Printer (Module ParseDep ann) where
   prettyDoc mod' =
     let printedDefs =
           uncurry (printDefinition mod')
@@ -144,7 +166,7 @@ printImport :: ModuleHash -> Doc a
 printImport modHash =
   "import * from" <+> prettyDoc modHash
 
-printTypeDef :: Module ann -> TypeName -> DataType ParseDep ann -> Doc style
+printTypeDef :: Module ParseDep ann -> TypeName -> DataType ParseDep ann -> Doc style
 printTypeDef mod' tn dt =
   let prettyExp =
         if S.member tn (moDataTypeExports mod')
@@ -168,7 +190,7 @@ printPaired mt expr =
       <> line
       <> indentMulti 2 (prettyDoc expr)
 
-printDefinition :: Module ann -> DefIdentifier -> ParsedExpr ann -> Doc a
+printDefinition :: Module ParseDep ann -> DefIdentifier -> ParsedExpr ann -> Doc a
 printDefinition mod' def expr =
   let prettyExp =
         if S.member def (moExpressionExports mod')
@@ -195,11 +217,11 @@ printDefinition mod' def expr =
           "test" <+> "\"" <> prettyDoc testName <> "\"" <+> "=" <+> prettyDoc expr
 -}
 
-instance Semigroup (Module ann) where
+instance Semigroup (Module dep ann) where
   (Module a b c d e f g) <> (Module a' b' c' d' e' f' g') =
     Module (a <> a') (b <> b') (c <> c') (d <> d') (e <> e') (f <> f') (g <> g')
 
-instance Monoid (Module ann) where
+instance Monoid (Module dep ann) where
   mempty =
     Module
       mempty

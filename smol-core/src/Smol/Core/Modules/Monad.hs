@@ -26,9 +26,9 @@ import Smol.Core.Types.Module.ModuleHash
 
 lookupModule ::
   (MonadError ModuleError m) =>
-  Map ModuleHash (Module ann) ->
+  Map ModuleHash (Module dep ann) ->
   ModuleHash ->
-  m (Module ann)
+  m (Module dep ann)
 lookupModule mods modHash = do
   case M.lookup modHash mods of
     Just foundModule -> pure foundModule
@@ -36,10 +36,10 @@ lookupModule mods modHash = do
 
 lookupModuleDep ::
   (MonadError ModuleError m) =>
-  Map ModuleHash (Module (Type ParseDep Annotation)) ->
+  Map ModuleHash (Module dep (Type dep Annotation)) ->
   DefIdentifier ->
   ModuleHash ->
-  m (Expr ParseDep (Type ParseDep Annotation))
+  m (Expr dep (Type dep Annotation))
 lookupModuleDep typecheckedModules def modHash = do
   case M.lookup modHash typecheckedModules of
     Just mod' ->
@@ -50,10 +50,10 @@ lookupModuleDep typecheckedModules def modHash = do
 
 lookupModuleType ::
   (MonadError ModuleError m) =>
-  Map ModuleHash (Module (Type ParseDep Annotation)) ->
+  Map ModuleHash (Module dep (Type dep Annotation)) ->
   TypeName ->
   ModuleHash ->
-  m (DataType ParseDep Annotation)
+  m (DataType dep Annotation)
 lookupModuleType typecheckedModules typeName modHash = do
   case M.lookup modHash typecheckedModules of
     Just mod' ->
@@ -64,7 +64,7 @@ lookupModuleType typecheckedModules typeName modHash = do
 
 errorIfExpressionAlreadyDefined ::
   (MonadError ModuleError m) =>
-  Module ann ->
+  Module dep ann ->
   DefIdentifier ->
   m ()
 errorIfExpressionAlreadyDefined mod' def =
@@ -76,8 +76,8 @@ errorIfExpressionAlreadyDefined mod' def =
 
 checkDataType ::
   (MonadError ModuleError m) =>
-  Module ann ->
-  DataType ParseDep ann ->
+  Module dep ann ->
+  DataType dep ann ->
   m ()
 checkDataType mod' (DataType typeName _ constructors) = do
   errorIfTypeAlreadyDefined mod' (coerce typeName)
@@ -85,7 +85,7 @@ checkDataType mod' (DataType typeName _ constructors) = do
 
 errorIfTypeAlreadyDefined ::
   (MonadError ModuleError m) =>
-  Module ann ->
+  Module dep ann ->
   TypeName ->
   m ()
 errorIfTypeAlreadyDefined mod' typeName =
@@ -97,7 +97,7 @@ errorIfTypeAlreadyDefined mod' typeName =
 
 errorIfConstructorAlreadyDefined ::
   (MonadError ModuleError m) =>
-  Module ann ->
+  Module dep ann ->
   Constructor ->
   m ()
 errorIfConstructorAlreadyDefined mod' tyCon =
@@ -108,7 +108,7 @@ errorIfConstructorAlreadyDefined mod' tyCon =
 
 errorIfImportAlreadyDefined ::
   (MonadError ModuleError m) =>
-  Module ann ->
+  Module dep ann ->
   DefIdentifier ->
   ModuleHash ->
   m ()
@@ -121,7 +121,7 @@ errorIfImportAlreadyDefined mod' def moduleHash =
 
 errorIfTypeImportAlreadyDefined ::
   (MonadError ModuleError m) =>
-  Module ann ->
+  Module dep ann ->
   TypeName ->
   ModuleHash ->
   m ()

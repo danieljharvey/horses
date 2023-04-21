@@ -86,7 +86,7 @@ filterTypes =
 getDependencies ::
   (MonadError ModuleError m) =>
   (Expr ParseDep ann -> Set E.Entity) ->
-  Module ann ->
+  Module ParseDep ann ->
   m
     ( Map
         DefIdentifier
@@ -110,7 +110,7 @@ getDependencies getUses mod' = do
 -- get all dependencies of a type definition
 getTypeDependencies ::
   (MonadError ModuleError m) =>
-  Module ann ->
+  Module ParseDep ann ->
   DataType ParseDep ann ->
   m (DepType ann, Set DefIdentifier, Set E.Entity)
 getTypeDependencies mod' dt = do
@@ -121,7 +121,7 @@ getTypeDependencies mod' dt = do
 
 getTypeUses ::
   (MonadError ModuleError m) =>
-  Module ann ->
+  Module ParseDep ann ->
   Set E.Entity ->
   m (Set DefIdentifier)
 getTypeUses mod' uses =
@@ -145,7 +145,7 @@ getTypeUses mod' uses =
         else throwError (CannotFindTypes unknownTypeDeps)
 
 findTypenameInModule ::
-  Module ann ->
+  Module ParseDep ann ->
   Constructor ->
   Maybe TypeName
 findTypenameInModule mod' tyCon =
@@ -156,13 +156,13 @@ findTypenameInModule mod' tyCon =
 -- get typenames where we can, ignore missing ones as they're from another
 -- module
 -- (fingers crosseD!???!)
-findTypesForConstructors :: Module ann -> Set Constructor -> Set TypeName
+findTypesForConstructors :: Module ParseDep ann -> Set Constructor -> Set TypeName
 findTypesForConstructors mod' =
   S.fromList . mapMaybe (findTypenameInModule mod') . S.toList
 
 getConstructorUses ::
   (MonadError ModuleError m) =>
-  Module ann ->
+  Module ParseDep ann ->
   Set E.Entity ->
   m (Set DefIdentifier)
 getConstructorUses mod' uses = do
@@ -188,7 +188,7 @@ getConstructorUses mod' uses = do
 getExprDependencies ::
   (MonadError ModuleError m) =>
   (Expr ParseDep ann -> Set E.Entity) ->
-  Module ann ->
+  Module ParseDep ann ->
   Expr ParseDep ann ->
   m (DepType ann, Set DefIdentifier, Set E.Entity)
 getExprDependencies getUses mod' expr = do
@@ -200,7 +200,7 @@ getExprDependencies getUses mod' expr = do
 
 getExprDeps ::
   (MonadError ModuleError m) =>
-  Module ann ->
+  Module ParseDep ann ->
   Set E.Entity ->
   m (Set DefIdentifier)
 getExprDeps mod' uses =
@@ -228,12 +228,12 @@ getExprDeps mod' uses =
 -- so that we can typecheck them all
 getModuleDeps ::
   (MonadError ModuleError m, Show ann) =>
-  Map ModuleHash (Module ann) ->
-  Module ann ->
+  Map ModuleHash (Module ParseDep ann) ->
+  Module ParseDep ann ->
   m
     ( Map
         ModuleHash
-        ( Module ann,
+        ( Module ParseDep ann,
           Set ModuleHash
         )
     )

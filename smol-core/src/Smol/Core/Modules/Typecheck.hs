@@ -35,10 +35,10 @@ import Smol.Core.Types.Module.ModuleHash
 -- 3. do it!
 typecheckAllModules ::
   (MonadError ModuleError m) =>
-  Map ModuleHash (Module Annotation) ->
+  Map ModuleHash (Module ResolvedDep Annotation) ->
   Text ->
-  Module Annotation ->
-  m (Map ModuleHash (Module (Type ParseDep Annotation)))
+  Module ResolvedDep Annotation ->
+  m (Map ModuleHash (Module ResolvedDep (Type ResolvedDep Annotation)))
 typecheckAllModules _modules _rootModuleInput _rootModule = do
   pure mempty
 
@@ -83,7 +83,7 @@ typecheckAllModuleDefs ::
   (MonadError ModuleError m) =>
   Map ModuleHash (Module (Type Annotation)) ->
   Text ->
-  Module Annotation ->
+  Module ResolvedDep Annotation ->
   m (Module (Type Annotation))
 typecheckAllModuleDefs typecheckedDeps input inputModule = do
   -- create initial state for builder
@@ -197,7 +197,7 @@ filterNameDefs =
 
 createTypecheckEnvironment ::
   (MonadError ModuleError m) =>
-  Module Annotation ->
+  Module ResolvedDep Annotation ->
   Map DefIdentifier (Expr Name MonoType) ->
   Map ModuleHash (Module (Type Annotation)) ->
   m Environment
@@ -220,7 +220,7 @@ createTypecheckEnvironment inputModule deps typecheckedModules = do
       (getModuleTypes inputModule typecheckedModules)
 
 getModuleTypes ::
-  Module Annotation ->
+  Module ResolvedDep Annotation ->
   Map ModuleHash (Module (Type Annotation)) ->
   Map ModuleHash (Map Name MonoType)
 getModuleTypes inputModule typecheckedModules =
@@ -232,7 +232,7 @@ getModuleTypes inputModule typecheckedModules =
    in M.fromList (getTypes <$> M.toList (moNamedImports inputModule))
 
 namespacedModules ::
-  Module Annotation ->
+  Module ResolvedDep Annotation ->
   Map ModuleHash (Module (Type Annotation)) ->
   Map ModuleName (ModuleHash, Set Name)
 namespacedModules inputModule typecheckedModules =
@@ -255,7 +255,7 @@ namesOnly =
 typecheckOneDef ::
   (MonadError ModuleError m) =>
   Text ->
-  Module Annotation ->
+  Module ResolvedDep Annotation ->
   Map ModuleHash (Module (Type Annotation)) ->
   Map DefIdentifier (DepType MonoType) ->
   (DefIdentifier, DepType Annotation) ->
@@ -270,7 +270,7 @@ typecheckOneDef input inputModule typecheckedModules deps (def, dep) =
         <$> typecheckOneTypeDef input inputModule typecheckedModules (filterDataTypes deps) (def, dt)
 
 _keyDeps ::
-  Module Annotation ->
+  Module ResolvedDep Annotation ->
   Map DefIdentifier DataType ->
   Map (Maybe ModuleName, TypeName) DataType
 _keyDeps _mod =
@@ -285,7 +285,7 @@ _keyDeps _mod =
 typecheckOneTypeDef ::
   (MonadError ModuleError m) =>
   Text ->
-  Module Annotation ->
+  Module ResolvedDep Annotation ->
   Map ModuleHash (Module (Type Annotation)) ->
   Map DefIdentifier DataType ->
   (DefIdentifier, DataType) ->
@@ -356,7 +356,7 @@ getConstructorUses other = withMonoidType getConstructorUses other
 typecheckOneExprDef ::
   (MonadError ModuleError m) =>
   Text ->
-  Module Annotation ->
+  Module ResolvedDep Annotation ->
   Map ModuleHash (Module (Type Annotation)) ->
   Map DefIdentifier (Expr Name MonoType) ->
   (DefIdentifier, Expr Name Annotation) ->

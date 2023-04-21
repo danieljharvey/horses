@@ -21,9 +21,9 @@ moduleFromModuleParts ::
   ( MonadError ModuleError m,
     Monoid ann
   ) =>
-  Map ModuleHash (Module Annotation) ->
+  Map ModuleHash (Module ParseDep Annotation) ->
   [ModuleItem ann] ->
-  m (Module ann)
+  m (Module ParseDep ann)
 moduleFromModuleParts modules parts =
   let addPart part output = do
         mod' <- output
@@ -32,10 +32,10 @@ moduleFromModuleParts modules parts =
 
 addModulePart ::
   (MonadError ModuleError m, Monoid ann) =>
-  Map ModuleHash (Module Annotation) ->
+  Map ModuleHash (Module ParseDep Annotation) ->
   ModuleItem ann ->
-  Module ann ->
-  m (Module ann)
+  Module ParseDep ann ->
+  m (Module ParseDep ann)
 addModulePart modules part mod' =
   case part of
     ModuleExpression name bits expr -> do
