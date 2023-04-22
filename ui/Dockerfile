@@ -1,5 +1,5 @@
 # Stage 1 - the build process
-FROM node:19 as build-deps
+FROM node:20 as build-deps
 
 ARG REACT_APP_MIMSA_API_URL
 ARG REACT_APP_ROUTER_API_URL
