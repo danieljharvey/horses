@@ -131,10 +131,12 @@ infer (EApply ann fnName args) = do
   fn <- lookupFunction ann fnName
   (ty, elabArgs) <- case fn of
     TFunction _ tArgs tReturn -> do
-      when (length args /= length tArgs) (error "wrong length")
+      when
+        (length args /= length tArgs)
+        (throwError $ FunctionArgumentLengthMismatch ann (length tArgs) (length args))
       elabArgs <- zipWithM check tArgs args -- check each arg against type
       pure (tReturn, elabArgs)
-    _ -> error "wrong type"
+    _ -> throwError $ NonFunctionTypeFound ann fn
   pure (EApply (ty $> ann) fnName elabArgs)
 infer (EVar ann var) = do
   ty <- lookupVar ann var
