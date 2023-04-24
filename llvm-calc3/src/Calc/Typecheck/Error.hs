@@ -26,6 +26,8 @@ data TypeError ann
   | TypeMismatch (Type ann) (Type ann)
   | VarNotFound ann Identifier (HashSet Identifier)
   | FunctionNotFound ann FunctionName (HashSet FunctionName)
+  | FunctionArgumentLengthMismatch ann Int Int -- expected, actual
+  | NonFunctionTypeFound ann (Type ann)
   deriving stock (Eq, Ord, Show)
 
 positionFromAnnotation ::
@@ -52,6 +54,52 @@ typeErrorDiagnostic input e =
   let filename = "<repl>"
       diag = Diag.addFile Diag.def filename (T.unpack input)
       report = case e of
+        (NonFunctionTypeFound _ ty) ->
+          Diag.Err
+            Nothing
+            ( prettyPrint "Function type expected but not found."
+            )
+            ( catMaybes
+                [ (,)
+                    <$> positionFromAnnotation
+                      filename
+                      input
+                      (getOuterTypeAnnotation ty)
+                    <*> pure
+                      ( Diag.This
+                          ( prettyPrint $
+                              "This has type "
+                                <> PP.pretty ty
+                                <> "."
+                          )
+                      )
+                ]
+            )
+            []
+        (FunctionArgumentLengthMismatch ann expected actual) ->
+          Diag.Err
+            Nothing
+            ( prettyPrint "Wrong number of arguments passed to function!"
+            )
+            ( catMaybes
+                [ (,)
+                    <$> positionFromAnnotation
+                      filename
+                      input
+                      ann
+                    <*> pure
+                      ( Diag.This
+                          ( prettyPrint $
+                              "Expected "
+                                <> PP.pretty expected
+                                <> " but found "
+                                <> PP.pretty actual
+                                <> "."
+                          )
+                      )
+                ]
+            )
+            []
         (PredicateIsNotBoolean _ foundType) ->
           Diag.Err
             Nothing
