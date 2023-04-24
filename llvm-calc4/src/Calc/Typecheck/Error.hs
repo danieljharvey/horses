@@ -31,6 +31,8 @@ data TypeError ann
   | FunctionArgumentLengthMismatch ann Int Int -- expected, actual
   | NonFunctionTypeFound ann (Type ann)
   | PatternMismatch (Pattern ann) (Type ann)
+  | FunctionArgumentLengthMismatch ann Int Int -- expected, actual
+  | NonFunctionTypeFound ann (Type ann)
   deriving stock (Eq, Ord, Show)
 
 positionFromAnnotation ::
