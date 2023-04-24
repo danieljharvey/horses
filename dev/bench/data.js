@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1682274050159,
+  "lastUpdate": 1682357001643,
   "repoUrl": "https://github.com/danieljharvey/mimsa",
   "entries": {
     "Store benchmarks in Github Pages": [
@@ -1183,6 +1183,50 @@ window.BENCHMARK_DATA = {
           {
             "name": "evaluate/evaluate parsing 2",
             "value": 0.2754352914999998,
+            "unit": "Time (ms)"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "danieljamesharvey@gmail.com",
+            "name": "Daniel Harvey",
+            "username": "danieljharvey"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "fc73da18d3704cf66daf1bd09ed02b9ce952cfbf",
+          "message": "Better function errors in calc3 (#927)\n\n* Better errors in llvm-calc3\r\n\r\n* Copy changes to calc4 too",
+          "timestamp": "2023-04-24T18:17:41+01:00",
+          "tree_id": "77435b33cb7ae0711fa20f8ce3b25be757e4d717",
+          "url": "https://github.com/danieljharvey/mimsa/commit/fc73da18d3704cf66daf1bd09ed02b9ce952cfbf"
+        },
+        "date": 1682357000861,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "build stdlib/allFns",
+            "value": 0.10729642323333421,
+            "unit": "Time (ms)"
+          },
+          {
+            "name": "evaluate/evaluate big looping thing",
+            "value": 0.09657174673334142,
+            "unit": "Time (ms)"
+          },
+          {
+            "name": "evaluate/evaluate parsing",
+            "value": 0.032126413651961144,
+            "unit": "Time (ms)"
+          },
+          {
+            "name": "evaluate/evaluate parsing 2",
+            "value": 0.230070028314276,
             "unit": "Time (ms)"
           }
         ]
