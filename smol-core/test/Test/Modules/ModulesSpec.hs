@@ -37,11 +37,12 @@ spec = do
     describe "ResolvedDeps" $ do
       it "No deps, marks var as unique" $ do
         let mod' = unsafeParseModule "def main = let a = 123 in a"
-            expr = ELet
-                          ()
-                          (UniqueDefinition "a" 1)
-                          (nat 123)
-                          (EVar () (UniqueDefinition "a" 1))
+            expr =
+              ELet
+                ()
+                (UniqueDefinition "a" 1)
+                (nat 123)
+                (EVar () (UniqueDefinition "a" 1))
 
             expected =
               mempty
@@ -52,16 +53,17 @@ spec = do
 
       it "No deps, marks two different `a` values correctly" $ do
         let mod' = unsafeParseModule "def main = let a = 123 in let a = 456 in a"
-            expr = ELet
-                          ()
-                          (UniqueDefinition "a" 1)
-                          (nat 123)
-                          ( ELet
-                              ()
-                              (UniqueDefinition "a" 2)
-                              (nat 456)
-                              (EVar () (UniqueDefinition "a" 2))
-                          )
+            expr =
+              ELet
+                ()
+                (UniqueDefinition "a" 1)
+                (nat 123)
+                ( ELet
+                    ()
+                    (UniqueDefinition "a" 2)
+                    (nat 456)
+                    (EVar () (UniqueDefinition "a" 2))
+                )
 
             expected =
               mempty
@@ -72,26 +74,50 @@ spec = do
 
       it "'main' uses a dep from 'dep'" $ do
         let mod' = unsafeParseModule "def main = let a = dep in let a = 456 in a\ndef dep = 1"
-            depExpr =nat 1 
-            mainExpr = ELet
-                          ()
-                          (UniqueDefinition "a" 1)
-                          (EVar () (LocalDefinition "dep"))
-                          ( ELet
-                              ()
-                              (UniqueDefinition "a" 2)
-                              (nat 456)
-                              (EVar () (UniqueDefinition "a" 2))
-                          )
+            depExpr = nat 1
+            mainExpr =
+              ELet
+                ()
+                (UniqueDefinition "a" 1)
+                (EVar () (LocalDefinition "dep"))
+                ( ELet
+                    ()
+                    (UniqueDefinition "a" 2)
+                    (nat 456)
+                    (EVar () (UniqueDefinition "a" 2))
+                )
 
             expected =
               mempty
-                { moExpressions = M.fromList [(DIName "main", mainExpr),
-                                            (DIName "dep", depExpr)]
+                { moExpressions =
+                    M.fromList
+                      [ (DIName "main", mainExpr),
+                        (DIName "dep", depExpr)
+                      ]
                 }
 
         resolveModuleDeps mod' `shouldBe` expected
 
+      it "'main' uses a type dep from 'Maybe'" $ do
+        let mod' = unsafeParseModule "type Maybe a = Just a\ndef main = let a = 456 in Just a"
+            mainExpr =
+              ELet
+                ()
+                (UniqueDefinition "a" 1)
+                (EVar () (LocalDefinition "dep"))
+                ( EApp
+                    ()
+                    (EConstructor () (LocalDefinition "Maybe"))
+                    (EVar () (UniqueDefinition "a" 2))
+                )
+
+            expected =
+              mempty
+                { moExpressions =
+                    M.singleton (DIName "main") mainExpr
+                }
+
+        resolveModuleDeps mod' `shouldBe` expected
 
     describe "Typecheck" $ do
       it "Typechecks Prelude successfully" $ do
