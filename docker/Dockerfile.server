@@ -1,4 +1,4 @@
-FROM haskell:9.4.4-buster as build
+FROM haskell:9.4.5-buster as build
 
 # work from root of monorepo
 COPY . /opt/build/
