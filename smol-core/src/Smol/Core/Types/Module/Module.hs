@@ -3,7 +3,7 @@
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE DerivingStrategies #-}
 {-# LANGUAGE FlexibleContexts #-}
-  {-# LANGUAGE FlexibleInstances #-}
+{-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE MonoLocalBinds #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE StandaloneDeriving #-}
@@ -17,7 +17,6 @@ module Smol.Core.Types.Module.Module
   )
 where
 
-import Smol.Core.Types.Constructor
 import Data.Aeson (FromJSON, ToJSON)
 import Data.Map.Strict (Map)
 import qualified Data.Map.Strict as M
@@ -27,6 +26,7 @@ import GHC.Generics (Generic)
 import Prettyprinter
 import Smol.Core.Printer
 import Smol.Core.Types.Annotated
+import Smol.Core.Types.Constructor
 import Smol.Core.Types.DataType
 import Smol.Core.Types.Expr
 import Smol.Core.Types.Identifier
@@ -87,19 +87,23 @@ data Module dep ann = Module
     moDataTypeImports :: Map TypeName ModuleHash, -- what we imported, where its from,
     moNamedImports :: Map ModuleName ModuleHash -- `import sdfsdf as Prelude`..
   }
-  deriving stock ( Functor, Generic)
+  deriving stock (Functor, Generic)
 
 deriving stock instance
-  (Eq ann,
+  ( Eq ann,
     Eq (dep TypeName),
     Eq (dep Identifier),
-    Eq (dep Constructor)) => Eq (Module dep ann)
+    Eq (dep Constructor)
+  ) =>
+  Eq (Module dep ann)
 
 deriving stock instance
-  (Ord ann,
+  ( Ord ann,
     Ord (dep TypeName),
     Ord (dep Constructor),
-    Ord (dep Identifier)) => Ord (Module dep ann)
+    Ord (dep Identifier)
+  ) =>
+  Ord (Module dep ann)
 
 deriving stock instance
   ( Show ann,
@@ -118,11 +122,11 @@ deriving anyclass instance
   ToJSON (Module dep ann)
 
 deriving anyclass instance
-  (FromJSON ann,
+  ( FromJSON ann,
     FromJSON (dep TypeName),
     FromJSON (dep Constructor),
     FromJSON (dep Identifier)
-  )=>
+  ) =>
   FromJSON (Module dep ann)
 
 instance Printer (Module ParseDep ann) where

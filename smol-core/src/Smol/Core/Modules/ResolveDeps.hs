@@ -1,5 +1,6 @@
 {-# LANGUAGE DerivingStrategies #-}
 {-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE OverloadedStrings #-}
 
 module Smol.Core.Modules.ResolveDeps
@@ -7,6 +8,7 @@ module Smol.Core.Modules.ResolveDeps
   )
 where
 
+import qualified Data.Set as S
 import Control.Monad.Reader
 import Control.Monad.State
 import Data.Map.Strict (Map)
@@ -21,26 +23,30 @@ import Smol.Core.Types.Module.Module
 -- this is possibly only useful for testing
 resolveModuleDeps :: (Eq ann) => Module ParseDep ann -> Module ResolvedDep ann
 resolveModuleDeps parsedModule =
-      case getDependencies extractUses parseModule of
-        Right map' ->
-          -- now we need to resolve each thing one by one
-          -- then remake the module with the shiny new shit in it
-          let resolveIt (DTData {},_,_) = error "not thinking about data yet"
-              resolveIt (DTExpr expr, defIds, _entities) =
-                resolve newExpr defIds
-            _ -> error "did not find my boy"
-        Left e -> error (show e)
+  case getDependencies extractUses parsedModule of
+    Right map' ->
+      -- now we need to resolve each thing one by one
+      -- then remake the module with the shiny new shit in it
+      let resolveIt (DTData {}, _, _) = error "not thinking about data yet"
+          resolveIt (DTExpr expr, defIds, _entities) =
+            resolve expr defIds
+          resolvedMap = resolveIt <$> map'
+       in parsedModule
+            { moExpressions = resolvedMap,
+              moDataTypes = mempty
+            }
+    Left e -> error (show e)
 
 resolve ::
   Expr ParseDep ann ->
   Set DefIdentifier ->
   Expr ResolvedDep ann
-resolve expr _localDefs =
+resolve expr localDefs =
   runReader
     (evalStateT (resolveM expr) initialState)
     initialEnv
   where
-    initialEnv = ResolveEnv mempty
+    initialEnv = ResolveEnv mempty localDefs
     initialState = ResolveState 0
 
 resolveIdentifier ::
@@ -54,7 +60,11 @@ resolveIdentifier (ParseDep ident Nothing) = do
   existingUnique <- asks (M.lookup ident . reExisting)
   case existingUnique of
     Just i -> pure (UniqueDefinition ident i)
-    Nothing -> error "dont know how to make a new unique yet"
+    Nothing -> do
+      isLocal <- asks (S.member (DIName ident) . reLocal)
+      if isLocal 
+         then pure (LocalDefinition ident)
+         else error $ "Could not find " <> show ident
 
 freshInt :: (MonadState ResolveState m) => m Int
 freshInt =
@@ -81,7 +91,7 @@ withNewIdentifier ::
 withNewIdentifier i ident =
   local (\re -> re {reExisting = M.singleton ident i <> reExisting re})
 
-newtype ResolveEnv = ResolveEnv {reExisting :: Map Identifier Int}
+data ResolveEnv = ResolveEnv {reExisting :: Map Identifier Int, reLocal :: Set DefIdentifier}
 
 newtype ResolveState = ResolveState {rsUnique :: Int}
 

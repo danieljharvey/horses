@@ -15,6 +15,8 @@ import Smol.Core
 import Smol.Core.Modules.FromParts
 import Smol.Core.Modules.ResolveDeps
 import Smol.Core.Modules.Typecheck
+import Smol.Core.Types.Module.DefIdentifier
+import Smol.Core.Types.Module.Module
 import Smol.Core.Types.Module.ModuleHash
 import Test.Helpers
 import Test.Hspec
@@ -34,34 +36,68 @@ spec = do
   fdescribe "Modules" $ do
     describe "ResolvedDeps" $ do
       it "No deps, marks var as unique" $ do
-        let expr = unsafeParseExpr "let a = 123 in a"
+        let mod' = unsafeParseModule "def main = let a = 123 in a"
+            expr = ELet
+                          ()
+                          (UniqueDefinition "a" 1)
+                          (nat 123)
+                          (EVar () (UniqueDefinition "a" 1))
+
             expected =
-              ELet
-                ()
-                (UniqueDefinition "a" 1)
-                (nat 123)
-                (EVar () (UniqueDefinition "a" 1))
-        resolveExprDeps expr `shouldBe` expected
+              mempty
+                { moExpressions = M.singleton (DIName "main") expr
+                }
+
+        resolveModuleDeps mod' `shouldBe` expected
+
       it "No deps, marks two different `a` values correctly" $ do
-        let expr = unsafeParseExpr "let a = 123 in let a = 456 in a"
+        let mod' = unsafeParseModule "def main = let a = 123 in let a = 456 in a"
+            expr = ELet
+                          ()
+                          (UniqueDefinition "a" 1)
+                          (nat 123)
+                          ( ELet
+                              ()
+                              (UniqueDefinition "a" 2)
+                              (nat 456)
+                              (EVar () (UniqueDefinition "a" 2))
+                          )
+
             expected =
-              ELet
-                ()
-                (UniqueDefinition "a" 1)
-                (nat 123)
-                ( ELet
-                    ()
-                    (UniqueDefinition "a" 2)
-                    (nat 456)
-                    (EVar () (UniqueDefinition "a" 2))
-                )
-        resolveExprDeps expr `shouldBe` expected
+              mempty
+                { moExpressions = M.singleton (DIName "main") expr
+                }
+
+        resolveModuleDeps mod' `shouldBe` expected
+
+      it "'main' uses a dep from 'dep'" $ do
+        let mod' = unsafeParseModule "def main = let a = dep in let a = 456 in a\ndef dep = 1"
+            depExpr =nat 1 
+            mainExpr = ELet
+                          ()
+                          (UniqueDefinition "a" 1)
+                          (EVar () (LocalDefinition "dep"))
+                          ( ELet
+                              ()
+                              (UniqueDefinition "a" 2)
+                              (nat 456)
+                              (EVar () (UniqueDefinition "a" 2))
+                          )
+
+            expected =
+              mempty
+                { moExpressions = M.fromList [(DIName "main", mainExpr),
+                                            (DIName "dep", depExpr)]
+                }
+
+        resolveModuleDeps mod' `shouldBe` expected
+
 
     describe "Typecheck" $ do
       it "Typechecks Prelude successfully" $ do
         case parseModuleAndFormatError preludeInput of
           Right moduleParts -> do
-            case moduleFromModuleParts mempty moduleParts of
+            case resolveModuleDeps <$> moduleFromModuleParts mempty moduleParts of
               Left e -> error (show e)
               Right myModule -> do
                 let modules = M.singleton (ModuleHash "123") myModule
