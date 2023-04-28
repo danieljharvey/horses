@@ -11,9 +11,11 @@ module Smol.Core.Helpers
     tryError,
     fromRight,
     foldMapM,
+    filterMapKeys
   )
 where
 
+import Data.Maybe (mapMaybe)
 import Control.Monad
 import Control.Monad.Except
 import Data.Bifunctor
@@ -71,6 +73,12 @@ fromRight = \case
   Right a -> a
   Left e -> error (show e)
 
+-- useful to break apart maps where
+-- key is a sum type
+filterMapKeys :: (Ord k2) => (k -> Maybe k2) -> Map k a -> Map k2 a
+filterMapKeys f =
+  M.fromList . mapMaybe (\(k, a) -> (,) <$> f k <*> pure a) . M.toList
+
 -------
 
 -- from https://hackage.haskell.org/package/rio-0.1.22.0/docs/src/RIO.Prelude.Extra.html#foldMapM
@@ -96,3 +104,4 @@ foldMapM f =
         return $! mappend acc w
     )
     mempty
+

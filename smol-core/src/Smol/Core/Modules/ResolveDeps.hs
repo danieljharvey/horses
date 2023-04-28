@@ -31,7 +31,7 @@ resolveModuleDeps parsedModule =
   case getDependencies extractUses parsedModule of
     Right map' ->
       let resolveIt (DTData dt, _, _) =
-            error (show dt)
+            Left $ resolveDataType dt
           resolveIt (DTExpr expr, defIds, _entities) =
             Right $ resolveExpr expr defIds (allConstructors parsedModule)
           resolvedMap = resolveIt <$> map'
@@ -61,6 +61,30 @@ mapMaybeWithKey f = M.fromList . mapMaybe (uncurry f) . M.toList
 allConstructors :: Module dep ann -> Set Constructor
 allConstructors Module {moDataTypes} =
   foldMap (\(DataType {dtConstructors}) -> M.keysSet dtConstructors) moDataTypes
+
+resolveDataType :: DataType ParseDep ann -> DataType ResolvedDep ann
+resolveDataType (DataType {dtName, dtVars, dtConstructors}) =
+  DataType dtName dtVars (resolveDataConstructor <$> dtConstructors)
+  where
+    resolveDataConstructor tys =
+      resolveType <$> tys
+
+resolveType :: Type ParseDep ann -> Type ResolvedDep ann
+resolveType (TVar ann (ParseDep v _)) = TVar ann (LocalDefinition v)
+resolveType (TConstructor ann c) = TConstructor ann (resolveTypeName c)
+resolveType (TPrim ann p) = TPrim ann p
+resolveType (TLiteral ann l) = TLiteral ann l
+resolveType (TFunc ann closure from to) =
+  TFunc ann (resolveType <$> closure) (resolveType from) (resolveType to)
+resolveType (TTuple ann a as) =
+  TTuple ann (resolveType a) (resolveType <$> as)
+resolveType (TArray ann size a) = TArray ann size (resolveType a)
+resolveType (TUnknown ann i) = TUnknown ann i
+resolveType (TGlobals ann bits inner) =
+  TGlobals ann (resolveType <$> bits) (resolveType inner)
+resolveType (TRecord ann as) = TRecord ann (resolveType <$> as)
+resolveType (TUnion ann a b) = TUnion ann (resolveType a) (resolveType b)
+resolveType (TApp ann fn arg) = TApp ann (resolveType fn) (resolveType arg)
 
 resolveExpr ::
   (Show ann) =>
@@ -105,6 +129,14 @@ resolveConstructor (ParseDep constructor Nothing) = do
   if isLocal
     then pure (LocalDefinition constructor)
     else error $ "Could not find " <> show constructor
+
+resolveTypeName ::
+  ParseDep TypeName ->
+  ResolvedDep TypeName
+resolveTypeName (ParseDep tn Nothing) =
+  LocalDefinition tn
+resolveTypeName (ParseDep tn (Just a)) =
+  error $ "resolve type name for type " <> show a <> "." <> show tn
 
 freshInt :: (MonadState ResolveState m) => m Int
 freshInt =
@@ -157,4 +189,54 @@ resolveM (EApp ann fn arg) =
   EApp ann <$> resolveM fn <*> resolveM arg
 resolveM (EConstructor ann constructor) =
   EConstructor ann <$> resolveConstructor constructor
-resolveM e = error $ "resolveM " <> show e
+resolveM (ELambda ann ident body) =
+  ELambda ann <$> resolveIdentifier ident <*> resolveM body
+resolveM (EInfix ann op a b) =
+  EInfix ann op <$> resolveM a <*> resolveM b
+resolveM (EIf ann predExpr thenExpr elseExpr) =
+  EIf ann
+    <$> resolveM predExpr
+    <*> resolveM thenExpr
+    <*> resolveM elseExpr
+resolveM (EAnn ann ty expr) =
+  EAnn ann (resolveType ty) <$> resolveM expr
+resolveM (ETuple ann a as) =
+  ETuple ann <$> resolveM a <*> traverse resolveM as
+resolveM (EArray ann as) =
+  EArray ann <$> traverse resolveM as
+resolveM (EGlobal ann g) =
+  pure $ EGlobal ann g
+resolveM (EGlobalLet ann g expr rest) =
+  EGlobalLet ann g <$> resolveM expr <*> resolveM rest
+resolveM (ERecord ann as) =
+  ERecord ann <$> traverse resolveM as
+resolveM (ERecordAccess ann expr name) =
+  ERecordAccess ann <$> resolveM expr <*> pure name
+resolveM (EPatternMatch ann expr pats) =
+  EPatternMatch ann <$> resolveM expr <*> traverse (uncurry resolvePat) pats
+  where
+    resolvePat pat patExpr =
+      (,) <$> resolvePattern pat <*> resolveM patExpr
+
+resolvePattern ::
+  (MonadReader ResolveEnv m) =>
+  Pattern ParseDep ann ->
+  m (Pattern ResolvedDep ann)
+resolvePattern (PVar ann ident) =
+  PVar ann <$> resolveIdentifier ident
+resolvePattern (PWildcard ann) = pure (PWildcard ann)
+resolvePattern (PTuple ann a as) =
+  PTuple ann <$> resolvePattern a <*> traverse resolvePattern as
+resolvePattern (PArray ann as spread) =
+  PArray ann
+    <$> traverse resolvePattern as
+    <*> case spread of
+      NoSpread -> pure NoSpread
+      SpreadWildcard ann' -> pure (SpreadWildcard ann')
+      SpreadValue ann' v -> SpreadValue ann' <$> resolveIdentifier v
+resolvePattern (PLiteral ann l) =
+  pure $ PLiteral ann l
+resolvePattern (PConstructor ann constructor args) =
+  PConstructor ann
+    <$> resolveConstructor constructor
+    <*> traverse resolvePattern args

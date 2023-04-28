@@ -104,17 +104,26 @@ spec = do
               ELet
                 ()
                 (UniqueDefinition "a" 1)
-                (EVar () (LocalDefinition "dep"))
+                (nat 456)
                 ( EApp
                     ()
-                    (EConstructor () (LocalDefinition "Maybe"))
-                    (EVar () (UniqueDefinition "a" 2))
+                    (EConstructor () (LocalDefinition "Just"))
+                    (EVar () (UniqueDefinition "a" 1))
                 )
 
             expected =
               mempty
                 { moExpressions =
-                    M.singleton (DIName "main") mainExpr
+                    M.singleton (DIName "main") mainExpr,
+                  moDataTypes =
+                    M.singleton
+                      "Maybe"
+                      ( DataType
+                          { dtName = "Maybe",
+                            dtVars = ["a"],
+                            dtConstructors = M.fromList [("Just", [TVar () (LocalDefinition "a")])]
+                          }
+                      )
                 }
 
         resolveModuleDeps mod' `shouldBe` expected

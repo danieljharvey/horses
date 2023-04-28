@@ -7,25 +7,24 @@
 module Smol.Core.Modules.Typecheck (typecheckAllModules) where
 
 -- import Smol.Core.Types.Module.ModuleName
--- import Smol.Core.Types.Module.DefIdentifier
 
 import Control.Monad.Except
--- import Data.Bifunctor
--- import Data.Coerce
+import Data.Bifunctor (first)
 -- import Data.Foldable
 import Data.Map.Strict (Map)
--- import qualified Data.Map.Strict as M
 -- import Data.Maybe
 -- import Data.Set (Set)
 -- import qualified Data.Set as S
 import Data.Text (Text)
 -- import qualified Builder as Build
 import Smol.Core
+import Smol.Core.Modules.Check (filterNameDefs)
 -- import Smol.Core.Modules.Dependencies
 -- import Smol.Core.Modules.HashModule
 -- import Smol.Core.Modules.Monad
 -- import Smol.Core.Modules.Uses
 import Smol.Core.Modules.ModuleError
+import Smol.Core.Types.Module.DefIdentifier
 import Smol.Core.Types.Module.Module
 import Smol.Core.Types.Module.ModuleHash
 
@@ -302,7 +301,7 @@ typecheckOneTypeDef input _inputModule _typecheckedModules _typeDeps (def, dt) =
   -- typecheck it
   liftEither $
     first
-      (ModuleErr . DefDoesNotTypeCheck input def)
+      ( DefDoesNotTypeCheck input def)
       action
 
   pure dt
@@ -352,40 +351,28 @@ getConstructorUses (MTConstructor _ modName typeName) =
   S.singleton (modName, typeName, 0)
 getConstructorUses other = withMonoidType getConstructorUses other
 
+-}
+
 -- given types for other required definition, typecheck a definition
 typecheckOneExprDef ::
   (MonadError ModuleError m) =>
   Text ->
   Module ResolvedDep Annotation ->
-  Map ModuleHash (Module (Type Annotation)) ->
-  Map DefIdentifier (Expr Name MonoType) ->
-  (DefIdentifier, Expr Name Annotation) ->
-  m (Expr Name MonoType)
+  Map ModuleHash (Module ResolvedDep (Type ResolvedDep Annotation)) ->
+  Map DefIdentifier (Expr ResolvedDep (Type ResolvedDep Annotation)) ->
+  (DefIdentifier, Expr ResolvedDep Annotation) ->
+  m (Expr ResolvedDep (Type ResolvedDep Annotation))
 typecheckOneExprDef input inputModule typecheckedModules deps (def, expr) = do
-  let typeMap = getTypeFromAnn <$> filterNameDefs deps
-
-  -- number the vars
-  numberedExpr <-
-    liftEither $
-      first
-        (ModuleErr . DefDoesNotTypeCheck input def)
-        ( addNumbersToExpression
-            (M.keysSet (filterNameDefs deps))
-            (coerce <$> filterNameDefs (moExpressionImports inputModule))
-            (namespacedModules inputModule typecheckedModules)
-            expr
-        )
+  let typeMap = getExprAnnotation <$> filterNameDefs deps
 
   -- initial typechecking environment
-  env <- createTypecheckEnvironment inputModule deps typecheckedModules
+  --env <- createTypecheckEnvironment inputModule deps typecheckedModules
 
   -- typecheck it
-  (_subs, _constraints, typedExpr, _mt) <-
+  typedExpr <-
     liftEither $
       first
-        (ModuleErr . DefDoesNotTypeCheck input def)
-        (typecheck typeMap env numberedExpr)
+        ( DefDoesNotTypeCheck input def)
+        (elaborate expr)
 
-  pure (first fst typedExpr)
-
--}
+  pure typedExpr 
