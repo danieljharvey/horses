@@ -14,9 +14,10 @@ import Data.Bifunctor (first)
 import Data.Map.Strict (Map)
 -- import Data.Maybe
 -- import Data.Set (Set)
+import qualified Data.Map.Strict as M
 -- import qualified Data.Set as S
 import Data.Text (Text)
--- import qualified Builder as Build
+import qualified Builder as Build
 import Smol.Core
 import Smol.Core.Modules.Check (filterNameDefs)
 -- import Smol.Core.Modules.Dependencies
@@ -76,7 +77,6 @@ typecheckAllModules _modules _rootModuleInput _rootModule = do
 
 -}
 
-{-
 --- typecheck a single module
 typecheckAllModuleDefs ::
   (MonadError ModuleError m) =>
@@ -115,6 +115,8 @@ typecheckAllModuleDefs typecheckedDeps input inputModule = do
       { moExpressions = filterExprs typecheckedDefs
       }
 
+
+  {-
 -- return type of module as a MTRecord of dep -> monotype
 -- TODO: module should probably be it's own MTModule or something
 -- as we'll want to pass them about at some point I think
