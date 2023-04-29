@@ -1,7 +1,7 @@
 {-# LANGUAGE DerivingStrategies #-}
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE LambdaCase #-}
-
+  {-# LANGUAGE StandaloneDeriving #-}
 module Smol.Core.Modules.Dependencies
   ( getDependencies,
     getModuleDeps,
@@ -21,21 +21,22 @@ import Data.Monoid (First (..))
 import Data.Set (Set)
 import qualified Data.Set as S
 import Smol.Core
-import Smol.Core.Modules.HashModule
 import Smol.Core.Modules.ModuleError
-import Smol.Core.Modules.Monad
 import Smol.Core.Modules.Uses
 import Smol.Core.Types.Module.DefIdentifier
 import qualified Smol.Core.Types.Module.Entity as E
 import Smol.Core.Types.Module.Module
 import Smol.Core.Types.Module.ModuleHash
 
-data DepType ann
-  = DTExpr (Expr ParseDep ann)
-  | DTData (DataType ParseDep ann)
-  deriving stock (Eq, Ord, Show)
+data DepType dep ann
+  = DTExpr (Expr dep ann)
+  | DTData (DataType dep ann)
 
-filterExprs :: Map k (DepType ann) -> Map k (Expr ParseDep ann)
+deriving stock instance (Eq ann, Eq (dep Identifier),
+                          Eq (dep Constructor),
+                         Eq (dep TypeName)) => Eq (DepType dep ann)
+
+filterExprs :: Map k (DepType dep ann) -> Map k (Expr dep ann)
 filterExprs =
   M.mapMaybe
     ( \case
@@ -43,7 +44,7 @@ filterExprs =
         _ -> Nothing
     )
 
-filterDataTypes :: Map k (DepType ann) -> Map k (DataType ParseDep ann)
+filterDataTypes :: Map k (DepType dep ann) -> Map k (DataType dep ann)
 filterDataTypes =
   M.mapMaybe
     ( \case
@@ -90,7 +91,7 @@ getDependencies ::
   m
     ( Map
         DefIdentifier
-        ( DepType ann,
+        ( DepType ParseDep ann,
           Set DefIdentifier,
           Set E.Entity
         )
@@ -112,7 +113,7 @@ getTypeDependencies ::
   (MonadError ModuleError m) =>
   Module ParseDep ann ->
   DataType ParseDep ann ->
-  m (DepType ann, Set DefIdentifier, Set E.Entity)
+  m (DepType ParseDep ann, Set DefIdentifier, Set E.Entity)
 getTypeDependencies mod' dt = do
   let allUses = extractDataTypeUses dt
   typeDefIds <- getTypeUses mod' allUses
@@ -121,7 +122,7 @@ getTypeDependencies mod' dt = do
 
 getTypeUses ::
   (MonadError ModuleError m) =>
-  Module ParseDep ann ->
+  Module dep ann ->
   Set E.Entity ->
   m (Set DefIdentifier)
 getTypeUses mod' uses =
@@ -145,7 +146,7 @@ getTypeUses mod' uses =
         else throwError (CannotFindTypes unknownTypeDeps)
 
 findTypenameInModule ::
-  Module ParseDep ann ->
+  Module dep ann ->
   Constructor ->
   Maybe TypeName
 findTypenameInModule mod' tyCon =
@@ -156,13 +157,13 @@ findTypenameInModule mod' tyCon =
 -- get typenames where we can, ignore missing ones as they're from another
 -- module
 -- (fingers crosseD!???!)
-findTypesForConstructors :: Module ParseDep ann -> Set Constructor -> Set TypeName
+findTypesForConstructors :: Module dep ann -> Set Constructor -> Set TypeName
 findTypesForConstructors mod' =
   S.fromList . mapMaybe (findTypenameInModule mod') . S.toList
 
 getConstructorUses ::
   (MonadError ModuleError m) =>
-  Module ParseDep ann ->
+  Module dep ann ->
   Set E.Entity ->
   m (Set DefIdentifier)
 getConstructorUses mod' uses = do
@@ -187,10 +188,10 @@ getConstructorUses mod' uses = do
 
 getExprDependencies ::
   (MonadError ModuleError m) =>
-  (Expr ParseDep ann -> Set E.Entity) ->
-  Module ParseDep ann ->
-  Expr ParseDep ann ->
-  m (DepType ann, Set DefIdentifier, Set E.Entity)
+  (Expr dep ann -> Set E.Entity) ->
+  Module dep ann ->
+  Expr dep ann ->
+  m (DepType dep ann, Set DefIdentifier, Set E.Entity)
 getExprDependencies getUses mod' expr = do
   let allUses = getUses expr
   exprDefIds <- getExprDeps mod' allUses
@@ -200,7 +201,7 @@ getExprDependencies getUses mod' expr = do
 
 getExprDeps ::
   (MonadError ModuleError m) =>
-  Module ParseDep ann ->
+  Module dep ann ->
   Set E.Entity ->
   m (Set DefIdentifier)
 getExprDeps mod' uses =
@@ -227,17 +228,19 @@ getExprDeps mod' uses =
 -- create a map of each expr hash along with the modules it needs
 -- so that we can typecheck them all
 getModuleDeps ::
-  (MonadError ModuleError m, Show ann) =>
-  Map ModuleHash (Module ParseDep ann) ->
-  Module ParseDep ann ->
+  (MonadError ModuleError m ) =>
+  Map ModuleHash (Module ResolvedDep ann) ->
+  Module ResolvedDep ann ->
   m
     ( Map
         ModuleHash
-        ( Module ParseDep ann,
+        ( Module ResolvedDep ann,
           Set ModuleHash
         )
     )
-getModuleDeps moduleDeps inputModule = do
+getModuleDeps _moduleDeps _inputModule = do
+  pure mempty
+    {-
   -- get this module's deps
   let deps =
         S.fromList
@@ -252,3 +255,4 @@ getModuleDeps moduleDeps inputModule = do
   subDeps <- traverse (getModuleDeps moduleDeps) depModules
 
   pure $ M.singleton mHash (inputModule, deps) <> mconcat subDeps
+  -}

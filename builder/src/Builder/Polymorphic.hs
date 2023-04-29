@@ -1,7 +1,7 @@
 {-# LANGUAGE DerivingStrategies #-}
 {-# LANGUAGE OverloadedStrings #-}
 
-module Language.Mimsa.Actions.Helpers.Build (doJobs, getMissing, Plan (..), State (..), Job, Inputs) where
+module Builder.Polymorphic (doJobs, getMissing, Plan (..), State (..), Job, Inputs) where
 
 import Control.Parallel.Strategies
 import Data.Map.Strict (Map)
@@ -16,9 +16,6 @@ data Plan k input = Plan
   }
   deriving stock (Eq, Ord, Show)
 
-instance (Printer k, Printer input) => Printer (Plan k input) where
-  prettyPrint (Plan deps _input) = prettyPrint deps
-
 -- how we're going to do it
 type Job m k input output = Map k output -> input -> m output
 
@@ -30,10 +27,6 @@ data State k input output = State
     stOutputs :: Map k output
   }
   deriving stock (Eq, Ord, Show)
-
-instance (Printer k, Printer input, Printer output) => Printer (State k input output) where
-  prettyPrint (State inputs _outputs) =
-    prettyPrint inputs
 
 -- | one run of the builder builds everything that is currently ready, then
 -- updates the state
