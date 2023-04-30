@@ -1,7 +1,8 @@
 {-# LANGUAGE DerivingStrategies #-}
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE LambdaCase #-}
-  {-# LANGUAGE StandaloneDeriving #-}
+{-# LANGUAGE StandaloneDeriving #-}
+
 module Smol.Core.Modules.Dependencies
   ( getDependencies,
     getModuleDeps,
@@ -32,9 +33,13 @@ data DepType dep ann
   = DTExpr (Expr dep ann)
   | DTData (DataType dep ann)
 
-deriving stock instance (Eq ann, Eq (dep Identifier),
-                          Eq (dep Constructor),
-                         Eq (dep TypeName)) => Eq (DepType dep ann)
+deriving stock instance
+  ( Eq ann,
+    Eq (dep Identifier),
+    Eq (dep Constructor),
+    Eq (dep TypeName)
+  ) =>
+  Eq (DepType dep ann)
 
 filterExprs :: Map k (DepType dep ann) -> Map k (Expr dep ann)
 filterExprs =
@@ -228,7 +233,7 @@ getExprDeps mod' uses =
 -- create a map of each expr hash along with the modules it needs
 -- so that we can typecheck them all
 getModuleDeps ::
-  (MonadError ModuleError m ) =>
+  (MonadError ModuleError m) =>
   Map ModuleHash (Module ResolvedDep ann) ->
   Module ResolvedDep ann ->
   m
@@ -240,19 +245,20 @@ getModuleDeps ::
     )
 getModuleDeps _moduleDeps _inputModule = do
   pure mempty
-    {-
-  -- get this module's deps
-  let deps =
-        S.fromList
-          ( M.elems (moExpressionImports inputModule)
-              <> M.elems (moNamedImports inputModule)
-              <> M.elems (moDataTypeImports inputModule)
-          )
-      mHash = snd $ serializeModule inputModule
 
-  -- recursively fetch sub-deps
-  depModules <- traverse (lookupModule moduleDeps) (S.toList deps)
-  subDeps <- traverse (getModuleDeps moduleDeps) depModules
+{-
+-- get this module's deps
+let deps =
+      S.fromList
+        ( M.elems (moExpressionImports inputModule)
+            <> M.elems (moNamedImports inputModule)
+            <> M.elems (moDataTypeImports inputModule)
+        )
+    mHash = snd $ serializeModule inputModule
 
-  pure $ M.singleton mHash (inputModule, deps) <> mconcat subDeps
-  -}
+-- recursively fetch sub-deps
+depModules <- traverse (lookupModule moduleDeps) (S.toList deps)
+subDeps <- traverse (getModuleDeps moduleDeps) depModules
+
+pure $ M.singleton mHash (inputModule, deps) <> mconcat subDeps
+-}

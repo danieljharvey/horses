@@ -1,6 +1,10 @@
 {-# LANGUAGE DerivingStrategies #-}
 
-module Smol.Core.Modules.ModuleError (ModuleError (..), moduleErrorDiagnostic) where
+module Smol.Core.Modules.ModuleError
+  ( ModuleError (..),
+    moduleErrorDiagnostic,
+  )
+where
 
 import Data.Set (Set)
 import Data.Text (Text)
@@ -21,6 +25,7 @@ data ModuleError
   | CannotFindValues (Set DefIdentifier)
   | CannotFindTypes (Set TypeName)
   | CannotFindConstructors (Set Constructor)
+  | VarNotFound Identifier
   | DefDoesNotTypeCheck Text DefIdentifier (TCError Annotation)
   | NamedImportNotFound (Set ModuleName) ModuleName
   | MissingModule ModuleHash

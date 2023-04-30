@@ -16,9 +16,9 @@ import Data.Map.Strict (Map)
 import qualified Data.Map.Strict as M
 import qualified Data.Set as S
 import Smol.Core
+import Smol.Core.Helpers (filterMapKeys)
 import Smol.Core.Types.Module.DefIdentifier
 import Smol.Core.Types.Module.Module
-import Smol.Core.Helpers (filterMapKeys)
 
 lookupModuleDef ::
   Module dep (Type dep ann) ->
@@ -57,7 +57,7 @@ getModuleType mod' =
         M.filterWithKey
           (\k _ -> S.member k (moExpressionExports mod'))
           (moExpressions mod')
-   in TRecord mempty (getExprAnnotation <$> filterNameDefs defs) 
+   in TRecord mempty (getExprAnnotation <$> filterNameDefs defs)
 
 filterNameDefs :: Map DefIdentifier a -> Map Identifier a
 filterNameDefs =

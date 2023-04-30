@@ -8,7 +8,7 @@ export def and a b = if a then b else False
 
 export def or a b = if a then True else b
 
-export def fst pair = case pair of (a,_) -> a
+export def fst pair = case pair of (aa,_) -> aa
 
 export def snd pair = case pair of (_,b) -> b
 

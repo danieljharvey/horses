@@ -3,14 +3,17 @@
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE NamedFieldPuns #-}
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE RankNTypes #-}
 
 module Smol.Core.Modules.ResolveDeps
   ( resolveModuleDeps,
   )
 where
 
+import Control.Monad.Except
 import Control.Monad.Reader
 import Control.Monad.State
+import Control.Monad.Writer
 import Data.Map.Strict (Map)
 import qualified Data.Map.Strict as M
 import Data.Maybe (mapMaybe)
@@ -18,24 +21,24 @@ import Data.Set (Set)
 import qualified Data.Set as S
 import Smol.Core
 import Smol.Core.Modules.Dependencies
+import Smol.Core.Modules.ModuleError
 import Smol.Core.Modules.Uses
 import Smol.Core.Types.Module.DefIdentifier
 import Smol.Core.Types.Module.Module
 
--- this is possibly only useful for testing
 resolveModuleDeps ::
-  (Show ann, Eq ann) =>
+  (Show ann, Eq ann, MonadError ModuleError m) =>
   Module ParseDep ann ->
-  Module ResolvedDep ann
+  m (Module ResolvedDep ann)
 resolveModuleDeps parsedModule =
   case getDependencies extractUses parsedModule of
-    Right map' ->
+    Right map' -> do
       let resolveIt (DTData dt, _, _) =
-            Left $ resolveDataType dt
+            pure (Left (resolveDataType dt))
           resolveIt (DTExpr expr, defIds, _entities) =
-            Right $ resolveExpr expr defIds (allConstructors parsedModule)
-          resolvedMap = resolveIt <$> map'
-          newExpressions =
+            Right <$> resolveExpr expr defIds (allConstructors parsedModule)
+      resolvedMap <- traverse resolveIt map'
+      let newExpressions =
             M.mapMaybe
               ( \case
                   Right expr -> Just expr
@@ -49,10 +52,11 @@ resolveModuleDeps parsedModule =
                   _ -> Nothing
               )
               resolvedMap
-       in parsedModule
-            { moExpressions = newExpressions,
-              moDataTypes = newDataTypes
-            }
+       in pure $
+            parsedModule
+              { moExpressions = newExpressions,
+                moDataTypes = newDataTypes
+              }
     Left e -> error (show e)
 
 mapMaybeWithKey :: (Ord k2) => (k -> a -> Maybe (k2, b)) -> Map k a -> Map k2 b
@@ -87,21 +91,23 @@ resolveType (TUnion ann a b) = TUnion ann (resolveType a) (resolveType b)
 resolveType (TApp ann fn arg) = TApp ann (resolveType fn) (resolveType arg)
 
 resolveExpr ::
-  (Show ann) =>
+  (Show ann, MonadError ModuleError m) =>
   Expr ParseDep ann ->
   Set DefIdentifier ->
   Set Constructor ->
-  Expr ResolvedDep ann
+  m (Expr ResolvedDep ann)
 resolveExpr expr localDefs localTypes =
-  runReader
-    (evalStateT (resolveM expr) initialState)
-    initialEnv
+  liftEither $
+    runReader
+      (evalStateT (runExceptT $ resolveM expr) initialState)
+      initialEnv
   where
     initialEnv = ResolveEnv mempty localDefs localTypes
     initialState = ResolveState 0
 
 resolveIdentifier ::
-  ( MonadReader ResolveEnv m
+  ( MonadReader ResolveEnv m,
+    MonadError ModuleError m
   ) =>
   ParseDep Identifier ->
   m (ResolvedDep Identifier)
@@ -115,7 +121,7 @@ resolveIdentifier (ParseDep ident Nothing) = do
       isLocal <- asks (S.member (DIName ident) . reLocal)
       if isLocal
         then pure (LocalDefinition ident)
-        else error $ "Could not find " <> show ident
+        else throwError $ VarNotFound ident
 
 resolveConstructor ::
   ( MonadReader ResolveEnv m
@@ -128,7 +134,7 @@ resolveConstructor (ParseDep constructor Nothing) = do
   isLocal <- asks (S.member constructor . reLocalConstructor)
   if isLocal
     then pure (LocalDefinition constructor)
-    else error $ "Could not find " <> show constructor
+    else error $ "Could not find constructor " <> show constructor
 
 resolveTypeName ::
   ParseDep TypeName ->
@@ -163,6 +169,14 @@ withNewIdentifier ::
 withNewIdentifier i ident =
   local (\re -> re {reExisting = M.singleton ident i <> reExisting re})
 
+withNewIdentifiers ::
+  (MonadReader ResolveEnv m) =>
+  Map Identifier Int ->
+  m a ->
+  m a
+withNewIdentifiers resolvedIdentifiers =
+  local (\re -> re {reExisting = resolvedIdentifiers <> reExisting re})
+
 data ResolveEnv = ResolveEnv
   { reExisting :: Map Identifier Int,
     reLocal :: Set DefIdentifier,
@@ -172,7 +186,7 @@ data ResolveEnv = ResolveEnv
 newtype ResolveState = ResolveState {rsUnique :: Int}
 
 resolveM ::
-  (Show ann, MonadReader ResolveEnv m, MonadState ResolveState m) =>
+  (Show ann, MonadReader ResolveEnv m, MonadState ResolveState m, MonadError ModuleError m) =>
   Expr ParseDep ann ->
   m (Expr ResolvedDep ann)
 resolveM (EVar ann ident) = EVar ann <$> resolveIdentifier ident
@@ -189,8 +203,10 @@ resolveM (EApp ann fn arg) =
   EApp ann <$> resolveM fn <*> resolveM arg
 resolveM (EConstructor ann constructor) =
   EConstructor ann <$> resolveConstructor constructor
-resolveM (ELambda ann ident body) =
-  ELambda ann <$> resolveIdentifier ident <*> resolveM body
+resolveM (ELambda ann ident body) = do
+  (unique, innerIdent, newIdent) <- newIdentifier ident
+  resolvedBody <- withNewIdentifier unique innerIdent (resolveM body)
+  pure $ ELambda ann newIdent resolvedBody
 resolveM (EInfix ann op a b) =
   EInfix ann op <$> resolveM a <*> resolveM b
 resolveM (EIf ann predExpr thenExpr elseExpr) =
@@ -212,31 +228,48 @@ resolveM (ERecord ann as) =
   ERecord ann <$> traverse resolveM as
 resolveM (ERecordAccess ann expr name) =
   ERecordAccess ann <$> resolveM expr <*> pure name
-resolveM (EPatternMatch ann expr pats) =
+resolveM (EPatternMatch ann expr pats) = do
   EPatternMatch ann <$> resolveM expr <*> traverse (uncurry resolvePat) pats
   where
-    resolvePat pat patExpr =
-      (,) <$> resolvePattern pat <*> resolveM patExpr
+    resolvePat pat patExpr = do
+      (resolvedPat, idents) <- resolvePattern pat
+      (,) resolvedPat <$> withNewIdentifiers idents (resolveM patExpr)
 
 resolvePattern ::
-  (MonadReader ResolveEnv m) =>
+  forall m ann.
+  ( MonadReader ResolveEnv m,
+    MonadError ModuleError m,
+    MonadState ResolveState m
+  ) =>
   Pattern ParseDep ann ->
-  m (Pattern ResolvedDep ann)
-resolvePattern (PVar ann ident) =
-  PVar ann <$> resolveIdentifier ident
-resolvePattern (PWildcard ann) = pure (PWildcard ann)
-resolvePattern (PTuple ann a as) =
-  PTuple ann <$> resolvePattern a <*> traverse resolvePattern as
-resolvePattern (PArray ann as spread) =
-  PArray ann
-    <$> traverse resolvePattern as
-    <*> case spread of
-      NoSpread -> pure NoSpread
-      SpreadWildcard ann' -> pure (SpreadWildcard ann')
-      SpreadValue ann' v -> SpreadValue ann' <$> resolveIdentifier v
-resolvePattern (PLiteral ann l) =
-  pure $ PLiteral ann l
-resolvePattern (PConstructor ann constructor args) =
-  PConstructor ann
-    <$> resolveConstructor constructor
-    <*> traverse resolvePattern args
+  m (Pattern ResolvedDep ann, Map Identifier Int)
+resolvePattern = runWriterT . resolvePatternInner
+  where
+    resolvePatternInner ::
+      ( MonadError ModuleError m,
+        MonadReader ResolveEnv m,
+        MonadWriter (Map Identifier Int) m,
+        MonadState ResolveState m
+      ) =>
+      Pattern ParseDep ann ->
+      m (Pattern ResolvedDep ann)
+    resolvePatternInner (PVar ann ident) = do
+      (unique, innerIdent, newIdent) <- newIdentifier ident
+      tell (M.singleton innerIdent unique)
+      pure (PVar ann newIdent)
+    resolvePatternInner (PWildcard ann) = pure (PWildcard ann)
+    resolvePatternInner (PTuple ann a as) =
+      PTuple ann <$> resolvePatternInner a <*> traverse resolvePatternInner as
+    resolvePatternInner (PArray ann as spread) =
+      PArray ann
+        <$> traverse resolvePatternInner as
+        <*> case spread of
+          NoSpread -> pure NoSpread
+          SpreadWildcard ann' -> pure (SpreadWildcard ann')
+          SpreadValue ann' v -> SpreadValue ann' <$> resolveIdentifier v
+    resolvePatternInner (PLiteral ann l) =
+      pure $ PLiteral ann l
+    resolvePatternInner (PConstructor ann constructor args) =
+      PConstructor ann
+        <$> resolveConstructor constructor
+        <*> traverse resolvePatternInner args

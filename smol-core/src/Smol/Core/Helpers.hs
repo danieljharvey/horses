@@ -11,11 +11,10 @@ module Smol.Core.Helpers
     tryError,
     fromRight,
     foldMapM,
-    filterMapKeys
+    filterMapKeys,
   )
 where
 
-import Data.Maybe (mapMaybe)
 import Control.Monad
 import Control.Monad.Except
 import Data.Bifunctor
@@ -23,6 +22,7 @@ import Data.Foldable (foldlM)
 import qualified Data.List.NonEmpty as NE
 import Data.Map.Strict (Map)
 import qualified Data.Map.Strict as M
+import Data.Maybe (mapMaybe)
 
 neZipWithM ::
   (Applicative m) =>
@@ -104,4 +104,3 @@ foldMapM f =
         return $! mappend acc w
     )
     mempty
-

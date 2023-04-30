@@ -8,6 +8,7 @@ import Data.Either (isRight)
 import Data.FileEmbed
 import Data.Foldable (find)
 import Data.List (isInfixOf)
+import qualified Data.List.NonEmpty as NE
 import qualified Data.Map.Strict as M
 import Data.Text (Text)
 import qualified Data.Text.Encoding as T
@@ -17,7 +18,6 @@ import Smol.Core.Modules.ResolveDeps
 import Smol.Core.Modules.Typecheck
 import Smol.Core.Types.Module.DefIdentifier
 import Smol.Core.Types.Module.Module
-import Smol.Core.Types.Module.ModuleHash
 import Test.Helpers
 import Test.Hspec
 
@@ -49,7 +49,7 @@ spec = do
                 { moExpressions = M.singleton (DIName "main") expr
                 }
 
-        resolveModuleDeps mod' `shouldBe` expected
+        resolveModuleDeps mod' `shouldBe` Right expected
 
       it "No deps, marks two different `a` values correctly" $ do
         let mod' = unsafeParseModule "def main = let a = 123 in let a = 456 in a"
@@ -70,7 +70,37 @@ spec = do
                 { moExpressions = M.singleton (DIName "main") expr
                 }
 
-        resolveModuleDeps mod' `shouldBe` expected
+        resolveModuleDeps mod' `shouldBe` Right expected
+
+      it "Lambdas add new variables" $ do
+        let mod' = unsafeParseModule "def main = \\a -> a"
+            expr = ELambda () (UniqueDefinition "a" 1) (EVar () (UniqueDefinition "a" 1))
+
+            expected =
+              mempty
+                { moExpressions = M.singleton (DIName "main") expr
+                }
+
+        resolveModuleDeps mod' `shouldBe` Right expected
+
+      it "Variables added in pattern matches are unique" $ do
+        let mod' = unsafeParseModule "def main pair = case pair of (a,_) -> a"
+            expr =
+              ELambda
+                ()
+                (UniqueDefinition "pair" 1)
+                ( EPatternMatch
+                    ()
+                    (EVar () (UniqueDefinition "pair" 1))
+                    ( NE.fromList [(PTuple () (PVar () (UniqueDefinition "a" 2)) (NE.singleton (PWildcard ())), EVar () (UniqueDefinition "a" 2))]
+                    )
+                )
+            expected =
+              mempty
+                { moExpressions = M.singleton (DIName "main") expr
+                }
+
+        resolveModuleDeps mod' `shouldBe` Right expected
 
       it "'main' uses a dep from 'dep'" $ do
         let mod' = unsafeParseModule "def main = let a = dep in let a = 456 in a\ndef dep = 1"
@@ -96,7 +126,7 @@ spec = do
                       ]
                 }
 
-        resolveModuleDeps mod' `shouldBe` expected
+        resolveModuleDeps mod' `shouldBe` Right expected
 
       it "'main' uses a type dep from 'Maybe'" $ do
         let mod' = unsafeParseModule "type Maybe a = Just a\ndef main = let a = 456 in Just a"
@@ -126,15 +156,14 @@ spec = do
                       )
                 }
 
-        resolveModuleDeps mod' `shouldBe` expected
+        resolveModuleDeps mod' `shouldBe` Right expected
 
     describe "Typecheck" $ do
       it "Typechecks Prelude successfully" $ do
         case parseModuleAndFormatError preludeInput of
           Right moduleParts -> do
-            case resolveModuleDeps <$> moduleFromModuleParts mempty moduleParts of
+            case moduleFromModuleParts mempty moduleParts >>= resolveModuleDeps of
               Left e -> error (show e)
               Right myModule -> do
-                let modules = M.singleton (ModuleHash "123") myModule
-                typecheckAllModules modules "" myModule `shouldSatisfy` isRight
+                typecheckModule mempty "" myModule `shouldSatisfy` isRight
           Left e -> error (show e)
