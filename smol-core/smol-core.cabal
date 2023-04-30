@@ -85,6 +85,7 @@ library
     Smol.Core.IR.ToLLVM.Helpers
     Smol.Core.IR.ToLLVM.Patterns
     Smol.Core.IR.ToLLVM.ToLLVM
+    Smol.Core.Modules.Check
     Smol.Core.Modules.Dependencies
     Smol.Core.Modules.FromParts
     Smol.Core.Modules.HashModule
@@ -135,6 +136,7 @@ library
     Smol.Core.Types.Prim
     Smol.Core.Types.ResolvedDep
     Smol.Core.Types.SourceSpan
+    Smol.Core.Types.Spread
     Smol.Core.Types.Type
     Smol.Core.Types.TypeName
     Smol.Core.TypeUtils
@@ -168,11 +170,13 @@ test-suite smol-core-tests
     Smol.Core.IR.ToLLVM.Helpers
     Smol.Core.IR.ToLLVM.Patterns
     Smol.Core.IR.ToLLVM.ToLLVM
+    Smol.Core.Modules.Check
     Smol.Core.Modules.Dependencies
     Smol.Core.Modules.FromParts
     Smol.Core.Modules.HashModule
     Smol.Core.Modules.ModuleError
     Smol.Core.Modules.Monad
+    Smol.Core.Modules.ResolveDeps
     Smol.Core.Modules.Typecheck
     Smol.Core.Modules.Uses
     Smol.Core.Parser
@@ -217,6 +221,7 @@ test-suite smol-core-tests
     Smol.Core.Types.Prim
     Smol.Core.Types.ResolvedDep
     Smol.Core.Types.SourceSpan
+    Smol.Core.Types.Spread
     Smol.Core.Types.Type
     Smol.Core.Types.TypeName
     Smol.Core.TypeUtils
