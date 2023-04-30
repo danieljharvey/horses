@@ -28,10 +28,11 @@ module Smol.Core.Typecheck.Shared
     tellGlobal,
     listenGlobals,
     freshen,
-    primFromTypeLiteral,
+    primsFromTypeLiteral,
   )
 where
 
+import qualified Data.Set.NonEmpty as NES
 import Control.Monad.Except
 import Control.Monad.Reader
 import Control.Monad.State
@@ -102,10 +103,10 @@ getTypeAnnotation (TLiteral ann _) = ann
 getTypeAnnotation (TRecord ann _) = ann
 getTypeAnnotation (TUnion ann _ _) = ann
 
-primFromTypeLiteral :: TypeLiteral -> Prim
-primFromTypeLiteral (TLInt i) = PInt i
-primFromTypeLiteral (TLBool b) = PBool b
-primFromTypeLiteral TLUnit = PUnit
+primsFromTypeLiteral :: TypeLiteral -> [Prim]
+primsFromTypeLiteral (TLInt i) = PInt <$> S.toList (NES.toSet i)
+primsFromTypeLiteral (TLBool b) = [PBool b]
+primsFromTypeLiteral TLUnit = [PUnit]
 
 getUnknown :: (MonadState (TCState ann) m) => ann -> m (ResolvedType ann)
 getUnknown ann = do

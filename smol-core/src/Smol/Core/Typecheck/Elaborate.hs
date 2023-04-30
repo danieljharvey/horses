@@ -10,6 +10,7 @@ module Smol.Core.Typecheck.Elaborate
   )
 where
 
+import qualified Data.Set.NonEmpty as NES
 import Control.Monad.Except
 import Control.Monad.Reader
 import Control.Monad.State
@@ -189,8 +190,8 @@ inferInfix ann OpEquals a b = do
 
 typeLiteralFromPrim :: Prim -> TypeLiteral
 typeLiteralFromPrim (PBool b) = TLBool b
-typeLiteralFromPrim (PInt a) = TLInt a
-typeLiteralFromPrim (PNat a) = TLInt (fromIntegral a)
+typeLiteralFromPrim (PInt a) = TLInt (NES.singleton a)
+typeLiteralFromPrim (PNat a) = TLInt (NES.singleton $ fromIntegral a)
 typeLiteralFromPrim PUnit = TLUnit
 
 -- | infer synthesizes values

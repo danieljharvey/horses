@@ -11,6 +11,7 @@ module Smol.Core.Parser.Primitives
   )
 where
 
+import qualified Data.Set.NonEmpty as NES
 import Data.Functor (($>))
 import Data.Text (Text)
 import Data.Void
@@ -36,7 +37,7 @@ primParser =
 typeLiteralParser :: Parser TypeLiteral
 typeLiteralParser =
   myLexeme
-    ( TLInt <$> intParser
+    ( TLInt . NES.singleton <$> intParser
         <|> TLBool <$> trueParser
         <|> TLBool <$> falseParser
         <|> TLUnit <$ unitParser

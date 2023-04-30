@@ -18,6 +18,7 @@ module Smol.Core.Types.Type
   )
 where
 
+import qualified Data.Set as S
 import Data.Aeson (FromJSON, FromJSONKey, ToJSON)
 import qualified Data.List.NonEmpty as NE
 import Data.Map.Strict
@@ -31,6 +32,7 @@ import Smol.Core.Types.Identifier
 import Smol.Core.Types.ParseDep
 import Smol.Core.Types.ResolvedDep
 import Smol.Core.Types.TypeName
+import qualified Data.Set.NonEmpty as NES
 
 type ParsedType ann = Type ParseDep ann
 
@@ -45,13 +47,15 @@ instance Printer TypePrim where
   prettyDoc TPInt = "Int"
   prettyDoc TPBool = "Bool"
 
-data TypeLiteral = TLBool Bool | TLInt Integer | TLUnit
+data TypeLiteral = TLBool Bool | TLInt (NES.NESet Integer) 
+                  | TLUnit
   deriving stock (Eq, Ord, Show, Generic)
   deriving anyclass (FromJSON, ToJSON)
 
 instance Printer TypeLiteral where
   prettyDoc (TLBool b) = PP.pretty b
-  prettyDoc (TLInt i) = PP.pretty i
+  prettyDoc (TLInt neInts) = 
+    PP.hsep (PP.punctuate "|" (PP.pretty <$> S.toList (NES.toSet neInts))) 
   prettyDoc TLUnit = "Unit"
 
 data Type dep ann

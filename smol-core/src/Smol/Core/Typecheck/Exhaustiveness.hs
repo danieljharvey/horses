@@ -160,7 +160,7 @@ generateFromType ::
   ResolvedType Annotation ->
   m [Pattern ResolvedDep (ResolvedType Annotation)]
 generateFromType ty@(TLiteral _ literal) =
-  pure [PLiteral ty (primFromTypeLiteral literal)]
+  pure $ PLiteral ty <$> primsFromTypeLiteral literal
 generateFromType ty@(TPrim _ TPBool) =
   pure
     [ PLiteral ty (PBool True),

@@ -16,6 +16,7 @@ import qualified Data.Set as S
 import Data.Text (Text)
 import Prettyprinter
 import Prettyprinter.Render.Text
+import qualified Data.Set.NonEmpty as NES
 
 renderWithWidth :: Int -> Doc ann -> Text
 renderWithWidth w doc = renderStrict (layoutPretty layoutOptions (unAnnotate doc))
@@ -67,3 +68,6 @@ instance (Printer a, Printer b, Printer c, Printer d) => Printer (a, b, c, d) wh
 
 instance (Printer a) => Printer (Set a) where
   prettyDoc as = list (prettyDoc <$> S.toList as)
+
+instance (Printer a) => Printer (NES.NESet a) where
+  prettyDoc as = prettyDoc (NES.toSet as)

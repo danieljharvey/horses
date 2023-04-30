@@ -33,6 +33,7 @@ import Data.Text (Text)
 import GHC.Natural
 import Smol.Core
 import Smol.Core.Typecheck.FromParsedExpr
+import qualified Data.Set.NonEmpty as NES
 
 tyBool :: (Monoid ann) => Type dep ann
 tyBool = TPrim mempty TPBool
@@ -44,7 +45,7 @@ tyInt :: (Monoid ann) => Type dep ann
 tyInt = TPrim mempty TPInt
 
 tyIntLit :: (Monoid ann) => Integer -> Type dep ann
-tyIntLit = TLiteral mempty . TLInt
+tyIntLit = TLiteral mempty . TLInt . NES.singleton
 
 tyNat :: (Monoid ann) => Type dep ann
 tyNat = TPrim mempty TPNat
