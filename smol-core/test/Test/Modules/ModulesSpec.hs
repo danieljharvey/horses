@@ -139,8 +139,8 @@ spec = do
 
         resolveModuleDeps mod' `shouldBe` Right expected
 
-      it "'main' uses a type dep from 'Maybe'" $ do
-        let mod' = unsafeParseModule "type Maybe a = Just a\ndef main = let a = 456 in Just a"
+      it "'main' uses a type dep from 'Moybe'" $ do
+        let mod' = unsafeParseModule "type Moybe a = Jost a | Noothing\ndef main = let a = 456 in Jost a"
             mainExpr =
               ELet
                 ()
@@ -148,7 +148,7 @@ spec = do
                 (nat 456)
                 ( EApp
                     ()
-                    (EConstructor () (LocalDefinition "Just"))
+                    (EConstructor () (LocalDefinition "Jost"))
                     (EVar () (UniqueDefinition "a" 1))
                 )
 
@@ -158,11 +158,15 @@ spec = do
                     M.singleton (DIName "main") mainExpr,
                   moDataTypes =
                     M.singleton
-                      "Maybe"
+                      "Moybe"
                       ( DataType
-                          { dtName = "Maybe",
+                          { dtName = "Moybe",
                             dtVars = ["a"],
-                            dtConstructors = M.fromList [("Just", [TVar () (LocalDefinition "a")])]
+                            dtConstructors =
+                              M.fromList
+                                [ ("Jost", [TVar () (LocalDefinition "a")]),
+                                  ("Noothing", mempty)
+                                ]
                           }
                       )
                 }
@@ -172,5 +176,6 @@ spec = do
     describe "Typecheck" $ do
       it "Typechecks Prelude successfully" $ do
         testModuleTypecheck "Prelude" `shouldSatisfy` isRight
+
       it "Typechecks Maybe successfully" $ do
         testModuleTypecheck "Maybe" `shouldSatisfy` isRight

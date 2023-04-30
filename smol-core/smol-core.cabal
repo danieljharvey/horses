@@ -178,7 +178,9 @@ test-suite smol-core-tests
     Smol.Core.Modules.Monad
     Smol.Core.Modules.ResolveDeps
     Smol.Core.Modules.Typecheck
+    Smol.Core.Modules.Types.DepType
     Smol.Core.Modules.Uses
+
     Smol.Core.Parser
     Smol.Core.Parser.DataType
     Smol.Core.Parser.Expr

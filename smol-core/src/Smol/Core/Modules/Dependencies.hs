@@ -1,19 +1,18 @@
 {-# LANGUAGE DerivingStrategies #-}
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE LambdaCase #-}
-{-# LANGUAGE StandaloneDeriving #-}
 
 module Smol.Core.Modules.Dependencies
   ( getDependencies,
     getModuleDeps,
     filterExprs,
     filterDataTypes,
-    DepType (..),
   )
 where
 
 -- work out the dependencies between definitions inside a module
 
+import Debug.Trace
 import Control.Monad.Except
 import Data.Map.Strict (Map)
 import qualified Data.Map.Strict as M
@@ -23,23 +22,12 @@ import Data.Set (Set)
 import qualified Data.Set as S
 import Smol.Core
 import Smol.Core.Modules.ModuleError
+import Smol.Core.Modules.Types.DepType
 import Smol.Core.Modules.Uses
 import Smol.Core.Types.Module.DefIdentifier
 import qualified Smol.Core.Types.Module.Entity as E
 import Smol.Core.Types.Module.Module
 import Smol.Core.Types.Module.ModuleHash
-
-data DepType dep ann
-  = DTExpr (Expr dep ann)
-  | DTData (DataType dep ann)
-
-deriving stock instance
-  ( Eq ann,
-    Eq (dep Identifier),
-    Eq (dep Constructor),
-    Eq (dep TypeName)
-  ) =>
-  Eq (DepType dep ann)
 
 filterExprs :: Map k (DepType dep ann) -> Map k (Expr dep ann)
 filterExprs =
@@ -90,7 +78,7 @@ filterTypes =
 -- get the vars used by each def
 -- explode if there's not available
 getDependencies ::
-  (MonadError ModuleError m) =>
+  (MonadError ModuleError m, Show ann) =>
   (Expr ParseDep ann -> Set E.Entity) ->
   Module ParseDep ann ->
   m
@@ -115,12 +103,14 @@ getDependencies getUses mod' = do
 
 -- get all dependencies of a type definition
 getTypeDependencies ::
-  (MonadError ModuleError m) =>
+  (MonadError ModuleError m, Show ann) =>
   Module ParseDep ann ->
   DataType ParseDep ann ->
   m (DepType ParseDep ann, Set DefIdentifier, Set E.Entity)
 getTypeDependencies mod' dt = do
+  traceShowM dt
   let allUses = extractDataTypeUses dt
+  traceShowM allUses
   typeDefIds <- getTypeUses mod' allUses
   exprDefIds <- getExprDeps mod' allUses
   pure (DTData dt, typeDefIds <> exprDefIds, allUses)
@@ -156,13 +146,18 @@ findTypenameInModule ::
   Maybe TypeName
 findTypenameInModule mod' tyCon =
   let lookupInDataType (DataType typeName _ constructors) =
-        if M.member tyCon constructors then First (Just typeName) else First Nothing
+        if M.member tyCon constructors
+          then First (Just typeName)
+          else First Nothing
    in getFirst $ foldMap lookupInDataType (M.elems (moDataTypes mod'))
 
 -- get typenames where we can, ignore missing ones as they're from another
 -- module
 -- (fingers crosseD!???!)
-findTypesForConstructors :: Module dep ann -> Set Constructor -> Set TypeName
+findTypesForConstructors ::
+  Module dep ann ->
+  Set Constructor ->
+  Set TypeName
 findTypesForConstructors mod' =
   S.fromList . mapMaybe (findTypenameInModule mod') . S.toList
 

@@ -22,6 +22,7 @@ import qualified Data.Set as S
 import Smol.Core
 import Smol.Core.Modules.Dependencies
 import Smol.Core.Modules.ModuleError
+import Smol.Core.Modules.Types.DepType
 import Smol.Core.Modules.Uses
 import Smol.Core.Types.Module.DefIdentifier
 import Smol.Core.Types.Module.Module
@@ -30,34 +31,32 @@ resolveModuleDeps ::
   (Show ann, Eq ann, MonadError ModuleError m) =>
   Module ParseDep ann ->
   m (Module ResolvedDep ann)
-resolveModuleDeps parsedModule =
-  case getDependencies extractUses parsedModule of
-    Right map' -> do
-      let resolveIt (DTData dt, _, _) =
-            pure (Left (resolveDataType dt))
-          resolveIt (DTExpr expr, defIds, _entities) =
-            Right <$> resolveExpr expr defIds (allConstructors parsedModule)
-      resolvedMap <- traverse resolveIt map'
-      let newExpressions =
-            M.mapMaybe
-              ( \case
-                  Right expr -> Just expr
-                  Left _ -> Nothing
-              )
-              resolvedMap
-          newDataTypes =
-            mapMaybeWithKey
-              ( \k a -> case (k, a) of
-                  (DIType typeName, Left dt) -> Just (typeName, dt)
-                  _ -> Nothing
-              )
-              resolvedMap
-       in pure $
-            parsedModule
-              { moExpressions = newExpressions,
-                moDataTypes = newDataTypes
-              }
-    Left e -> error (show e)
+resolveModuleDeps parsedModule = do
+  map' <- getDependencies extractUses parsedModule
+  let resolveIt (DTData dt, _, _) =
+        pure (Left (resolveDataType dt))
+      resolveIt (DTExpr expr, defIds, _entities) =
+        Right <$> resolveExpr expr defIds (allConstructors parsedModule)
+  resolvedMap <- traverse resolveIt map'
+  let newExpressions =
+        M.mapMaybe
+          ( \case
+              Right expr -> Just expr
+              Left _ -> Nothing
+          )
+          resolvedMap
+      newDataTypes =
+        mapMaybeWithKey
+          ( \k a -> case (k, a) of
+              (DIType typeName, Left dt) -> Just (typeName, dt)
+              _ -> Nothing
+          )
+          resolvedMap
+   in pure $
+        parsedModule
+          { moExpressions = newExpressions,
+            moDataTypes = newDataTypes
+          }
 
 mapMaybeWithKey :: (Ord k2) => (k -> a -> Maybe (k2, b)) -> Map k a -> Map k2 b
 mapMaybeWithKey f = M.fromList . mapMaybe (uncurry f) . M.toList

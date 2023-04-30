@@ -21,9 +21,25 @@ import Smol.Core
 import Smol.Core.Modules.Check (filterNameDefs)
 import Smol.Core.Modules.Dependencies
 import Smol.Core.Modules.ModuleError
+import Smol.Core.Modules.Types.DepType
 import Smol.Core.Types.Module.DefIdentifier
 import Smol.Core.Types.Module.Module
 import Smol.Core.Types.Module.ModuleHash
+
+getModuleDefIdentifiers ::
+  Module dep ann ->
+  Map DefIdentifier (DefIdentifier, DepType dep ann)
+getModuleDefIdentifiers inputModule =
+  let exprs =
+        M.mapWithKey (,) (DTExpr <$> moExpressions inputModule)
+      dataTypes =
+        M.fromList $
+          ( \dt ->
+              let defId = DIType (dtName dt)
+               in (defId, (defId, DTData dt))
+          )
+            <$> M.elems (moDataTypes inputModule)
+   in exprs <> dataTypes
 
 --- typecheck a single module
 typecheckModule ::
@@ -33,7 +49,7 @@ typecheckModule ::
   Module ResolvedDep Annotation ->
   m (Module ResolvedDep (Type ResolvedDep Annotation))
 typecheckModule _typecheckedDeps input inputModule = do
-  let inputWithDepsAndName = M.mapWithKey (,) (DTExpr <$> moExpressions inputModule)
+  let inputWithDepsAndName = getModuleDefIdentifiers inputModule
 
   let stInputs =
         ( \(name, expr) ->

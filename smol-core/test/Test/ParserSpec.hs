@@ -31,6 +31,11 @@ spec = do
         let result = parseModuleAndFormatError "type Dog a = Woof String | Other a"
         result `shouldSatisfy` isRight
 
+      -- broken because Nat parses as part of union
+      xit "Parses type and def" $ do
+        let result = parseModuleAndFormatError "type What a = Just a | Nathing"
+        result `shouldBe` Right []
+
       it "Parses a single definition" $ do
         let result = parseModuleAndFormatError "def id a = a"
         result `shouldSatisfy` isRight
