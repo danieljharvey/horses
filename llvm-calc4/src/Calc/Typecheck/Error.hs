@@ -28,8 +28,6 @@ data TypeError ann
   | TypeMismatch (Type ann) (Type ann)
   | VarNotFound ann Identifier (HashSet Identifier)
   | FunctionNotFound ann FunctionName (HashSet FunctionName)
-  | FunctionArgumentLengthMismatch ann Int Int -- expected, actual
-  | NonFunctionTypeFound ann (Type ann)
   | PatternMismatch (Pattern ann) (Type ann)
   | FunctionArgumentLengthMismatch ann Int Int -- expected, actual
   | NonFunctionTypeFound ann (Type ann)
