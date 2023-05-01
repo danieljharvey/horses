@@ -101,7 +101,6 @@ getTypeAnnotation (TVar ann _) = ann
 getTypeAnnotation (TGlobals ann _ _) = ann
 getTypeAnnotation (TLiteral ann _) = ann
 getTypeAnnotation (TRecord ann _) = ann
-getTypeAnnotation (TUnion ann _ _) = ann
 
 primsFromTypeLiteral :: TypeLiteral -> [Prim]
 primsFromTypeLiteral (TLInt i) = PInt <$> S.toList (NES.toSet i)

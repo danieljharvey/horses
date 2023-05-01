@@ -169,6 +169,5 @@ mapTypeDep resolve = go
     go (TUnknown ann i) = TUnknown ann i
     go (TGlobals ann env inner) = TGlobals ann (go <$> env) (go inner)
     go (TRecord ann as) = TRecord ann (go <$> as)
-    go (TUnion ann a b) = TUnion ann (go a) (go b)
     go (TApp ann a b) = TApp ann (go a) (go b)
     go (TConstructor ann constructor) = TConstructor ann (resolve constructor)

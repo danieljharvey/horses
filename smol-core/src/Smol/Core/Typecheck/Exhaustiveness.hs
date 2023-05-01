@@ -170,10 +170,6 @@ generateFromType ty@(TPrim _ TPInt) =
   pure [PWildcard ty]
 generateFromType ty@(TPrim _ TPNat) =
   pure [PWildcard ty]
-generateFromType (TUnion _ a b) =
-  mappend
-    <$> generateFromType a
-    <*> generateFromType b
 generateFromType _ = pure mempty
 
 generateAlways ::

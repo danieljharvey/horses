@@ -392,15 +392,6 @@ checkPattern checkTy checkPat = do
       pure (PLiteral ty (PNat b), mempty)
     (ty@(TPrim _ TPInt), PLiteral _ (PInt b)) ->
       pure (PLiteral ty (PInt b), mempty)
-    (ty@(TUnion _ l r), pat@(PLiteral _ lit)) -> do
-      result <-
-        tryError
-          ( checkPattern l pat -- is left OK?
-              `catchError` \_ -> checkPattern r pat -- or maybe right is?
-          )
-      case result of
-        Left _ -> throwError (TCPatternMismatch pat ty)
-        Right _ -> pure (PLiteral ty lit, mempty)
     (ty@(TArray _ arrSize tyArr), PArray ann items spread) -> do
       inferEverything <- traverse (checkPattern tyArr) items
       (inferSpread, env2) <- case spread of
