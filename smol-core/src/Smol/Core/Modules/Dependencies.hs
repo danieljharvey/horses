@@ -12,7 +12,6 @@ where
 
 -- work out the dependencies between definitions inside a module
 
-import Debug.Trace
 import Control.Monad.Except
 import Data.Map.Strict (Map)
 import qualified Data.Map.Strict as M
@@ -78,7 +77,7 @@ filterTypes =
 -- get the vars used by each def
 -- explode if there's not available
 getDependencies ::
-  (MonadError ModuleError m, Show ann) =>
+  (MonadError ModuleError m) =>
   (Expr ParseDep ann -> Set E.Entity) ->
   Module ParseDep ann ->
   m
@@ -103,14 +102,12 @@ getDependencies getUses mod' = do
 
 -- get all dependencies of a type definition
 getTypeDependencies ::
-  (MonadError ModuleError m, Show ann) =>
+  (MonadError ModuleError m) =>
   Module ParseDep ann ->
   DataType ParseDep ann ->
   m (DepType ParseDep ann, Set DefIdentifier, Set E.Entity)
 getTypeDependencies mod' dt = do
-  traceShowM dt
   let allUses = extractDataTypeUses dt
-  traceShowM allUses
   typeDefIds <- getTypeUses mod' allUses
   exprDefIds <- getExprDeps mod' allUses
   pure (DTData dt, typeDefIds <> exprDefIds, allUses)

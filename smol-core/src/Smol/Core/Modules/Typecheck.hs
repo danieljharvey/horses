@@ -1,8 +1,5 @@
 {-# LANGUAGE DerivingStrategies #-}
 {-# LANGUAGE FlexibleContexts #-}
-{-# LANGUAGE LambdaCase #-}
-{-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE TupleSections #-}
 
 module Smol.Core.Modules.Typecheck (typecheckModule) where
 
@@ -16,6 +13,8 @@ import Data.Map.Strict (Map)
 -- import Smol.Core.Modules.Monad
 
 import qualified Data.Map.Strict as M
+import Data.Maybe (mapMaybe)
+import Data.Set (Set)
 import Data.Text (Text)
 import Smol.Core
 import Smol.Core.Modules.Check (filterNameDefs)
@@ -28,18 +27,40 @@ import Smol.Core.Types.Module.ModuleHash
 
 getModuleDefIdentifiers ::
   Module dep ann ->
-  Map DefIdentifier (DefIdentifier, DepType dep ann)
+  Map DefIdentifier (DefIdentifier, DepType dep ann, Set DefIdentifier)
 getModuleDefIdentifiers inputModule =
   let exprs =
-        M.mapWithKey (,) (DTExpr <$> moExpressions inputModule)
+        M.mapWithKey
+          ( \name expr ->
+              (name, expr, error "where should we get these?")
+          )
+          (DTExpr <$> moExpressions inputModule)
       dataTypes =
         M.fromList $
           ( \dt ->
               let defId = DIType (dtName dt)
-               in (defId, (defId, DTData dt))
+               in (defId, (defId, DTData dt, mempty))
           )
             <$> M.elems (moDataTypes inputModule)
    in exprs <> dataTypes
+
+moduleFromDepTypes ::
+  Module ResolvedDep ann ->
+  Map DefIdentifier (DepType ResolvedDep (Type ResolvedDep ann)) ->
+  Module ResolvedDep (Type ResolvedDep ann)
+moduleFromDepTypes oldModule definitions =
+  let firstMaybe f (a, b) = case f a of
+        Just fa -> Just (fa, b)
+        Nothing -> Nothing
+      mapKeyMaybe f =
+        M.fromList . mapMaybe (firstMaybe f) . M.toList
+      getTypeName (DIType tn) = Just tn
+      getTypeName _ = Nothing
+   in -- replace input module with typechecked versions
+      oldModule
+        { moExpressions = filterExprs definitions,
+          moDataTypes = mapKeyMaybe getTypeName (filterDataTypes definitions)
+        }
 
 --- typecheck a single module
 typecheckModule ::
@@ -52,9 +73,9 @@ typecheckModule _typecheckedDeps input inputModule = do
   let inputWithDepsAndName = getModuleDefIdentifiers inputModule
 
   let stInputs =
-        ( \(name, expr) ->
+        ( \(name, expr, deps) ->
             Build.Plan
-              { Build.jbDeps = mempty, -- deps,
+              { Build.jbDeps = deps,
                 Build.jbInput = (name, expr)
               }
         )
@@ -65,17 +86,14 @@ typecheckModule _typecheckedDeps input inputModule = do
           { Build.stInputs = stInputs,
             Build.stOutputs = mempty
           }
+
   -- go!
   typecheckedDefs <-
     Build.stOutputs
       <$> Build.doJobs (typecheckOneDef input inputModule) state
 
   -- replace input module with typechecked versions
-  pure $
-    inputModule
-      { moExpressions = filterExprs typecheckedDefs,
-        moDataTypes = mempty
-      }
+  pure $ moduleFromDepTypes inputModule typecheckedDefs
 
 -- given types for other required definition, typecheck a definition
 typecheckOneDef ::

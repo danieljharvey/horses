@@ -86,7 +86,6 @@ resolveType (TUnknown ann i) = TUnknown ann i
 resolveType (TGlobals ann bits inner) =
   TGlobals ann (resolveType <$> bits) (resolveType inner)
 resolveType (TRecord ann as) = TRecord ann (resolveType <$> as)
-resolveType (TUnion ann a b) = TUnion ann (resolveType a) (resolveType b)
 resolveType (TApp ann fn arg) = TApp ann (resolveType fn) (resolveType arg)
 
 resolveExpr ::

@@ -179,3 +179,9 @@ spec = do
 
       it "Typechecks Maybe successfully" $ do
         testModuleTypecheck "Maybe" `shouldSatisfy` isRight
+
+      it "Typechecks Either successfully" $ do
+        testModuleTypecheck "Either" `shouldSatisfy` isRight
+
+      it "Typechecks State successfully" $ do
+        testModuleTypecheck "State" `shouldSatisfy` isRight
