@@ -24,10 +24,10 @@ spec = do
   describe "Subtyping" $ do
     describe "generaliseLiteral" $ do
       it "Negative literal makes int" $ do
-        generaliseLiteral (tyIntLit (-1))
+        generaliseLiteral (tyIntLit [-1])
           `shouldBe` TPrim () TPInt
       it "Non-negative literal makes nat" $ do
-        generaliseLiteral (tyIntLit 0)
+        generaliseLiteral (tyIntLit [0])
           `shouldBe` TPrim () TPNat
 
     describe "Subtype" $ do

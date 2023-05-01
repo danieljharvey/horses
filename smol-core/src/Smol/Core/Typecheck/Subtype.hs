@@ -81,9 +81,8 @@ combine a b =
     `catchError` const asUnion
   where
     asUnion = case (a, b) of
-      (TLiteral ann (TLInt bA), TLiteral _ (TLInt bB))
-        | bA /= bB ->
-            pure $ TUnion ann a b
+      (TLiteral ann (TLInt as), TLiteral _ (TLInt bs)) ->
+        pure $ TLiteral ann (TLInt $ as <> bs)
       (TLiteral ann (TLBool bA), TLiteral _ (TLBool bB))
         | bA /= bB ->
             pure $ TPrim ann TPBool -- don't have True | False, it's silly
@@ -111,7 +110,7 @@ memberOf a b = typeEquals a b
 isLiteralSubtypeOf :: ResolvedType ann -> ResolvedType ann -> Bool
 isLiteralSubtypeOf a b | a `typeEquals` b = True
 isLiteralSubtypeOf (TLiteral _ (TLBool _)) (TPrim _ TPBool) = True -- a Bool literal is a Bool
-isLiteralSubtypeOf (TLiteral _ (TLInt a)) (TPrim _ TPNat) = all (>= 0) a-- a Int literal is a Nat if its non-negative
+isLiteralSubtypeOf (TLiteral _ (TLInt a)) (TPrim _ TPNat) = all (>= 0) a -- a Int literal is a Nat if its non-negative
 isLiteralSubtypeOf (TLiteral _ (TLInt _)) (TPrim _ TPInt) = True -- a Nat literal is also an Int
 isLiteralSubtypeOf (TPrim _ TPNat) (TPrim _ TPInt) = True -- a Nat is also an Int
 isLiteralSubtypeOf c (TUnion _ l r) | c `memberOf` l || c `memberOf` r = True -- a | b is a more general 'a'

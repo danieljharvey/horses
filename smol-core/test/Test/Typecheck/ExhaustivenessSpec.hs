@@ -104,7 +104,7 @@ spec = do
             `shouldBe` Right []
 
         it "Int literal is complete in itself" $ do
-          let ty = tyIntLit 100
+          let ty = tyIntLit [100]
           exhaustiveCheck [PLiteral ty (PInt 100)]
             `shouldBe` Right mempty
 
@@ -117,9 +117,9 @@ spec = do
             `shouldBe` Right [PWildcard tyNat]
 
         it "Union of int literals" $ do
-          let ty = tyUnion (tyIntLit 1) (tyIntLit 2)
+          let ty = tyUnion (tyIntLit [1]) (tyIntLit [2])
           exhaustiveCheck [PLiteral ty (PInt 1)]
-            `shouldBe` Right [PLiteral (tyIntLit 2) (PInt 2)]
+            `shouldBe` Right [PLiteral (tyIntLit [2]) (PInt 2)]
 
         it "Wildcard is fine" $ do
           exhaustiveCheck [PWildcard tyInt] `shouldBe` Right []

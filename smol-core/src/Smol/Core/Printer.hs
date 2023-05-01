@@ -13,10 +13,10 @@ import Data.Map.Strict (Map)
 import qualified Data.Map.Strict as M
 import Data.Set (Set)
 import qualified Data.Set as S
+import qualified Data.Set.NonEmpty as NES
 import Data.Text (Text)
 import Prettyprinter
 import Prettyprinter.Render.Text
-import qualified Data.Set.NonEmpty as NES
 
 renderWithWidth :: Int -> Doc ann -> Text
 renderWithWidth w doc = renderStrict (layoutPretty layoutOptions (unAnnotate doc))

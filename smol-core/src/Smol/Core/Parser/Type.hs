@@ -68,7 +68,6 @@ parseTypeAndFormatError = parseAndFormat (space *> typeParser <* eof)
 typeParser :: Parser (ParsedType Annotation)
 typeParser =
   try (orInBrackets tyFunctionParser)
-    <|> try tyUnionParser
     <|> simpleTypeParser
 
 -- | all the types except functions
@@ -122,7 +121,6 @@ subParser :: Parser (ParsedType Annotation)
 subParser =
   try simpleTypeParser
     <|> try (inBrackets tyFunctionParser)
-    <|> try (inBrackets tyUnionParser)
 
 tyPrimitiveParser :: Parser (ParsedType Annotation)
 tyPrimitiveParser = TPrim mempty <$> tyPrimParser
@@ -165,12 +163,6 @@ tyTupleParser = do
 
 tyIdentifier :: Parser Text
 tyIdentifier = myLexeme (takeWhile1P (Just "type variable name") Char.isAlphaNum)
-
-tyUnionParser :: Parser (ParsedType Annotation)
-tyUnionParser = do
-  chainl1
-    simpleTypeParser
-    (myString "|" >> pure (TUnion mempty))
 
 inProtectedTypes :: Text -> Maybe Text
 inProtectedTypes tx =

@@ -29,11 +29,11 @@ import Data.Foldable (foldl')
 import Data.Functor
 import qualified Data.List.NonEmpty as NE
 import qualified Data.Sequence as Seq
+import qualified Data.Set.NonEmpty as NES
 import Data.Text (Text)
 import GHC.Natural
 import Smol.Core
 import Smol.Core.Typecheck.FromParsedExpr
-import qualified Data.Set.NonEmpty as NES
 
 tyBool :: (Monoid ann) => Type dep ann
 tyBool = TPrim mempty TPBool
@@ -44,8 +44,8 @@ tyBoolLit = TLiteral mempty . TLBool
 tyInt :: (Monoid ann) => Type dep ann
 tyInt = TPrim mempty TPInt
 
-tyIntLit :: (Monoid ann) => Integer -> Type dep ann
-tyIntLit = TLiteral mempty . TLInt . NES.singleton
+tyIntLit :: (Monoid ann) => [Integer] -> Type dep ann
+tyIntLit = TLiteral mempty . TLInt . NES.fromList . NE.fromList
 
 tyNat :: (Monoid ann) => Type dep ann
 tyNat = TPrim mempty TPNat

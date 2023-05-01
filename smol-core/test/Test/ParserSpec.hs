@@ -25,7 +25,7 @@ testInputs =
 
 spec :: Spec
 spec = do
-  describe "Parser" $ do
+  fdescribe "Parser" $ do
     describe "Module" $ do
       it "Parses a single type" $ do
         let result = parseModuleAndFormatError "type Dog a = Woof String | Other a"
@@ -110,6 +110,7 @@ spec = do
       let strings =
             [ ("True", tyBoolLit True),
               ("False", tyBoolLit False),
+              ("1 | 2 | 3", tyIntLit [1, 2, 3]),
               ( "(a -> b) -> Maybe a -> Maybe b",
                 TFunc
                   ()

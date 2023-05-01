@@ -32,7 +32,6 @@ module Smol.Core.Typecheck.Shared
   )
 where
 
-import qualified Data.Set.NonEmpty as NES
 import Control.Monad.Except
 import Control.Monad.Reader
 import Control.Monad.State
@@ -41,6 +40,7 @@ import Data.Map.Strict (Map)
 import qualified Data.Map.Strict as M
 import Data.Maybe (listToMaybe)
 import qualified Data.Set as S
+import qualified Data.Set.NonEmpty as NES
 import Smol.Core.Helpers
 import Smol.Core.Typecheck.FreeVars
 import Smol.Core.Typecheck.Substitute

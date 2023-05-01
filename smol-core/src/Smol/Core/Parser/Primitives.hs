@@ -11,8 +11,9 @@ module Smol.Core.Parser.Primitives
   )
 where
 
-import qualified Data.Set.NonEmpty as NES
 import Data.Functor (($>))
+import qualified Data.List.NonEmpty as NE
+import qualified Data.Set.NonEmpty as NES
 import Data.Text (Text)
 import Data.Void
 import GHC.Num.Natural
@@ -37,7 +38,7 @@ primParser =
 typeLiteralParser :: Parser TypeLiteral
 typeLiteralParser =
   myLexeme
-    ( TLInt . NES.singleton <$> intParser
+    ( TLInt <$> multiIntParser
         <|> TLBool <$> trueParser
         <|> TLBool <$> falseParser
         <|> TLUnit <$ unitParser
@@ -60,6 +61,14 @@ intPrimParser = PInt <$> intParser
 intParser :: Parser Integer
 intParser =
   L.signed (string "" $> ()) L.decimal
+
+multiIntParser :: Parser (NES.NESet Integer)
+multiIntParser = do
+  ints <-
+    sepBy1
+      (myLexeme intParser)
+      (myString "|")
+  pure (NES.fromList (NE.fromList ints))
 
 ---
 
