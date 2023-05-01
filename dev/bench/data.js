@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1682950277815,
+  "lastUpdate": 1682951917990,
   "repoUrl": "https://github.com/danieljharvey/mimsa",
   "entries": {
     "Store benchmarks in Github Pages": [
@@ -1271,6 +1271,50 @@ window.BENCHMARK_DATA = {
           {
             "name": "evaluate/evaluate parsing 2",
             "value": 0.2100801703714264,
+            "unit": "Time (ms)"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "danieljamesharvey@gmail.com",
+            "name": "Daniel Harvey",
+            "username": "danieljharvey"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "71c6fac606552b8dcaca099cc1367918e7b1565d",
+          "message": "Make type literals non empty sets (#933)\n\n* Make type literals non empty sets\r\n\r\n* Parsing fixed\r\n\r\n* It typechecks\r\n\r\n* Remove TUnion",
+          "timestamp": "2023-05-01T15:30:49+01:00",
+          "tree_id": "8bae64016307eceab0bba97cfb0f19a701064fe7",
+          "url": "https://github.com/danieljharvey/mimsa/commit/71c6fac606552b8dcaca099cc1367918e7b1565d"
+        },
+        "date": 1682951917396,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "build stdlib/allFns",
+            "value": 0.12452393357140684,
+            "unit": "Time (ms)"
+          },
+          {
+            "name": "evaluate/evaluate big looping thing",
+            "value": 0.11205521690475864,
+            "unit": "Time (ms)"
+          },
+          {
+            "name": "evaluate/evaluate parsing",
+            "value": 0.03625923110735465,
+            "unit": "Time (ms)"
+          },
+          {
+            "name": "evaluate/evaluate parsing 2",
+            "value": 0.2654975436999848,
             "unit": "Time (ms)"
           }
         ]
