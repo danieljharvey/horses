@@ -7,7 +7,6 @@ module Test.Helpers
     tyVar,
     tyUnknown,
     tyTuple,
-    tyUnion,
     tyCons,
     bool,
     int,
@@ -29,6 +28,7 @@ import Data.Foldable (foldl')
 import Data.Functor
 import qualified Data.List.NonEmpty as NE
 import qualified Data.Sequence as Seq
+import qualified Data.Set.NonEmpty as NES
 import Data.Text (Text)
 import GHC.Natural
 import Smol.Core
@@ -43,8 +43,8 @@ tyBoolLit = TLiteral mempty . TLBool
 tyInt :: (Monoid ann) => Type dep ann
 tyInt = TPrim mempty TPInt
 
-tyIntLit :: (Monoid ann) => Integer -> Type dep ann
-tyIntLit = TLiteral mempty . TLInt
+tyIntLit :: (Monoid ann) => [Integer] -> Type dep ann
+tyIntLit = TLiteral mempty . TLInt . NES.fromList . NE.fromList
 
 tyNat :: (Monoid ann) => Type dep ann
 tyNat = TPrim mempty TPNat
@@ -61,13 +61,6 @@ tyTuple ::
   [Type dep ann] ->
   Type dep ann
 tyTuple a as = TTuple mempty a (NE.fromList as)
-
-tyUnion ::
-  (Monoid ann) =>
-  Type dep ann ->
-  Type dep ann ->
-  Type dep ann
-tyUnion = TUnion mempty
 
 tyCons ::
   (Monoid ann) =>

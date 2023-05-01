@@ -28,7 +28,7 @@ module Smol.Core.Typecheck.Shared
     tellGlobal,
     listenGlobals,
     freshen,
-    primFromTypeLiteral,
+    primsFromTypeLiteral,
   )
 where
 
@@ -40,6 +40,7 @@ import Data.Map.Strict (Map)
 import qualified Data.Map.Strict as M
 import Data.Maybe (listToMaybe)
 import qualified Data.Set as S
+import qualified Data.Set.NonEmpty as NES
 import Smol.Core.Helpers
 import Smol.Core.Typecheck.FreeVars
 import Smol.Core.Typecheck.Substitute
@@ -100,12 +101,11 @@ getTypeAnnotation (TVar ann _) = ann
 getTypeAnnotation (TGlobals ann _ _) = ann
 getTypeAnnotation (TLiteral ann _) = ann
 getTypeAnnotation (TRecord ann _) = ann
-getTypeAnnotation (TUnion ann _ _) = ann
 
-primFromTypeLiteral :: TypeLiteral -> Prim
-primFromTypeLiteral (TLInt i) = PInt i
-primFromTypeLiteral (TLBool b) = PBool b
-primFromTypeLiteral TLUnit = PUnit
+primsFromTypeLiteral :: TypeLiteral -> [Prim]
+primsFromTypeLiteral (TLInt i) = PInt <$> S.toList (NES.toSet i)
+primsFromTypeLiteral (TLBool b) = [PBool b]
+primsFromTypeLiteral TLUnit = [PUnit]
 
 getUnknown :: (MonadState (TCState ann) m) => ann -> m (ResolvedType ann)
 getUnknown ann = do

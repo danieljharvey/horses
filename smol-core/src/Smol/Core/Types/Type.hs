@@ -22,6 +22,8 @@ import Data.Aeson (FromJSON, FromJSONKey, ToJSON)
 import qualified Data.List.NonEmpty as NE
 import Data.Map.Strict
 import qualified Data.Map.Strict as M
+import qualified Data.Set as S
+import qualified Data.Set.NonEmpty as NES
 import Data.Word (Word64)
 import GHC.Generics (Generic)
 import Prettyprinter ((<+>))
@@ -45,13 +47,17 @@ instance Printer TypePrim where
   prettyDoc TPInt = "Int"
   prettyDoc TPBool = "Bool"
 
-data TypeLiteral = TLBool Bool | TLInt Integer | TLUnit
+data TypeLiteral
+  = TLBool Bool
+  | TLInt (NES.NESet Integer)
+  | TLUnit
   deriving stock (Eq, Ord, Show, Generic)
   deriving anyclass (FromJSON, ToJSON)
 
 instance Printer TypeLiteral where
   prettyDoc (TLBool b) = PP.pretty b
-  prettyDoc (TLInt i) = PP.pretty i
+  prettyDoc (TLInt neInts) =
+    PP.hsep (PP.punctuate "| " (PP.pretty <$> S.toList (NES.toSet neInts)))
   prettyDoc TLUnit = "Unit"
 
 data Type dep ann
@@ -64,7 +70,6 @@ data Type dep ann
   | TUnknown ann Integer
   | TGlobals ann (Map Identifier (Type dep ann)) (Type dep ann)
   | TRecord ann (Map Identifier (Type dep ann))
-  | TUnion ann (Type dep ann) (Type dep ann)
   | TApp ann (Type dep ann) (Type dep ann)
   | TConstructor ann (dep TypeName)
   deriving stock (Functor, Foldable, Generic, Traversable)
@@ -127,7 +132,6 @@ renderType (TPrim _ a) = prettyDoc a
 renderType (TLiteral _ l) = prettyDoc l
 renderType (TUnknown _ i) = "U" <> PP.pretty i
 renderType (TArray _ _ as) = "[" <> prettyDoc as <> "]"
-renderType (TUnion _ a b) = prettyDoc a <+> "|" <+> prettyDoc b
 renderType (TFunc _ _ a b) =
   withParens a <+> "->" <+> renderType b
 renderType (TTuple _ a as) =

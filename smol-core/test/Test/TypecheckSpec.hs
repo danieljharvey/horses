@@ -221,7 +221,7 @@ spec = do
     describe "Typecheck" $ do
       it "Infers nat" $ do
         let input = EPrim () (PNat 1)
-            expected = tyIntLit 1
+            expected = tyIntLit [1]
         getExprAnnotation <$> testElaborate input `shouldBe` Right expected
 
       it "Nat literal becomes Nat under annotation" $ do
@@ -240,7 +240,7 @@ spec = do
 
       it "Infers int" $ do
         let input = EPrim () (PInt (-1))
-            expected = tyIntLit (-1)
+            expected = tyIntLit [-1]
         getExprAnnotation <$> testElaborate input `shouldBe` Right expected
 
       it "Nat becomes int under annotation" $ do
@@ -347,7 +347,7 @@ spec = do
       it "Function use in if no annotation" $ do
         let input = unsafeParseExpr "if ((\\a -> a) True) then 1 else 2"
             expected :: Type dep ()
-            expected = tyUnion (tyIntLit 1) (tyIntLit 2)
+            expected = tyIntLit [1, 2]
         getExprAnnotation <$> testElaborate input `shouldBe` Right expected
 
       it "If statement combines return types but generalises to Int" $ do
@@ -375,7 +375,7 @@ spec = do
         let input =
               tuple (int 1) [bool True, int 2]
             expected :: Type dep ()
-            expected = tyTuple (tyIntLit 1) [tyBoolLit True, tyIntLit 2]
+            expected = tyTuple (tyIntLit [1]) [tyBoolLit True, tyIntLit [2]]
         getExprAnnotation <$> testElaborate input `shouldBe` Right expected
 
       it "Detects annotated tuple with wrong values" $ do
@@ -424,7 +424,7 @@ spec = do
             input = EApp () argInput (int 1)
 
             expected :: Type dep ()
-            expected = tyIntLit 1
+            expected = tyIntLit [1]
 
         getExprAnnotation <$> testElaborate input
           `shouldBe` Right expected
@@ -442,7 +442,7 @@ spec = do
                 (EApp () (var "f") (int 1))
             input = EApp () fnInput argInput
             expected :: Type dep ()
-            expected = tyIntLit 1
+            expected = tyIntLit [1]
 
         getExprAnnotation <$> testElaborate input
           `shouldBe` Right expected
@@ -456,7 +456,7 @@ spec = do
             fnInput = unsafeParseExpr "\\f -> (f 1, f True)"
             input = EApp () fnInput argInput
             expected :: Type dep ()
-            expected = tyTuple (tyIntLit 1) [tyBoolLit True]
+            expected = tyTuple (tyIntLit [1]) [tyBoolLit True]
 
         getExprAnnotation <$> testElaborate input
           `shouldBe` Right expected
@@ -612,7 +612,7 @@ spec = do
                 ()
                 ( M.fromList
                     [ ("a", tyBoolLit True),
-                      ("b", tyIntLit 1)
+                      ("b", tyIntLit [1])
                     ]
                 )
 
@@ -699,7 +699,7 @@ spec = do
 
       it "Basic let binding" $ do
         let input = unsafeParseExpr "let a = 1; a"
-            expected = ELet (tyIntLit 1) "a" (EPrim (tyIntLit 1) (PNat 1)) (EVar (tyIntLit 1) "a")
+            expected = ELet (tyIntLit [1]) "a" (EPrim (tyIntLit [1]) (PNat 1)) (EVar (tyIntLit [1]) "a")
         testElaborate input `shouldBe` Right expected
 
       it "Function knows about it's external deps" $ do

@@ -110,6 +110,7 @@ spec = do
       let strings =
             [ ("True", tyBoolLit True),
               ("False", tyBoolLit False),
+              ("1 | 2 | 3", tyIntLit [1, 2, 3]),
               ( "(a -> b) -> Maybe a -> Maybe b",
                 TFunc
                   ()

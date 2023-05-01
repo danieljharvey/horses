@@ -43,6 +43,7 @@ common shared
     , llvm-hs-pure
     , megaparsec
     , mtl
+    , nonempty-containers
     , parser-combinators
     , prettyprinter
     , process

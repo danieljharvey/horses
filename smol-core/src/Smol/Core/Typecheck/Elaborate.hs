@@ -20,6 +20,7 @@ import qualified Data.List.NonEmpty as NE
 import Data.Map.Strict (Map)
 import qualified Data.Map.Strict as M
 import qualified Data.Set as S
+import qualified Data.Set.NonEmpty as NES
 import Smol.Core.ExprUtils
 import Smol.Core.Helpers
 import Smol.Core.Typecheck.Shared
@@ -189,8 +190,8 @@ inferInfix ann OpEquals a b = do
 
 typeLiteralFromPrim :: Prim -> TypeLiteral
 typeLiteralFromPrim (PBool b) = TLBool b
-typeLiteralFromPrim (PInt a) = TLInt a
-typeLiteralFromPrim (PNat a) = TLInt (fromIntegral a)
+typeLiteralFromPrim (PInt a) = TLInt (NES.singleton a)
+typeLiteralFromPrim (PNat a) = TLInt (NES.singleton $ fromIntegral a)
 typeLiteralFromPrim PUnit = TLUnit
 
 -- | infer synthesizes values
@@ -376,6 +377,12 @@ checkPattern checkTy checkPat = do
     (ty, PVar _ ident) ->
       pure (PVar ty ident, M.singleton ident ty)
     (ty, PWildcard _) -> pure (PWildcard ty, mempty)
+    (ty@(TLiteral _ (TLInt as)), PLiteral _ (PInt i))
+      | NES.member i as ->
+          pure (PLiteral ty (PInt i), mempty)
+    (ty@(TLiteral _ (TLInt as)), PLiteral _ (PNat i))
+      | NES.member (fromIntegral i) as ->
+          pure (PLiteral ty (PNat i), mempty)
     (ty@(TLiteral _ tPrim), PLiteral _ pPrim)
       | tPrim == typeLiteralFromPrim pPrim ->
           pure (PLiteral ty pPrim, mempty)
@@ -385,15 +392,6 @@ checkPattern checkTy checkPat = do
       pure (PLiteral ty (PNat b), mempty)
     (ty@(TPrim _ TPInt), PLiteral _ (PInt b)) ->
       pure (PLiteral ty (PInt b), mempty)
-    (ty@(TUnion _ l r), pat@(PLiteral _ lit)) -> do
-      result <-
-        tryError
-          ( checkPattern l pat -- is left OK?
-              `catchError` \_ -> checkPattern r pat -- or maybe right is?
-          )
-      case result of
-        Left _ -> throwError (TCPatternMismatch pat ty)
-        Right _ -> pure (PLiteral ty lit, mempty)
     (ty@(TArray _ arrSize tyArr), PArray ann items spread) -> do
       inferEverything <- traverse (checkPattern tyArr) items
       (inferSpread, env2) <- case spread of

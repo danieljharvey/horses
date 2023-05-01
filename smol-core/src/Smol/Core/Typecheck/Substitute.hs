@@ -88,6 +88,5 @@ substitute sub@(Substitution i ty) = \case
     TGlobals ann (fmap (substitute sub) tGlobs) (substitute sub tBody)
   TRecord ann items ->
     TRecord ann (fmap (substitute sub) items)
-  TUnion ann a b -> TUnion ann (substitute sub a) (substitute sub b)
   prim@TPrim {} -> prim
   lit@TLiteral {} -> lit

@@ -13,6 +13,7 @@ import Data.Map.Strict (Map)
 import qualified Data.Map.Strict as M
 import Data.Set (Set)
 import qualified Data.Set as S
+import qualified Data.Set.NonEmpty as NES
 import Data.Text (Text)
 import Prettyprinter
 import Prettyprinter.Render.Text
@@ -67,3 +68,6 @@ instance (Printer a, Printer b, Printer c, Printer d) => Printer (a, b, c, d) wh
 
 instance (Printer a) => Printer (Set a) where
   prettyDoc as = list (prettyDoc <$> S.toList as)
+
+instance (Printer a) => Printer (NES.NESet a) where
+  prettyDoc as = prettyDoc (NES.toSet as)

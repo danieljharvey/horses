@@ -19,6 +19,7 @@ import Data.Foldable (foldl', foldrM)
 import Data.Functor (($>))
 import qualified Data.List.NonEmpty as NE
 import qualified Data.Map.Strict as M
+import qualified Data.Set.NonEmpty as NES
 import Smol.Core.Helpers
 import Smol.Core.Typecheck.Shared
 import Smol.Core.Typecheck.Substitute
@@ -46,7 +47,7 @@ generaliseLiteral ::
   ResolvedType ann ->
   ResolvedType ann
 generaliseLiteral (TLiteral ann (TLInt tlA)) =
-  if tlA >= 0
+  if all (>= 0) tlA
     then TPrim ann TPNat
     else TPrim ann TPInt
 generaliseLiteral (TLiteral ann (TLBool _)) =
@@ -81,40 +82,25 @@ combine a b =
     `catchError` const asUnion
   where
     asUnion = case (a, b) of
-      (TLiteral ann (TLInt bA), TLiteral _ (TLInt bB))
-        | bA /= bB ->
-            pure $ TUnion ann a b
+      (TLiteral ann (TLInt as), TLiteral _ (TLInt bs)) ->
+        pure $ TLiteral ann (TLInt $ as <> bs)
       (TLiteral ann (TLBool bA), TLiteral _ (TLBool bB))
         | bA /= bB ->
             pure $ TPrim ann TPBool -- don't have True | False, it's silly
-      (TUnion ann _ _, TLiteral _ (TLInt _)) ->
-        if memberOf b a
-          then pure a
-          else pure $ TUnion ann a b
-      (TLiteral _ (TLInt _), TUnion ann _ _) ->
-        if memberOf a b
-          then pure b
-          else pure $ TUnion ann b a
-      (TUnion ann _ _, TUnion {}) ->
-        pure $ TUnion ann a b -- we're not deduping because we are lazy
       _ -> throwError (TCTypeMismatch a b)
 
 typeEquals :: ResolvedType ann -> ResolvedType ann -> Bool
 typeEquals a b = (a $> ()) == (b $> ())
-
-memberOf :: ResolvedType ann -> ResolvedType ann -> Bool
-memberOf a (TUnion _ l r) = memberOf a l || memberOf a r
-memberOf a b = typeEquals a b
 
 -- | is the RHS an equal or more general expression of the LHS?
 -- | expressed like this so we can try both sides quickly
 isLiteralSubtypeOf :: ResolvedType ann -> ResolvedType ann -> Bool
 isLiteralSubtypeOf a b | a `typeEquals` b = True
 isLiteralSubtypeOf (TLiteral _ (TLBool _)) (TPrim _ TPBool) = True -- a Bool literal is a Bool
-isLiteralSubtypeOf (TLiteral _ (TLInt a)) (TPrim _ TPNat) = a >= 0 -- a Int literal is a Nat if its non-negative
+isLiteralSubtypeOf (TLiteral _ (TLInt as)) (TLiteral _ (TLInt bs)) | NES.isSubsetOf as bs = True
+isLiteralSubtypeOf (TLiteral _ (TLInt a)) (TPrim _ TPNat) = all (>= 0) a -- a Int literal is a Nat if its non-negative
 isLiteralSubtypeOf (TLiteral _ (TLInt _)) (TPrim _ TPInt) = True -- a Nat literal is also an Int
 isLiteralSubtypeOf (TPrim _ TPNat) (TPrim _ TPInt) = True -- a Nat is also an Int
-isLiteralSubtypeOf c (TUnion _ l r) | c `memberOf` l || c `memberOf` r = True -- a | b is a more general 'a'
 isLiteralSubtypeOf union (TPrim _ TPNat) | isNatLiteral union = True
 isLiteralSubtypeOf union (TPrim _ TPInt) | isIntLiteral union = True
 isLiteralSubtypeOf _ _ = False
@@ -122,12 +108,10 @@ isLiteralSubtypeOf _ _ = False
 -- | this is a sign we're encoding unions all wrong I think, but let's just
 -- follow this through
 isNatLiteral :: Type dep ann -> Bool
-isNatLiteral (TUnion _ a b) = isNatLiteral a && isNatLiteral b
-isNatLiteral (TLiteral _ (TLInt a)) | a >= 0 = True
+isNatLiteral (TLiteral _ (TLInt a)) | all (>= 0) a = True
 isNatLiteral _ = False
 
 isIntLiteral :: Type dep ann -> Bool
-isIntLiteral (TUnion _ a b) = isIntLiteral a && isIntLiteral b
 isIntLiteral (TLiteral _ (TLInt _)) = True
 isIntLiteral _ = False
 
