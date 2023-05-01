@@ -117,9 +117,9 @@ spec = do
             `shouldBe` Right [PWildcard tyNat]
 
         it "Union of int literals" $ do
-          let ty = tyUnion (tyIntLit [1]) (tyIntLit [2])
+          let ty = tyIntLit [1, 2]
           exhaustiveCheck [PLiteral ty (PInt 1)]
-            `shouldBe` Right [PLiteral (tyIntLit [2]) (PInt 2)]
+            `shouldBe` Right [PLiteral (tyIntLit [1, 2]) (PInt 2)]
 
         it "Wildcard is fine" $ do
           exhaustiveCheck [PWildcard tyInt] `shouldBe` Right []

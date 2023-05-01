@@ -117,7 +117,8 @@ spec = do
                 ("Maybe", "Maybe"),
                 ("Maybe 1", "Maybe a"),
                 ("{ item: 1 }", "{}"),
-                ("[1 | 2]", "[Nat]")
+                ("[1 | 2]", "[Nat]"),
+                ("1", "1 | 2")
               ]
         traverse_
           ( \(lhs, rhs) -> it (show lhs <> " <: " <> show rhs) $ do
@@ -128,5 +129,22 @@ spec = do
                       (fromParsedType $ unsafeParseType rhs)
                   )
                 `shouldSatisfy` isRight
+          )
+          validPairs
+
+      describe "Invalid pairs" $ do
+        let validPairs =
+              [ ("Bool", "True"),
+                ("1", "2 | 3")
+              ]
+        traverse_
+          ( \(lhs, rhs) -> it (show lhs <> " <: " <> show rhs) $ do
+              fst
+                <$> runWriterT
+                  ( isSubtypeOf
+                      (fromParsedType $ unsafeParseType lhs)
+                      (fromParsedType $ unsafeParseType rhs)
+                  )
+                `shouldSatisfy` isLeft
           )
           validPairs

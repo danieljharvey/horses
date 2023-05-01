@@ -7,7 +7,6 @@ module Test.Helpers
     tyVar,
     tyUnknown,
     tyTuple,
-    tyUnion,
     tyCons,
     bool,
     int,
@@ -62,13 +61,6 @@ tyTuple ::
   [Type dep ann] ->
   Type dep ann
 tyTuple a as = TTuple mempty a (NE.fromList as)
-
-tyUnion ::
-  (Monoid ann) =>
-  Type dep ann ->
-  Type dep ann ->
-  Type dep ann
-tyUnion = TUnion mempty
 
 tyCons ::
   (Monoid ann) =>

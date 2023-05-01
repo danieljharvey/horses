@@ -377,6 +377,12 @@ checkPattern checkTy checkPat = do
     (ty, PVar _ ident) ->
       pure (PVar ty ident, M.singleton ident ty)
     (ty, PWildcard _) -> pure (PWildcard ty, mempty)
+    (ty@(TLiteral _ (TLInt as)), PLiteral _ (PInt i))
+      | NES.member i as ->
+          pure (PLiteral ty (PInt i), mempty)
+    (ty@(TLiteral _ (TLInt as)), PLiteral _ (PNat i))
+      | NES.member (fromIntegral i) as ->
+          pure (PLiteral ty (PNat i), mempty)
     (ty@(TLiteral _ tPrim), PLiteral _ pPrim)
       | tPrim == typeLiteralFromPrim pPrim ->
           pure (PLiteral ty pPrim, mempty)

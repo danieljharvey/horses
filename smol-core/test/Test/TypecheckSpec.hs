@@ -48,7 +48,7 @@ testElaborate expr = do
 
 spec :: Spec
 spec = do
-  fdescribe "TypecheckSpec" $ do
+  describe "TypecheckSpec" $ do
     describe "Parse and typecheck" $ do
       let inputs =
             [ ("True", "True"),
@@ -347,7 +347,7 @@ spec = do
       it "Function use in if no annotation" $ do
         let input = unsafeParseExpr "if ((\\a -> a) True) then 1 else 2"
             expected :: Type dep ()
-            expected = tyUnion (tyIntLit [1]) (tyIntLit [2])
+            expected = tyIntLit [1, 2]
         getExprAnnotation <$> testElaborate input `shouldBe` Right expected
 
       it "If statement combines return types but generalises to Int" $ do

@@ -25,7 +25,7 @@ testInputs =
 
 spec :: Spec
 spec = do
-  fdescribe "Parser" $ do
+  describe "Parser" $ do
     describe "Module" $ do
       it "Parses a single type" $ do
         let result = parseModuleAndFormatError "type Dog a = Woof String | Other a"
