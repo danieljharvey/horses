@@ -106,6 +106,7 @@ library
     Smol.Core.Printer
     Smol.Core.SourceSpan
     Smol.Core.Typecheck
+    Smol.Core.Typecheck.BuiltInTypes
     Smol.Core.Typecheck.Elaborate
     Smol.Core.Typecheck.Errors
     Smol.Core.Typecheck.Exhaustiveness

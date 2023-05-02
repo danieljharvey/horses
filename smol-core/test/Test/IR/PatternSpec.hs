@@ -10,7 +10,7 @@ import qualified Data.List.NonEmpty as NE
 import Smol.Core.ExprUtils
 import Smol.Core.IR.FromExpr.Pattern (predicatesFromPattern)
 import Smol.Core.IR.FromExpr.Types (FromExprState (..))
-import Smol.Core.Typecheck.Elaborate (builtInTypes)
+import Smol.Core.Typecheck.BuiltInTypes (builtInTypes)
 import Smol.Core.Types.GetPath
 import Smol.Core.Types.ParseDep
 import qualified Smol.Core.Types.Pattern as Smol

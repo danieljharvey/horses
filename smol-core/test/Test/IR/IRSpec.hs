@@ -13,6 +13,7 @@ import Smol.Core.IR.FromResolvedExpr
 import Smol.Core.IR.IRExpr
 import Smol.Core.IR.ToLLVM.ToLLVM
 import Smol.Core.Typecheck
+import Smol.Core.Typecheck.BuiltInTypes
 import Smol.Core.Types
 import System.IO.Unsafe
 import Test.Helpers
@@ -25,7 +26,7 @@ run = fmap Run.rrResult . Run.run
 
 evalExpr :: Text -> ResolvedExpr (Type ResolvedDep Annotation)
 evalExpr input =
-  case elaborate (unsafeParseTypedExpr input $> mempty) of
+  case elaborate (builtInTypes emptyResolvedDep) (unsafeParseTypedExpr input $> mempty) of
     Right typedExpr -> typedExpr
     Left e -> error (show e)
 

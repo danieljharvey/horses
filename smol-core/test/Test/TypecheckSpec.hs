@@ -14,6 +14,7 @@ import Data.Text (Text)
 import qualified Data.Text as T
 import Error.Diagnose (defaultStyle, printDiagnostic, stdout)
 import Smol.Core
+import Smol.Core.Typecheck.BuiltInTypes (builtInTypes)
 import Smol.Core.Typecheck.FromParsedExpr
 import Test.Helpers
 import Test.Hspec
@@ -42,7 +43,7 @@ testElaborate ::
   Expr ParseDep ann ->
   Either (TCError ann) (Expr ResolvedDep (Type ResolvedDep ann))
 testElaborate expr = do
-  case elaborate (fromParsedExpr expr) of
+  case elaborate (builtInTypes emptyResolvedDep) (fromParsedExpr expr) of
     Right typedExpr -> pure typedExpr
     Left e -> Left e
 

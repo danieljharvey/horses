@@ -168,4 +168,4 @@ typecheckOneExprDef input _inputModule deps (def, expr) = do
   liftEither $
     first
       (DefDoesNotTypeCheck input def)
-      (elaborate expr)
+      (elaborate mempty expr)

@@ -25,7 +25,8 @@ import Smol.Core.IR.FromExpr.Pattern
 import Smol.Core.IR.FromExpr.Type
 import Smol.Core.IR.FromExpr.Types
 import Smol.Core.IR.IRExpr
-import Smol.Core.Typecheck (builtInTypes, flattenConstructorApplication)
+import Smol.Core.Typecheck (flattenConstructorApplication)
+import Smol.Core.Typecheck.BuiltInTypes (builtInTypes)
 import Smol.Core.Typecheck.Shared (getExprAnnotation)
 import Smol.Core.Typecheck.Subtype
 import Smol.Core.Types.Constructor
