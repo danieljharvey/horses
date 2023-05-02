@@ -8,11 +8,11 @@ import qualified Data.Map.Strict as M
 import qualified Smol.Core.IR.FromExpr.DataTypes as DT
 import Smol.Core.IR.FromExpr.Types
 import Smol.Core.IR.FromResolvedExpr
-import Smol.Core.Typecheck.BuiltInTypes (builtInTypes)
 import Smol.Core.Typecheck.FromParsedExpr
 import qualified Smol.Core.Typecheck.Types as Smol
 import Smol.Core.Types
 import qualified Smol.Core.Types as Smol
+import Test.BuiltInTypes (builtInTypes)
 import Test.Helpers
 import Test.Hspec
 

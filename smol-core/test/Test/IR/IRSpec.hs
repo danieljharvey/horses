@@ -2,6 +2,7 @@
 
 module Test.IR.IRSpec (spec) where
 
+import Control.Monad.Identity
 import Data.Foldable (traverse_)
 import Data.Functor
 import Data.Text (Text)
@@ -13,9 +14,9 @@ import Smol.Core.IR.FromResolvedExpr
 import Smol.Core.IR.IRExpr
 import Smol.Core.IR.ToLLVM.ToLLVM
 import Smol.Core.Typecheck
-import Smol.Core.Typecheck.BuiltInTypes
 import Smol.Core.Types
 import System.IO.Unsafe
+import Test.BuiltInTypes
 import Test.Helpers
 import Test.Hspec
 import Test.IR.Samples
@@ -33,7 +34,7 @@ evalExpr input =
 createModule :: Text -> LLVM.Module
 createModule input = do
   let expr = evalExpr input
-      irModule = irFromExpr (fromResolvedType <$> fromResolvedExpr expr)
+      irModule = irFromExpr (builtInTypes Identity) (fromResolvedType <$> fromResolvedExpr expr)
   irToLLVM irModule
 
 _printModule :: IRModule -> IRModule

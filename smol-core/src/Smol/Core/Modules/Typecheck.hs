@@ -32,7 +32,7 @@ getModuleDefIdentifiers inputModule =
   let exprs =
         M.mapWithKey
           ( \name expr ->
-              (name, expr, error "where should we get these?")
+              (name, expr, mempty)
           )
           (DTExpr <$> moExpressions inputModule)
       dataTypes =

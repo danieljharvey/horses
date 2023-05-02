@@ -15,8 +15,8 @@ import Smol.Core.IR.FromResolvedExpr
 import Smol.Core.IR.IRExpr
 import Smol.Core.IR.ToLLVM.Patterns
 import Smol.Core.Typecheck
-import Smol.Core.Typecheck.BuiltInTypes (builtInTypes)
 import Smol.Core.Types
+import Test.BuiltInTypes (builtInTypes)
 import Test.Helpers
 import Test.Hspec
 

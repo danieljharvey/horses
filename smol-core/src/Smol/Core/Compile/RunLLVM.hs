@@ -6,6 +6,7 @@ module Smol.Core.Compile.RunLLVM (run, moduleFromExpr, RunResult (..)) where
 import Control.Exception (bracket)
 import Control.Monad.Identity
 import Data.FileEmbed
+import Data.Map.Strict (Map)
 import Data.String.Conversions
 import Data.Text (Text)
 import qualified Data.Text as T
@@ -28,8 +29,11 @@ cRuntime :: Text
 cRuntime =
   T.decodeUtf8 $(makeRelativeToProject "static/runtime.c" >>= embedFile)
 
-moduleFromExpr :: IdentityExpr (Type Identity Annotation) -> Module
-moduleFromExpr = irToLLVM . irFromExpr
+moduleFromExpr ::
+  Map (Identity TypeName) (DataType Identity Annotation) ->
+  IdentityExpr (Type Identity Annotation) ->
+  Module
+moduleFromExpr dataTypes = irToLLVM . irFromExpr dataTypes
 
 time :: IO t -> IO (Text, t)
 time a = do

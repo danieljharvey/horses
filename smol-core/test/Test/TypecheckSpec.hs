@@ -14,8 +14,8 @@ import Data.Text (Text)
 import qualified Data.Text as T
 import Error.Diagnose (defaultStyle, printDiagnostic, stdout)
 import Smol.Core
-import Smol.Core.Typecheck.BuiltInTypes (builtInTypes)
 import Smol.Core.Typecheck.FromParsedExpr
+import Test.BuiltInTypes (builtInTypes)
 import Test.Helpers
 import Test.Hspec
 

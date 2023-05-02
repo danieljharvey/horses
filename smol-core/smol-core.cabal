@@ -106,7 +106,6 @@ library
     Smol.Core.Printer
     Smol.Core.SourceSpan
     Smol.Core.Typecheck
-    Smol.Core.Typecheck.BuiltInTypes
     Smol.Core.Typecheck.Elaborate
     Smol.Core.Typecheck.Errors
     Smol.Core.Typecheck.Exhaustiveness
@@ -228,6 +227,7 @@ test-suite smol-core-tests
     Smol.Core.Types.Type
     Smol.Core.Types.TypeName
     Smol.Core.TypeUtils
+    Test.BuiltInTypes
     Test.Helpers
     Test.Interpreter.InterpreterSpec
     Test.IR.CompileSpec

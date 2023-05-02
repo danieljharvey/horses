@@ -9,8 +9,8 @@ import Control.Monad.Except
 import Control.Monad.Reader
 import qualified Data.List.NonEmpty as NE
 import Smol.Core
-import Smol.Core.Typecheck.BuiltInTypes
 import Smol.Core.Typecheck.FromParsedExpr
+import Test.BuiltInTypes
 import Test.Helpers
 import Test.Hspec
 
