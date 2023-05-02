@@ -13,6 +13,7 @@ import Calc.Types
 import Control.Monad.Except
 import Control.Monad.State
 import Data.Foldable (traverse_)
+import Data.Functor (($>))
 import Data.Map.Strict (Map)
 import qualified Data.Map.Strict as M
 import Data.String (fromString)
@@ -33,6 +34,7 @@ data OutputState = OutputState
 data OutputError
   = CantFindVar Identifier
   | CantFindFunction FunctionName
+  | NonFunctionType (Type ())
   deriving stock (Eq, Ord, Show)
 
 lookupFunction ::
@@ -118,11 +120,13 @@ functionToLLVM ::
   Function (Type ann) ->
   m ()
 functionToLLVM (Function {fnAnn, fnFunctionName, fnBody, fnArgs}) = do
+  retType <- case fnAnn of
+    TFunction _ _ tyRet -> pure $ typeToLLVM tyRet
+    _ -> throwError (NonFunctionType (fnAnn $> ()))
+
   let argTypes = functionArgToLLVM <$> fnArgs
-      retType = case fnAnn of
-        TFunction _ _ tyRet -> typeToLLVM tyRet
-        _ -> error "non-function type"
       functionName = functionNameToLLVM fnFunctionName
+
   llvmFunction <- LLVM.function functionName argTypes retType $ \args -> do
     saveArgs
       ( M.fromList $
