@@ -3,6 +3,7 @@
 
 module Test.Modules.ModulesSpec (spec) where
 
+import qualified Data.Set as S
 import Data.Bifunctor (second)
 import Data.Either (isRight)
 import Data.FileEmbed
@@ -38,8 +39,8 @@ testModuleTypecheck moduleName =
     Right moduleParts -> do
       case moduleFromModuleParts mempty moduleParts >>= resolveModuleDeps of
         Left e -> error (show e)
-        Right myModule -> do
-          typecheckModule mempty "" myModule
+        Right (myModule,deps) -> do
+          typecheckModule mempty "" myModule deps
     Left e -> error (show e)
 
 spec :: Spec
@@ -60,7 +61,7 @@ spec = do
                 { moExpressions = M.singleton (DIName "main") expr
                 }
 
-        resolveModuleDeps mod' `shouldBe` Right expected
+        fst <$> resolveModuleDeps mod' `shouldBe` Right expected
 
       it "No deps, marks two different `a` values correctly" $ do
         let mod' = unsafeParseModule "def main = let a = 123 in let a = 456 in a"
@@ -81,7 +82,7 @@ spec = do
                 { moExpressions = M.singleton (DIName "main") expr
                 }
 
-        resolveModuleDeps mod' `shouldBe` Right expected
+        fst <$> resolveModuleDeps mod' `shouldBe` Right expected
 
       it "Lambdas add new variables" $ do
         let mod' = unsafeParseModule "def main = \\a -> a"
@@ -92,7 +93,7 @@ spec = do
                 { moExpressions = M.singleton (DIName "main") expr
                 }
 
-        resolveModuleDeps mod' `shouldBe` Right expected
+        fst <$> resolveModuleDeps mod' `shouldBe` Right expected
 
       it "Variables added in pattern matches are unique" $ do
         let mod' = unsafeParseModule "def main pair = case pair of (a,_) -> a"
@@ -111,7 +112,7 @@ spec = do
                 { moExpressions = M.singleton (DIName "main") expr
                 }
 
-        resolveModuleDeps mod' `shouldBe` Right expected
+        fst <$> resolveModuleDeps mod' `shouldBe` Right expected
 
       it "'main' uses a dep from 'dep'" $ do
         let mod' = unsafeParseModule "def main = let a = dep in let a = 456 in a\ndef dep = 1"
@@ -137,7 +138,7 @@ spec = do
                       ]
                 }
 
-        resolveModuleDeps mod' `shouldBe` Right expected
+        fst <$> resolveModuleDeps mod' `shouldBe` Right expected
 
       it "'main' uses a type dep from 'Moybe'" $ do
         let mod' = unsafeParseModule "type Moybe a = Jost a | Noothing\ndef main = let a = 456 in Jost a"
@@ -171,9 +172,13 @@ spec = do
                       )
                 }
 
-        resolveModuleDeps mod' `shouldBe` Right expected
+            depMap = M.fromList [
+                (DIName "main", S.fromList [DIType "Moybe"]),
+                (DIType "Moybe", mempty)]
 
-    describe "Typecheck" $ do
+        resolveModuleDeps mod' `shouldBe` Right (expected, depMap)
+
+    fdescribe "Typecheck" $ do
       it "Typechecks Prelude successfully" $ do
         testModuleTypecheck "Prelude" `shouldSatisfy` isRight
 

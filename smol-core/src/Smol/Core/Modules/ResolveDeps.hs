@@ -30,7 +30,7 @@ import Smol.Core.Types.Module.Module
 resolveModuleDeps ::
   (Show ann, Eq ann, MonadError ModuleError m) =>
   Module ParseDep ann ->
-  m (Module ResolvedDep ann)
+  m (Module ResolvedDep ann, Map DefIdentifier (Set DefIdentifier))
 resolveModuleDeps parsedModule = do
   map' <- getDependencies extractUses parsedModule
   let resolveIt (DTData dt, _, _) =
@@ -52,11 +52,13 @@ resolveModuleDeps parsedModule = do
               _ -> Nothing
           )
           resolvedMap
-   in pure $
+      dependencies = (\(_,b,_) -> b) <$> map'
+   in pure (
         parsedModule
           { moExpressions = newExpressions,
             moDataTypes = newDataTypes
-          }
+          },
+          dependencies)
 
 mapMaybeWithKey :: (Ord k2) => (k -> a -> Maybe (k2, b)) -> Map k a -> Map k2 b
 mapMaybeWithKey f = M.fromList . mapMaybe (uncurry f) . M.toList

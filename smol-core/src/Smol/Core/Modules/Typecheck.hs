@@ -13,7 +13,7 @@ import Data.Map.Strict (Map)
 -- import Smol.Core.Modules.Monad
 
 import qualified Data.Map.Strict as M
-import Data.Maybe (mapMaybe)
+import Data.Maybe (mapMaybe, fromMaybe)
 import Data.Set (Set)
 import Data.Text (Text)
 import Smol.Core
@@ -26,20 +26,22 @@ import Smol.Core.Types.Module.Module
 import Smol.Core.Types.Module.ModuleHash
 
 getModuleDefIdentifiers ::
+  Map DefIdentifier (Set DefIdentifier) ->
   Module dep ann ->
   Map DefIdentifier (DefIdentifier, DepType dep ann, Set DefIdentifier)
-getModuleDefIdentifiers inputModule =
-  let exprs =
+getModuleDefIdentifiers depMap inputModule =
+  let getDeps di = fromMaybe mempty (M.lookup di depMap)
+      exprs =
         M.mapWithKey
           ( \name expr ->
-              (name, expr, mempty)
+              (name, expr, getDeps name)
           )
           (DTExpr <$> moExpressions inputModule)
       dataTypes =
         M.fromList $
           ( \dt ->
               let defId = DIType (dtName dt)
-               in (defId, (defId, DTData dt, mempty))
+               in (defId, (defId, DTData dt, getDeps defId))
           )
             <$> M.elems (moDataTypes inputModule)
    in exprs <> dataTypes
@@ -68,9 +70,10 @@ typecheckModule ::
   Map ModuleHash (Module ResolvedDep (Type ResolvedDep Annotation)) ->
   Text ->
   Module ResolvedDep Annotation ->
+  Map DefIdentifier (Set DefIdentifier) ->
   m (Module ResolvedDep (Type ResolvedDep Annotation))
-typecheckModule _typecheckedDeps input inputModule = do
-  let inputWithDepsAndName = getModuleDefIdentifiers inputModule
+typecheckModule _typecheckedDeps input inputModule depMap = do
+  let inputWithDepsAndName = getModuleDefIdentifiers depMap inputModule
 
   let stInputs =
         ( \(name, expr, deps) ->
@@ -110,7 +113,7 @@ typecheckOneDef input inputModule deps (def, dep) =
         <$> typecheckOneExprDef
           input
           inputModule
-          (filterExprs deps)
+          deps
           (def, expr)
     DTData dt ->
       DTData
@@ -155,11 +158,12 @@ typecheckOneExprDef ::
   (MonadError ModuleError m) =>
   Text ->
   Module ResolvedDep Annotation ->
-  Map DefIdentifier (Expr ResolvedDep (Type ResolvedDep Annotation)) ->
+  Map DefIdentifier (DepType ResolvedDep (Type ResolvedDep Annotation)) ->
   (DefIdentifier, Expr ResolvedDep Annotation) ->
   m (Expr ResolvedDep (Type ResolvedDep Annotation))
 typecheckOneExprDef input _inputModule deps (def, expr) = do
-  let _typeMap = getExprAnnotation <$> filterNameDefs deps
+  let _exprTypeMap = getExprAnnotation <$> filterNameDefs (filterExprs deps)
+      dataTypeMap = mempty -- filterDataTypes deps
 
   -- initial typechecking environment
   -- env <- createTypecheckEnvironment inputModule deps typecheckedModules
@@ -168,4 +172,4 @@ typecheckOneExprDef input _inputModule deps (def, expr) = do
   liftEither $
     first
       (DefDoesNotTypeCheck input def)
-      (elaborate mempty expr)
+      (elaborate dataTypeMap expr)

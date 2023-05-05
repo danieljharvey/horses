@@ -20,3 +20,11 @@ deriving stock instance
     Eq (dep TypeName)
   ) =>
   Eq (DepType dep ann)
+
+deriving stock instance
+  ( Show ann,
+    Show (dep Identifier),
+    Show (dep Constructor),
+    Show (dep TypeName)
+  ) =>
+  Show (DepType dep ann)
