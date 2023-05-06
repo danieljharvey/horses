@@ -3,7 +3,6 @@
 
 module Test.Modules.ModulesSpec (spec) where
 
-import qualified Data.Set as S
 import Data.Bifunctor (second)
 import Data.Either (isRight)
 import Data.FileEmbed
@@ -11,6 +10,7 @@ import Data.Foldable (find)
 import Data.List (isInfixOf)
 import qualified Data.List.NonEmpty as NE
 import qualified Data.Map.Strict as M
+import qualified Data.Set as S
 import Data.Text (Text)
 import qualified Data.Text.Encoding as T
 import Smol.Core
@@ -39,13 +39,13 @@ testModuleTypecheck moduleName =
     Right moduleParts -> do
       case moduleFromModuleParts mempty moduleParts >>= resolveModuleDeps of
         Left e -> error (show e)
-        Right (myModule,deps) -> do
+        Right (myModule, deps) -> do
           typecheckModule mempty "" myModule deps
     Left e -> error (show e)
 
 spec :: Spec
 spec = do
-  fdescribe "Modules" $ do
+  describe "Modules" $ do
     describe "ResolvedDeps" $ do
       it "No deps, marks var as unique" $ do
         let mod' = unsafeParseModule "def main = let a = 123 in a"
@@ -172,13 +172,15 @@ spec = do
                       )
                 }
 
-            depMap = M.fromList [
-                (DIName "main", S.fromList [DIType "Moybe"]),
-                (DIType "Moybe", mempty)]
+            depMap =
+              M.fromList
+                [ (DIName "main", S.fromList [DIType "Moybe"]),
+                  (DIType "Moybe", mempty)
+                ]
 
         resolveModuleDeps mod' `shouldBe` Right (expected, depMap)
 
-    fdescribe "Typecheck" $ do
+    describe "Typecheck" $ do
       it "Typechecks Prelude successfully" $ do
         testModuleTypecheck "Prelude" `shouldSatisfy` isRight
 

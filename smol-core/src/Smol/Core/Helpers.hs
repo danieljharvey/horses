@@ -12,9 +12,14 @@ module Smol.Core.Helpers
     fromRight,
     foldMapM,
     filterMapKeys,
+    mapKey,
+    tracePrettyM
   )
 where
 
+import qualified Data.Text  as T
+import Debug.Trace (traceM)
+import Smol.Core.Printer
 import Control.Monad
 import Control.Monad.Except
 import Data.Bifunctor
@@ -104,3 +109,10 @@ foldMapM f =
         return $! mappend acc w
     )
     mempty
+
+mapKey :: (Ord k1) => (k -> k1) -> Map k a -> Map k1 a
+mapKey f = M.fromList . fmap (first f) . M.toList
+
+tracePrettyM :: (Printer a, Monad m) => a -> m ()
+tracePrettyM a = traceM (T.unpack $ renderWithWidth 40 $ prettyDoc a)
+

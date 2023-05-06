@@ -13,11 +13,12 @@ import Data.Map.Strict (Map)
 -- import Smol.Core.Modules.Monad
 
 import qualified Data.Map.Strict as M
-import Data.Maybe (mapMaybe, fromMaybe)
+import Data.Maybe (fromMaybe, mapMaybe)
 import Data.Set (Set)
 import Data.Text (Text)
 import Smol.Core
-import Smol.Core.Modules.Check (filterNameDefs)
+import Smol.Core.Helpers (mapKey)
+import Smol.Core.Modules.Check (filterNameDefs, filterTypeDefs)
 import Smol.Core.Modules.Dependencies
 import Smol.Core.Modules.ModuleError
 import Smol.Core.Modules.Types.DepType
@@ -132,8 +133,9 @@ typecheckOneTypeDef ::
   Map DefIdentifier (DataType ResolvedDep (Type ResolvedDep Annotation)) ->
   (DefIdentifier, DataType ResolvedDep Annotation) ->
   m (DataType ResolvedDep (Type ResolvedDep Annotation))
-typecheckOneTypeDef _input _inputModule _typeDeps (_def, _dt) = do
-  pure undefined
+typecheckOneTypeDef _input _inputModule _typeDeps (_def, dt) = do
+  -- just put a bullshit type in for now
+  pure $ (`TPrim` TPBool) <$> dt
 
 {-
 -- ideally we'd attach annotations to the DefIdentifiers or something, so we
@@ -153,6 +155,15 @@ liftEither $
 pure dt
 -}
 
+getDataTypeMap ::
+  Map DefIdentifier (DepType ResolvedDep (Type ResolvedDep Annotation)) ->
+  Map (ResolvedDep TypeName) (DataType ResolvedDep Annotation)
+getDataTypeMap =
+  (fmap . fmap) getTypeAnnotation
+    . mapKey LocalDefinition
+    . filterTypeDefs
+    . filterDataTypes
+
 -- given types for other required definition, typecheck a definition
 typecheckOneExprDef ::
   (MonadError ModuleError m) =>
@@ -163,7 +174,6 @@ typecheckOneExprDef ::
   m (Expr ResolvedDep (Type ResolvedDep Annotation))
 typecheckOneExprDef input _inputModule deps (def, expr) = do
   let _exprTypeMap = getExprAnnotation <$> filterNameDefs (filterExprs deps)
-      dataTypeMap = mempty -- filterDataTypes deps
 
   -- initial typechecking environment
   -- env <- createTypecheckEnvironment inputModule deps typecheckedModules
@@ -172,4 +182,4 @@ typecheckOneExprDef input _inputModule deps (def, expr) = do
   liftEither $
     first
       (DefDoesNotTypeCheck input def)
-      (elaborate dataTypeMap expr)
+      (elaborate (getDataTypeMap deps) expr)

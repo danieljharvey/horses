@@ -9,6 +9,7 @@ module Smol.Core.Typecheck.Elaborate
   )
 where
 
+import Debug.Trace
 import Control.Monad.Except
 import Control.Monad.Reader
 import Control.Monad.State
@@ -31,6 +32,7 @@ import Smol.Core.Types
 elaborate ::
   ( Ord ann,
     Show ann,
+
     MonadError (TCError ann) m
   ) =>
   Map (ResolvedDep TypeName) (DataType ResolvedDep ann) ->
@@ -86,6 +88,7 @@ collectGlobals f = do
 inferInfix ::
   ( Ord ann,
     Show ann,
+
     MonadState (TCState ann) m,
     MonadReader (TCEnv ann) m,
     MonadError (TCError ann) m,
@@ -135,6 +138,7 @@ typeLiteralFromPrim PUnit = TLUnit
 infer ::
   ( Ord ann,
     Show ann,
+
     MonadError (TCError ann) m,
     MonadReader (TCEnv ann) m,
     MonadState (TCState ann) m,
@@ -231,6 +235,7 @@ infer inferExpr = do
 inferApplication ::
   ( Ord ann,
     Show ann,
+
     MonadError (TCError ann) m,
     MonadReader (TCEnv ann) m,
     MonadState (TCState ann) m,
@@ -428,6 +433,7 @@ checkLambda other _ _ =
 inferLambda ::
   ( Ord ann,
     Show ann,
+
     MonadError (TCError ann) m,
     MonadReader (TCEnv ann) m,
     MonadState (TCState ann) m,
@@ -457,6 +463,7 @@ inferLambda ann ident body = do
 check ::
   ( Ord ann,
     Show ann,
+
     MonadError (TCError ann) m,
     MonadReader (TCEnv ann) m,
     MonadState (TCState ann) m,
@@ -495,9 +502,13 @@ check typ expr = do
       tellGlobal (GlobalMap (M.singleton ident typ)) -- 'raise' constraint
       pure (EGlobal typ ident)
     EPatternMatch _ matchExpr pats -> do
+      traceM "Check pattern match:"
+      traceShowM typ
       elabExpr <- infer matchExpr
       let withPair (pat, patExpr) = do
             (elabPat, newVars) <- checkPattern (getExprAnnotation elabExpr) pat
+            traceShowM patExpr
+            traceShowM newVars
             elabPatExpr <- withNewVars newVars (check typ patExpr)
             pure (elabPat, elabPatExpr)
       elabPats <- traverse withPair pats
