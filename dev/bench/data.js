@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1683062080217,
+  "lastUpdate": 1683469679094,
   "repoUrl": "https://github.com/danieljharvey/mimsa",
   "entries": {
     "Store benchmarks in Github Pages": [
@@ -1359,6 +1359,50 @@ window.BENCHMARK_DATA = {
           {
             "name": "evaluate/evaluate parsing 2",
             "value": 0.23329075174286637,
+            "unit": "Time (ms)"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "danieljamesharvey@gmail.com",
+            "name": "Daniel Harvey",
+            "username": "danieljharvey"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "43a3169d8b1456466380c84c4a0d4fe05199d7f9",
+          "message": "Next step: Typecheck Prelude (#886)\n\n* Copy pasta modules code\r\n\r\n* Validate module, now typecheck it pls\r\n\r\n* Slowly smash it together\r\n\r\n* This is possibly doomed\r\n\r\n* Start resolved deps\r\n\r\n* Start hammering together a test case\r\n\r\n* Unique numbers\r\n\r\n* Begin to resolve whole modules for lols\r\n\r\n* Tremendous\r\n\r\n* Slowly, slowly\r\n\r\n* Nearly typechecking\r\n\r\n* Slowly working up to a thing\r\n\r\n* Oh for fucks sake this is boring\r\n\r\n* Nice\r\n\r\n* Need to include module types in module expression typechecking\r\n\r\n* Unions are fucking this\r\n\r\n* Need to calculate deps\r\n\r\n* Start to move built in types into tests\r\n\r\n* Now this breaks in the way we actually expect\r\n\r\n* More ok-ness\r\n\r\n* Start debugging pattern match subtyping mismatch in typechecker\r\n\r\n* yes\r\n\r\n* Ready\r\n\r\n* oops",
+          "timestamp": "2023-05-07T15:18:49+01:00",
+          "tree_id": "b24bccd38247b9b4587a63361c31ecd9d346240f",
+          "url": "https://github.com/danieljharvey/mimsa/commit/43a3169d8b1456466380c84c4a0d4fe05199d7f9"
+        },
+        "date": 1683469678085,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "build stdlib/allFns",
+            "value": 0.14464741757143423,
+            "unit": "Time (ms)"
+          },
+          {
+            "name": "evaluate/evaluate big looping thing",
+            "value": 0.13529397297618628,
+            "unit": "Time (ms)"
+          },
+          {
+            "name": "evaluate/evaluate parsing",
+            "value": 0.04022606006786062,
+            "unit": "Time (ms)"
+          },
+          {
+            "name": "evaluate/evaluate parsing 2",
+            "value": 0.2879421787999945,
             "unit": "Time (ms)"
           }
         ]
