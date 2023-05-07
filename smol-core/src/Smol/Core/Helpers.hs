@@ -13,13 +13,10 @@ module Smol.Core.Helpers
     foldMapM,
     filterMapKeys,
     mapKey,
-    tracePrettyM
+    tracePrettyM,
   )
 where
 
-import qualified Data.Text  as T
-import Debug.Trace (traceM)
-import Smol.Core.Printer
 import Control.Monad
 import Control.Monad.Except
 import Data.Bifunctor
@@ -28,6 +25,9 @@ import qualified Data.List.NonEmpty as NE
 import Data.Map.Strict (Map)
 import qualified Data.Map.Strict as M
 import Data.Maybe (mapMaybe)
+import qualified Data.Text as T
+import Debug.Trace (traceM)
+import Smol.Core.Printer
 
 neZipWithM ::
   (Applicative m) =>
@@ -115,4 +115,3 @@ mapKey f = M.fromList . fmap (first f) . M.toList
 
 tracePrettyM :: (Printer a, Monad m) => a -> m ()
 tracePrettyM a = traceM (T.unpack $ renderWithWidth 40 $ prettyDoc a)
-

@@ -31,7 +31,6 @@ import Smol.Core.Types
 elaborate ::
   ( Ord ann,
     Show ann,
-
     MonadError (TCError ann) m
   ) =>
   Map (ResolvedDep TypeName) (DataType ResolvedDep ann) ->
@@ -87,7 +86,6 @@ collectGlobals f = do
 inferInfix ::
   ( Ord ann,
     Show ann,
-
     MonadState (TCState ann) m,
     MonadReader (TCEnv ann) m,
     MonadError (TCError ann) m,
@@ -137,7 +135,6 @@ typeLiteralFromPrim PUnit = TLUnit
 infer ::
   ( Ord ann,
     Show ann,
-
     MonadError (TCError ann) m,
     MonadReader (TCEnv ann) m,
     MonadState (TCState ann) m,
@@ -234,7 +231,6 @@ infer inferExpr = do
 inferApplication ::
   ( Ord ann,
     Show ann,
-
     MonadError (TCError ann) m,
     MonadReader (TCEnv ann) m,
     MonadState (TCState ann) m,
@@ -432,7 +428,6 @@ checkLambda other _ _ =
 inferLambda ::
   ( Ord ann,
     Show ann,
-
     MonadError (TCError ann) m,
     MonadReader (TCEnv ann) m,
     MonadState (TCState ann) m,
@@ -462,7 +457,6 @@ inferLambda ann ident body = do
 check ::
   ( Ord ann,
     Show ann,
-
     MonadError (TCError ann) m,
     MonadReader (TCEnv ann) m,
     MonadState (TCState ann) m,
