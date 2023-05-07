@@ -34,14 +34,17 @@ common shared
     , aeson
     , array
     , base
+    , builder
     , bytestring
     , containers
+    , cryptonite
     , diagnose
     , directory
     , file-embed
     , llvm-hs-pretty
     , llvm-hs-pure
     , megaparsec
+    , memory
     , mtl
     , nonempty-containers
     , parser-combinators
@@ -82,6 +85,15 @@ library
     Smol.Core.IR.ToLLVM.Helpers
     Smol.Core.IR.ToLLVM.Patterns
     Smol.Core.IR.ToLLVM.ToLLVM
+    Smol.Core.Modules.Check
+    Smol.Core.Modules.Dependencies
+    Smol.Core.Modules.FromParts
+    Smol.Core.Modules.HashModule
+    Smol.Core.Modules.ModuleError
+    Smol.Core.Modules.Monad
+    Smol.Core.Modules.ResolveDeps
+    Smol.Core.Modules.Typecheck
+    Smol.Core.Modules.Uses
     Smol.Core.Parser
     Smol.Core.Parser.DataType
     Smol.Core.Parser.Expr
@@ -124,6 +136,7 @@ library
     Smol.Core.Types.Prim
     Smol.Core.Types.ResolvedDep
     Smol.Core.Types.SourceSpan
+    Smol.Core.Types.Spread
     Smol.Core.Types.Type
     Smol.Core.Types.TypeName
     Smol.Core.TypeUtils
@@ -157,6 +170,17 @@ test-suite smol-core-tests
     Smol.Core.IR.ToLLVM.Helpers
     Smol.Core.IR.ToLLVM.Patterns
     Smol.Core.IR.ToLLVM.ToLLVM
+    Smol.Core.Modules.Check
+    Smol.Core.Modules.Dependencies
+    Smol.Core.Modules.FromParts
+    Smol.Core.Modules.HashModule
+    Smol.Core.Modules.ModuleError
+    Smol.Core.Modules.Monad
+    Smol.Core.Modules.ResolveDeps
+    Smol.Core.Modules.Typecheck
+    Smol.Core.Modules.Types.DepType
+    Smol.Core.Modules.Uses
+
     Smol.Core.Parser
     Smol.Core.Parser.DataType
     Smol.Core.Parser.Expr
@@ -199,9 +223,11 @@ test-suite smol-core-tests
     Smol.Core.Types.Prim
     Smol.Core.Types.ResolvedDep
     Smol.Core.Types.SourceSpan
+    Smol.Core.Types.Spread
     Smol.Core.Types.Type
     Smol.Core.Types.TypeName
     Smol.Core.TypeUtils
+    Test.BuiltInTypes
     Test.Helpers
     Test.Interpreter.InterpreterSpec
     Test.IR.CompileSpec
@@ -211,6 +237,7 @@ test-suite smol-core-tests
     Test.IR.PatternSpec
     Test.IR.RawSamples
     Test.IR.Samples
+    Test.Modules.ModulesSpec
     Test.ParserSpec
     Test.Typecheck.ExhaustivenessSpec
     Test.Typecheck.NestingMonadSpec

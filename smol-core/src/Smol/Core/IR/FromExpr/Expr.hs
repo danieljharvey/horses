@@ -25,10 +25,11 @@ import Smol.Core.IR.FromExpr.Pattern
 import Smol.Core.IR.FromExpr.Type
 import Smol.Core.IR.FromExpr.Types
 import Smol.Core.IR.IRExpr
-import Smol.Core.Typecheck (builtInTypes, flattenConstructorApplication)
+import Smol.Core.Typecheck (flattenConstructorApplication)
 import Smol.Core.Typecheck.Shared (getExprAnnotation)
 import Smol.Core.Typecheck.Subtype
 import Smol.Core.Types.Constructor
+import Smol.Core.Types.DataType
 import Smol.Core.Types.Expr
 import Smol.Core.Types.GetPath
 import Smol.Core.Types.Identifier
@@ -96,8 +97,8 @@ getPrintFuncType ty =
 
 getFreshName :: (MonadState (FromExprState ann) m) => String -> m String
 getFreshName prefix = do
-  current <- gets freshInt
-  modify (\s -> s {freshInt = current + 1})
+  current <- gets fesFreshInt
+  modify (\s -> s {fesFreshInt = current + 1})
   pure (prefix <> show current)
 
 getFreshFunctionName :: (MonadState (FromExprState ann) m) => m IRFunctionName
@@ -112,7 +113,7 @@ addVar ::
   IRExpr ->
   m ()
 addVar ident expr =
-  modify (\s -> s {vars = vars s <> M.singleton ident expr})
+  modify (\s -> s {fesVars = fesVars s <> M.singleton ident expr})
 
 {-
 lookupVar ::
@@ -132,13 +133,14 @@ lookupVar ident = do
 -- a side effect will be that it adds IRModuleParts to the state, these are all
 -- combined
 irFromExpr ::
-  (Show ann, Monoid ann) =>
+  (Show ann) =>
+  Map (Identity TypeName) (DataType Identity ann) ->
   IdentityExpr (Type Identity ann) ->
   IRModule
-irFromExpr expr =
+irFromExpr dataTypes expr =
   IRModule $
     [getPrinter (getExprAnnotation expr)]
-      <> modulePartsFromExpr expr
+      <> modulePartsFromExpr dataTypes expr
 
 fromPrim :: Prim -> IRPrim
 fromPrim (PInt i) = IRPrimInt32 i
@@ -484,12 +486,13 @@ pushModulePart part =
 -- | given an expr, return the `main` function, as well as adding any extra
 -- module Core.parts to the State
 modulePartsFromExpr ::
-  (Show ann, Monoid ann) =>
+  (Show ann) =>
+  Map (Identity TypeName) (DataType Identity ann) ->
   IdentityExpr (Type Identity ann) ->
   [IRModulePart]
-modulePartsFromExpr expr =
+modulePartsFromExpr dataTypes expr =
   let (mainExpr, FromExprState otherParts _ _ _) =
-        runState (fromExpr expr) (FromExprState mempty (builtInTypes Identity) 1 mempty)
+        runState (fromExpr expr) (FromExprState mempty dataTypes 1 mempty)
       printFuncName = getPrintFuncName (getExprAnnotation expr)
       printFuncType = getPrintFuncType (getExprAnnotation expr)
    in otherParts

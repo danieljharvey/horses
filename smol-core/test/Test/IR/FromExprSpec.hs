@@ -16,12 +16,13 @@ import Smol.Core.IR.IRExpr
 import Smol.Core.IR.ToLLVM.Patterns
 import Smol.Core.Typecheck
 import Smol.Core.Types
+import Test.BuiltInTypes (builtInTypes)
 import Test.Helpers
 import Test.Hspec
 
 evalExpr :: Text -> IdentityExpr (Type Identity Annotation)
 evalExpr input =
-  case elaborate (unsafeParseTypedExpr input $> mempty) of
+  case elaborate (builtInTypes emptyResolvedDep) (unsafeParseTypedExpr input $> mempty) of
     Right typedExpr -> fromResolvedType <$> fromResolvedExpr typedExpr
     Left e -> error (show e)
 

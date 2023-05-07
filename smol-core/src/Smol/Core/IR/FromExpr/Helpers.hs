@@ -58,7 +58,7 @@ lookupConstructor constructor = do
           ( \dt@(Smol.DataType _ _ constructors) ->
               (,) dt <$> M.lookup constructor constructors
           )
-          . getField @"dataTypes"
+          . getField @"fesDataTypes"
       )
   case maybeDt of
     Just (dt, _) -> pure dt
@@ -70,7 +70,7 @@ lookupTypeName ::
   Identity Smol.TypeName ->
   m (Smol.DataType Identity ann)
 lookupTypeName tn = do
-  maybeDt <- gets (M.lookup tn . getField @"dataTypes")
+  maybeDt <- gets (M.lookup tn . getField @"fesDataTypes")
   case maybeDt of
     Just dt -> pure dt
     Nothing -> error $ "couldn't find datatype for " <> show tn

@@ -5,7 +5,6 @@
 
 module Smol.Core.Typecheck.Elaborate
   ( elaborate,
-    builtInTypes,
     getExprAnnotation,
   )
 where
@@ -29,78 +28,15 @@ import Smol.Core.Typecheck.Subtype
 import Smol.Core.Typecheck.Types
 import Smol.Core.Types
 
-builtInTypes ::
-  (Monoid ann, Ord (dep TypeName)) =>
-  (forall a. a -> dep a) ->
-  Map (dep TypeName) (DataType dep ann)
-builtInTypes liftDep =
-  let identityDt =
-        DataType
-          "Identity"
-          ["a"]
-          (M.singleton "Identity" [TVar mempty $ liftDep "a"])
-      maybeDt =
-        DataType
-          "Maybe"
-          ["a"]
-          (M.fromList [("Just", [TVar mempty $ liftDep "a"]), ("Nothing", [])])
-      eitherDt =
-        DataType
-          "Either"
-          ["e", "a"]
-          ( M.fromList
-              [ ("Left", [TVar mempty $ liftDep "e"]),
-                ("Right", [TVar mempty $ liftDep "a"])
-              ]
-          )
-
-      theseDt =
-        DataType
-          "These"
-          ["a", "b"]
-          ( M.fromList
-              [ ("This", [TVar mempty $ liftDep "a"]),
-                ("That", [TVar mempty $ liftDep "b"]),
-                ("These", [TVar mempty $ liftDep "a", TVar mempty $ liftDep "b"])
-              ]
-          )
-      ordDt =
-        DataType
-          "Ord"
-          []
-          ( M.fromList [("LT", mempty), ("EQ", mempty), ("GT", mempty)]
-          )
-      listDt =
-        DataType
-          "List"
-          ["a"]
-          ( M.fromList
-              [ ( "Cons",
-                  [ TVar mempty (liftDep "a"),
-                    TApp mempty (TConstructor mempty (liftDep "List")) (TVar mempty (liftDep "a"))
-                  ]
-                ),
-                ("Nil", mempty)
-              ]
-          )
-   in M.fromList
-        [ (liftDep "Maybe", maybeDt),
-          (liftDep "Either", eitherDt),
-          (liftDep "Ord", ordDt),
-          (liftDep "These", theseDt),
-          (liftDep "Identity", identityDt),
-          (liftDep "List", listDt)
-        ]
-
 elaborate ::
   ( Ord ann,
     Show ann,
-    Monoid ann,
     MonadError (TCError ann) m
   ) =>
+  Map (ResolvedDep TypeName) (DataType ResolvedDep ann) ->
   ResolvedExpr ann ->
   m (ResolvedExpr (ResolvedType ann))
-elaborate expr =
+elaborate dataTypes expr =
   fst
     <$> runReaderT
       ( runWriterT
@@ -109,7 +45,7 @@ elaborate expr =
               (TCState mempty 0 mempty)
           )
       )
-      (TCEnv mempty mempty (builtInTypes emptyResolvedDep))
+      (TCEnv mempty mempty dataTypes)
 
 listenToGlobals ::
   ( MonadState (TCState ann) m,

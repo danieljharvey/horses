@@ -8,11 +8,11 @@ import qualified Data.Map.Strict as M
 import qualified Smol.Core.IR.FromExpr.DataTypes as DT
 import Smol.Core.IR.FromExpr.Types
 import Smol.Core.IR.FromResolvedExpr
-import qualified Smol.Core.Typecheck as TC
 import Smol.Core.Typecheck.FromParsedExpr
 import qualified Smol.Core.Typecheck.Types as Smol
 import Smol.Core.Types
 import qualified Smol.Core.Types as Smol
+import Test.BuiltInTypes (builtInTypes)
 import Test.Helpers
 import Test.Hspec
 
@@ -22,7 +22,7 @@ typeToDataType ::
 typeToDataType ty =
   evalState
     (DT.typeToDataTypeInMemory ty)
-    (FromExprState mempty (TC.builtInTypes Identity) 0 mempty)
+    (FromExprState mempty (builtInTypes Identity) 0 mempty)
 
 parseToIdentity :: Type ParseDep a -> Type Identity a
 parseToIdentity = fromResolvedType . fromParsedType
