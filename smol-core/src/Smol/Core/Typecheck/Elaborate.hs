@@ -9,7 +9,6 @@ module Smol.Core.Typecheck.Elaborate
   )
 where
 
-import Debug.Trace
 import Control.Monad.Except
 import Control.Monad.Reader
 import Control.Monad.State
@@ -502,13 +501,9 @@ check typ expr = do
       tellGlobal (GlobalMap (M.singleton ident typ)) -- 'raise' constraint
       pure (EGlobal typ ident)
     EPatternMatch _ matchExpr pats -> do
-      traceM "Check pattern match:"
-      traceShowM typ
       elabExpr <- infer matchExpr
       let withPair (pat, patExpr) = do
             (elabPat, newVars) <- checkPattern (getExprAnnotation elabExpr) pat
-            traceShowM patExpr
-            traceShowM newVars
             elabPatExpr <- withNewVars newVars (check typ patExpr)
             pure (elabPat, elabPatExpr)
       elabPats <- traverse withPair pats
