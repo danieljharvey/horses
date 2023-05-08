@@ -5,6 +5,7 @@ on:
     branches:
       - trunk
     paths:
+      - "benchmarks/**"
       - "builder/**"
       - "compiler/**"
       - "server/**"
@@ -18,6 +19,7 @@ on:
     branches:
       - trunk
     paths:
+      - "benchmarks/**"
       - "builder/**"
       - "compiler/**"
       - "server/**"
@@ -164,7 +166,7 @@ jobs:
 
       - name: Create benchmark file
         run: |
-          jq '.[2] | map({name: .reportName, unit: "Time (ms)", value: .reportAnalysis.anRegress[0].regCoeffs.iters.estPoint })' compiler/performance.json | tee sorted-results.json
+          jq '.[2] | map({name: .reportName, unit: "Time (ms)", value: .reportAnalysis.anRegress[0].regCoeffs.iters.estPoint })' benchmarks/performance.json | tee sorted-results.json
 
       # Download previous benchmark result from cache (if exists)
       - name: Download previous benchmark data
