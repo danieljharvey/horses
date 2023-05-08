@@ -102,7 +102,7 @@ freeze:
 
 .PHONY: bench
 bench:
-	cabal bench mimsa
+	cabal bench benchmarks:benchmarks
 
 .PHONY: format
 format:

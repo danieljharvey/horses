@@ -8,7 +8,7 @@ result
 result/
 
 # output by benchmarks
-compiler/performance.*
+benchmarks/performance.*
 
 .mimsa/
 swagger.json
