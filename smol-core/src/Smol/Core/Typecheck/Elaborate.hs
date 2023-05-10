@@ -246,7 +246,7 @@ inferApplication maybeCheckType fn arg = withRecursiveFn fn arg $ do
   -- do some substitution etc. if not, just infer it as usual and yolo
   let inferFn exprFn = do
         typedFn <- infer exprFn -- get type of fn
-        freshTyVar <- freshen (getExprAnnotation typedFn)
+        (freshTyVar, undoSubs) <- freshen (getExprAnnotation typedFn)
         case freshTyVar of
           (TFunc tAnn tClosure tArg tBody) -> do
             -- if this is a func, it may be ready to be applied
@@ -255,11 +255,16 @@ inferApplication maybeCheckType fn arg = withRecursiveFn fn arg $ do
               Just pushedArg -> do
                 -- this is a func looking to be applied
                 (tyArg, subs) <- listen (pushedArg `isSubtypeOf` tArg)
+
                 -- use substitutions to replace what we have learned
+                -- the `undoSubs` put back any generalised vars to what they
+                -- were so that any unchanged type vars don't get turned into
+                -- unknowns unnecessarily
                 let realType =
                       substituteMany
-                        subs
+                        (subs <> undoSubs)
                         (TFunc tAnn tClosure tyArg tBody)
+
                 pure (mapOuterExprAnnotation (const realType) typedFn) -- replace type with clever one
               Nothing -> pure typedFn
           _ -> pure typedFn
@@ -355,7 +360,6 @@ checkPattern checkTy checkPat = do
     (ty, PConstructor ann constructor args) -> do
       -- we don't check the constructor is valid yet
       let flattened = flattenConstructorType ty
-
       -- lookup the constructor itself (ie, `Just`, `Nothing`)
       (patTypeName, _, otherConstructors, consArgs) <- lookupConstructor constructor
 

@@ -68,6 +68,7 @@ parseTypeAndFormatError = parseAndFormat (space *> typeParser <* eof)
 typeParser :: Parser (ParsedType Annotation)
 typeParser =
   try (orInBrackets tyFunctionParser)
+    <|> try tyAppParser
     <|> simpleTypeParser
 
 -- | all the types except functions
@@ -76,7 +77,6 @@ simpleTypeParser =
   let parsers =
         try tyTupleParser
           <|> typeLiteralParser
-          <|> try tyAppParser
           <|> try tVarParser
           <|> try tyPrimitiveParser
           <|> try tyRecordParser
@@ -92,7 +92,7 @@ adtParser =
 multiDataTypeParser :: Parser (ParsedType Annotation)
 multiDataTypeParser = do
   tyName <- typeNameParser
-  tyArgs <- some subParser
+  tyArgs <- some appArgParser
   pure (dataTypeWithVars mempty tyName tyArgs)
 
 monoDataTypeParser :: Parser (ParsedType Annotation)
@@ -116,10 +116,11 @@ typeLiteralParser :: Parser (ParsedType Annotation)
 typeLiteralParser =
   label "type literal" $ myLexeme (withLocation TLiteral Prim.typeLiteralParser)
 
--- | used where a function must be inside brackets for clarity
+-- | used where a function or type must be inside brackets for clarity
 subParser :: Parser (ParsedType Annotation)
 subParser =
-  try simpleTypeParser
+  try (orInBrackets tyAppParser)
+    <|> try simpleTypeParser
     <|> try (inBrackets tyFunctionParser)
 
 tyPrimitiveParser :: Parser (ParsedType Annotation)
@@ -135,9 +136,16 @@ tyAppParser :: Parser (ParsedType Annotation)
 tyAppParser = label "type app" $ do
   func <- orInBrackets (TVar mempty . emptyParseDep <$> tyVarParser)
   let argParser' :: Parser [ParsedType Annotation]
-      argParser' = (: []) <$> subParser
+      argParser' = (: []) <$> appArgParser
   args <- chainl1 argParser' (pure (<>))
   pure $ foldl (TApp mempty) func args
+
+-- | used where a function or type must be inside brackets for clarity
+appArgParser :: Parser (ParsedType Annotation)
+appArgParser =
+  try (inBrackets tyAppParser)
+    <|> try simpleTypeParser
+    <|> try (inBrackets tyFunctionParser)
 
 tyFunctionParser :: Parser (ParsedType Annotation)
 tyFunctionParser = do
