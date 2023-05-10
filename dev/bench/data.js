@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1683557439997,
+  "lastUpdate": 1683740161943,
   "repoUrl": "https://github.com/danieljharvey/mimsa",
   "entries": {
     "Store benchmarks in Github Pages": [
@@ -1447,6 +1447,50 @@ window.BENCHMARK_DATA = {
           {
             "name": "evaluate/evaluate parsing 2",
             "value": 0.23176930928571632,
+            "unit": "Time (ms)"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "danieljamesharvey@gmail.com",
+            "name": "Daniel Harvey",
+            "username": "danieljharvey"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "175b562b3f30495e6e793a6bd76cf0c49257c72e",
+          "message": "Fix silly billy typechecker problems (#946)",
+          "timestamp": "2023-05-10T18:27:57+01:00",
+          "tree_id": "5f98dfe07ac4df4e2418e06240b8027d76c5025e",
+          "url": "https://github.com/danieljharvey/mimsa/commit/175b562b3f30495e6e793a6bd76cf0c49257c72e"
+        },
+        "date": 1683740160797,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "build stdlib/allFns",
+            "value": 0.10893334833333473,
+            "unit": "Time (ms)"
+          },
+          {
+            "name": "evaluate/evaluate big looping thing",
+            "value": 0.0966435563333362,
+            "unit": "Time (ms)"
+          },
+          {
+            "name": "evaluate/evaluate parsing",
+            "value": 0.03220135174558721,
+            "unit": "Time (ms)"
+          },
+          {
+            "name": "evaluate/evaluate parsing 2",
+            "value": 0.23433684234285823,
             "unit": "Time (ms)"
           }
         ]
