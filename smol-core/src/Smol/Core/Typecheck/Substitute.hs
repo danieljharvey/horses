@@ -7,9 +7,12 @@ module Smol.Core.Typecheck.Substitute
   ( Substitution (..),
     SubstitutionMatcher (..),
     substituteMany,
+    getUnknownId,
   )
 where
 
+import qualified Prettyprinter as PP
+import Smol.Core.Printer
 import Smol.Core.Types
 
 data SubstitutionMatcher dep ann
@@ -40,6 +43,9 @@ deriving stock instance
 
 data Substitution dep ann
   = Substitution (SubstitutionMatcher dep ann) (Type dep ann)
+
+instance (Show ann, Show (dep Identifier), Show (dep TypeName)) => Printer (Substitution dep ann) where
+  prettyDoc a = PP.pretty (show a)
 
 deriving stock instance
   (Eq ann, Eq (dep Identifier), Eq (dep TypeName)) =>

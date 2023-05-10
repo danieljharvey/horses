@@ -38,7 +38,7 @@ import Control.Monad.State
 import Data.Foldable (foldl')
 import Data.Map.Strict (Map)
 import qualified Data.Map.Strict as M
-import Data.Maybe (listToMaybe)
+import Data.Maybe (listToMaybe, mapMaybe)
 import qualified Data.Set as S
 import qualified Data.Set.NonEmpty as NES
 import Smol.Core.Helpers
@@ -275,16 +275,30 @@ popArg = do
   pure topVal
 
 -- | replace TVar with new TUnknown
-freshen :: (MonadState (TCState ann) m) => ResolvedType ann -> m (ResolvedType ann)
+-- | we also return the subs so they can be undone, as such, if needed
+freshen ::
+  (MonadState (TCState ann) m) =>
+  ResolvedType ann ->
+  m (ResolvedType ann, [Substitution ResolvedDep ann])
 freshen ty = do
-  subs <-
+  pairs <-
     traverse
       ( \var -> do
           unknown <- getUnknown (getTypeAnnotation ty)
-          pure $ Substitution (SubId var) unknown
+          pure (var, unknown)
       )
       (S.toList $ freeTypeVars ty)
-  pure $ substituteMany subs ty
+  let subs = (\(var, unknown) -> Substitution (SubId var) unknown) <$> pairs
+      undo =
+        mapMaybe
+          ( \(var, unknown) ->
+              let varType = TVar (getTypeAnnotation ty) var
+               in case unknown of
+                    TUnknown _ uid -> Just (Substitution (SubUnknown uid) varType)
+                    _ -> Nothing
+          )
+          pairs
+  pure (substituteMany subs ty, undo)
 
 -- | pass stack arg to action and remove it
 popArgs :: (Show ann, MonadState (TCState ann) m) => Int -> m [ResolvedType ann]
