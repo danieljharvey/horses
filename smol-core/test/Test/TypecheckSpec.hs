@@ -1,7 +1,8 @@
 {-# LANGUAGE OverloadedStrings #-}
-
+  {-# LANGUAGE FlexibleContexts #-}
 module Test.TypecheckSpec (spec) where
 
+import Control.Monad.Reader
 import Control.Monad.Except
 import Control.Monad.State
 import Data.Bifunctor
@@ -46,6 +47,9 @@ testElaborate expr = do
   case elaborate (builtInTypes emptyResolvedDep) (fromParsedExpr expr) of
     Right typedExpr -> pure typedExpr
     Left e -> Left e
+
+typecheckEnv :: TCEnv ()
+typecheckEnv =  TCEnv mempty mempty (builtInTypes LocalDefinition)
 
 spec :: Spec
 spec = do
@@ -106,6 +110,9 @@ spec = do
               ),
               ( "(\\maybeF -> \\maybeA -> case (maybeF, maybeA) of (Just f, Just a) -> Just (f a) | _ -> Nothing : Maybe (a -> b) -> Maybe a -> Maybe b)",
                 "Maybe (a -> b) -> Maybe a -> Maybe b"
+              ),
+              ( "(\\value -> \\default -> case value of Right a -> a | Left _ -> default : Either e a -> a -> a)",
+                "Either e a -> a -> a"
               ),
               --              ( "let liftA2 = (\\ap -> \\fmap -> \\f -> \\ma -> \\mb -> ap (fmap f ma) mb : (m (a -> b) -> m a -> m b) -> ((a -> b) -> m a -> m b) -> (a -> b -> c) -> m a -> m b -> m c); let add2 = (\\a -> \\b -> a + b : Nat -> Nat -> Nat); liftA2 add2 (Just 1) (Just 2)",
               --              "Maybe Nat"
@@ -201,6 +208,23 @@ spec = do
       xit "New vars, inside pattern match" $ do
         freeVars (unsafeParseTypedExpr "\\a -> case (1,2) of (c,d) -> c + d + e")
           `shouldBe` S.singleton "e"
+
+    describe "checkPattern" $ do
+      it "Match Right a with Either e a" $ do
+        let pat = PConstructor () (LocalDefinition "Right") [PVar () "a"]
+            ty = fromParsedType (tyCons "Either" [tyVar "e", tyVar "a"])
+
+        fst <$> runReaderT (checkPattern ty pat) typecheckEnv
+          `shouldBe` Right (PConstructor ty (LocalDefinition "Right")
+              [PVar (fromParsedType $ tyVar "a") "a"])
+
+      it "Match Left e with Either e a" $ do
+        let pat = PConstructor () (LocalDefinition "Left") [PVar () "e"]
+            ty = fromParsedType (tyCons "Either" [tyVar "e", tyVar "a"])
+
+        fst <$> runReaderT (checkPattern ty pat) typecheckEnv
+          `shouldBe` Right (PConstructor ty (LocalDefinition "Left")
+              [PVar (fromParsedType $ tyVar "e") "e"])
 
     describe "expected typechecking failures" $ do
       let inputs =

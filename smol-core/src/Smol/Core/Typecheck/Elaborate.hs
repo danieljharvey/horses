@@ -6,6 +6,7 @@
 module Smol.Core.Typecheck.Elaborate
   ( elaborate,
     getExprAnnotation,
+    checkPattern
   )
 where
 
@@ -360,12 +361,13 @@ checkPattern checkTy checkPat = do
     (ty, PConstructor ann constructor args) -> do
       -- we don't check the constructor is valid yet
       let flattened = flattenConstructorType ty
+
       -- lookup the constructor itself (ie, `Just`, `Nothing`)
-      (patTypeName, _, otherConstructors, consArgs) <- lookupConstructor constructor
+      (patTypeName, _, otherConstructors, consArgs) <-
+          lookupConstructor constructor
 
       case flattened of
         Left _ -> do
-          -- don't know what it is... the following typechecks but is it nonsense
           (patArgs, envArgs) <-
             unzip <$> zipWithM checkPattern consArgs args
 
@@ -377,13 +379,14 @@ checkPattern checkTy checkPat = do
 
           let constructorTy = dataTypeWithVars ann patTypeName consArgs
           pure (PConstructor constructorTy constructor patArgs, mconcat envArgs)
+
         Right (typeName, tyArgs) -> do
           -- check constructor lives in type
           when (typeName /= patTypeName) $
             throwError (TCUnknownConstructor constructor otherConstructors)
 
           (patArgs, envArgs) <-
-            unzip <$> zipWithM checkPattern tyArgs args
+            unzip <$> zipWithM checkPattern consArgs args
 
           -- check number of args matches what constructor expects
           when

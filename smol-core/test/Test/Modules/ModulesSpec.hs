@@ -45,7 +45,7 @@ testModuleTypecheck moduleName =
 
 spec :: Spec
 spec = do
-  describe "Modules" $ do
+  fdescribe "Modules" $ do
     describe "ResolvedDeps" $ do
       it "No deps, marks var as unique" $ do
         let mod' = unsafeParseModule "def main = let a = 123 in a"
@@ -187,8 +187,8 @@ spec = do
       it "Typechecks Maybe successfully" $ do
         testModuleTypecheck "Maybe" `shouldSatisfy` isRight
 
-      xit "Typechecks Either successfully" $ do
+      it "Typechecks Either successfully" $ do
         testModuleTypecheck "Either" `shouldSatisfy` isRight
 
-      xit "Typechecks State successfully" $ do
+      it "Typechecks State successfully" $ do
         testModuleTypecheck "State" `shouldSatisfy` isRight
