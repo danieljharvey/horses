@@ -6,6 +6,7 @@ module Test.BuiltInTypes
   )
 where
 
+import qualified Data.List.NonEmpty as NE
 import Data.Map.Strict (Map)
 import qualified Data.Map.Strict as M
 import Smol.Core.Types
@@ -53,6 +54,25 @@ builtInTypes liftDep =
           []
           ( M.fromList [("LT", mempty), ("EQ", mempty), ("GT", mempty)]
           )
+
+      stateDt =
+        DataType
+          "State"
+          ["s", "a"]
+          ( M.singleton
+              "State"
+              [ TFunc
+                  mempty
+                  mempty
+                  (TVar mempty (liftDep "s"))
+                  ( TTuple
+                      mempty
+                      (TVar mempty (liftDep "a"))
+                      (NE.fromList [TVar mempty (liftDep "s")])
+                  )
+              ]
+          )
+
       listDt =
         DataType
           "List"
@@ -72,5 +92,6 @@ builtInTypes liftDep =
           (liftDep "Ord", ordDt),
           (liftDep "These", theseDt),
           (liftDep "Identity", identityDt),
-          (liftDep "List", listDt)
+          (liftDep "List", listDt),
+          (liftDep "State", stateDt)
         ]

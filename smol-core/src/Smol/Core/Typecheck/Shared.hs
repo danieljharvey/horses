@@ -29,6 +29,7 @@ module Smol.Core.Typecheck.Shared
     listenGlobals,
     freshen,
     primsFromTypeLiteral,
+    typeLiteralFromPrim,
   )
 where
 
@@ -167,7 +168,11 @@ lookupConstructor constructor = do
     asks
       ( mapFind
           ( \(DataType typeName vars constructors) ->
-              (,,,) (emptyResolvedDep typeName) vars (M.keys constructors) <$> M.lookup (rdIdentifier constructor) constructors
+              (,,,)
+                (emptyResolvedDep typeName)
+                vars
+                (M.keys constructors)
+                <$> M.lookup (rdIdentifier constructor) constructors
           )
           . tceDataTypes
       )
@@ -373,3 +378,9 @@ listenGlobals action = do
           }
     )
   pure (a, newState)
+
+typeLiteralFromPrim :: Prim -> TypeLiteral
+typeLiteralFromPrim (PBool b) = TLBool b
+typeLiteralFromPrim (PInt a) = TLInt (NES.singleton a)
+typeLiteralFromPrim (PNat a) = TLInt (NES.singleton $ fromIntegral a)
+typeLiteralFromPrim PUnit = TLUnit

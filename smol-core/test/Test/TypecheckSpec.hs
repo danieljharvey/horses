@@ -1,9 +1,10 @@
+{-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE OverloadedStrings #-}
-  {-# LANGUAGE FlexibleContexts #-}
+
 module Test.TypecheckSpec (spec) where
 
-import Control.Monad.Reader
 import Control.Monad.Except
+import Control.Monad.Reader
 import Control.Monad.State
 import Data.Bifunctor
 import Data.Either
@@ -49,7 +50,7 @@ testElaborate expr = do
     Left e -> Left e
 
 typecheckEnv :: TCEnv ()
-typecheckEnv =  TCEnv mempty mempty (builtInTypes LocalDefinition)
+typecheckEnv = TCEnv mempty mempty (builtInTypes LocalDefinition)
 
 spec :: Spec
 spec = do
@@ -209,22 +210,55 @@ spec = do
         freeVars (unsafeParseTypedExpr "\\a -> case (1,2) of (c,d) -> c + d + e")
           `shouldBe` S.singleton "e"
 
-    describe "checkPattern" $ do
+    fdescribe "checkPattern" $ do
       it "Match Right a with Either e a" $ do
         let pat = PConstructor () (LocalDefinition "Right") [PVar () "a"]
             ty = fromParsedType (tyCons "Either" [tyVar "e", tyVar "a"])
 
         fst <$> runReaderT (checkPattern ty pat) typecheckEnv
-          `shouldBe` Right (PConstructor ty (LocalDefinition "Right")
-              [PVar (fromParsedType $ tyVar "a") "a"])
+          `shouldBe` Right
+            ( PConstructor
+                ty
+                (LocalDefinition "Right")
+                [PVar (fromParsedType $ tyVar "a") "a"]
+            )
+
+      it "Match Right True with Either 1 True" $ do
+        let pat = PConstructor () (LocalDefinition "Right") [PLiteral () (PBool True)]
+            ty = fromParsedType (tyCons "Either" [tyIntLit [1], tyBoolLit True])
+
+        fst <$> runReaderT (checkPattern ty pat) typecheckEnv
+          `shouldBe` Right
+            ( PConstructor
+                ty
+                (LocalDefinition "Right")
+                [PLiteral (fromParsedType $ tyBoolLit True) (PBool True)]
+            )
 
       it "Match Left e with Either e a" $ do
         let pat = PConstructor () (LocalDefinition "Left") [PVar () "e"]
             ty = fromParsedType (tyCons "Either" [tyVar "e", tyVar "a"])
 
         fst <$> runReaderT (checkPattern ty pat) typecheckEnv
-          `shouldBe` Right (PConstructor ty (LocalDefinition "Left")
-              [PVar (fromParsedType $ tyVar "e") "e"])
+          `shouldBe` Right
+            ( PConstructor
+                ty
+                (LocalDefinition "Left")
+                [PVar (fromParsedType $ tyVar "e") "e"]
+            )
+
+      it "Match State inner with State s a" $ do
+        let pat = PConstructor () (LocalDefinition "State") [PVar () "inner"]
+            ty = fromParsedType (tyCons "State" [tyVar "s", tyVar "a"])
+            tyExpected = TFunc () mempty (tyVar "s") (tyTuple (tyVar "a") [tyVar "s"])
+
+        fst <$> runReaderT (checkPattern ty pat) typecheckEnv
+          `shouldBe` Right
+            ( PConstructor
+                ty
+                (LocalDefinition "State")
+                [PVar (fromParsedType tyExpected) "inner"]
+            )
 
     describe "expected typechecking failures" $ do
       let inputs =

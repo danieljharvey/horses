@@ -145,7 +145,8 @@ spec = do
               ),
               ("Maybe.Maybe", TConstructor () (ParseDep "Maybe" (Just "Maybe"))),
               ("[Bool]", TArray () 0 tyBool),
-              ("Either e a", tyCons "Either" [tyVar "e", tyVar "a"])
+              ("Either e a", tyCons "Either" [tyVar "e", tyVar "a"]),
+              ("s -> (a, s)", TFunc () mempty (tyVar "s") (tyTuple (tyVar "a") [tyVar "s"]))
             ]
       traverse_
         ( \(str, ty) -> it (T.unpack str) $ do
