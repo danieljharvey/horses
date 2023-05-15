@@ -40,12 +40,11 @@ common shared
     , file-embed
     , megaparsec
     , memory
-    , mtl
+    , mtl > 2.3.0
     , nonempty-containers
     , parser-combinators
     , prettyprinter
     , text
-    , writer-cps-mtl
 
 library
   import:           shared

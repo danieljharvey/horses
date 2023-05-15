@@ -21,8 +21,8 @@ package diagnose
 
 source-repository-package
   type: git
-  location: https://github.com/novadiscovery/llvm-hs.git
-  tag: 5942a8b750a5754abdb2e978e7bff746db746d49
+  location: https://github.com/sighingnow/llvm-hs.git
+  tag: a0db9e9753a3757f25f40ed1311cab2e748a3dd6
   subdir: llvm-hs-pure
 
 allow-newer: all

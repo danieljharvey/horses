@@ -194,7 +194,6 @@ library
     , text
     , transformers
     , wasm
-    , writer-cps-mtl
 
   default-language:   Haskell2010
 
