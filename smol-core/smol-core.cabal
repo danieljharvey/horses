@@ -111,6 +111,7 @@ library
     Smol.Core.Typecheck.Exhaustiveness
     Smol.Core.Typecheck.FreeVars
     Smol.Core.Typecheck.FromParsedExpr
+    Smol.Core.Typecheck.Pattern
     Smol.Core.Typecheck.Shared
     Smol.Core.Typecheck.Substitute
     Smol.Core.Typecheck.Subtype
@@ -198,6 +199,7 @@ test-suite smol-core-tests
     Smol.Core.Typecheck.Exhaustiveness
     Smol.Core.Typecheck.FreeVars
     Smol.Core.Typecheck.FromParsedExpr
+    Smol.Core.Typecheck.Pattern
     Smol.Core.Typecheck.Shared
     Smol.Core.Typecheck.Substitute
     Smol.Core.Typecheck.Subtype
