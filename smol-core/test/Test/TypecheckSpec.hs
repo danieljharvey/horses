@@ -75,28 +75,75 @@ spec = do
               ("200 + -100", "Int"),
               ("(1 + 2 + 3 : Nat)", "Nat"),
               ("(1 + 2 + 3 : Int)", "Int"),
-              ("(\\pair -> case pair of (a,_) -> a : (Bool, Nat) -> Bool) (True, 1)", "Bool"),
-              ("(\\pair -> case pair of (True, a) -> a | (False,_) -> 0 : (Bool, Nat) -> Nat) (True,1)", "Nat"),
-              ("(case (True, 1) of (True, a) -> a: Nat)", "Nat"), -- this should remain total as we know it's always True
-              ("Just True", "Maybe True"),
-              ("(Just True : Maybe True)", "Maybe True"),
-              ("(Just : a -> Maybe a)", "a -> Maybe a"),
-              ("(That 1 : These a 1)", "These a 1"),
-              ("These 1 True", "These 1 True"),
-              ("(Left 1 : Either 1 Bool)", "Either 1 Bool"),
-              ("(Right True : Either e True)", "Either e True"),
-              ("(case Just 1 of Just a -> a | _ -> 0 : Nat)", "Nat"),
-              ("(\\a -> case a of 1 -> 10 | 2 -> 20 : (1 | 2) -> Nat) 1", "Nat"),
-              ("(\\a -> case a of (1,_) -> 10 | (2,_) -> 20 : (1 | 2,Bool) -> Nat) (1,False)", "Nat"),
-              ("(\\a -> a : Maybe a -> Maybe a) (Nothing : Maybe Nat)", "Maybe Nat"),
-              ("(\\a -> a : Maybe a -> Maybe a) Just 1", "Maybe 1"),
-              ("(\\f -> \\ident -> case ident of Identity a -> Identity (f a) : (a -> b) -> Identity a -> Identity b)", "(a -> b) -> Identity a -> Identity b"),
-              ("(\\f -> \\maybe -> case maybe of Just a -> Just (f a) | Nothing -> Nothing : (a -> b) -> Maybe a -> Maybe b)", "(a -> b) -> Maybe a -> Maybe b"),
-              ("(\\f -> \\maybe -> case maybe of Just a -> Just (f a) | Nothing -> Nothing : (b -> a) -> Maybe b -> Maybe a)", "(b -> a) -> Maybe b -> Maybe a"),
-              ("(case (This 42 : These Nat Nat) of This a -> a : Nat)", "Nat"),
-              ("let fmap = (\\f -> \\maybe -> case maybe of Just a -> Just (f a) | Nothing -> Nothing : (a -> b) -> Maybe a -> Maybe b); let inc = (\\a -> True : Nat -> Bool); fmap inc", "Maybe Nat -> Maybe Bool"),
-              ("let fmap = (\\f -> \\either -> case either of Right a -> Right (f a) | Left e -> Left e : (a -> b) -> Either e a -> Either e b); let inc = (\\a -> True : Nat -> Bool); fmap inc", "Either e Nat -> Either e Bool"),
-              ("let fmap = (\\f -> \\either -> case either of Right a -> Right (f a) | Left e -> Left e : (a -> b) -> Either e a -> Either e b); fmap", "(a -> b) -> Either e a -> Either e b"),
+              ( "(\\pair -> case pair of (a,_) -> a : (Bool, Nat) -> Bool) (True, 1)",
+                "Bool"
+              ),
+              ( "(\\pair -> case pair of (True, a) -> a | (False,_) -> 0 : (Bool, Nat) -> Nat) (True,1)",
+                "Nat"
+              ),
+              ( "(case (True, 1) of (True, a) -> a: Nat)",
+                "Nat" -- this should remain total as we know it's always True
+              ),
+              ( "Just True",
+                "Maybe True"
+              ),
+              ( "(Just True : Maybe True)",
+                "Maybe True"
+              ),
+              ( "(Just : a -> Maybe a)",
+                "a -> Maybe a"
+              ),
+              ( "(That 1 : These a 1)",
+                "These a 1"
+              ),
+              ( "These 1 True",
+                "These 1 True"
+              ),
+              ( "(Left 1 : Either 1 Bool)",
+                "Either 1 Bool"
+              ),
+              ( "(Right True : Either e True)",
+                "Either e True"
+              ),
+              ( "(case Just 1 of Just a -> a | _ -> 0 : Nat)",
+                "Nat"
+              ),
+              ( "(\\a -> case a of 1 -> 10 | 2 -> 20 : (1 | 2) -> Nat) 1",
+                "Nat"
+              ),
+              ( "(\\a -> case a of (1,_) -> 10 | (2,_) -> 20 : (1 | 2,Bool) -> Nat) (1,False)",
+                "Nat"
+              ),
+              ( "(\\a -> a : Maybe a -> Maybe a) (Nothing : Maybe Nat)",
+                "Maybe Nat"
+              ),
+              ( "(\\a -> a : Maybe a -> Maybe a) Just 1",
+                "Maybe 1"
+              ),
+              ( "(\\f -> \\ident -> case ident of Identity a -> Identity (f a) : (a -> b) -> Identity a -> Identity b)",
+                "(a -> b) -> Identity a -> Identity b"
+              ),
+              ( "(\\f -> \\maybe -> case maybe of Just a -> Just (f a) | Nothing -> Nothing : (a -> b) -> Maybe a -> Maybe b)",
+                "(a -> b) -> Maybe a -> Maybe b"
+              ),
+              ( "(\\f -> \\maybe -> case maybe of Just a -> Just (f a) | Nothing -> Nothing : (b -> a) -> Maybe b -> Maybe a)",
+                "(b -> a) -> Maybe b -> Maybe a"
+              ),
+              ( "(case (This 42 : These Nat Nat) of This a -> a : Nat)",
+                "Nat"
+              ),
+              ( "let fmap = (\\f -> \\maybe -> case maybe of Just a -> Just (f a) | Nothing -> Nothing : (a -> b) -> Maybe a -> Maybe b); let inc = (\\a -> True : Nat -> Bool); fmap inc",
+                "Maybe Nat -> Maybe Bool"
+              ),
+              ( "let fmap = (\\f -> \\either -> case either of Right a -> Right (f a) | Left e -> Left e : (a -> b) -> Either e a -> Either e b); let inc = (\\a -> True : Nat -> Bool); fmap inc",
+                "Either e Nat -> Either e Bool"
+              ),
+              ( "let fmap = (\\f -> \\either -> case either of Right a -> Right (f a) | Left e -> Left e : (a -> b) -> Either e a -> Either e b); fmap",
+                "(a -> b) -> Either e a -> Either e b"
+              ),
+              -- ( "let fmap = (\\f -> \\state -> case state of (State sas) -> State (\\s -> case sas s of (a, s) -> (f a, s)) : (a -> b) -> State s a -> State s b) in fmap",
+              -- "(a -> b) -> State s a -> State s b"
+              -- ),
               ( "let const = (\\a -> \\b -> a : a -> b -> a); const True 100",
                 "True"
               ),
@@ -210,7 +257,7 @@ spec = do
         freeVars (unsafeParseTypedExpr "\\a -> case (1,2) of (c,d) -> c + d + e")
           `shouldBe` S.singleton "e"
 
-    fdescribe "checkPattern" $ do
+    describe "checkPattern" $ do
       it "Match Right a with Either e a" $ do
         let pat = PConstructor () (LocalDefinition "Right") [PVar () "a"]
             ty = fromParsedType (tyCons "Either" [tyVar "e", tyVar "a"])

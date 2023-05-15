@@ -3,9 +3,7 @@
 {-# LANGUAGE RankNTypes #-}
 
 module Smol.Core.Typecheck.Pattern
-  (
-
-    checkPattern,
+  ( checkPattern,
   )
 where
 
@@ -17,6 +15,7 @@ import qualified Data.Map.Strict as M
 import qualified Data.Set.NonEmpty as NES
 import Smol.Core.Helpers
 import Smol.Core.Typecheck.Shared
+import Smol.Core.Typecheck.Substitute
 import Smol.Core.Typecheck.Types
 import Smol.Core.Types
 
@@ -91,7 +90,7 @@ checkPattern checkTy checkPat = do
       let flattened = flattenConstructorType ty
 
       -- lookup the constructor itself (ie, `Just`, `Nothing`)
-      (patTypeName, _, otherConstructors, consArgs) <-
+      (patTypeName, dtArgs, otherConstructors, consArgs) <-
         lookupConstructor constructor
 
       case flattened of
@@ -112,8 +111,11 @@ checkPattern checkTy checkPat = do
           when (typeName /= patTypeName) $
             throwError (TCUnknownConstructor constructor otherConstructors)
 
+          let pairs = zipWith (\var subTy -> Substitution (SubId (LocalDefinition var)) subTy) dtArgs tyArgs
+              resolvedArgs = substituteMany pairs <$> consArgs
+
           (patArgs, envArgs) <-
-            unzip <$> zipWithM checkPattern consArgs args -- tyArgs was consArgs
+            unzip <$> zipWithM checkPattern resolvedArgs args -- tyArgs was consArgs
 
           -- check number of args matches what constructor expects
           when
@@ -124,4 +126,3 @@ checkPattern checkTy checkPat = do
           let constructorTy = dataTypeWithVars ann patTypeName tyArgs
           pure (PConstructor constructorTy constructor patArgs, mconcat envArgs)
     (otherTy, otherPat) -> throwError (TCPatternMismatch otherPat otherTy)
-
