@@ -1,0 +1,31 @@
+  
+export def maybe innerM = {
+  mappend: \a -> \b -> case (a,b) of
+                    (Maybe.Just iA, Maybe.Just iB) -> Maybe.Just (innerM.mappend iA iB)
+                  | (Maybe.Just iA, Maybe.Nothing) -> (Maybe.Just iA) 
+                  | (Maybe.Nothing, Maybe.Just iB) -> (Maybe.Just iB) 
+                  | _ -> Maybe.Nothing,
+  mempty: Maybe.Nothing
+  }
+
+export def any = { mappend: Prelude.or, mempty: False } 
+ 
+export def all = { mappend: Prelude.and, mempty: True }
+
+export def sum = { mappend: \a -> \b -> a + b, mempty: 0 }
+
+export def first = { mappend: \a -> \b -> 
+                        case (a, b) of
+                            (Maybe.Just a, _) -> (Maybe.Just a)
+                          | (_, b) -> b,
+                     mempty: Maybe.Nothing
+                    }
+
+ export def last = { mappend: \a -> \b -> 
+                        case (a, b) of
+                            (_, Maybe.Just b) -> (Maybe.Just b)
+                          | (a, _) -> a,
+                     mempty: Maybe.Nothing
+                    }
+  
+

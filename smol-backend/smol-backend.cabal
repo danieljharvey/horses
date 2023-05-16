@@ -1,0 +1,96 @@
+cabal-version:      2.4
+name:               smol-backend
+version:            0.1.0.0
+
+-- A short (one-line) description of the package.
+-- synopsis:
+
+-- A longer description of the package.
+-- description:
+
+-- A URL where users can report bugs.
+-- bug-reports:
+
+-- The license under which the package is released.
+-- license:
+author:             Daniel Harvey
+maintainer:         danieljamesharvey@gmail.com
+
+-- A copyright notice.
+-- copyright:
+-- category:
+extra-source-files:
+  CHANGELOG.md
+  static/runtime.c
+
+common shared
+  ghc-options:
+    -threaded -rtsopts -with-rtsopts=-N -Wall
+    -Wno-unticked-promoted-constructors -Wcompat
+    -Wincomplete-record-updates -Wincomplete-uni-patterns
+    -Wredundant-constraints -Wmissing-deriving-strategies
+
+  build-depends:
+    , smol-core
+    , base
+
+library
+  import:           shared
+
+  -- Modules included in this executable, other than Main.
+  -- other-modules:
+
+  -- LANGUAGE extensions used by modules in this package.
+  -- other-extensions:
+  hs-source-dirs:   src
+  default-language: Haskell2010
+  exposed-modules:
+    Smol.Backend
+    Smol.Backend.Compile.RunLLVM
+    Smol.Backend.IR.FromExpr.DataTypes
+    Smol.Backend.IR.FromExpr.Expr
+    Smol.Backend.IR.FromExpr.Helpers
+    Smol.Backend.IR.FromExpr.Pattern
+    Smol.Backend.IR.FromExpr.Type
+    Smol.Backend.IR.FromExpr.Types
+    Smol.Backend.IR.FromResolvedExpr
+    Smol.Backend.IR.IRExpr
+    Smol.Backend.IR.ToLLVM.Helpers
+    Smol.Backend.IR.ToLLVM.Patterns
+    Smol.Backend.IR.ToLLVM.ToLLVM
+
+test-suite smol-backend-tests
+  import:           shared
+  type:             exitcode-stdio-1.0
+  hs-source-dirs:   test
+  hs-source-dirs:   src
+  build-depends:
+    , hspec       >=2.8.3 && <3
+    , hspec-core  >=2.8.3 && <3
+
+  other-modules:
+    Smol.Backend
+    Smol.Backend.Compile.RunLLVM
+    Smol.Backend.IR.FromExpr.DataTypes
+    Smol.Backend.IR.FromExpr.Expr
+    Smol.Backend.IR.FromExpr.Helpers
+    Smol.Backend.IR.FromExpr.Pattern
+    Smol.Backend.IR.FromExpr.Type
+    Smol.Backend.IR.FromExpr.Types
+    Smol.Backend.IR.FromResolvedExpr
+    Smol.Backend.IR.IRExpr
+    Smol.Backend.IR.ToLLVM.Helpers
+    Smol.Backend.IR.ToLLVM.Patterns
+    Smol.Backend.IR.ToLLVM.ToLLVM
+
+    Test.BuiltInTypes
+    Test.IR.CompileSpec
+    Test.IR.DataTypesSpec
+    Test.IR.FromExprSpec
+    Test.IR.IRSpec
+    Test.IR.PatternSpec
+    Test.IR.RawSamples
+    Test.IR.Samples
+
+  main-is:          Main.hs
+  default-language: Haskell2010

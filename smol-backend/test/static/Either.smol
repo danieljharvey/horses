@@ -1,0 +1,11 @@
+export type Either e a = Left e | Right a
+
+export def orDefault (default: a) (value: Either e a): a =
+  case value of
+     Right a -> a
+   | Left _ -> default
+
+export def fmap (f: a -> b) (value: Either e a): Either e b =
+  case value of
+    Right a -> Right (f a)
+    | Left e -> Left e
