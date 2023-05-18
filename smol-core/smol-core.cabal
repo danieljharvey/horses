@@ -21,7 +21,6 @@ maintainer:         danieljamesharvey@gmail.com
 -- category:
 extra-source-files:
   CHANGELOG.md
-  static/runtime.c
 
 common shared
   ghc-options:
@@ -32,27 +31,20 @@ common shared
 
   build-depends:
     , aeson
-    , array
     , base
     , builder
     , bytestring
     , containers
     , cryptonite
     , diagnose
-    , directory
     , file-embed
-    , llvm-hs-pretty
-    , llvm-hs-pure
     , megaparsec
     , memory
     , mtl
     , nonempty-containers
     , parser-combinators
     , prettyprinter
-    , process
-    , string-conversions
     , text
-    , unix
     , writer-cps-mtl
 
 library
@@ -67,26 +59,15 @@ library
   default-language: Haskell2010
   exposed-modules:
     Smol.Core
-    Smol.Core.Compile.RunLLVM
     Smol.Core.ExprUtils
     Smol.Core.Helpers
     Smol.Core.Interpreter
     Smol.Core.Interpreter.Convert
     Smol.Core.Interpreter.Interpret
     Smol.Core.Interpreter.Types
-    Smol.Core.IR.FromExpr.DataTypes
-    Smol.Core.IR.FromExpr.Expr
-    Smol.Core.IR.FromExpr.Helpers
-    Smol.Core.IR.FromExpr.Pattern
-    Smol.Core.IR.FromExpr.Type
-    Smol.Core.IR.FromExpr.Types
-    Smol.Core.IR.FromResolvedExpr
-    Smol.Core.IR.IRExpr
-    Smol.Core.IR.ToLLVM.Helpers
-    Smol.Core.IR.ToLLVM.Patterns
-    Smol.Core.IR.ToLLVM.ToLLVM
     Smol.Core.Modules.Check
     Smol.Core.Modules.Dependencies
+    Smol.Core.Modules.Types.DepType
     Smol.Core.Modules.FromParts
     Smol.Core.Modules.HashModule
     Smol.Core.Modules.ModuleError
@@ -153,24 +134,12 @@ test-suite smol-core-tests
 
   other-modules:
     Smol.Core
-    Smol.Core.Compile.RunLLVM
     Smol.Core.ExprUtils
     Smol.Core.Helpers
     Smol.Core.Interpreter
     Smol.Core.Interpreter.Convert
     Smol.Core.Interpreter.Interpret
     Smol.Core.Interpreter.Types
-    Smol.Core.IR.FromExpr.DataTypes
-    Smol.Core.IR.FromExpr.Expr
-    Smol.Core.IR.FromExpr.Helpers
-    Smol.Core.IR.FromExpr.Pattern
-    Smol.Core.IR.FromExpr.Type
-    Smol.Core.IR.FromExpr.Types
-    Smol.Core.IR.FromResolvedExpr
-    Smol.Core.IR.IRExpr
-    Smol.Core.IR.ToLLVM.Helpers
-    Smol.Core.IR.ToLLVM.Patterns
-    Smol.Core.IR.ToLLVM.ToLLVM
     Smol.Core.Modules.Check
     Smol.Core.Modules.Dependencies
     Smol.Core.Modules.FromParts
@@ -232,13 +201,6 @@ test-suite smol-core-tests
     Test.BuiltInTypes
     Test.Helpers
     Test.Interpreter.InterpreterSpec
-    Test.IR.CompileSpec
-    Test.IR.DataTypesSpec
-    Test.IR.FromExprSpec
-    Test.IR.IRSpec
-    Test.IR.PatternSpec
-    Test.IR.RawSamples
-    Test.IR.Samples
     Test.Modules.ModulesSpec
     Test.ParserSpec
     Test.Typecheck.ExhaustivenessSpec

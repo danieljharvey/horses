@@ -10,10 +10,10 @@ import Control.Monad.State
 import qualified Data.List.NonEmpty as NE
 import Data.Map.Strict (Map)
 import qualified Data.Map.Strict as M
-import Smol.Core.IR.FromExpr.DataTypes
-import qualified Smol.Core.IR.FromExpr.Helpers as Compile
-import Smol.Core.IR.FromExpr.Types
-import Smol.Core.IR.IRExpr
+import Smol.Backend.IR.FromExpr.DataTypes
+import qualified Smol.Backend.IR.FromExpr.Helpers as Compile
+import Smol.Backend.IR.FromExpr.Types
+import Smol.Backend.IR.IRExpr
 import Smol.Core.Typecheck.Subtype (isIntLiteral, isNatLiteral)
 import qualified Smol.Core.Types as Smol
 

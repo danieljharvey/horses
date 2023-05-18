@@ -19,8 +19,8 @@ import Data.Map.Strict (Map)
 import qualified Data.Map.Strict as M
 import Data.Semigroup
 import Data.Word (Word64)
-import Smol.Core.IR.FromExpr.Helpers
-import Smol.Core.IR.FromExpr.Types
+import Smol.Backend.IR.FromExpr.Helpers
+import Smol.Backend.IR.FromExpr.Types
 import Smol.Core.Typecheck.Substitute
 import Smol.Core.Typecheck.Subtype
 import qualified Smol.Core.Typecheck.Types as Smol

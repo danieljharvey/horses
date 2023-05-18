@@ -14,8 +14,8 @@ import qualified Data.List.NonEmpty as NE
 import Data.Map.Strict (Map)
 import qualified Data.Map.Strict as M
 import Smol.Core.Helpers
-import Smol.Core.IR.FromExpr.Helpers
-import Smol.Core.IR.FromExpr.Types
+import Smol.Backend.IR.FromExpr.Helpers
+import Smol.Backend.IR.FromExpr.Types
 import qualified Smol.Core.Types as Smol
 import Smol.Core.Types.GetPath
 import Smol.Core.Types.PatternPredicate

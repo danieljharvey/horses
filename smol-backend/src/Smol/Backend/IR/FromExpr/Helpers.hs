@@ -16,7 +16,7 @@ import Control.Monad.State
 import qualified Data.Map.Strict as M
 import GHC.Records (HasField (..))
 import Smol.Core.Helpers
-import Smol.Core.IR.FromExpr.Types
+import Smol.Backend.IR.FromExpr.Types
 import qualified Smol.Core.Typecheck.Shared as TC
 import qualified Smol.Core.Types as Smol
 

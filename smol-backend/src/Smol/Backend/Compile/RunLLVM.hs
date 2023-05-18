@@ -14,8 +14,8 @@ import qualified Data.Text.Encoding as T
 import qualified Data.Text.IO as T
 import LLVM.AST hiding (Type, function)
 import LLVM.Pretty
-import Smol.Core.IR.FromExpr.Expr
-import Smol.Core.IR.ToLLVM.ToLLVM
+import Smol.Backend.IR.FromExpr.Expr
+import Smol.Backend.IR.ToLLVM.ToLLVM
 import Smol.Core.Types
 import System.CPUTime
 import System.Directory

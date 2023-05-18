@@ -31,8 +31,19 @@ common shared
     -Wredundant-constraints -Wmissing-deriving-strategies
 
   build-depends:
-    , smol-core
     , base
+    , bytestring
+    , containers
+    , directory
+    , file-embed
+    , llvm-hs-pure
+    , llvm-hs-pretty
+    , mtl
+    , process
+    , smol-core
+    , string-conversions
+    , text
+    , unix
 
 library
   import:           shared
@@ -67,6 +78,7 @@ test-suite smol-backend-tests
   build-depends:
     , hspec       >=2.8.3 && <3
     , hspec-core  >=2.8.3 && <3
+    , nonempty-containers
 
   other-modules:
     Smol.Backend
@@ -84,6 +96,7 @@ test-suite smol-backend-tests
     Smol.Backend.IR.ToLLVM.ToLLVM
 
     Test.BuiltInTypes
+    Test.Helpers
     Test.IR.CompileSpec
     Test.IR.DataTypesSpec
     Test.IR.FromExprSpec

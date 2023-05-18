@@ -26,9 +26,9 @@ import qualified LLVM.IRBuilder.Instruction as LLVM
 import qualified LLVM.IRBuilder.Module as LLVM
 import qualified LLVM.IRBuilder.Monad as LLVM
 import Smol.Core.Helpers (traverseIndNe)
-import Smol.Core.IR.IRExpr
-import Smol.Core.IR.ToLLVM.Helpers
-import Smol.Core.IR.ToLLVM.Patterns
+import Smol.Backend.IR.IRExpr
+import Smol.Backend.IR.ToLLVM.Helpers
+import Smol.Backend.IR.ToLLVM.Patterns
 
 irToLLVM :: IRModule -> LLVM.Module
 irToLLVM (IRModule bits) =

@@ -62,7 +62,7 @@ import qualified LLVM.IRBuilder.Module as LLVM
 import qualified LLVM.IRBuilder.Monad as L
 import qualified LLVM.IRBuilder.Monad as LLVM
 import Smol.Core.Helpers
-import Smol.Core.IR.IRExpr
+import Smol.Backend.IR.IRExpr
 import qualified Smol.Core.Types as Smol
 import Smol.Core.Types.GetPath
 

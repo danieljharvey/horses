@@ -24,8 +24,8 @@ import qualified LLVM.IRBuilder.Constant as C
 import qualified LLVM.IRBuilder.Instruction as L
 import qualified LLVM.IRBuilder.Module as L
 import qualified LLVM.IRBuilder.Monad as L
-import Smol.Core.IR.IRExpr
-import Smol.Core.IR.ToLLVM.Helpers
+import Smol.Backend.IR.IRExpr
+import Smol.Backend.IR.ToLLVM.Helpers
 import Smol.Core.Types.GetPath
 import Smol.Core.Types.PatternPredicate
 
