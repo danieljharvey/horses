@@ -18,22 +18,22 @@ import qualified Data.List.NonEmpty as NE
 import Data.Map.Strict (Map)
 import qualified Data.Map.Strict as M
 import qualified Data.Text as T
-import Smol.Core.Helpers
 import Smol.Backend.IR.FromExpr.DataTypes
 import qualified Smol.Backend.IR.FromExpr.Helpers as Compile
 import Smol.Backend.IR.FromExpr.Pattern
 import Smol.Backend.IR.FromExpr.Type
 import Smol.Backend.IR.FromExpr.Types
 import Smol.Backend.IR.IRExpr
+import Smol.Backend.Types.GetPath
+import Smol.Backend.Types.PatternPredicate
+import Smol.Core.Helpers
 import Smol.Core.Typecheck (flattenConstructorApplication)
 import Smol.Core.Typecheck.Shared (getExprAnnotation)
 import Smol.Core.Typecheck.Subtype
 import Smol.Core.Types.Constructor
 import Smol.Core.Types.DataType
 import Smol.Core.Types.Expr
-import Smol.Backend.Types.GetPath
 import Smol.Core.Types.Identifier
-import Smol.Backend.Types.PatternPredicate
 import Smol.Core.Types.Prim
 import Smol.Core.Types.Type
 import Smol.Core.Types.TypeName

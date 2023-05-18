@@ -13,12 +13,12 @@ import Control.Monad.State
 import qualified Data.List.NonEmpty as NE
 import Data.Map.Strict (Map)
 import qualified Data.Map.Strict as M
-import Smol.Core.Helpers
 import Smol.Backend.IR.FromExpr.Helpers
 import Smol.Backend.IR.FromExpr.Types
-import qualified Smol.Core.Types as Smol
 import Smol.Backend.Types.GetPath
 import Smol.Backend.Types.PatternPredicate
+import Smol.Core.Helpers
+import qualified Smol.Core.Types as Smol
 
 -- | given a pattern, pull out all the vars we're interested in and how to get
 -- to them

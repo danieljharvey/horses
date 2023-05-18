@@ -1,6 +1,5 @@
 module Smol.Backend
-  (
-    module Smol.Backend.Compile.RunLLVM,
+  ( module Smol.Backend.Compile.RunLLVM,
   )
 where
 

@@ -7,16 +7,16 @@ import Control.Monad.State (evalState)
 import Data.Bifunctor
 import Data.Foldable (traverse_)
 import qualified Data.List.NonEmpty as NE
-import Smol.Core.ExprUtils
 import Smol.Backend.IR.FromExpr.Pattern (predicatesFromPattern)
 import Smol.Backend.IR.FromExpr.Types (FromExprState (..))
 import Smol.Backend.Types.GetPath
+import Smol.Backend.Types.PatternPredicate
+  ( PatternPredicate (PathEquals),
+  )
+import Smol.Core.ExprUtils
 import Smol.Core.Types.ParseDep
 import qualified Smol.Core.Types.Pattern as Smol
   ( Pattern (PConstructor, PLiteral, PTuple, PWildcard),
-  )
-import Smol.Backend.Types.PatternPredicate
-  ( PatternPredicate (PathEquals),
   )
 import Smol.Core.Types.Prim (Prim (PBool, PInt, PNat))
 import Smol.Core.Types.Type (Type (TPrim), TypePrim (TPInt))

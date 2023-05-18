@@ -61,10 +61,10 @@ import qualified LLVM.IRBuilder.Module as L
 import qualified LLVM.IRBuilder.Module as LLVM
 import qualified LLVM.IRBuilder.Monad as L
 import qualified LLVM.IRBuilder.Monad as LLVM
-import Smol.Core.Helpers
 import Smol.Backend.IR.IRExpr
-import qualified Smol.Core.Types as Smol
 import Smol.Backend.Types.GetPath
+import Smol.Core.Helpers
+import qualified Smol.Core.Types as Smol
 
 -- | lookup constructor, get number for it and expected number of args
 -- we'll use this to create datatype etc
