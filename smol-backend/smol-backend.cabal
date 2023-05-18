@@ -69,6 +69,8 @@ library
     Smol.Backend.IR.ToLLVM.Helpers
     Smol.Backend.IR.ToLLVM.Patterns
     Smol.Backend.IR.ToLLVM.ToLLVM
+    Smol.Backend.Types.GetPath
+    Smol.Backend.Types.PatternPredicate
 
 test-suite smol-backend-tests
   import:           shared
@@ -94,6 +96,9 @@ test-suite smol-backend-tests
     Smol.Backend.IR.ToLLVM.Helpers
     Smol.Backend.IR.ToLLVM.Patterns
     Smol.Backend.IR.ToLLVM.ToLLVM
+
+    Smol.Backend.Types.GetPath
+    Smol.Backend.Types.PatternPredicate
 
     Test.BuiltInTypes
     Test.Helpers

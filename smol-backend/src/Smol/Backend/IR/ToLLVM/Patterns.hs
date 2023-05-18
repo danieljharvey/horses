@@ -26,8 +26,8 @@ import qualified LLVM.IRBuilder.Module as L
 import qualified LLVM.IRBuilder.Monad as L
 import Smol.Backend.IR.IRExpr
 import Smol.Backend.IR.ToLLVM.Helpers
-import Smol.Core.Types.GetPath
-import Smol.Core.Types.PatternPredicate
+import Smol.Backend.Types.GetPath
+import Smol.Backend.Types.PatternPredicate
 
 -- | get name for pattern block
 patName :: Integer -> SBS.ShortByteString

@@ -64,7 +64,7 @@ import qualified LLVM.IRBuilder.Monad as LLVM
 import Smol.Core.Helpers
 import Smol.Backend.IR.IRExpr
 import qualified Smol.Core.Types as Smol
-import Smol.Core.Types.GetPath
+import Smol.Backend.Types.GetPath
 
 -- | lookup constructor, get number for it and expected number of args
 -- we'll use this to create datatype etc

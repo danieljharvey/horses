@@ -10,10 +10,10 @@ import qualified Data.List.NonEmpty as NE
 import qualified Data.Map.Strict as M
 import Data.Maybe
 import Data.Text (Text)
-import qualified Smol.Core.IR.FromExpr.Expr as IR
-import Smol.Core.IR.FromResolvedExpr
-import Smol.Core.IR.IRExpr
-import Smol.Core.IR.ToLLVM.Patterns
+import qualified Smol.Backend.IR.FromExpr.Expr as IR
+import Smol.Backend.IR.FromResolvedExpr
+import Smol.Backend.IR.IRExpr
+import Smol.Backend.IR.ToLLVM.Patterns
 import Smol.Core.Typecheck
 import Smol.Core.Types
 import Test.BuiltInTypes (builtInTypes)

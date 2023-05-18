@@ -17,8 +17,8 @@ import Smol.Core.Helpers
 import Smol.Backend.IR.FromExpr.Helpers
 import Smol.Backend.IR.FromExpr.Types
 import qualified Smol.Core.Types as Smol
-import Smol.Core.Types.GetPath
-import Smol.Core.Types.PatternPredicate
+import Smol.Backend.Types.GetPath
+import Smol.Backend.Types.PatternPredicate
 
 -- | given a pattern, pull out all the vars we're interested in and how to get
 -- to them

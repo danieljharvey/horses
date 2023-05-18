@@ -8,11 +8,11 @@ import Data.Functor
 import Data.Text (Text)
 import qualified Data.Text.IO as T
 import qualified LLVM.AST as LLVM
-import qualified Smol.Core.Compile.RunLLVM as Run
-import Smol.Core.IR.FromExpr.Expr
-import Smol.Core.IR.FromResolvedExpr
-import Smol.Core.IR.IRExpr
-import Smol.Core.IR.ToLLVM.ToLLVM
+import qualified Smol.Backend.Compile.RunLLVM as Run
+import Smol.Backend.IR.FromExpr.Expr
+import Smol.Backend.IR.FromResolvedExpr
+import Smol.Backend.IR.IRExpr
+import Smol.Backend.IR.ToLLVM.ToLLVM
 import Smol.Core.Typecheck
 import Smol.Core.Types
 import System.IO.Unsafe

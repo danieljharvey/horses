@@ -2,12 +2,12 @@
 {-# LANGUAGE DerivingStrategies #-}
 {-# LANGUAGE FlexibleContexts #-}
 
-module Smol.Core.Types.PatternPredicate
+module Smol.Backend.Types.PatternPredicate
   ( PatternPredicate (..),
   )
 where
 
-import Smol.Core.Types.GetPath
+import Smol.Backend.Types.GetPath
 
 -- TODO: go through pattern, create a big predicate that says "i am matched"
 data PatternPredicate p

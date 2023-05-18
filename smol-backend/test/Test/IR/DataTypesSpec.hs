@@ -5,9 +5,9 @@ module Test.IR.DataTypesSpec (spec) where
 import Control.Monad.Identity
 import Control.Monad.State
 import qualified Data.Map.Strict as M
-import qualified Smol.Core.IR.FromExpr.DataTypes as DT
-import Smol.Core.IR.FromExpr.Types
-import Smol.Core.IR.FromResolvedExpr
+import qualified Smol.Backend.IR.FromExpr.DataTypes as DT
+import Smol.Backend.IR.FromExpr.Types
+import Smol.Backend.IR.FromResolvedExpr
 import Smol.Core.Typecheck.FromParsedExpr
 import qualified Smol.Core.Typecheck.Types as Smol
 import Smol.Core.Types

@@ -29,8 +29,8 @@ import Data.Text (Text)
 import qualified Data.Text as T
 import Data.Word (Word64)
 import qualified LLVM.AST as LLVM hiding (function)
-import Smol.Core.Types.GetPath
-import Smol.Core.Types.PatternPredicate
+import Smol.Backend.Types.GetPath
+import Smol.Backend.Types.PatternPredicate
 
 newtype IRName = IRName String
   deriving newtype (Eq, Ord, Show)

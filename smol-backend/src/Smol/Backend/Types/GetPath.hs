@@ -2,7 +2,7 @@
 {-# LANGUAGE DerivingStrategies #-}
 {-# LANGUAGE FlexibleContexts #-}
 
-module Smol.Core.Types.GetPath
+module Smol.Backend.Types.GetPath
   ( GetPath (..),
     GetValue (..),
   )

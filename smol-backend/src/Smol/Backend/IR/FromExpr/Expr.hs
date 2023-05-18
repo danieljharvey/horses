@@ -31,9 +31,9 @@ import Smol.Core.Typecheck.Subtype
 import Smol.Core.Types.Constructor
 import Smol.Core.Types.DataType
 import Smol.Core.Types.Expr
-import Smol.Core.Types.GetPath
+import Smol.Backend.Types.GetPath
 import Smol.Core.Types.Identifier
-import Smol.Core.Types.PatternPredicate
+import Smol.Backend.Types.PatternPredicate
 import Smol.Core.Types.Prim
 import Smol.Core.Types.Type
 import Smol.Core.Types.TypeName

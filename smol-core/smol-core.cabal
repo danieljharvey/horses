@@ -103,7 +103,6 @@ library
     Smol.Core.Types.Constructor
     Smol.Core.Types.DataType
     Smol.Core.Types.Expr
-    Smol.Core.Types.GetPath
     Smol.Core.Types.Identifier
     Smol.Core.Types.Module
     Smol.Core.Types.Module.DefIdentifier
@@ -114,7 +113,6 @@ library
     Smol.Core.Types.ParseDep
     Smol.Core.Types.Pattern
     Smol.Core.Types.PatternMatchError
-    Smol.Core.Types.PatternPredicate
     Smol.Core.Types.Prim
     Smol.Core.Types.ResolvedDep
     Smol.Core.Types.SourceSpan
@@ -179,7 +177,6 @@ test-suite smol-core-tests
     Smol.Core.Types.Constructor
     Smol.Core.Types.DataType
     Smol.Core.Types.Expr
-    Smol.Core.Types.GetPath
     Smol.Core.Types.Identifier
     Smol.Core.Types.Module
     Smol.Core.Types.Module.DefIdentifier
@@ -190,7 +187,6 @@ test-suite smol-core-tests
     Smol.Core.Types.ParseDep
     Smol.Core.Types.Pattern
     Smol.Core.Types.PatternMatchError
-    Smol.Core.Types.PatternPredicate
     Smol.Core.Types.Prim
     Smol.Core.Types.ResolvedDep
     Smol.Core.Types.SourceSpan
