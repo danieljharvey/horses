@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1684186184096,
+  "lastUpdate": 1684446171772,
   "repoUrl": "https://github.com/danieljharvey/mimsa",
   "entries": {
     "Store benchmarks in Github Pages": [
@@ -1535,6 +1535,50 @@ window.BENCHMARK_DATA = {
           {
             "name": "evaluate/evaluate parsing 2",
             "value": 0.2330323356857304,
+            "unit": "Time (ms)"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "danieljamesharvey@gmail.com",
+            "name": "Daniel Harvey",
+            "username": "danieljharvey"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "ec28e75db64fe72b6d7a0b6b73b765f40a6a1d6e",
+          "message": "Split smol backend (#950)\n\n* pls\r\n\r\n* Yes\r\n\r\n* Fix github stuff\r\n\r\n* Format\r\n\r\n* Freeze file",
+          "timestamp": "2023-05-18T22:34:37+01:00",
+          "tree_id": "76b6ebf5e68fd6b2abe9a1f9718f2eae341c3cfc",
+          "url": "https://github.com/danieljharvey/mimsa/commit/ec28e75db64fe72b6d7a0b6b73b765f40a6a1d6e"
+        },
+        "date": 1684446171171,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "build stdlib/allFns",
+            "value": 0.1060503529166718,
+            "unit": "Time (ms)"
+          },
+          {
+            "name": "evaluate/evaluate big looping thing",
+            "value": 0.09692233243331988,
+            "unit": "Time (ms)"
+          },
+          {
+            "name": "evaluate/evaluate parsing",
+            "value": 0.031783484200978894,
+            "unit": "Time (ms)"
+          },
+          {
+            "name": "evaluate/evaluate parsing 2",
+            "value": 0.2319528051142892,
             "unit": "Time (ms)"
           }
         ]
