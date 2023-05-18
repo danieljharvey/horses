@@ -4,7 +4,6 @@ module Smol.Core.Types
     module Smol.Core.Types.Constructor,
     module Smol.Core.Types.DataType,
     module Smol.Core.Types.Expr,
-    module Smol.Core.Types.GetPath,
     module Smol.Core.Types.Identifier,
     module Smol.Core.Types.ParseDep,
     module Smol.Core.Types.Pattern,
@@ -21,7 +20,6 @@ import Smol.Core.Types.Annotation
 import Smol.Core.Types.Constructor
 import Smol.Core.Types.DataType
 import Smol.Core.Types.Expr
-import Smol.Core.Types.GetPath
 import Smol.Core.Types.Identifier
 import Smol.Core.Types.ParseDep
 import Smol.Core.Types.Pattern

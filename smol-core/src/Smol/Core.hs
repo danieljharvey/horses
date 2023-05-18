@@ -6,11 +6,9 @@ module Smol.Core
     module Smol.Core.TypeUtils,
     module Smol.Core.Interpreter,
     module Smol.Core.Printer,
-    module Smol.Core.Compile.RunLLVM,
   )
 where
 
-import Smol.Core.Compile.RunLLVM
 import Smol.Core.ExprUtils
 import Smol.Core.Interpreter
 import Smol.Core.Parser

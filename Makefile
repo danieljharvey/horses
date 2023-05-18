@@ -68,6 +68,10 @@ test:
 test-smol:
 	cabal run smol-core:test:smol-core-tests
 
+.PHONY: test-smol-backend
+test-smol-backend:
+	cabal run smol-backend:test:smol-backend-tests
+
 .PHONY: test-core
 test-core:
 	cabal run core:test:core-test

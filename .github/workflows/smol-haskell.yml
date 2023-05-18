@@ -6,6 +6,7 @@ on:
       - trunk
     paths:
       - "benchmarks/**"
+      - "smol-backend/**"
       - "smol-core/**"
       - "vendored/**"
       - "cabal.project"
@@ -16,6 +17,7 @@ on:
       - trunk
     paths:
       - "benchmarks/**"
+      - "smol-backend/**"
       - "smol-core/**"
       - "vendored/**"
       - "cabal.project"
@@ -58,3 +60,5 @@ jobs:
       - name: Test smol 
         run: make test-smol
 
+      - name: Test smol backend
+        run: make test-smol-backend
