@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1684446171772,
+  "lastUpdate": 1684705936205,
   "repoUrl": "https://github.com/danieljharvey/mimsa",
   "entries": {
     "Store benchmarks in Github Pages": [
@@ -1579,6 +1579,50 @@ window.BENCHMARK_DATA = {
           {
             "name": "evaluate/evaluate parsing 2",
             "value": 0.2319528051142892,
+            "unit": "Time (ms)"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "danieljamesharvey@gmail.com",
+            "name": "Daniel Harvey",
+            "username": "danieljharvey"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "0c1a34a78ba8182f730bb144816d9abad5586ee7",
+          "message": "bump mtl (#948)\n\n* Need to fork llvm-hs\r\n\r\n* Update llvm-hs-pretty to include new operations\r\n\r\n* Well, well, well\r\n\r\n* Great\r\n\r\n* Fix tests etc\r\n\r\n* Maybe done\r\n\r\n* Add ts-node, bump node\r\n\r\n* Bump ts-node in CI\r\n\r\n* Right\r\n\r\n* Specify commonjs",
+          "timestamp": "2023-05-21T22:41:20+01:00",
+          "tree_id": "75b99cf6cf61a180a04b088f2141785801a92a39",
+          "url": "https://github.com/danieljharvey/mimsa/commit/0c1a34a78ba8182f730bb144816d9abad5586ee7"
+        },
+        "date": 1684705934949,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "build stdlib/allFns",
+            "value": 0.10771730968333855,
+            "unit": "Time (ms)"
+          },
+          {
+            "name": "evaluate/evaluate big looping thing",
+            "value": 0.09296776128333202,
+            "unit": "Time (ms)"
+          },
+          {
+            "name": "evaluate/evaluate parsing",
+            "value": 0.03266334183578132,
+            "unit": "Time (ms)"
+          },
+          {
+            "name": "evaluate/evaluate parsing 2",
+            "value": 0.2177415744000005,
             "unit": "Time (ms)"
           }
         ]
