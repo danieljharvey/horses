@@ -5,6 +5,7 @@ on:
     branches:
       - trunk
     paths:
+      - "flake.nix"
       - "benchmarks/**"
       - "builder/**"
       - "compiler/**"
@@ -19,6 +20,7 @@ on:
     branches:
       - trunk
     paths:
+      - "flake.nix"
       - "benchmarks/**"
       - "builder/**"
       - "compiler/**"
@@ -62,10 +64,12 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-1-cabal-work-${{ matrix.plan.ghc }}
 
-      - uses: haskell/actions/setup@v2
+      - uses: cachix/install-nix-action@v20
         with:
-          ghc-version: '9.4.4'
-          cabal-version: '3.8.1.0'
+          github_access_token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Nix develop
+        run: nix develop
 
       - name: Build all things
         run: make build
@@ -76,10 +80,12 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
-      - uses: haskell/actions/setup@v2
+      - uses: cachix/install-nix-action@v20
         with:
-          ghc-version: '9.4.4'
-          cabal-version: '3.8.1.0'
+          github_access_token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Nix develop
+        run: nix develop
 
       - name: Cache cabal global package db
         id: cabal-global
@@ -128,10 +134,12 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
-      - uses: haskell/actions/setup@v2
+      - uses: cachix/install-nix-action@v20
         with:
-          ghc-version: '9.4.4'
-          cabal-version: '3.8.1.0'
+          github_access_token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Nix develop
+        run: nix develop
 
       - name: Cache cabal global package db
         id: cabal-global
