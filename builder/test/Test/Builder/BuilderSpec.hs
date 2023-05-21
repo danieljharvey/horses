@@ -1,5 +1,3 @@
-
-
 {-# LANGUAGE BlockArguments #-}
 {-# LANGUAGE OverloadedStrings #-}
 
@@ -9,11 +7,11 @@ module Test.Builder.BuilderSpec
 where
 
 import qualified Builder
-import Test.Hspec
 import Control.Monad.IO.Class
 import qualified Data.Map.Strict as M
 import qualified Data.Set as S
 import Data.Text (Text)
+import Test.Hspec
 
 job :: Builder.Job IO Int Text [Text]
 job deps input =
@@ -102,9 +100,3 @@ spec = do
           outputs = mempty
           state = Builder.State inputs outputs
       Builder.getMissing state `shouldBe` S.fromList [100, 101]
-
-
-
-
-
-
