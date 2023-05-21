@@ -523,6 +523,7 @@ instance Pretty Instruction where
     FAdd {..}   -> "fadd" <+> (pretty fastMathFlags) <+> ppTyped operand0 `cma` pretty operand1 <+> ppInstrMeta metadata
     FSub {..}   -> "fsub" <+> (pretty fastMathFlags) <+> ppTyped operand0 `cma` pretty operand1 <+> ppInstrMeta metadata
     FMul {..}   -> "fmul" <+> (pretty fastMathFlags) <+> ppTyped operand0 `cma` pretty operand1 <+> ppInstrMeta metadata
+    FNeg {..} -> "fneg" <+> pretty fastMathFlags <+> ppTyped operand0
     FDiv {..}   -> "fdiv" <+> (pretty fastMathFlags) <+> ppTyped operand0 `cma` pretty operand1 <+> ppInstrMeta metadata
     FRem {..}   -> "frem" <+> (pretty fastMathFlags) <+> ppTyped operand0 `cma` pretty operand1 <+> ppInstrMeta metadata
     FCmp {..}   -> "fcmp" <+> pretty fpPredicate <+> ppTyped operand0 `cma` pretty operand1 <+> ppInstrMeta metadata
@@ -559,6 +560,7 @@ instance Pretty Instruction where
     SIToFP {..} -> "sitofp" <+> ppTyped operand0 <+> "to" <+> pretty type' <+> ppInstrMeta metadata
     PtrToInt {..} -> "ptrtoint" <+> ppTyped operand0 <+> "to" <+> pretty type' <+> ppInstrMeta metadata
     IntToPtr {..} -> "inttoptr" <+> ppTyped operand0 <+> "to" <+> pretty type' <+> ppInstrMeta metadata
+    Freeze {..} -> "freeze" <+> pretty type' <+> ppTyped operand0 
 
     InsertElement {..} -> "insertelement" <+> commas [ppTyped vector, ppTyped element, ppTyped index] <+> ppInstrMeta metadata
     ShuffleVector {..} -> "shufflevector" <+> commas [ppTyped operand0, ppTyped operand1 ] <+> ppInstrMeta metadata
@@ -1236,6 +1238,8 @@ instance Pretty RMW.RMWOperation where
     RMW.Min -> "min"
     RMW.UMax -> "umax"
     RMW.UMin -> "umin"
+    RMW.FAdd -> "fadd"
+    RMW.FSub -> "fsub"
 
 instance Pretty DataLayout where
   pretty x = pretty (BL.unpack (dataLayoutToString x))

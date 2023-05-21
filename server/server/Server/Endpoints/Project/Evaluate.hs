@@ -12,7 +12,6 @@ module Server.Endpoints.Project.Evaluate
   )
 where
 
-import Control.Monad.Except
 import qualified Data.Aeson as JSON
 import Data.OpenApi hiding (Server, get)
 import Data.Text (Text)

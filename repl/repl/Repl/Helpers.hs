@@ -37,7 +37,7 @@ saveExpression ::
   ReplM (Error Annotation) ExprHash
 saveExpression se = do
   rootPath <- asks rcRootPath
-  mapError StoreErr (saveExpr rootPath se)
+  mapReplError StoreErr (saveExpr rootPath se)
 
 -- | Actually save a file to disk
 saveFile' ::
@@ -45,7 +45,7 @@ saveFile' ::
   ReplM (Error Annotation) ()
 saveFile' details = do
   rootPath <- asks rcRootPath
-  mapError StoreErr (saveFile rootPath details)
+  mapReplError StoreErr (saveFile rootPath details)
 
 -- | Run an Action, printing any messages to the console and saving any
 -- expressions to disk

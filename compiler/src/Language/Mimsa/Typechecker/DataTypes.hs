@@ -10,6 +10,7 @@ module Language.Mimsa.Typechecker.DataTypes
   )
 where
 
+import Control.Monad (when)
 import Control.Monad.Except
 import Control.Monad.State
 import Data.Bifunctor

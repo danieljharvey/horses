@@ -10,6 +10,7 @@ where
 -- functions for Projects as opposed to the larger Store
 
 import Control.Monad.Except
+import Control.Monad.IO.Class (MonadIO)
 import Control.Monad.Logger
 import Data.Map.Strict (Map)
 import qualified Data.Map.Strict as M

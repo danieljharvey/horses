@@ -12,6 +12,7 @@ module Smol.Core.Typecheck.Subtype
   )
 where
 
+import Control.Monad (when, zipWithM)
 import Control.Monad.Except
 import Control.Monad.Writer.CPS
 import Data.Bifunctor (first)

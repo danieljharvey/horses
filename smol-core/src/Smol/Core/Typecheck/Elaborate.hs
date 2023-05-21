@@ -10,9 +10,11 @@ module Smol.Core.Typecheck.Elaborate
   )
 where
 
+import Control.Monad (foldM, when, zipWithM)
 import Control.Monad.Except
 import Control.Monad.Reader
 import Control.Monad.State
+import Control.Monad.Trans.Writer.CPS (runWriterT)
 import Control.Monad.Writer.CPS
 import Data.Foldable (foldl', toList)
 import Data.Functor

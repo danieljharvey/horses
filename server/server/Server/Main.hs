@@ -7,6 +7,7 @@ module Server.Main
 where
 
 import qualified Control.Concurrent.STM as STM
+import Control.Monad (void)
 import Control.Monad.Except
 import Control.Monad.Reader
 import qualified Data.Text.IO as T
@@ -59,8 +60,8 @@ createMimsaEnvironment :: ServerM (Error Annotation) MimsaEnvironment
 createMimsaEnvironment = do
   cfg <- ask
   let project = stdlib
-  _ <- mapError StoreErr (saveAllInStore (scRootPath cfg) (prjStore project))
-  _ <- mapError StoreErr (saveModulesInStore (scRootPath cfg) (prjModuleStore project))
+  _ <- mapServerError StoreErr (saveAllInStore (scRootPath cfg) (prjStore project))
+  _ <- mapServerError StoreErr (saveModulesInStore (scRootPath cfg) (prjModuleStore project))
   ms <- liftIO (STM.newTVarIO (prjStore project))
   mms <- liftIO (STM.newTVarIO (prjModuleStore project))
   pure (MimsaEnvironment ms mms cfg)

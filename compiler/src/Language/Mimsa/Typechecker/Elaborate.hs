@@ -10,6 +10,7 @@ module Language.Mimsa.Typechecker.Elaborate
   )
 where
 
+import Control.Monad (when)
 import Control.Monad.Except
 import Control.Monad.State (State)
 import Control.Monad.Writer.CPS
@@ -19,6 +20,7 @@ import Data.Functor
 import qualified Data.List.NonEmpty as NE
 import qualified Data.Map.Strict as M
 import Data.Maybe (listToMaybe)
+import Data.Monoid (Any (..))
 import GHC.Natural
 import Language.Mimsa.Core
 import Language.Mimsa.Typechecker.DataTypes

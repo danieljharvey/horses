@@ -2,7 +2,7 @@
 
 module Test.Typecheck.SubtypeSpec (spec) where
 
-import Control.Monad.Writer.CPS
+import Control.Monad.Trans.Writer.CPS (runWriterT)
 import Data.Either
 import Data.Foldable (traverse_)
 import Smol.Core

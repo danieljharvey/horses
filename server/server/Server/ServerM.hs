@@ -4,7 +4,7 @@
 module Server.ServerM
   ( ServerM (..),
     runServerM,
-    mapError,
+    mapServerError,
     mimsaFromEither,
     replOutput,
   )
@@ -50,8 +50,8 @@ newtype ServerM e a = ServerM
     )
 
 -- | change error type
-mapError :: (e -> e') -> ServerM e a -> ServerM e' a
-mapError f = ServerM . withExceptT f . getServerM
+mapServerError :: (e -> e') -> ServerM e a -> ServerM e' a
+mapServerError f = ServerM . withExceptT f . getServerM
 
 -- | run this big brave boy
 runServerM :: ServerConfig -> ServerM e a -> IO (Either e a)

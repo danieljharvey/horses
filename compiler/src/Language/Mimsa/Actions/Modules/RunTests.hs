@@ -2,6 +2,7 @@
 
 module Language.Mimsa.Actions.Modules.RunTests (runModuleTests) where
 
+import Control.Monad (void)
 import Control.Monad.Except
 import Data.Bifunctor
 import Data.Map.Strict (Map)

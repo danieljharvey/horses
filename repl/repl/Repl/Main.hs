@@ -7,7 +7,9 @@ module Repl.Main
 where
 
 import Control.Monad.Except
+import Control.Monad.IO.Class (MonadIO, liftIO)
 import Control.Monad.Logger
+import Control.Monad.Trans.Class (lift)
 import Data.Text (Text)
 import qualified Data.Text as T
 import Language.Mimsa.Core
@@ -80,5 +82,5 @@ parseCommand env input =
       pure env
     Right replAction -> do
       newExprs <- doReplAction env replAction
-      _ <- mapError StoreErr (saveProject newExprs)
+      _ <- mapReplError StoreErr (saveProject newExprs)
       pure newExprs

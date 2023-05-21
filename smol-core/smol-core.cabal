@@ -45,6 +45,7 @@ common shared
     , parser-combinators
     , prettyprinter
     , text
+    , transformers
 
 library
   import:           shared

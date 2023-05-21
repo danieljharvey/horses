@@ -5,7 +5,7 @@ module Repl.ReplM
   ( ReplM (..),
     ReplState (..),
     runReplM,
-    mapError,
+    mapReplError,
     setStoredModule,
     getStoredModule,
     replMFromEither,
@@ -65,8 +65,8 @@ newtype ReplM e a = ReplM
     )
 
 -- | change error type
-mapError :: (e -> e') -> ReplM e a -> ReplM e' a
-mapError f = ReplM . withExceptT f . getReplM
+mapReplError :: (e -> e') -> ReplM e a -> ReplM e' a
+mapReplError f = ReplM . withExceptT f . getReplM
 
 -- | run this big brave boy
 runReplM :: ReplConfig -> ReplM e a -> IO (Either e a)
