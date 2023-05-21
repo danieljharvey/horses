@@ -5,7 +5,7 @@ module Server.EnvVars
   )
 where
 
-import Control.Monad.Except
+import Control.Monad.IO.Class (MonadIO, liftIO)
 import Data.Char
 import Data.Maybe
 import Language.Mimsa.Types.Store.RootPath

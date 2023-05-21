@@ -349,6 +349,10 @@ instance Pretty FunctionAttribute where
    FA.StringAttribute k v -> dquotes (short k) <> "=" <> dquotes (short v)
    Speculatable        -> "speculatable"
    StrictFP            -> "strictfp"
+   MustProgress        -> "mustprogress"
+   NoSync              -> "nosync"
+   WillReturn          -> "willreturn"
+
 
 instance Pretty ParameterAttribute where
   pretty = \case
@@ -519,6 +523,7 @@ instance Pretty Instruction where
     FAdd {..}   -> "fadd" <+> (pretty fastMathFlags) <+> ppTyped operand0 `cma` pretty operand1 <+> ppInstrMeta metadata
     FSub {..}   -> "fsub" <+> (pretty fastMathFlags) <+> ppTyped operand0 `cma` pretty operand1 <+> ppInstrMeta metadata
     FMul {..}   -> "fmul" <+> (pretty fastMathFlags) <+> ppTyped operand0 `cma` pretty operand1 <+> ppInstrMeta metadata
+    FNeg {..} -> "fneg" <+> pretty fastMathFlags <+> ppTyped operand0
     FDiv {..}   -> "fdiv" <+> (pretty fastMathFlags) <+> ppTyped operand0 `cma` pretty operand1 <+> ppInstrMeta metadata
     FRem {..}   -> "frem" <+> (pretty fastMathFlags) <+> ppTyped operand0 `cma` pretty operand1 <+> ppInstrMeta metadata
     FCmp {..}   -> "fcmp" <+> pretty fpPredicate <+> ppTyped operand0 `cma` pretty operand1 <+> ppInstrMeta metadata
@@ -555,9 +560,10 @@ instance Pretty Instruction where
     SIToFP {..} -> "sitofp" <+> ppTyped operand0 <+> "to" <+> pretty type' <+> ppInstrMeta metadata
     PtrToInt {..} -> "ptrtoint" <+> ppTyped operand0 <+> "to" <+> pretty type' <+> ppInstrMeta metadata
     IntToPtr {..} -> "inttoptr" <+> ppTyped operand0 <+> "to" <+> pretty type' <+> ppInstrMeta metadata
+    Freeze {..} -> "freeze" <+> pretty type' <+> ppTyped operand0 
 
     InsertElement {..} -> "insertelement" <+> commas [ppTyped vector, ppTyped element, ppTyped index] <+> ppInstrMeta metadata
-    ShuffleVector {..} -> "shufflevector" <+> commas [ppTyped operand0, ppTyped operand1, ppTyped mask] <+> ppInstrMeta metadata
+    ShuffleVector {..} -> "shufflevector" <+> commas [ppTyped operand0, ppTyped operand1 ] <+> ppInstrMeta metadata
     ExtractElement {..} -> "extractelement" <+> commas [ppTyped vector, ppTyped index] <+> ppInstrMeta metadata
     InsertValue {..} -> "insertvalue" <+> commas (ppTyped aggregate : ppTyped element : fmap pretty indices') <+> ppInstrMeta metadata
 
@@ -746,6 +752,11 @@ instance Pretty DIScope where
   pretty (DINamespace ns) = pretty ns
   pretty (DIType t) = pretty t
 
+instance Pretty DIBound where
+  pretty (DIBoundConstant c) = pretty c
+  pretty (DIBoundVariable v) = pretty v
+  pretty (DIBoundExpression e) = pretty e
+
 instance Pretty DISubrange where
   pretty Subrange {..} = ppDINode "DISubrange" [("count", Just (pretty count)), ("lowerBound", Just (pretty lowerBound))]
 
@@ -791,7 +802,7 @@ instance Pretty DICompileUnit where
     , ("splitDebugInlining", Just (ppBoolean splitDebugInlining))
     , ("debugInfoForProfiling", Just (ppBoolean debugInfoForProfiling))
     , ("nameTableKind", Just (pretty nameTableKind))
-    , ("debugBaseAddress", Just (ppBoolean debugBaseAddress))
+    --, ("debugBaseAddress", Just (ppBoolean debugBaseAddress))
     ]
 
 instance Pretty DebugEmissionKind where
@@ -816,7 +827,7 @@ instance Pretty DIModule where
     , ("name", ppSbs name)
     , ("configMacros", ppSbs configurationMacros)
     , ("includePath", ppSbs includePath)
-    , ("isysroot", ppSbs isysRoot)
+    --, ("isysroot", ppSbs isysRoot)
     ]
 
 instance Pretty DINamespace where
@@ -1227,6 +1238,8 @@ instance Pretty RMW.RMWOperation where
     RMW.Min -> "min"
     RMW.UMax -> "umax"
     RMW.UMin -> "umin"
+    RMW.FAdd -> "fadd"
+    RMW.FSub -> "fsub"
 
 instance Pretty DataLayout where
   pretty x = pretty (BL.unpack (dataLayoutToString x))

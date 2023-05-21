@@ -7,6 +7,7 @@ module Smol.Core.Typecheck.Pattern
   )
 where
 
+import Control.Monad (when, zipWithM)
 import Control.Monad.Except
 import Control.Monad.Reader
 import qualified Data.List.NonEmpty as NE

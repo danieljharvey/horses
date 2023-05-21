@@ -6,6 +6,7 @@
 
 module Language.Mimsa.Modules.FromParts (addModulePart, moduleFromModuleParts, exprAndTypeFromParts) where
 
+import Control.Monad (void, when)
 import Control.Monad.Except
 import Data.Coerce
 import Data.Map.Strict (Map)

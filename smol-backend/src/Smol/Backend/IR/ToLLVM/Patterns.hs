@@ -14,7 +14,7 @@ module Smol.Backend.IR.ToLLVM.Patterns
   )
 where
 
-import Control.Monad.Except
+import Control.Monad (foldM)
 import qualified Data.ByteString.Short as SBS
 import qualified Data.List.NonEmpty as NE
 import Data.String

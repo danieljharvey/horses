@@ -8,9 +8,9 @@ module Smol.Backend.IR.ToLLVM.ToLLVM
   )
 where
 
+import Control.Monad.Fix (MonadFix)
 import Control.Monad.State
-  ( MonadFix,
-    MonadState,
+  ( MonadState,
     StateT (runStateT),
   )
 import Data.Bifunctor (Bifunctor (bimap))

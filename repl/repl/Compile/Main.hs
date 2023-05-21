@@ -6,7 +6,7 @@ module Compile.Main
   )
 where
 
-import Control.Monad.Except
+import Control.Monad.IO.Class (MonadIO, liftIO)
 import Data.Text (Text)
 import qualified Language.Mimsa.Actions.Compile as Actions
 import Language.Mimsa.Backend.Types

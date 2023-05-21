@@ -16,6 +16,6 @@ loadProject ::
     (Either (Error Annotation) (Project Annotation))
 loadProject =
   do
-    env <- mapError StoreErr Repl.loadProject
+    env <- mapReplError StoreErr Repl.loadProject
     pure (Right env)
     `catchError` (pure . Left)

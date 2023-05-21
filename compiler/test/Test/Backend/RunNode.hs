@@ -40,7 +40,7 @@ runTypescriptFromFile :: (MonadIO m) => String -> m (Bool, String)
 runTypescriptFromFile =
   runProcessFromFile
     "ts-node"
-    [ "--compiler-options={\"lib\":[\"dom\",\"dom.iterable\",\"es6\"]}"
+    [ "--compiler-options={\"lib\":[\"dom\",\"dom.iterable\",\"es6\"],\"module\":\"commonjs\"}"
     ]
 
 exitCodeToBool :: ExitCode -> Bool

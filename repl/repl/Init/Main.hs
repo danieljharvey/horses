@@ -5,7 +5,6 @@ module Init.Main
   )
 where
 
-import Control.Monad.Except
 import Control.Monad.Reader
 import qualified Data.Text as T
 import Language.Mimsa.Core
@@ -31,7 +30,7 @@ initialiseProject = do
   rootPath <- asks rcRootPath
   saveAllInStore rootPath (prjStore stdlib)
   saveModulesInStore rootPath (prjModuleStore stdlib)
-  _ <- mapError StoreErr (saveProject stdlib)
+  _ <- mapReplError StoreErr (saveProject stdlib)
   replOutput ("New project created in " <> T.pack (show rootPath))
   pure stdlib
 

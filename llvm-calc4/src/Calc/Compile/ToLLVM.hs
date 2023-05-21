@@ -11,6 +11,7 @@ import Calc.ExprUtils
 import Calc.TypeUtils
 import Calc.Types
 import Control.Monad.Except
+import Control.Monad.Fix (MonadFix)
 import Control.Monad.State
 import Data.Foldable (traverse_)
 import Data.Functor (($>))

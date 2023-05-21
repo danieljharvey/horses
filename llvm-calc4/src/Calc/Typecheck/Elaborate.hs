@@ -13,6 +13,7 @@ import Calc.Types.Function
 import Calc.Types.Module
 import Calc.Types.Prim
 import Calc.Types.Type
+import Control.Monad (when, zipWithM)
 import Control.Monad.Except
 import Data.Bifunctor (second)
 import Data.Functor

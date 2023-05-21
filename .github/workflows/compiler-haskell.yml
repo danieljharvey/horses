@@ -76,6 +76,10 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
+      - uses: actions/setup-node@v3
+        with:
+          node-version: 19
+
       - uses: haskell/actions/setup@v2
         with:
           ghc-version: '9.4.4'
@@ -117,7 +121,7 @@ jobs:
         run: make test-backends
 
       - name: Test compiler
-        run: yarn global add typescript@4.4 ts-node@10.4.0 & make test
+        run: yarn global add typescript@4.4 ts-node@10.9.1 & make test
 
       - name: Generate swagger json
         run: make generate-swagger

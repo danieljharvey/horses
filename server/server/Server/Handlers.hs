@@ -22,6 +22,7 @@ where
 
 import qualified Control.Concurrent.STM as STM
 import Control.Monad.Except
+import Control.Monad.IO.Class (liftIO)
 import Data.Foldable (traverse_)
 import Data.Functor
 import Data.Map.Strict (Map)

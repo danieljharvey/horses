@@ -3,7 +3,7 @@
 module Test.Interpreter.InterpreterSpec (spec) where
 
 import Calc
-import Control.Monad.Except
+import Control.Monad (void)
 import Data.Foldable (traverse_)
 import Data.Functor (($>))
 import Data.Text (Text)

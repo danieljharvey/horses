@@ -8,7 +8,6 @@ module Smol.Core.Helpers
     traverseIndNe,
     mapFind,
     mapToNumbered,
-    tryError,
     fromRight,
     foldMapM,
     filterMapKeys,
@@ -18,7 +17,6 @@ module Smol.Core.Helpers
 where
 
 import Control.Monad
-import Control.Monad.Except
 import Data.Bifunctor
 import Data.Foldable (foldlM)
 import qualified Data.List.NonEmpty as NE
@@ -67,11 +65,6 @@ mapToNumbered =
   M.fromList
     . (\as -> zip (fmap fst as) [0 ..])
     . M.toList
-
--- | 'MonadError' analogue to the 'Control.Exception.try' function.
--- coming in mtl 2.3
-tryError :: (MonadError e m) => m a -> m (Either e a)
-tryError action = (Right <$> action) `catchError` (pure . Left)
 
 fromRight :: (Show e) => Either e a -> a
 fromRight = \case
