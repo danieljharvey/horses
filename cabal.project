@@ -19,4 +19,10 @@ with-compiler: ghc-9.6.1
 package diagnose
   flags: +megaparsec-compat
 
+source-repository-package
+    type: git
+    location: https://github.com/ysangkok/servant
+    tag: b71dde7d9477a54c7a6abcb469117d16e12d2b78
+    subdir: servant
+
 allow-newer: all
