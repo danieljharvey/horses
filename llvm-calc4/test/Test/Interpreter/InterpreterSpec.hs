@@ -43,7 +43,8 @@ spec = do
     describe "Modules" $ do
       let cases =
             [ ("1 + 1", "2"),
-              ("function increment(a: Integer) { a + 1 } increment(-11)", "-10")
+              ("function increment(a: Integer) { a + 1 } increment(-11)", "-10"),
+              ("function swap(pair: (Integer,Boolean)) { case pair of (a,b) -> (b,a) } swap(1,True)", "(True, 1)")
             ]
       traverse_
         ( \(input, expect) ->
@@ -61,7 +62,8 @@ spec = do
               ("1 + 1 == 2", "True"),
               ("2 + 2 == 5", "False"),
               ("if False then True else False", "False"),
-              ("if 1 == 1 then 6 else 5", "6")
+              ("if 1 == 1 then 6 else 5", "6"),
+              ("case (1, True) of (a,False) -> a | (_,c) -> c", "True")
             ]
       traverse_
         ( \(input, expect) ->
