@@ -12,7 +12,7 @@ COPY . ./
 RUN REACT_APP_ROUTER_API_URL=${REACT_APP_ROUTER_API_URL} REACT_APP_MIMSA_API_URL=${REACT_APP_MIMSA_API_URL} yarn build
 
 # Stage 2 - the production environment
-FROM nginx:1.24-alpine
+FROM nginx:1.25-alpine
 
 # replace default.conf with our exciting nginx.conf 
 COPY ./nginx.conf /etc/nginx/conf.d/default.conf
