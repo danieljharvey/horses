@@ -4,7 +4,6 @@
 
 module Calc.Typecheck.Elaborate (elaborate, elaborateFunction, elaborateModule) where
 
-import Data.Foldable (foldrM)
 import Calc.ExprUtils
 import Calc.PatternUtils
 import Calc.TypeUtils
@@ -17,10 +16,11 @@ import Calc.Types.Module
 import Calc.Types.Pattern
 import Calc.Types.Prim
 import Calc.Types.Type
-import Control.Monad (when, zipWithM)
 import Calc.Utils
+import Control.Monad (when, zipWithM)
 import Control.Monad.Except
 import Data.Bifunctor (second)
+import Data.Foldable (foldrM)
 import Data.Functor
 import qualified Data.List.NonEmpty as NE
 import Data.Map.Strict (Map)
@@ -62,10 +62,10 @@ check ty expr = do
 
 -- simple check for now
 checkTypeIsEqual :: Type ann -> Type ann -> TypecheckM ann (Type ann)
-checkTypeIsEqual tyA tyB
-  = if void tyA == void tyB
-       then pure tyA
-       else throwError (TypeMismatch tyA tyB)
+checkTypeIsEqual tyA tyB =
+  if void tyA == void tyB
+    then pure tyA
+    else throwError (TypeMismatch tyA tyB)
 
 checkTypesAreEqual :: NE.NonEmpty (Type ann) -> TypecheckM ann (Type ann)
 checkTypesAreEqual tys =

@@ -1,8 +1,18 @@
-
 {-# LANGUAGE LambdaCase #-}
 
-module Test.Helpers (int, bool, var, tuple, patternMatch, tyInt,
-    tyBool, tyTuple, patTuple,patInt) where
+module Test.Helpers
+  ( int,
+    bool,
+    var,
+    tuple,
+    patternMatch,
+    tyInt,
+    tyBool,
+    tyTuple,
+    patTuple,
+    patInt,
+  )
+where
 
 import Calc
 import qualified Data.List.NonEmpty as NE
@@ -44,4 +54,3 @@ patTuple = \case
 
 patInt :: (Monoid ann) => Integer -> Pattern ann
 patInt = PLiteral mempty . PInt
-

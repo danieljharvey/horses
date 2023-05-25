@@ -3,11 +3,11 @@
 
 module Test.Parser.ParserSpec (spec) where
 
-import Test.Helpers
 import Calc
 import Data.Foldable (traverse_)
 import Data.Functor
 import qualified Data.Text as T
+import Test.Helpers
 import Test.Hspec
 
 spec :: Spec
@@ -99,6 +99,13 @@ spec = do
                   (tuple [int 1, int 2, int 3])
                   [ (patTuple [patInt 5, patInt 6, patInt 7], bool True),
                     (patTuple [patInt 1, patInt 2, patInt 3], bool False)
+                  ]
+              ),
+              ( "case a of 100 -> True | _ -> False",
+                patternMatch
+                  (var "a")
+                  [ (patInt 100, bool True),
+                    (PWildcard (), bool False)
                   ]
               )
             ]

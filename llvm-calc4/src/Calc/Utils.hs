@@ -2,9 +2,9 @@ module Calc.Utils (neZipWithM, neUnzip) where
 
 -- useful junk goes here
 
-import qualified Data.List.NonEmpty as NE
-import Data.Bifunctor
 import Control.Monad (zipWithM)
+import Data.Bifunctor
+import qualified Data.List.NonEmpty as NE
 
 neZipWithM ::
   (Applicative m) =>
@@ -17,4 +17,3 @@ neZipWithM f as bs =
 
 neUnzip :: NE.NonEmpty (a, b) -> (NE.NonEmpty a, NE.NonEmpty b)
 neUnzip = bimap NE.fromList NE.fromList . unzip . NE.toList
-

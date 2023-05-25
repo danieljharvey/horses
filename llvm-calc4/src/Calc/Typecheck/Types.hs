@@ -107,7 +107,10 @@ withVars args =
           }
     )
 
-withFunctionArgs :: [(ArgumentName, Type ann)] ->
-    TypecheckM ann a -> TypecheckM ann a
-withFunctionArgs = withVars .
-      fmap (first (\(ArgumentName arg) -> Identifier arg))
+withFunctionArgs ::
+  [(ArgumentName, Type ann)] ->
+  TypecheckM ann a ->
+  TypecheckM ann a
+withFunctionArgs =
+  withVars
+    . fmap (first (\(ArgumentName arg) -> Identifier arg))

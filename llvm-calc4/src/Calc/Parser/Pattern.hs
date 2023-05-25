@@ -60,4 +60,4 @@ patTupleParser = label "tuple" $
 ----
 
 patLitParser :: Parser ParserPattern
-patLitParser = withLocation PLiteral primParser
+patLitParser = myLexeme $ withLocation PLiteral primParser

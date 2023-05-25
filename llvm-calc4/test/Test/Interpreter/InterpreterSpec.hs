@@ -44,7 +44,7 @@ spec = do
       let cases =
             [ ("1 + 1", "2"),
               ("function increment(a: Integer) { a + 1 } increment(-11)", "-10"),
-              ("function swap(pair: (Integer,Boolean)) { case pair of (a,b) -> (b,a) } swap(1,True)", "(True, 1)")
+              ("function swap(pair: (Integer,Boolean)) { case pair of (a,b) -> (b,a) } swap((1,True))", "(True, 1)")
             ]
       traverse_
         ( \(input, expect) ->

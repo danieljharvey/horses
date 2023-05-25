@@ -2,7 +2,6 @@
 
 module Test.Typecheck.TypecheckSpec (spec) where
 
-import Test.Helpers
 import Calc.ExprUtils
 import Calc.Parser
 import Calc.Typecheck.Elaborate
@@ -16,6 +15,7 @@ import Control.Monad
 import Data.Either (isLeft)
 import Data.Foldable (traverse_)
 import Data.Text (Text)
+import Test.Helpers
 import Test.Hspec
 
 runTC :: TypecheckM ann a -> Either (TypeError ann) a
@@ -71,7 +71,7 @@ spec = do
       let succeeding =
             [ ("function one () { 1 }", TFunction () [] tyInt),
               ( "function not (bool: Boolean) { if bool then False else True }",
-                TFunction () [tyBool ] tyBool
+                TFunction () [tyBool] tyBool
               )
             ]
 
@@ -80,8 +80,8 @@ spec = do
 
     describe "Module" $ do
       let succeeding =
-            [ ("function ignore() { 1 } 42", tyInt ),
-              ("function increment(a: Integer) { a + 1 } increment(41)", tyInt ),
+            [ ("function ignore() { 1 } 42", tyInt),
+              ("function increment(a: Integer) { a + 1 } increment(41)", tyInt),
               ("function inc(a: Integer) { a + 1 } function inc2(a: Integer) { inc(a) } inc2(41)", TPrim () TInt)
             ]
       describe "Successfully typechecking modules" $ do
@@ -112,10 +112,10 @@ spec = do
         traverse_ testTypecheck succeeding
 
       let failing =
-            [ ("if 1 then 1 else 2", PredicateIsNotBoolean () tyInt ),
+            [ ("if 1 then 1 else 2", PredicateIsNotBoolean () tyInt),
               ("if True then 1 else True", TypeMismatch tyInt tyBool),
               ("1 + True", InfixTypeMismatch OpAdd [(tyInt, tyBool)]),
-              ("True + False", InfixTypeMismatch OpAdd [(tyInt, tyBool), (tyInt,tyBool)]),
+              ("True + False", InfixTypeMismatch OpAdd [(tyInt, tyBool), (tyInt, tyBool)]),
               ("1 * False", InfixTypeMismatch OpMultiply [(TPrim () TInt, TPrim () TBool)]),
               ("True - 1", InfixTypeMismatch OpSubtract [(TPrim () TInt, TPrim () TBool)]),
               ("case (1,True) of (a, False) -> a | (_,c) -> c", TypeMismatch tyBool tyInt)

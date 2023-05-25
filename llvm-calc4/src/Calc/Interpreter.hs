@@ -13,15 +13,15 @@ module Calc.Interpreter
   )
 where
 
-import Data.Monoid (First(..))
-import qualified Data.List.NonEmpty as NE
 import Calc.Types
 import Control.Monad.Except
 import Control.Monad.Reader
 import Control.Monad.State
 import Data.Coerce
+import qualified Data.List.NonEmpty as NE
 import Data.Map.Strict (Map)
 import qualified Data.Map.Strict as M
+import Data.Monoid (First (..))
 
 -- | type for interpreter state
 newtype InterpreterState ann = InterpreterState
@@ -33,6 +33,7 @@ data InterpreterError ann
   = NonBooleanPredicate ann (Expr ann)
   | FunctionNotFound FunctionName [FunctionName]
   | VarNotFound Identifier [Identifier]
+  | NoPatternsMatched (Expr ann) (NE.NonEmpty (Pattern ann))
   deriving stock (Eq, Ord, Show)
 
 -- | type of Reader env for interpreter state
@@ -128,7 +129,10 @@ interpret (EApply _ fnName args) =
   interpretApply fnName args
 interpret (EInfix ann op a b) =
   interpretInfix ann op a b
-interpret (ETuple {}) = error "interpret ETuple"
+interpret (ETuple ann a as) = do
+  aA <- interpret a
+  asA <- traverse interpret as
+  pure (ETuple ann aA asA)
 interpret (EPatternMatch _ expr pats) = do
   exprA <- interpret expr
   interpretPatternMatch exprA pats
@@ -153,11 +157,10 @@ interpretPatternMatch expr' patterns = do
   -- get first matching pattern
   case getFirst (foldMap foldF patterns) of
     Just (patExpr, bindings) ->
-        let vars = fmap (coerce . fst) bindings
-            exprs = fmap snd bindings
-         in withVars vars exprs (interpret patExpr)
-    _ ->
-      error "pattern match failure"
+      let vars = fmap (coerce . fst) bindings
+          exprs = fmap snd bindings
+       in withVars vars exprs (interpret patExpr)
+    _ -> throwError (NoPatternsMatched expr' (fst <$> patterns))
 
 -- pull vars out of expr to match patterns
 patternMatches ::
