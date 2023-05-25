@@ -1,67 +1,90 @@
 {-# LANGUAGE DerivingStrategies #-}
+  {-# LANGUAGE ScopedTypeVariables #-}
+module Calc.Patterns.Flatten ( generateMissing) where
 
-module Calc.Patterns.Flatten (SimpleExpr(..),
-    SimplePattern(..), flattenPatterns) where
-
-import Data.Bifunctor (first)
-import Control.Monad (void)
+import Debug.Trace
+import Data.Functor (($>))
+import qualified Data.List
 import Calc.Types
-import Data.List.NonEmpty as NE
+import qualified Data.List.NonEmpty as NE
 
--- we wish to flatten patterns like this
---
--- case p of (1,2) -> True | (_,_) -> False
---
--- becomes
---
--- case p of
---  [1,b] -> case b of
---                2 -> True
---                _ -> False
---  _ -> False
+-- | given our patterns, generate everything we need minus the ones we have
+generateMissing :: (Eq ann, Show ann) => NE.NonEmpty (Pattern ann) -> [Pattern ann]
+generateMissing nePats
+  = let pats = NE.toList nePats
+    in filterMissing pats (generatePatterns pats)
 
--- case p of (1,2,3) -> True | (_,_,_) -> False
---
--- becomes
---
--- case p of
---  [1, b, c] -> case b of
---                2 -> case c of
---                       3 -> True
---                       _ -> False
---                _ -> False
---  _ -> False
+-- | given our patterns, generate any others we might need
+generatePatterns :: (Show ann) => [Pattern ann] -> [Pattern ann]
+generatePatterns = concatMap generatePattern
 
--- we'll identify missing patterns when we're unable to fill in the fallthrough
--- cases
+-- | given a pattern, generate all other patterns we'll need
+generatePattern :: forall ann. (Show ann) => Pattern ann -> [Pattern ann]
+generatePattern (PWildcard _) = mempty
+generatePattern (PLiteral ann (PBool True)) = [PLiteral ann (PBool False)]
+generatePattern (PLiteral ann (PBool False)) = [PLiteral ann (PBool True)]
+generatePattern (PTuple ann a as) =
+  let genOrOriginal :: Pattern ann -> [Pattern ann]
+      genOrOriginal pat =
+        traceShowId $ case generatePattern (traceShowId pat) of
+          [] -> -- here we want to generate "everything" for the type to stop unnecessary wildcards
+              [pat]
+          pats -> if isTotal pat then pats else  [pat] <> pats 
 
--- is this it?
-data SimplePattern
-  = SPTuple Int
-  | SPPrim Prim
-  | SPWildcard
-  deriving stock (Eq,Ord,Show)
+      genAs :: [[Pattern ann]]
+      genAs = fmap genOrOriginal ([a] <> NE.toList as)
 
-data SimpleExpr
-  = SEPrim Prim
-  | SETupleItem Int SimpleExpr
-  | SEPatternMatch SimpleExpr [(SimplePattern, SimpleExpr)]
-  deriving stock (Eq,Ord,Show)
+      createTuple :: [Pattern ann] -> Pattern ann
+      createTuple items =
+          let ne = NE.fromList items
+           in PTuple ann (NE.head ne) (NE.fromList $ NE.tail ne)
 
--- | this does not bind variables yet
-flattenPatterns :: NE.NonEmpty (Pattern ann, Expr ann) -> [(SimplePattern, SimpleExpr )]
-flattenPatterns =
-  fmap (uncurry flattenPattern . first unrollTuples) . NE.toList
+  in fmap createTuple (sequence genAs)
+generatePattern _ = mempty
 
-unrollTuples :: Pattern ann -> [Pattern ann]
-unrollTuples (PTuple _ a as) = [a] <> NE.toList as
-unrollTuples other = [other]
+-- | wildcards are total, vars are total, products are total 
+isTotal :: Pattern ann -> Bool
+isTotal (PWildcard _) = True
+isTotal (PVar _ _) = True
+isTotal (PTuple {}) = True
+isTotal _ = False
 
-flattenPattern :: [Pattern ann] ->  Expr ann -> (SimplePattern, SimpleExpr)
-flattenPattern [PWildcard _] expr = (SPWildcard, simpleExpr expr)
-flattenPattern [PLiteral _ prim] expr = (SPPrim prim, simpleExpr expr)
-flattenPattern other _ = error $ "flattenPattern " <> show (fmap void other)
+-- filter outstanding items
+filterMissing ::
+  (Eq ann) =>
+  [Pattern ann] ->
+  [Pattern ann] ->
+  [Pattern ann]
+filterMissing patterns required =
+  Data.List.nub $ foldr annihiliatePattern required patterns
+  where
+    annihiliatePattern pat =
+      filter
+        ( not
+            . annihilate
+              (removeAnn pat)
+            . removeAnn
+        )
 
-simpleExpr :: Expr ann -> SimpleExpr
-simpleExpr (EPrim _ prim) = SEPrim prim
-simpleExpr other = error $ "simpleExpr " <> show (void other)
+removeAnn :: Pattern ann -> Pattern ()
+removeAnn p = p $> ()
+
+  {-
+-- does left pattern satisfy right pattern?
+annihilateAll ::
+  [(Pattern (), Pattern ())] ->
+  Bool
+annihilateAll =
+  foldr
+    (\(a, b) keep -> keep && annihilate a b)
+    True
+-}
+
+-- | if left is on the right, should we get rid?
+annihilate :: Pattern () -> Pattern () -> Bool
+annihilate a b | a == b = True
+annihilate (PWildcard _) _ = True -- wildcard trumps all
+annihilate (PVar _ _) _ = True -- as does var
+annihilate _ _as = False
+
+

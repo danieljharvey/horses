@@ -11,6 +11,7 @@ module Test.Helpers
     tyTuple,
     patTuple,
     patInt,
+    patBool
   )
 where
 
@@ -54,3 +55,6 @@ patTuple = \case
 
 patInt :: (Monoid ann) => Integer -> Pattern ann
 patInt = PLiteral mempty . PInt
+
+patBool :: (Monoid ann) => Bool -> Pattern ann
+patBool = PLiteral mempty . PBool
