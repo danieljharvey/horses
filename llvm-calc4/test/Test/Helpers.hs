@@ -11,7 +11,7 @@ module Test.Helpers
     tyTuple,
     patTuple,
     patInt,
-    patBool
+    patBool,
   )
 where
 
