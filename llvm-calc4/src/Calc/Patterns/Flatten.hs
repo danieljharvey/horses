@@ -10,13 +10,13 @@ import qualified Data.List
 import qualified Data.List.NonEmpty as NE
 
 -- | given our patterns, generate everything we need minus the ones we have
-generateMissing :: (Show ann) => NE.NonEmpty (Pattern (Type ann)) -> [Pattern ()]
+generateMissing :: NE.NonEmpty (Pattern (Type ann)) -> [Pattern ()]
 generateMissing nePats =
   let pats = NE.toList nePats
    in filterMissing (removeAnn <$> pats) (generatePatterns pats)
 
 -- | given our patterns, generate any others we might need
-generatePatterns :: (Show ann) => [Pattern (Type ann)] -> [Pattern ()]
+generatePatterns :: [Pattern (Type ann)] -> [Pattern ()]
 generatePatterns = concatMap generatePattern
 
 generateForType :: Type ann -> [Pattern ()]
@@ -30,7 +30,7 @@ typeIsTotal (TTuple {}) = True
 typeIsTotal (TFunction {}) = True
 
 -- | given a pattern, generate all other patterns we'll need
-generatePattern :: forall ann. (Show ann) => Pattern (Type ann) -> [Pattern ()]
+generatePattern :: forall ann. Pattern (Type ann) -> [Pattern ()]
 generatePattern (PWildcard _) = mempty
 generatePattern (PLiteral _ (PBool True)) = [PLiteral () (PBool False)]
 generatePattern (PLiteral _ (PBool False)) = [PLiteral () (PBool True)]

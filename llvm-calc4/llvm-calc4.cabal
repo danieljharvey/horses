@@ -61,10 +61,13 @@ common shared
     Calc.Parser.Function
     Calc.Parser.Identifier
     Calc.Parser.Module
+    Calc.Parser.Pattern
     Calc.Parser.Primitives
     Calc.Parser.Shared
     Calc.Parser.Type
     Calc.Parser.Types
+    Calc.Patterns.Flatten
+    Calc.PatternUtils
     Calc.Repl
     Calc.SourceSpan
     Calc.Typecheck.Elaborate
@@ -77,9 +80,11 @@ common shared
     Calc.Types.FunctionName
     Calc.Types.Identifier
     Calc.Types.Module
+    Calc.Types.Pattern
     Calc.Types.Prim
     Calc.Types.Type
     Calc.TypeUtils
+    Calc.Utils
 
 library
   import:           shared
@@ -110,8 +115,8 @@ test-suite llvm-calc4-tests
     Test.Typecheck.TypecheckSpec
 
 executable llvm-calc4
-  main-is:          Main.hs
   import:           shared
+  main-is:          Main.hs
   hs-source-dirs:   app
   hs-source-dirs:   src
   ghc-options:      -threaded -rtsopts -with-rtsopts=-N

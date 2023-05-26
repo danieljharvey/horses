@@ -31,6 +31,7 @@ data TypeError ann
   | PatternMismatch (Pattern ann) (Type ann)
   | FunctionArgumentLengthMismatch ann Int Int -- expected, actual
   | NonFunctionTypeFound ann (Type ann)
+  | IncompletePatterns ann [Pattern ()]
   deriving stock (Eq, Ord, Show)
 
 positionFromAnnotation ::
@@ -210,6 +211,24 @@ typeErrorDiagnostic input e =
                 ]
             )
             [Diag.Note $ "Available in scope: " <> prettyPrint (prettyHashset existing)]
+        (IncompletePatterns ann missingPatterns) ->
+          Diag.Err
+            Nothing
+            "Pattern match is incomplete!"
+            ( catMaybes
+                [ (,)
+                    <$> positionFromAnnotation
+                      filename
+                      input
+                      ann
+                    <*> pure
+                      ( Diag.This  $
+                              prettyPrint $ "Missing patterns: " <> PP.line <> prettyListToLines missingPatterns
+                      )
+                ]
+            )
+            []
+
    in Diag.addReport diag report
 
 -- | becomes "a, b, c, d"
@@ -218,6 +237,12 @@ prettyHashset hs =
   PP.concatWith
     (PP.surround PP.comma)
     (PP.pretty <$> HS.toList hs)
+
+prettyListToLines :: (PP.Pretty a) => [a] -> PP.Doc ann
+prettyListToLines as
+  = PP.concatWith
+      (PP.surround PP.line)
+      (PP.pretty <$> as)
 
 renderWithWidth :: Int -> PP.Doc ann -> Text
 renderWithWidth w doc = PP.renderStrict (PP.layoutPretty layoutOptions (PP.unAnnotate doc))

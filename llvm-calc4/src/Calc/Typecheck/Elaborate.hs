@@ -4,6 +4,7 @@
 
 module Calc.Typecheck.Elaborate (elaborate, elaborateFunction, elaborateModule) where
 
+import Calc.Patterns.Flatten
 import Calc.ExprUtils
 import Calc.PatternUtils
 import Calc.TypeUtils
@@ -181,7 +182,7 @@ infer (ETuple ann fstExpr restExpr) = do
           (getOuterAnnotation typedFst)
           (getOuterAnnotation <$> typedRest)
   pure $ ETuple typ typedFst typedRest
-infer (EPatternMatch _ann matchExpr pats) = do
+infer (EPatternMatch ann matchExpr pats) = do
   elabExpr <- infer matchExpr
   let withPair (pat, patExpr) = do
         (elabPat, newVars) <- checkPattern (getOuterAnnotation elabExpr) pat
@@ -190,6 +191,9 @@ infer (EPatternMatch _ann matchExpr pats) = do
   elabPats <- traverse withPair pats
   let allTypes = getOuterAnnotation . snd <$> elabPats
   typ <- checkTypesAreEqual allTypes
+  case generateMissing (fst <$> elabPats) of
+    [] -> pure ()
+    missingPatterns -> throwError (IncompletePatterns ann missingPatterns)
   pure (EPatternMatch typ elabExpr elabPats)
 infer (EApply ann fnName args) = do
   fn <- lookupFunction ann fnName

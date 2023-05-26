@@ -11,7 +11,7 @@ import Test.Hspec
 
 spec :: Spec
 spec = do
-  fdescribe "PatternsSpec" $ do
+  describe "PatternsSpec" $ do
     it "Wildcard is exhaustive" $ do
       let pats = NE.fromList [PWildcard tyInt]
       generateMissing @() pats `shouldBe` []
