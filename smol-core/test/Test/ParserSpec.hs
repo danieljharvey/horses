@@ -58,6 +58,8 @@ spec = do
               ("if True then 1 else 2", EIf () (bool True) (nat 1) (nat 2)),
               ("1 + 2", EInfix () OpAdd (nat 1) (nat 2)),
               ("1 + 2 + 3", EInfix () OpAdd (EInfix () OpAdd (nat 1) (nat 2)) (nat 3)),
+              ("\"\"", EPrim () (PString mempty)),
+              ("\"horses\"", EPrim () (PString "horses")),
               ("(True)", bool True),
               ("(True,True)", tuple (bool True) [bool True]),
               ("(100, 200, 300)", tuple (nat 100) [nat 200, nat 300]),

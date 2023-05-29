@@ -14,12 +14,14 @@ import GHC.Generics (Generic)
 import GHC.Natural
 import qualified Prettyprinter as PP
 import Smol.Core.Printer
+import Data.Text (Text)
 
 data Prim
   = PUnit
   | PNat Natural
   | PInt Integer
   | PBool Bool
+  | PString Text
   deriving stock (Eq, Ord, Show, Generic)
   deriving anyclass (FromJSON, ToJSON)
 
@@ -31,4 +33,5 @@ renderPrim (PNat i) = PP.pretty i
 renderPrim (PInt i) = PP.pretty i
 renderPrim (PBool True) = "True"
 renderPrim (PBool False) = "False"
+renderPrim (PString txt) = PP.pretty txt
 renderPrim PUnit = "Unit"

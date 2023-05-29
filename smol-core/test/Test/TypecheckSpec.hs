@@ -75,6 +75,7 @@ spec = do
               ("200 + -100", "100"),
               ("(1 + 2 + 3 : Nat)", "Nat"),
               ("(1 + 2 + 3 : Int)", "Int"),
+              ("\"hor\" + \"se\"", "String"),
               ( "(\\pair -> case pair of (a,_) -> a : (Bool, Nat) -> Bool) (True, 1)",
                 "Bool"
               ),

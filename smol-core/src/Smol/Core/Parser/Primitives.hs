@@ -7,10 +7,12 @@ module Smol.Core.Parser.Primitives
     intPrimParser,
     truePrimParser,
     falsePrimParser,
+    stringPrimParser,
     unitParser,
   )
 where
 
+import qualified Data.Text as T
 import Data.Functor (($>))
 import qualified Data.List.NonEmpty as NE
 import qualified Data.Set.NonEmpty as NES
@@ -33,6 +35,7 @@ primParser =
         <|> truePrimParser
         <|> falsePrimParser
         <|> PUnit <$ unitParser
+        <|> stringPrimParser
     )
 
 typeLiteralParser :: Parser TypeLiteral
@@ -89,23 +92,12 @@ falseParser = myString "False" $> False
 unitParser :: Parser ()
 unitParser = myString "Unit" $> ()
 
-{-
-     textPrim :: Parser Text
-textPrim = T.pack <$> (char '\"' *> manyTill L.charLiteral (char '\"'))
--}
+---
 
-{-
-stringPrim :: Parser Prim
-stringPrim =
-  MyString . StringType <$> textPrim
+stringPrimParser :: Parser Prim
+stringPrimParser =
+  PString <$> textPrim
+    where
+      textPrim :: Parser Text
+      textPrim = T.pack <$> (char '"' *> manyTill L.charLiteral (char '"'))
 
-stringParser :: Parser ParserExpr
-stringParser =
-  myLexeme
-    ( withLocation
-        EPrim
-        stringPrim
-    )
--}
-
-----

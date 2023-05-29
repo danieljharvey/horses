@@ -157,6 +157,7 @@ literalParser =
   boolParser
     <|> try natParser
     <|> intParser
+    <|> stringParser
     <|> unitExprParser
 
 --    <|> try stringParser
@@ -173,6 +174,11 @@ natParser = label "natural" $ myLexeme (withLocation EPrim natPrimParser)
 
 intParser :: Parser ParserExpr
 intParser = label "integer" $ myLexeme (withLocation EPrim intPrimParser)
+
+---
+
+stringParser :: Parser ParserExpr
+stringParser = label "string" $ myLexeme (withLocation EPrim stringPrimParser)
 
 ---
 

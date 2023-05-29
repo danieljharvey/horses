@@ -104,7 +104,8 @@ getTypeAnnotation (TLiteral ann _) = ann
 getTypeAnnotation (TRecord ann _) = ann
 
 primsFromTypeLiteral :: TypeLiteral -> [Prim]
-primsFromTypeLiteral (TLInt i) = PInt <$> S.toList (NES.toSet i)
+primsFromTypeLiteral (TLInt is) = PInt <$> S.toList (NES.toSet is)
+primsFromTypeLiteral (TLString strs) = PString <$> S.toList (NES.toSet strs)
 primsFromTypeLiteral (TLBool b) = [PBool b]
 primsFromTypeLiteral TLUnit = [PUnit]
 
@@ -383,4 +384,5 @@ typeLiteralFromPrim :: Prim -> TypeLiteral
 typeLiteralFromPrim (PBool b) = TLBool b
 typeLiteralFromPrim (PInt a) = TLInt (NES.singleton a)
 typeLiteralFromPrim (PNat a) = TLInt (NES.singleton $ fromIntegral a)
+typeLiteralFromPrim (PString str) = TLString (NES.singleton str)
 typeLiteralFromPrim PUnit = TLUnit
