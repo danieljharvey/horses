@@ -32,7 +32,7 @@
     "ts-jest": "29.1.0",
     "typescript": "5.0.4",
     "use-effect-reducer": "0.7.0",
-    "web-vitals": "3.3.1"
+    "web-vitals": "3.3.2"
   },
   "scripts": {
     "start": "react-scripts start",
