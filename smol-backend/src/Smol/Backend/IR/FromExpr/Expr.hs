@@ -146,6 +146,7 @@ fromPrim :: Prim -> IRPrim
 fromPrim (PInt i) = IRPrimInt32 i
 fromPrim (PNat i) = IRPrimInt32 (fromIntegral i)
 fromPrim (PBool b) = IRPrimInt2 b
+fromPrim (PString _str) = error "fromPrim PString"
 fromPrim PUnit = IRPrimInt2 False -- Unit is represented the same as False
 
 fromInfix ::

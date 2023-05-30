@@ -43,6 +43,10 @@ ghcid-smol:
 ghcid-smol-test:
 	ghcid -c "cabal repl smol-core:test:smol-core-tests" --test "main"
 
+.PHONY: ghcid-smol-backend-test
+ghcid-smol-backend-test:
+	ghcid -c "cabal repl smol-backend:test:smol-backend-tests" --test "main"
+
 .PHONY: update
 update:
 	cabal update

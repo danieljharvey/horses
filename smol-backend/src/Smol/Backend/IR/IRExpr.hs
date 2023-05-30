@@ -50,7 +50,8 @@ data IRType
   | IRArray Word64 IRType
   deriving stock (Eq, Ord, Show)
 
-data IRPrim = IRPrimInt2 Bool | IRPrimInt32 Integer
+data IRPrim = IRPrimInt2 Bool |
+      IRPrimInt32 Integer
   deriving stock (Eq, Ord, Show)
 
 newtype IRModule = IRModule [IRModulePart]

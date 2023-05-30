@@ -120,6 +120,7 @@ howManyInts DTEnum = 1
 howManyInts (DTPrim Smol.TPInt) = 1
 howManyInts (DTPrim Smol.TPBool) = 1
 howManyInts (DTPrim Smol.TPNat) = 1
+howManyInts (DTPrim Smol.TPString) = error "howManyInts string"
 howManyInts (DTTuple as) = getSum $ foldMap (Sum . howManyInts) as
 howManyInts (DTArray size a) = size * howManyInts a
 howManyInts (DTDataType whole _) = howManyInts whole -- wrong?
