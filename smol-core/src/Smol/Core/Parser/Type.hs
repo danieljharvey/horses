@@ -127,8 +127,8 @@ tyPrimitiveParser :: Parser (ParsedType Annotation)
 tyPrimitiveParser = TPrim mempty <$> tyPrimParser
   where
     tyPrimParser =
-      --      try (myString "String" $> TString)
-      try (myString "Bool" $> TPBool)
+      try (myString "String" $> TPString)
+        <|> try (myString "Bool" $> TPBool)
         <|> try (myString "Int" $> TPInt)
         <|> try (myString "Nat" $> TPNat)
 

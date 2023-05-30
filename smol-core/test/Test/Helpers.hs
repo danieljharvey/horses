@@ -3,6 +3,7 @@ module Test.Helpers
     tyBoolLit,
     tyInt,
     tyIntLit,
+    tyStrLit,
     tyNat,
     tyVar,
     tyUnknown,
@@ -48,6 +49,9 @@ tyInt = TPrim mempty TPInt
 
 tyIntLit :: (Monoid ann) => [Integer] -> Type dep ann
 tyIntLit = TLiteral mempty . TLInt . NES.fromList . NE.fromList
+
+tyStrLit :: (Monoid ann) => [Text] -> Type dep ann
+tyStrLit = TLiteral mempty . TLString . NES.fromList . NE.fromList
 
 tyNat :: (Monoid ann) => Type dep ann
 tyNat = TPrim mempty TPNat

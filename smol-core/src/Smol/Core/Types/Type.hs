@@ -24,6 +24,7 @@ import Data.Map.Strict
 import qualified Data.Map.Strict as M
 import qualified Data.Set as S
 import qualified Data.Set.NonEmpty as NES
+import Data.Text (Text)
 import Data.Word (Word64)
 import GHC.Generics (Generic)
 import Prettyprinter ((<+>))
@@ -33,13 +34,12 @@ import Smol.Core.Types.Identifier
 import Smol.Core.Types.ParseDep
 import Smol.Core.Types.ResolvedDep
 import Smol.Core.Types.TypeName
-import Data.Text (Text)
 
 type ParsedType ann = Type ParseDep ann
 
 type ResolvedType ann = Type ResolvedDep ann
 
-data TypePrim = TPNat | TPInt | TPBool
+data TypePrim = TPNat | TPInt | TPBool | TPString
   deriving stock (Eq, Ord, Show, Generic)
   deriving anyclass (FromJSON, ToJSON)
 
@@ -47,6 +47,7 @@ instance Printer TypePrim where
   prettyDoc TPNat = "Nat"
   prettyDoc TPInt = "Int"
   prettyDoc TPBool = "Bool"
+  prettyDoc TPString = "String"
 
 data TypeLiteral
   = TLBool Bool

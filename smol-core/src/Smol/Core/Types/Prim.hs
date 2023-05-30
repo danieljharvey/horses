@@ -10,11 +10,11 @@ module Smol.Core.Types.Prim
 where
 
 import Data.Aeson (FromJSON, ToJSON)
+import Data.Text (Text)
 import GHC.Generics (Generic)
 import GHC.Natural
 import qualified Prettyprinter as PP
 import Smol.Core.Printer
-import Data.Text (Text)
 
 data Prim
   = PUnit

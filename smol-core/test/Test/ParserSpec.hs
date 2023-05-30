@@ -118,6 +118,7 @@ spec = do
             [ ("True", tyBoolLit True),
               ("False", tyBoolLit False),
               ("1 | 2 | 3", tyIntLit [1, 2, 3]),
+              ("\"horse\"", tyStrLit ["horse"]),
               ( "(a -> b) -> Maybe a -> Maybe b",
                 TFunc
                   ()
@@ -147,6 +148,7 @@ spec = do
               ),
               ("Maybe.Maybe", TConstructor () (ParseDep "Maybe" (Just "Maybe"))),
               ("[Bool]", TArray () 0 tyBool),
+              ("String", TPrim () TPString),
               ("Either e a", tyCons "Either" [tyVar "e", tyVar "a"]),
               ("s -> (a, s)", TFunc () mempty (tyVar "s") (tyTuple (tyVar "a") [tyVar "s"]))
             ]
