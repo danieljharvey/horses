@@ -36,8 +36,8 @@ common shared
     , containers
     , directory
     , file-embed
-    , llvm-hs-pure
     , llvm-hs-pretty
+    , llvm-hs-pure
     , mtl
     , process
     , smol-core
@@ -78,8 +78,8 @@ test-suite smol-backend-tests
   hs-source-dirs:   test
   hs-source-dirs:   src
   build-depends:
-    , hspec       >=2.8.3 && <3
-    , hspec-core  >=2.8.3 && <3
+    , hspec                >=2.8.3 && <3
+    , hspec-core           >=2.8.3 && <3
     , nonempty-containers
 
   other-modules:
@@ -96,10 +96,8 @@ test-suite smol-backend-tests
     Smol.Backend.IR.ToLLVM.Helpers
     Smol.Backend.IR.ToLLVM.Patterns
     Smol.Backend.IR.ToLLVM.ToLLVM
-
     Smol.Backend.Types.GetPath
     Smol.Backend.Types.PatternPredicate
-
     Test.BuiltInTypes
     Test.Helpers
     Test.IR.CompileSpec

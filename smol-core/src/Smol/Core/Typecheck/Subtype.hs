@@ -85,7 +85,7 @@ typeAddition (TLiteral ann (TLInt as)) (TLiteral _ (TLInt bs)) =
   where
     allLiterals =
       NES.unsafeFromSet $
-        S.map (\(a, b) -> a + b) $
+        S.map (uncurry (+)) $
           S.cartesianProduct (NES.toSet as) (NES.toSet bs)
 typeAddition a b | isNatLiteral a = isSubtypeOf (TPrim (getTypeAnnotation a) TPNat) b
 typeAddition a b | isNatLiteral b = isSubtypeOf a (TPrim (getTypeAnnotation b) TPNat)
