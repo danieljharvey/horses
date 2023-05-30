@@ -102,10 +102,11 @@ inferInfix ::
 inferInfix _ann OpAdd a b = do
   elabA <- infer a
   elabB <- infer b
-  mostGeneralTy <-
-    generaliseLiteral (getExprAnnotation elabA)
-      `combine` generaliseLiteral (getExprAnnotation elabB)
-  pure (EInfix mostGeneralTy OpAdd elabA elabB)
+  let tyA = getExprAnnotation elabA
+      tyB = getExprAnnotation elabB
+  addTy <- tyA `typeAddition` tyB
+
+  pure (EInfix addTy OpAdd elabA elabB)
 -- equality is certainly a big bucket of worms
 -- for now, we'll concentrate on Int/Nat/Bool equality making sense
 inferInfix ann OpEquals a b = do
@@ -239,6 +240,7 @@ inferApplication ::
   m (ResolvedExpr (ResolvedType ann))
 inferApplication maybeCheckType fn arg = withRecursiveFn fn arg $ do
   typedArg <- infer arg
+
   -- if we are applying to a variable, then we need to be a bit clever and
   -- do some substitution etc. if not, just infer it as usual and yolo
   let inferFn exprFn = do

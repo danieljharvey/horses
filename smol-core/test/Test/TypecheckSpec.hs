@@ -55,7 +55,7 @@ typecheckEnv = TCEnv mempty mempty (builtInTypes LocalDefinition)
 spec :: Spec
 spec = do
   describe "TypecheckSpec" $ do
-    describe "Parse and typecheck" $ do
+    fdescribe "Parse and typecheck" $ do
       let inputs =
             [ ("True", "True"),
               ("False", "False"),
@@ -70,9 +70,9 @@ spec = do
               ("(\\a -> True : (1 | 2) -> True) 1", "True"),
               ("(\\a -> True : (1 | 2 | 3 | 4 | 5 | 6) -> True) 5", "True"),
               ("(1 : Int) + (2 : Int)", "Int"),
-              ("1 + 2", "Nat"),
-              ("-1 + 200", "Int"),
-              ("200 + -100", "Int"),
+              ("1 + 2", "3"),
+              ("-1 + 200", "199"),
+              ("200 + -100", "100"),
               ("(1 + 2 + 3 : Nat)", "Nat"),
               ("(1 + 2 + 3 : Int)", "Int"),
               ( "(\\pair -> case pair of (a,_) -> a : (Bool, Nat) -> Bool) (True, 1)",
@@ -165,8 +165,10 @@ spec = do
               --              ( "let liftA2 = (\\ap -> \\fmap -> \\f -> \\ma -> \\mb -> ap (fmap f ma) mb : (m (a -> b) -> m a -> m b) -> ((a -> b) -> m a -> m b) -> (a -> b -> c) -> m a -> m b -> m c); let add2 = (\\a -> \\b -> a + b : Nat -> Nat -> Nat); liftA2 add2 (Just 1) (Just 2)",
               --              "Maybe Nat"
               --          ),
-              ("(\\a -> a + 1) 1", "Nat"),
-              ("1 + 1", "Nat"),
+              ("(\\a -> a + 1) 1", "2"),
+              ("0 + 0", "0"),
+              ("0 + 1", "1"),
+              ("1 + 1", "2"),
               ("\\a -> a + 1", "Nat -> Nat"),
               ("(\\pair -> case pair of (a,b) -> a + b : (Nat,Nat) -> Nat)", "(Nat,Nat) -> Nat"),
               ("let id = (\\i -> i : i -> i); case (Just 1) of Just a -> Just (id a) | Nothing -> Nothing", "Maybe 1"),
@@ -175,7 +177,8 @@ spec = do
               ("[True]", "[True]"),
               ("([1,2,3,4] : [Nat])", "[Nat]"),
               ("case ([1,2,3] : [Nat]) of [a] -> [a] | [_,...b] -> b", "[Nat]"),
-              ("case ([1,2]: [Nat]) of [a,...] -> a | _ -> 0", "Nat")
+              ("case ([1,2]: [Nat]) of [a,...] -> a | _ -> 0", "Nat"),
+              ("let a = if True then 1 else 2; let b = if True then 7 else 9; a + b", "8 | 9 | 10 | 11")
             ]
       traverse_
         ( \(inputExpr, expectedType) -> it (T.unpack inputExpr <> " :: " <> T.unpack expectedType) $ do

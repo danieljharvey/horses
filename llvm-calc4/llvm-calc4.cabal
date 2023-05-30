@@ -104,10 +104,10 @@ test-suite llvm-calc4-tests
   main-is:          Main.hs
   default-language: Haskell2010
   other-modules:
-      Test.Interpreter.InterpreterSpec
-    , Test.LLVM.LLVMSpec
-    , Test.Parser.ParserSpec
-    , Test.Typecheck.TypecheckSpec
+    Test.Interpreter.InterpreterSpec
+    Test.LLVM.LLVMSpec
+    Test.Parser.ParserSpec
+    Test.Typecheck.TypecheckSpec
 
 executable llvm-calc4
   main-is:          Main.hs

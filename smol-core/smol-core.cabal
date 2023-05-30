@@ -19,8 +19,7 @@ maintainer:         danieljamesharvey@gmail.com
 -- A copyright notice.
 -- copyright:
 -- category:
-extra-source-files:
-  CHANGELOG.md
+extra-source-files: CHANGELOG.md
 
 common shared
   ghc-options:
@@ -40,7 +39,7 @@ common shared
     , file-embed
     , megaparsec
     , memory
-    , mtl > 2.3.0
+    , mtl                  >=2.3.0.0
     , nonempty-containers
     , parser-combinators
     , prettyprinter
@@ -67,13 +66,13 @@ library
     Smol.Core.Interpreter.Types
     Smol.Core.Modules.Check
     Smol.Core.Modules.Dependencies
-    Smol.Core.Modules.Types.DepType
     Smol.Core.Modules.FromParts
     Smol.Core.Modules.HashModule
     Smol.Core.Modules.ModuleError
     Smol.Core.Modules.Monad
     Smol.Core.Modules.ResolveDeps
     Smol.Core.Modules.Typecheck
+    Smol.Core.Modules.Types.DepType
     Smol.Core.Modules.Uses
     Smol.Core.Parser
     Smol.Core.Parser.DataType
@@ -148,7 +147,6 @@ test-suite smol-core-tests
     Smol.Core.Modules.Typecheck
     Smol.Core.Modules.Types.DepType
     Smol.Core.Modules.Uses
-
     Smol.Core.Parser
     Smol.Core.Parser.DataType
     Smol.Core.Parser.Expr

@@ -1,17 +1,17 @@
-cabal-version:      2.2
-name:               benchmark
-version:            0.1.0.0
+cabal-version: 2.2
+name:          benchmark
+version:       0.1.0.0
 description:
   Please see the README on GitHub at <https://github.com/githubuser/function-boys#readme>
 
-homepage:           https://github.com/danieljharvey/mimsa#readme
-bug-reports:        https://github.com/danieljharvey/mimsa/issues
-author:             Daniel J Harvey
-maintainer:         danieljamesharvey@gmail.com
-copyright:          2021 Daniel J Harvey
-license:            BSD-3-Clause
-license-file:       LICENSE
-build-type:         Simple
+homepage:      https://github.com/danieljharvey/mimsa#readme
+bug-reports:   https://github.com/danieljharvey/mimsa/issues
+author:        Daniel J Harvey
+maintainer:    danieljamesharvey@gmail.com
+copyright:     2021 Daniel J Harvey
+license:       BSD-3-Clause
+license-file:  LICENSE
+build-type:    Simple
 
 source-repository head
   type:     git

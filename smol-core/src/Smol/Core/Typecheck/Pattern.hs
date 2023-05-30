@@ -112,7 +112,7 @@ checkPattern checkTy checkPat = do
           when (typeName /= patTypeName) $
             throwError (TCUnknownConstructor constructor otherConstructors)
 
-          let pairs = zipWith (\var subTy -> Substitution (SubId (LocalDefinition var)) subTy) dtArgs tyArgs
+          let pairs = zipWith (Substitution . SubId . LocalDefinition) dtArgs tyArgs
               resolvedArgs = substituteMany pairs <$> consArgs
 
           (patArgs, envArgs) <-
