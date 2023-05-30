@@ -9,6 +9,7 @@ module Smol.Core.Typecheck.Subtype
     generaliseLiteral,
     isNatLiteral,
     isIntLiteral,
+    typeAddition,
   )
 where
 
@@ -20,6 +21,7 @@ import Data.Foldable (foldl', foldrM)
 import Data.Functor (($>))
 import qualified Data.List.NonEmpty as NE
 import qualified Data.Map.Strict as M
+import qualified Data.Set as S
 import qualified Data.Set.NonEmpty as NES
 import Smol.Core.Helpers
 import Smol.Core.Typecheck.Shared
@@ -65,6 +67,31 @@ combineMany ::
   m (ResolvedType ann)
 combineMany types =
   foldrM combine (NE.head types) (NE.tail types)
+
+-- | when calculating type for addition, we try and do the actual sum,
+-- otherwise treat literals as their more generic types (int, nat, etc) and
+-- then subtype as usual to check for errors
+typeAddition ::
+  ( Eq ann,
+    Show ann,
+    MonadError (TCError ann) m,
+    MonadWriter [Substitution ResolvedDep ann] m
+  ) =>
+  ResolvedType ann ->
+  ResolvedType ann ->
+  m (ResolvedType ann)
+typeAddition (TLiteral ann (TLInt as)) (TLiteral _ (TLInt bs)) =
+  pure $ TLiteral ann (TLInt allLiterals)
+  where
+    allLiterals =
+      NES.unsafeFromSet $
+        S.map (\(a, b) -> a + b) $
+          S.cartesianProduct (NES.toSet as) (NES.toSet bs)
+typeAddition a b | isNatLiteral a = isSubtypeOf (TPrim (getTypeAnnotation a) TPNat) b
+typeAddition a b | isNatLiteral b = isSubtypeOf a (TPrim (getTypeAnnotation b) TPNat)
+typeAddition a b | isIntLiteral a = isSubtypeOf (TPrim (getTypeAnnotation a) TPInt) b
+typeAddition a b | isIntLiteral b = isSubtypeOf a (TPrim (getTypeAnnotation b) TPInt)
+typeAddition a b = isSubtypeOf a b `catchError` const (isSubtypeOf b a)
 
 -- try and combine two types, either by getting the subtype or union-ing
 -- literals together

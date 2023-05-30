@@ -1,4 +1,5 @@
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE TypeApplications #-}
 
 module Test.Typecheck.SubtypeSpec (spec) where
 
@@ -101,6 +102,23 @@ spec = do
           ( \(one, two, result) -> it (show one <> " <> " <> show two) $ do
               let a =
                     combine
+                      (fromParsedType (unsafeParseType one))
+                      (fromParsedType (unsafeParseType two))
+              fst <$> runWriterT a `shouldBe` Right (fromParsedType (unsafeParseType result))
+          )
+          inputs
+
+      fdescribe "Type addition" $ do
+        let inputs =
+              [ ("1", "1", "2"),
+                ("1", "2", "3"),
+                ("1 | 2", "2", "3 | 4"),
+                ("1 | 2", "3 | 4", "4 | 5 | 6")
+              ]
+        traverse_
+          ( \(one, two, result) -> it (show one <> " + " <> show two <> " = " <> show result) $ do
+              let a =
+                    typeAddition
                       (fromParsedType (unsafeParseType one))
                       (fromParsedType (unsafeParseType two))
               fst <$> runWriterT a `shouldBe` Right (fromParsedType (unsafeParseType result))
