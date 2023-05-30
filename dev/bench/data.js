@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1684733403040,
+  "lastUpdate": 1685457894719,
   "repoUrl": "https://github.com/danieljharvey/mimsa",
   "entries": {
     "Store benchmarks in Github Pages": [
@@ -1667,6 +1667,50 @@ window.BENCHMARK_DATA = {
           {
             "name": "evaluate/evaluate parsing 2",
             "value": 0.23154699048571553,
+            "unit": "Time (ms)"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "danieljamesharvey@gmail.com",
+            "name": "Daniel Harvey",
+            "username": "danieljharvey"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "6c76974e279d55303a8032194eaf93e6a4459374",
+          "message": "Add is real addition (#957)\n\n* Add is real addition\r\n\r\n* Fix linty bits",
+          "timestamp": "2023-05-30T15:41:35+01:00",
+          "tree_id": "0766ea6396f7238dda74b72858e6b747db9db6a4",
+          "url": "https://github.com/danieljharvey/mimsa/commit/6c76974e279d55303a8032194eaf93e6a4459374"
+        },
+        "date": 1685457894124,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "build stdlib/allFns",
+            "value": 0.10815918724999743,
+            "unit": "Time (ms)"
+          },
+          {
+            "name": "evaluate/evaluate big looping thing",
+            "value": 0.0992667244000045,
+            "unit": "Time (ms)"
+          },
+          {
+            "name": "evaluate/evaluate parsing",
+            "value": 0.03259535219117643,
+            "unit": "Time (ms)"
+          },
+          {
+            "name": "evaluate/evaluate parsing 2",
+            "value": 0.23040952242856913,
             "unit": "Time (ms)"
           }
         ]
