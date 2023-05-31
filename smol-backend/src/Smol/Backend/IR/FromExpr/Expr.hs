@@ -29,7 +29,6 @@ import Smol.Backend.Types.PatternPredicate
 import Smol.Core.Helpers
 import Smol.Core.Typecheck (flattenConstructorApplication)
 import Smol.Core.Typecheck.Shared (getExprAnnotation)
-import Smol.Core.Typecheck.Subtype
 import Smol.Core.Types.Constructor
 import Smol.Core.Types.DataType
 import Smol.Core.Types.Expr
@@ -58,6 +57,16 @@ irPrintBool =
         }
     )
 
+irPrintString :: IRModulePart
+irPrintString
+  = IRExternDef
+      (IRExtern
+          { ireName = "printstring",
+            ireArgs = [],
+            ireReturn = IRInt32
+          }
+      )
+
 getPrinter ::
   (Show ann, Show (dep Identifier), Show (dep TypeName)) =>
   Type dep ann ->
@@ -67,8 +76,7 @@ getPrinter (TPrim _ TPNat) = irPrintInt
 getPrinter (TPrim _ TPBool) = irPrintBool
 getPrinter (TLiteral _ (TLBool _)) = irPrintBool
 getPrinter (TLiteral _ (TLInt _)) = irPrintInt
-getPrinter union | isNatLiteral union = irPrintInt
-getPrinter union | isIntLiteral union = irPrintInt
+getPrinter (TLiteral _ (TLString _)) = irPrintString
 getPrinter other = error ("could not find a printer for type " <> show other)
 
 getPrintFuncName ::
@@ -146,7 +154,6 @@ fromPrim :: Prim -> IRPrim
 fromPrim (PInt i) = IRPrimInt32 i
 fromPrim (PNat i) = IRPrimInt32 (fromIntegral i)
 fromPrim (PBool b) = IRPrimInt2 b
-fromPrim (PString _str) = error "fromPrim PString"
 fromPrim PUnit = IRPrimInt2 False -- Unit is represented the same as False
 
 fromInfix ::
