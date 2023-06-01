@@ -266,19 +266,19 @@ spec = do
           ( NE.fromList
               [ IRMatchCase
                   { irmcType = IRInt32,
-                    irmcPatternPredicate = [PathEquals (GetPath [] GetValue) (IRPrimInt32 1)],
+                    irmcPatternPredicate = [PathEquals (GetPath [] GetValue) (IRPrim $ IRPrimInt32 1)],
                     irmcGetPath = mempty,
                     irmcExpr = IRPrim (IRPrimInt32 21)
                   },
                 IRMatchCase
                   { irmcType = IRInt32,
-                    irmcPatternPredicate = [PathEquals (GetPath [] GetValue) (IRPrimInt32 0)],
+                    irmcPatternPredicate = [PathEquals (GetPath [] GetValue) (IRPrim $ IRPrimInt32 0)],
                     irmcGetPath = mempty,
                     irmcExpr = IRPrim (IRPrimInt32 23)
                   },
                 IRMatchCase
                   { irmcType = IRInt32,
-                    irmcPatternPredicate = [PathEquals (GetPath [] GetValue) (IRPrimInt32 2)],
+                    irmcPatternPredicate = [PathEquals (GetPath [] GetValue) (IRPrim $ IRPrimInt32 2)],
                     irmcGetPath = mempty,
                     irmcExpr = IRPrim (IRPrimInt32 42)
                   }
@@ -307,7 +307,7 @@ spec = do
                     irmcPatternPredicate =
                       [ PathEquals
                           (GetPath [0] GetValue)
-                          (IRPrimInt32 2)
+                          (IRPrim $ IRPrimInt32 2)
                       ],
                     irmcGetPath = M.singleton "a" (GetPath [1] GetValue),
                     irmcExpr = IRVar "a"
@@ -317,7 +317,7 @@ spec = do
                     irmcPatternPredicate =
                       [ PathEquals
                           (GetPath [0] GetValue)
-                          (IRPrimInt32 0)
+                          (IRPrim $ IRPrimInt32 0)
                       ],
                     irmcGetPath = M.singleton "b" (GetPath [1] GetValue),
                     irmcExpr = IRPrim (IRPrimInt32 0)
@@ -327,7 +327,7 @@ spec = do
                     irmcPatternPredicate =
                       [ PathEquals
                           (GetPath [0] GetValue)
-                          (IRPrimInt32 1)
+                          (IRPrim $ IRPrimInt32 1)
                       ],
                     irmcGetPath =
                       M.fromList

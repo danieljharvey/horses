@@ -101,7 +101,7 @@ data IRExpr
 
 data IRMatchCase = IRMatchCase
   { irmcType :: IRType,
-    irmcPatternPredicate :: [PatternPredicate IRPrim],
+    irmcPatternPredicate :: [PatternPredicate IRExpr],
     irmcGetPath :: Map IRIdentifier GetPath,
     irmcExpr :: IRExpr
   }

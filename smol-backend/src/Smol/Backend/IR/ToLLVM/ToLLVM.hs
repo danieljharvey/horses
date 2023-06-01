@@ -165,6 +165,7 @@ irExprToLLVM (IRMatch matchExpr tyRet matches) = mdo
   matchingInt <-
     selectToOperand
       llMatch
+      irExprToLLVM
       ( createSelectTable
           ( (\match -> (irmcPatternPredicate match, irmcType match)) <$> matches
           )

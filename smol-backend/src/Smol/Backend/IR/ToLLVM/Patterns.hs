@@ -37,9 +37,10 @@ patName i = "pat" <> fromString (show i)
 predicatesToOperand ::
   (L.MonadModuleBuilder m, L.MonadIRBuilder m) =>
   Op.Operand ->
-  NE.NonEmpty (PatternPredicate IRPrim) ->
+  NE.NonEmpty (PatternPredicate IRExpr) ->
+  (IRExpr -> Op.Operand) ->
   m Op.Operand
-predicatesToOperand input nePreds = do
+predicatesToOperand input nePreds irPrimToLLVM = do
   firstOp <- compilePred (NE.head nePreds)
   foldM
     ( \op pat -> do
@@ -85,9 +86,10 @@ selectToOperand ::
     L.MonadIRBuilder m
   ) =>
   Op.Operand ->
-  SelectList ([PatternPredicate IRPrim], IRType) ->
+  (IRExpr -> Op.Operand) ->
+  SelectList ([PatternPredicate IRExpr], IRType) ->
   m Op.Operand
-selectToOperand input = go
+selectToOperand input irExprToLLVM = go
   where
     go (SelectThen i) = pure (C.int32 i) `L.named` "fallback"
     go (SelectOr i (preds, irType) rest) = do
@@ -95,6 +97,6 @@ selectToOperand input = go
       opPred <- case NE.nonEmpty preds of
         Just nePreds -> do
           castInput <- L.bitcast input (irTypeToLLVM (getCastType irType))
-          predicatesToOperand castInput nePreds `L.named` "pred"
+          predicatesToOperand castInput nePreds irExprToLLVM `L.named` "pred"
         Nothing -> pure (C.bit 1) -- ie, const True
       L.select opPred (C.int32 i) opRest

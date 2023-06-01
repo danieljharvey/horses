@@ -150,11 +150,12 @@ irFromExpr dataTypes expr =
     [getPrinter (getExprAnnotation expr)]
       <> modulePartsFromExpr dataTypes expr
 
-fromPrim :: Prim -> IRPrim
-fromPrim (PInt i) = IRPrimInt32 i
-fromPrim (PNat i) = IRPrimInt32 (fromIntegral i)
-fromPrim (PBool b) = IRPrimInt2 b
-fromPrim PUnit = IRPrimInt2 False -- Unit is represented the same as False
+fromPrim :: Prim -> IRExpr
+fromPrim (PInt i) = IRPrim (IRPrimInt32 i)
+fromPrim (PNat i) = IRPrim (IRPrimInt32 (fromIntegral i))
+fromPrim (PBool b) = IRPrim (IRPrimInt2 b)
+fromPrim PUnit = IRPrim (IRPrimInt2 False) -- Unit is represented the same as False
+fromPrim (PString _) = IRPrim (IRPrimInt32 100) -- this will be a constant operand to the string literal soon
 
 fromInfix ::
   (Show ann, MonadState (FromExprState ann) m) =>
@@ -177,7 +178,7 @@ fromExpr ::
   (Show ann, MonadState (FromExprState ann) m) =>
   IdentityExpr (Type Identity ann) ->
   m IRExpr
-fromExpr (EPrim _ prim) = pure (IRPrim $ fromPrim prim)
+fromExpr (EPrim _ prim) = pure $ fromPrim prim
 fromExpr (EInfix _ op a b) = fromInfix op a b
 fromExpr (EAnn _ _ inner) = fromExpr inner
 fromExpr (EIf ty predExpr thenExpr elseExpr) = do
@@ -192,13 +193,13 @@ fromExpr (EIf ty predExpr thenExpr elseExpr) = do
       ( NE.fromList
           [ IRMatchCase
               { irmcType = IRInt2,
-                irmcPatternPredicate = [PathEquals (GetPath [] GetValue) (IRPrimInt2 True)],
+                irmcPatternPredicate = [PathEquals (GetPath [] GetValue) (IRPrim $ IRPrimInt2 True)],
                 irmcGetPath = mempty,
                 irmcExpr = irThen
               },
             IRMatchCase
               { irmcType = IRInt2,
-                irmcPatternPredicate = [PathEquals (GetPath [] GetValue) (IRPrimInt2 False)],
+                irmcPatternPredicate = [PathEquals (GetPath [] GetValue) (IRPrim $ IRPrimInt2 False)],
                 irmcGetPath = mempty,
                 irmcExpr = irElse
               }
@@ -256,7 +257,7 @@ fromExpr (EConstructor ty constructor) = do
   tyResult <- Compile.flattenConstructorType ty
   case tyResult of
     -- genuine enum, return number
-    (_typeName, []) -> IRPrim <$> getConstructorNumber (runIdentity constructor)
+    (_typeName, []) -> getConstructorNumber (runIdentity constructor)
     (_typeName, _) -> do
       (structType, specificStructType) <-
         bimap
@@ -267,7 +268,7 @@ fromExpr (EConstructor ty constructor) = do
       -- get number for constructor
       consNum <- getConstructorNumber (runIdentity constructor)
 
-      let setConsNum = IRSetTo [0] IRInt32 (IRPrim consNum)
+      let setConsNum = IRSetTo [0] IRInt32 consNum
 
       pure $
         IRInitialiseDataType
@@ -427,7 +428,7 @@ constructorAppFromExpr ty constructor cnArgs = do
   -- get number for constructor
   consNum <- getConstructorNumber constructor
 
-  let setConsNum = IRSetTo [0] IRInt32 (IRPrim consNum)
+  let setConsNum = IRSetTo [0] IRInt32 consNum
 
   statements <-
     traverseInd
@@ -520,6 +521,6 @@ modulePartsFromExpr dataTypes expr =
 getConstructorNumber ::
   (MonadState (FromExprState ann) m) =>
   Constructor ->
-  m IRPrim
+  m IRExpr
 getConstructorNumber =
-  fmap fromPrim . Compile.primFromConstructor
+  fmap fromPrim <$> Compile.primFromConstructor
