@@ -59,7 +59,7 @@ predicatesFromPattern ::
   ( MonadState (FromExprState ann) m,
     Show ann
   ) =>
-  (Smol.Prim -> p) ->
+  (Smol.Prim -> m p) ->
   Smol.Pattern Identity (Smol.Type Identity ann) ->
   m [PatternPredicate p]
 predicatesFromPattern fromPrim =
@@ -68,15 +68,16 @@ predicatesFromPattern fromPrim =
     predicatesInner _ (Smol.PWildcard _) = pure mempty
     predicatesInner _ (Smol.PVar _ _) = pure mempty
     predicatesInner path (Smol.PArray _ pats spread) = do
+      llPrim <-
+        fromPrim
+          ( Smol.PInt
+              (fromIntegral $ length pats)
+          )
       let spreadPred = case spread of
             Smol.NoSpread ->
               [ PathEquals
                   (GetPath (path <> [0]) GetValue)
-                  ( fromPrim
-                      ( Smol.PInt
-                          (fromIntegral $ length pats)
-                      )
-                  )
+                  llPrim
               ]
             _ -> []
       mappend spreadPred . mconcat
@@ -85,8 +86,9 @@ predicatesFromPattern fromPrim =
               predicatesInner (path <> [1, i]) pat
           )
           pats
-    predicatesInner path (Smol.PLiteral _ prim) =
-      pure [PathEquals (GetPath path GetValue) (fromPrim prim)]
+    predicatesInner path (Smol.PLiteral _ prim) = do
+      llPrim <- fromPrim prim
+      pure [PathEquals (GetPath path GetValue) llPrim]
     predicatesInner path (Smol.PTuple _ pHead pTail) =
       let pats = [pHead] <> NE.toList pTail
        in mconcat <$> traverseInd (\pat i -> predicatesInner (path <> [i]) pat) pats
@@ -97,11 +99,13 @@ predicatesFromPattern fromPrim =
         -- if no args, it's a primitive
         [] -> do
           prim <- primFromConstructor (runIdentity constructor)
-          pure [PathEquals (GetPath path GetValue) (fromPrim prim)]
+          llPrim <- fromPrim prim
+          pure [PathEquals (GetPath path GetValue) llPrim]
         _ -> do
           -- if there's args it's a struct
           prim <- primFromConstructor (runIdentity constructor)
-          let constructorPath = PathEquals (GetPath (path <> [0]) GetValue) (fromPrim prim)
+          llPrim <- fromPrim prim
+          let constructorPath = PathEquals (GetPath (path <> [0]) GetValue) llPrim
 
           -- work out predicates for rest of items
           predRest <- mconcat <$> traverseInd (\pat i -> predicatesInner (path <> [i + 1]) pat) pArgs

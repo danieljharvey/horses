@@ -93,6 +93,7 @@ irExprToLLVM ::
   IRExpr ->
   m LLVM.Operand
 irExprToLLVM (IRPrim prim) = pure $ irPrimToLLVM prim
+irExprToLLVM (IRString txt) = lookupString txt
 irExprToLLVM (IRApply fnType fn fnArgs) = do
   functionConst <- irExprToLLVM fn
   let (_, tyRet) = returnType fnType

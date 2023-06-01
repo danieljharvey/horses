@@ -5,22 +5,22 @@
 
 module Smol.Backend.IR.FromExpr.Type (fromType, typeFromEnv, fromDataTypeInMemory) where
 
-import GHC.Word (Word64)
-import qualified Data.Set as S
-import qualified Data.Set.NonEmpty as NES
 import Control.Monad.Identity
 import Control.Monad.State
 import qualified Data.List.NonEmpty as NE
 import Data.Map.Strict (Map)
 import qualified Data.Map.Strict as M
+import qualified Data.Set as S
+import qualified Data.Set.NonEmpty as NES
+import Data.Text (Text)
+import qualified Data.Text as T
+import GHC.Word (Word64)
 import Smol.Backend.IR.FromExpr.DataTypes
 import qualified Smol.Backend.IR.FromExpr.Helpers as Compile
 import Smol.Backend.IR.FromExpr.Types
 import Smol.Backend.IR.IRExpr
 import Smol.Core.Typecheck.Subtype (isIntLiteral, isNatLiteral)
 import qualified Smol.Core.Types as Smol
-import Data.Text (Text)
-import qualified Data.Text as T
 
 typeFromEnv ::
   (Show ann, MonadState (FromExprState ann) m) =>
@@ -30,8 +30,8 @@ typeFromEnv env = IRStruct <$> traverse fromType (M.elems env)
 
 maxLen :: NES.NESet Text -> Word64
 maxLen nesText =
-      let lengths = fmap T.length (S.toList (NES.toSet nesText))
-       in fromIntegral (foldr max 0 lengths)
+  let lengths = fmap T.length (S.toList (NES.toSet nesText))
+   in fromIntegral (foldr max 0 lengths)
 
 fromType ::
   (Show ann, MonadState (FromExprState ann) m) =>
@@ -46,8 +46,10 @@ fromType (Smol.TLiteral _ lit) = pure $ fromLit lit
     fromLit (Smol.TLInt _) = IRInt32
     fromLit Smol.TLUnit = IRInt2 -- unit become bool?
     fromLit (Smol.TLString as) =
-       IRStruct [IRInt32,
-        IRArray (maxLen as) IRInt32]
+      IRStruct
+        [ IRInt32,
+          IRArray (maxLen as) IRInt32
+        ]
 fromType (Smol.TFunc _ env tArg tBody) = do
   argType <- fromType tArg
   envType <- typeFromEnv env

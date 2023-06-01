@@ -30,7 +30,8 @@ env =
     { fesDataTypes = builtInTypes Identity,
       fesFreshInt = 0,
       fesModuleParts = mempty,
-      fesVars = mempty
+      fesVars = mempty,
+      fesStrings = mempty
     }
 
 parseDepToIdentity :: Type ParseDep ann -> Type Identity ann
@@ -73,7 +74,7 @@ spec = do
                 ]
     traverse_
       ( \(input, result) -> it (show input) $ do
-          let predResult = evalState (predicatesFromPattern id input) env
+          let predResult = evalState (predicatesFromPattern pure input) env
           predResult `shouldBe` result
       )
       testVals

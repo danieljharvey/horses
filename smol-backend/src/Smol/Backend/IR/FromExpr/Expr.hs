@@ -10,6 +10,7 @@ module Smol.Backend.IR.FromExpr.Expr
   )
 where
 
+import Control.Monad ((>=>))
 import Control.Monad.Identity
 import Control.Monad.State
 import Data.Bifunctor
@@ -58,14 +59,14 @@ irPrintBool =
     )
 
 irPrintString :: IRModulePart
-irPrintString
-  = IRExternDef
-      (IRExtern
-          { ireName = "printstring",
-            ireArgs = [],
-            ireReturn = IRInt32
-          }
-      )
+irPrintString =
+  IRExternDef
+    ( IRExtern
+        { ireName = "printstring",
+          ireArgs = [IRPointer IRInt8],
+          ireReturn = IRInt32
+        }
+    )
 
 getPrinter ::
   (Show ann, Show (dep Identifier), Show (dep TypeName)) =>
@@ -150,12 +151,12 @@ irFromExpr dataTypes expr =
     [getPrinter (getExprAnnotation expr)]
       <> modulePartsFromExpr dataTypes expr
 
-fromPrim :: Prim -> IRExpr
-fromPrim (PInt i) = IRPrim (IRPrimInt32 i)
-fromPrim (PNat i) = IRPrim (IRPrimInt32 (fromIntegral i))
-fromPrim (PBool b) = IRPrim (IRPrimInt2 b)
-fromPrim PUnit = IRPrim (IRPrimInt2 False) -- Unit is represented the same as False
-fromPrim (PString _) = IRPrim (IRPrimInt32 100) -- this will be a constant operand to the string literal soon
+fromPrim :: (Monad m) => Prim -> m IRExpr
+fromPrim (PInt i) = pure $ IRPrim (IRPrimInt32 i)
+fromPrim (PNat i) = pure $ IRPrim (IRPrimInt32 (fromIntegral i))
+fromPrim (PBool b) = pure $ IRPrim (IRPrimInt2 b)
+fromPrim PUnit = pure $ IRPrim (IRPrimInt2 False) -- Unit is represented the same as False
+fromPrim (PString txt) = pure $ IRString txt
 
 fromInfix ::
   (Show ann, MonadState (FromExprState ann) m) =>
@@ -178,7 +179,7 @@ fromExpr ::
   (Show ann, MonadState (FromExprState ann) m) =>
   IdentityExpr (Type Identity ann) ->
   m IRExpr
-fromExpr (EPrim _ prim) = pure $ fromPrim prim
+fromExpr (EPrim _ prim) = fromPrim prim
 fromExpr (EInfix _ op a b) = fromInfix op a b
 fromExpr (EAnn _ _ inner) = fromExpr inner
 fromExpr (EIf ty predExpr thenExpr elseExpr) = do
@@ -315,6 +316,7 @@ swapVar target replace =
 
 mapIRExpr :: (IRExpr -> IRExpr) -> IRExpr -> IRExpr
 mapIRExpr _ (IRVar a) = IRVar a
+mapIRExpr _ (IRString txt) = IRString txt
 mapIRExpr _ (IRAlloc ty) = IRAlloc ty
 mapIRExpr _ (IRPrim p) = IRPrim p
 mapIRExpr f (IRInfix op a b) = IRInfix op (f a) (f b)
@@ -500,8 +502,8 @@ modulePartsFromExpr ::
   IdentityExpr (Type Identity ann) ->
   [IRModulePart]
 modulePartsFromExpr dataTypes expr =
-  let (mainExpr, FromExprState otherParts _ _ _) =
-        runState (fromExpr expr) (FromExprState mempty dataTypes 1 mempty)
+  let (mainExpr, FromExprState {fesModuleParts = otherParts}) =
+        runState (fromExpr expr) (FromExprState mempty dataTypes 1 mempty mempty)
       printFuncName = getPrintFuncName (getExprAnnotation expr)
       printFuncType = getPrintFuncType (getExprAnnotation expr)
    in otherParts
@@ -523,4 +525,4 @@ getConstructorNumber ::
   Constructor ->
   m IRExpr
 getConstructorNumber =
-  fmap fromPrim <$> Compile.primFromConstructor
+  Compile.primFromConstructor >=> fromPrim

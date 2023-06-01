@@ -27,7 +27,14 @@ evalExpr input =
     Left e -> error (show e)
 
 testEnv :: (Monoid ann) => IR.FromExprState ann
-testEnv = IR.FromExprState mempty (builtInTypes Identity) 1 mempty
+testEnv =
+  IR.FromExprState
+    { IR.fesModuleParts = mempty,
+      IR.fesDataTypes = builtInTypes Identity,
+      IR.fesFreshInt = 1,
+      IR.fesVars = mempty,
+      IR.fesStrings = mempty
+    }
 
 getMainExpr :: Text -> IRExpr
 getMainExpr = fst . createIR
@@ -35,7 +42,7 @@ getMainExpr = fst . createIR
 createIR :: Text -> (IRExpr, [IRModulePart])
 createIR input = do
   let smolExpr = evalExpr input
-      (mainExpr, IR.FromExprState otherParts _ _ _) =
+      (mainExpr, IR.FromExprState {IR.fesModuleParts = otherParts}) =
         runState (IR.fromExpr smolExpr) testEnv
    in (mainExpr, otherParts)
 

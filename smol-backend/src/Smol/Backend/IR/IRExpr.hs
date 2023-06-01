@@ -43,6 +43,7 @@ instance IsString IRFunctionName where
 
 data IRType
   = IRInt2
+  | IRInt8
   | IRInt32
   | IRStruct [IRType]
   | IRPointer IRType
@@ -50,8 +51,9 @@ data IRType
   | IRArray Word64 IRType
   deriving stock (Eq, Ord, Show)
 
-data IRPrim = IRPrimInt2 Bool |
-      IRPrimInt32 Integer
+data IRPrim
+  = IRPrimInt2 Bool
+  | IRPrimInt32 Integer
   deriving stock (Eq, Ord, Show)
 
 newtype IRModule = IRModule [IRModulePart]
@@ -97,6 +99,7 @@ data IRExpr
   | IRStatements [IRStatement] IRExpr -- [things to do], value
   | IRPointerTo [Integer] IRExpr
   | IRInitialiseDataType IRExpr IRType IRType [IRSetTo] -- where to put stuff, type of whole thing, type of constructor, values
+  | IRString Text
   deriving stock (Eq, Ord, Show)
 
 data IRMatchCase = IRMatchCase
@@ -125,7 +128,8 @@ data IRExtern = IRExtern
 
 data IRState = IRState
   { irFunctions :: Map IRFunctionName (Either IRFunction IRExtern),
-    irVars :: Map IRIdentifier LLVM.Operand
+    irVars :: Map IRIdentifier LLVM.Operand,
+    irStrings :: Map Text LLVM.Operand
   }
 
 prettyModule :: IRModule -> Text

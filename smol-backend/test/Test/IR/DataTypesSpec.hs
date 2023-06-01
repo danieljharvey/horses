@@ -22,7 +22,14 @@ typeToDataType ::
 typeToDataType ty =
   evalState
     (DT.typeToDataTypeInMemory ty)
-    (FromExprState mempty (builtInTypes Identity) 0 mempty)
+    ( FromExprState
+        { fesModuleParts = mempty,
+          fesDataTypes = builtInTypes Identity,
+          fesFreshInt = 0,
+          fesVars = mempty,
+          fesStrings = mempty
+        }
+    )
 
 parseToIdentity :: Type ParseDep a -> Type Identity a
 parseToIdentity = fromResolvedType . fromParsedType

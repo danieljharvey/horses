@@ -38,9 +38,9 @@ predicatesToOperand ::
   (L.MonadModuleBuilder m, L.MonadIRBuilder m) =>
   Op.Operand ->
   NE.NonEmpty (PatternPredicate IRExpr) ->
-  (IRExpr -> Op.Operand) ->
+  (IRExpr -> m Op.Operand) ->
   m Op.Operand
-predicatesToOperand input nePreds irPrimToLLVM = do
+predicatesToOperand input nePreds irExprToLLVM = do
   firstOp <- compilePred (NE.head nePreds)
   foldM
     ( \op pat -> do
@@ -55,7 +55,8 @@ predicatesToOperand input nePreds irPrimToLLVM = do
         if null as
           then pure input
           else loadFromStruct input as
-      L.icmp IP.EQ val (irPrimToLLVM prim)
+      llExpr <- irExprToLLVM prim
+      L.icmp IP.EQ val llExpr
     compilePred (PathEquals (GetPath _ (GetArrayTail _)) _) =
       error "predicatesToOperand GetArrayTail"
 
@@ -86,7 +87,7 @@ selectToOperand ::
     L.MonadIRBuilder m
   ) =>
   Op.Operand ->
-  (IRExpr -> Op.Operand) ->
+  (IRExpr -> m Op.Operand) ->
   SelectList ([PatternPredicate IRExpr], IRType) ->
   m Op.Operand
 selectToOperand input irExprToLLVM = go
