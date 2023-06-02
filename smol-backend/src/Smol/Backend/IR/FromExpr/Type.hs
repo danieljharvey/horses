@@ -10,11 +10,6 @@ import Control.Monad.State
 import qualified Data.List.NonEmpty as NE
 import Data.Map.Strict (Map)
 import qualified Data.Map.Strict as M
-import qualified Data.Set as S
-import qualified Data.Set.NonEmpty as NES
-import Data.Text (Text)
-import qualified Data.Text as T
-import GHC.Word (Word64)
 import Smol.Backend.IR.FromExpr.DataTypes
 import qualified Smol.Backend.IR.FromExpr.Helpers as Compile
 import Smol.Backend.IR.FromExpr.Types
@@ -28,11 +23,6 @@ typeFromEnv ::
   m IRType
 typeFromEnv env = IRStruct <$> traverse fromType (M.elems env)
 
-maxLen :: NES.NESet Text -> Word64
-maxLen nesText =
-  let lengths = fmap T.length (S.toList (NES.toSet nesText))
-   in fromIntegral (foldr max 0 lengths)
-
 fromType ::
   (Show ann, MonadState (FromExprState ann) m) =>
   Smol.Type Identity ann ->
@@ -45,11 +35,8 @@ fromType (Smol.TLiteral _ lit) = pure $ fromLit lit
     fromLit (Smol.TLBool _) = IRInt2
     fromLit (Smol.TLInt _) = IRInt32
     fromLit Smol.TLUnit = IRInt2 -- unit become bool?
-    fromLit (Smol.TLString as) =
-      IRStruct
-        [ IRInt32,
-          IRArray (maxLen as) IRInt32
-        ]
+    fromLit (Smol.TLString _as) =
+      IRPointer IRInt8 -- a C string is a pointer to the char at the start of the string
 fromType (Smol.TFunc _ env tArg tBody) = do
   argType <- fromType tArg
   envType <- typeFromEnv env

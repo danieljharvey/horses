@@ -53,7 +53,6 @@ import qualified LLVM.AST as AST
 import qualified LLVM.AST as LLVM hiding (function)
 import qualified LLVM.AST.AddrSpace as AST
 import qualified LLVM.AST.AddrSpace as LLVM
-import qualified LLVM.AST.Name as LLVM
 import qualified LLVM.AST.Operand as Op
 import LLVM.AST.Type as AST
 import LLVM.AST.Type as LLVM
