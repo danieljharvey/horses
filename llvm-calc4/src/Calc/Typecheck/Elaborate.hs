@@ -4,9 +4,9 @@
 
 module Calc.Typecheck.Elaborate (elaborate, elaborateFunction, elaborateModule) where
 
-import Calc.Patterns.Flatten
 import Calc.ExprUtils
 import Calc.PatternUtils
+import Calc.Patterns.Flatten
 import Calc.TypeUtils
 import Calc.Typecheck.Error
 import Calc.Typecheck.Types

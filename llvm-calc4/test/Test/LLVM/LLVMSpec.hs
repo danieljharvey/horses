@@ -28,6 +28,9 @@ testCompileIR (input, result) = it (show input) $ do
           resp <- run (moduleToLLVM typedExpr)
           resp `shouldBe` result
 
+joinLines :: [Text] -> Text
+joinLines = foldr (\a b -> a <> " " <> b) ""
+
 spec :: Spec
 spec = do
   describe "LLVMSpec" $ do
@@ -40,10 +43,23 @@ spec = do
             ("if False then 1 else 2", "2"),
             ("if 1 == 1 then 7 else 10", "7"),
             ("if 2 == 1 then True else False", "False"),
-            ("function one() { 1 } function two() { 2 } one() + two()", "3"),
+            ( joinLines
+                [ "function one() { 1 }",
+                  "function two() { 2 }",
+                  "one() + two()"
+                ],
+              "3"
+            ),
             ("function increment(a: Integer) { a + 1 } increment(41)", "42"),
             ("function sum(a: Integer, b: Integer) { a + b } sum(20,22)", "42"),
-            ("function inc(a: Integer) { a + 1 } inc(inc(inc(inc(0))))", "4")
+            ("function inc(a: Integer) { a + 1 } inc(inc(inc(inc(0))))", "4"),
+            ( joinLines
+                [ "function swapIntAndBool(pair: (Integer, Boolean)) { case pair of (a, b) -> (b, a) }",
+                  "function fst(pair: (Boolean, Integer)) { case pair of (a,_) -> a }",
+                  "fst(swapIntAndBool((1,True)))"
+                ],
+              "True" -- note we cannot make polymorphic versions of these functions yet, although we will
+            )
           ]
 
     describe "From modules" $ do

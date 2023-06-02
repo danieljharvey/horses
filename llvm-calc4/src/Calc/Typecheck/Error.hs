@@ -222,13 +222,13 @@ typeErrorDiagnostic input e =
                       input
                       ann
                     <*> pure
-                      ( Diag.This  $
-                              prettyPrint $ "Missing patterns: " <> PP.line <> prettyListToLines missingPatterns
+                      ( Diag.This $
+                          prettyPrint $
+                            "Missing patterns: " <> PP.line <> prettyListToLines missingPatterns
                       )
                 ]
             )
             []
-
    in Diag.addReport diag report
 
 -- | becomes "a, b, c, d"
@@ -239,10 +239,10 @@ prettyHashset hs =
     (PP.pretty <$> HS.toList hs)
 
 prettyListToLines :: (PP.Pretty a) => [a] -> PP.Doc ann
-prettyListToLines as
-  = PP.concatWith
-      (PP.surround PP.line)
-      (PP.pretty <$> as)
+prettyListToLines as =
+  PP.concatWith
+    (PP.surround PP.line)
+    (PP.pretty <$> as)
 
 renderWithWidth :: Int -> PP.Doc ann -> Text
 renderWithWidth w doc = PP.renderStrict (PP.layoutPretty layoutOptions (PP.unAnnotate doc))

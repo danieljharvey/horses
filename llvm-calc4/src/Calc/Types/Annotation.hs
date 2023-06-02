@@ -14,7 +14,7 @@ data Annotation = Location Int Int
 -- | when combining two `Annotation`, combine to make one big annotation
 instance Semigroup Annotation where
   (Location start end) <> (Location start' end') =
-      Location (min start start') (max end end')
+    Location (min start start') (max end end')
 
 -- | Default to an empty `Annotation`
 instance Monoid Annotation where
