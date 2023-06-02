@@ -131,14 +131,7 @@ irExprToLLVM (IRLet ident expr body) = do
   llExpr <- irExprToLLVM expr
   addVar ident llExpr
   irExprToLLVM body
-irExprToLLVM (IRInfix IRAdd a b) = do
-  lhs <- irExprToLLVM a
-  rhs <- irExprToLLVM b
-  LLVM.add lhs rhs
-irExprToLLVM (IRInfix IREquals a b) = do
-  lhs <- irExprToLLVM a
-  rhs <- irExprToLLVM b
-  LLVM.icmp LLVM.EQ lhs rhs
+irExprToLLVM (IRInfix op a b) = irInfixToLLVM op a b
 irExprToLLVM (IRStatements statements expr) = do
   traverse_ irStatementToLLVM statements
   irExprToLLVM expr
@@ -196,6 +189,17 @@ irExprToLLVM (IRFuncPointer fnName) = do
   pure $
     LLVM.ConstantOperand
       (LLVM.GlobalReference (pointerType fnType) (irFunctionNameToLLVM fnName))
+
+irInfixToLLVM :: (LLVM.MonadIRBuilder m, LLVM.MonadModuleBuilder m,
+                  MonadState IRState m, MonadFix m) => IROp -> IRExpr -> IRExpr -> m LLVM.Operand
+irInfixToLLVM IRAdd a b = do
+  lhs <- irExprToLLVM a
+  rhs <- irExprToLLVM b
+  LLVM.add lhs rhs
+irInfixToLLVM IREquals a b = do
+  lhs <- irExprToLLVM a
+  rhs <- irExprToLLVM b
+  LLVM.icmp LLVM.EQ lhs rhs
 
 irExprToLLVMBlock ::
   ( MonadFix m,

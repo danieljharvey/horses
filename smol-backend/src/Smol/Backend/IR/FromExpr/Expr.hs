@@ -68,6 +68,16 @@ irPrintString =
         }
     )
 
+irStringConcat :: IRModulePart
+irStringConcat =
+  IRExternDef
+    ( IRExtern
+        { ireName = "stringconcat",
+        ireArgs = [IRPointer IRInt8, IRPointer IRInt8],
+        ireReturn = IRPointer IRInt8
+        }
+    )
+
 getPrinter ::
   (Show ann, Show (dep Identifier), Show (dep TypeName)) =>
   Type dep ann ->
@@ -148,7 +158,7 @@ irFromExpr ::
   IRModule
 irFromExpr dataTypes expr =
   IRModule $
-    [getPrinter (getExprAnnotation expr)]
+    [getPrinter (getExprAnnotation expr), irStringConcat]
       <> modulePartsFromExpr dataTypes expr
 
 fromPrim :: (Monad m) => Prim -> m IRExpr
@@ -165,10 +175,17 @@ fromInfix ::
   IdentityExpr (Type Identity ann) ->
   m IRExpr
 fromInfix op a b = do
-  let irOp = case op of
-        OpAdd -> IRAdd
-        OpEquals -> IREquals
-  IRInfix irOp <$> fromExpr a <*> fromExpr b
+  irA <- fromExpr a
+  irB <- fromExpr b
+  case op of
+        OpAdd -> case irA of
+                   IRString {} -> do
+                         case irStringConcat of
+                           IRExternDef (IRExtern fnName fnArgs fnReturn) ->
+                             pure $ IRApply (IRFunctionType fnArgs fnReturn) (IRFuncPointer fnName) [irA, irB]
+                           _ -> error "oh no"
+                   _ -> pure (IRInfix IRAdd irA irB)
+        OpEquals -> pure (IRInfix IREquals irA irB)
 
 functionReturnType :: IRType -> ([IRType], IRType)
 functionReturnType (IRStruct [IRPointer (IRFunctionType args ret), _]) =

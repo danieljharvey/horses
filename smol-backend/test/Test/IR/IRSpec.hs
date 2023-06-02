@@ -87,7 +87,8 @@ spec = do
                 ("(if False then 1 else 2 : Nat)", "2"),
                 ("\"horse\"", "horse"),
                 ("if True then \"horse\" else \"no-horse\"", "horse"),
-                ("\"hor\" + \"se\"", "horse")
+                ("\"hor\" + \"se\"", "horse"),
+                ("\"horse\" == \"horse\"", "True")
               ]
 
         describe "IR compile" $ do
