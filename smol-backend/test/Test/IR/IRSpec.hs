@@ -88,7 +88,11 @@ spec = do
                 ("\"horse\"", "horse"),
                 ("if True then \"horse\" else \"no-horse\"", "horse"),
                 ("\"hor\" + \"se\"", "horse"),
-                ("\"horse\" == \"horse\"", "True")
+                ("\"horse\" == \"horse\"", "True"),
+                ("\"hor\" + \"se\" == \"horse\"", "True"),
+                ("(\"dog\" : String) == (\"log\" : String)", "False"),
+                ("case \"dog\" of \"dog\" -> True | _ -> False", "True"),
+                ("case \"log\" of \"dog\" -> True | _ -> False", "True")
               ]
 
         describe "IR compile" $ do

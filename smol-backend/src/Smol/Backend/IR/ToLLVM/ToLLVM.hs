@@ -190,8 +190,16 @@ irExprToLLVM (IRFuncPointer fnName) = do
     LLVM.ConstantOperand
       (LLVM.GlobalReference (pointerType fnType) (irFunctionNameToLLVM fnName))
 
-irInfixToLLVM :: (LLVM.MonadIRBuilder m, LLVM.MonadModuleBuilder m,
-                  MonadState IRState m, MonadFix m) => IROp -> IRExpr -> IRExpr -> m LLVM.Operand
+irInfixToLLVM ::
+  ( LLVM.MonadIRBuilder m,
+    LLVM.MonadModuleBuilder m,
+    MonadState IRState m,
+    MonadFix m
+  ) =>
+  IROp ->
+  IRExpr ->
+  IRExpr ->
+  m LLVM.Operand
 irInfixToLLVM IRAdd a b = do
   lhs <- irExprToLLVM a
   rhs <- irExprToLLVM b

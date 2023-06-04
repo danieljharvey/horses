@@ -86,4 +86,4 @@ fromTypePrim :: Smol.TypePrim -> IRType
 fromTypePrim Smol.TPBool = IRInt2
 fromTypePrim Smol.TPNat = IRInt32
 fromTypePrim Smol.TPInt = IRInt32
-fromTypePrim Smol.TPString = error "fromTypePrim TPString"
+fromTypePrim Smol.TPString = IRPointer IRInt8

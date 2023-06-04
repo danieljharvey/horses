@@ -38,50 +38,50 @@ import Smol.Core.Types.Prim
 import Smol.Core.Types.Type
 import Smol.Core.Types.TypeName
 
-irPrintInt :: IRModulePart
+irPrintInt :: IRExtern
 irPrintInt =
-  IRExternDef
-    ( IRExtern
-        { ireName = "printint",
-          ireArgs = [IRInt32],
-          ireReturn = IRInt32
-        }
-    )
+  IRExtern
+    { ireName = "printint",
+      ireArgs = [IRInt32],
+      ireReturn = IRInt32
+    }
 
-irPrintBool :: IRModulePart
+irPrintBool :: IRExtern
 irPrintBool =
-  IRExternDef
-    ( IRExtern
-        { ireName = "printbool",
-          ireArgs = [IRInt2],
-          ireReturn = IRInt32
-        }
-    )
+  IRExtern
+    { ireName = "printbool",
+      ireArgs = [IRInt2],
+      ireReturn = IRInt32
+    }
 
-irPrintString :: IRModulePart
+irPrintString :: IRExtern
 irPrintString =
-  IRExternDef
-    ( IRExtern
-        { ireName = "printstring",
-          ireArgs = [IRPointer IRInt8],
-          ireReturn = IRInt32
-        }
-    )
+  IRExtern
+    { ireName = "printstring",
+      ireArgs = [IRPointer IRInt8],
+      ireReturn = IRInt32
+    }
 
-irStringConcat :: IRModulePart
+irStringConcat :: IRExtern
 irStringConcat =
-  IRExternDef
-    ( IRExtern
-        { ireName = "stringconcat",
-        ireArgs = [IRPointer IRInt8, IRPointer IRInt8],
-        ireReturn = IRPointer IRInt8
-        }
-    )
+  IRExtern
+    { ireName = "stringconcat",
+      ireArgs = [IRPointer IRInt8, IRPointer IRInt8],
+      ireReturn = IRPointer IRInt8
+    }
+
+irStringEquals :: IRExtern
+irStringEquals =
+  IRExtern
+    { ireName = "stringequals",
+      ireArgs = [IRPointer IRInt8, IRPointer IRInt8],
+      ireReturn = IRInt2
+    }
 
 getPrinter ::
   (Show ann, Show (dep Identifier), Show (dep TypeName)) =>
   Type dep ann ->
-  IRModulePart
+  IRExtern
 getPrinter (TPrim _ TPInt) = irPrintInt
 getPrinter (TPrim _ TPNat) = irPrintInt
 getPrinter (TPrim _ TPBool) = irPrintBool
@@ -99,8 +99,7 @@ getPrintFuncName ::
   IRFunctionName
 getPrintFuncName ty =
   case getPrinter ty of
-    (IRExternDef (IRExtern n _ _)) -> n
-    other -> error (show other)
+    (IRExtern n _ _) -> n
 
 getPrintFuncType ::
   ( Show ann,
@@ -111,8 +110,7 @@ getPrintFuncType ::
   IRType
 getPrintFuncType ty =
   case getPrinter ty of
-    (IRExternDef (IRExtern _ fnArgs fnReturn)) -> IRFunctionType fnArgs fnReturn
-    other -> error (show other)
+    (IRExtern _ fnArgs fnReturn) -> IRFunctionType fnArgs fnReturn
 
 getFreshName :: (MonadState (FromExprState ann) m) => String -> m String
 getFreshName prefix = do
@@ -158,7 +156,10 @@ irFromExpr ::
   IRModule
 irFromExpr dataTypes expr =
   IRModule $
-    [getPrinter (getExprAnnotation expr), irStringConcat]
+    [ IRExternDef $ getPrinter (getExprAnnotation expr),
+      IRExternDef irStringConcat,
+      IRExternDef irStringEquals -- we should dynamically include these once we get a lot of stdlib helpers
+    ]
       <> modulePartsFromExpr dataTypes expr
 
 fromPrim :: (Monad m) => Prim -> m IRExpr
@@ -174,18 +175,27 @@ fromInfix ::
   IdentityExpr (Type Identity ann) ->
   IdentityExpr (Type Identity ann) ->
   m IRExpr
-fromInfix op a b = do
+fromInfix OpAdd a b = do
   irA <- fromExpr a
   irB <- fromExpr b
-  case op of
-        OpAdd -> case irA of
-                   IRString {} -> do
-                         case irStringConcat of
-                           IRExternDef (IRExtern fnName fnArgs fnReturn) ->
-                             pure $ IRApply (IRFunctionType fnArgs fnReturn) (IRFuncPointer fnName) [irA, irB]
-                           _ -> error "oh no"
-                   _ -> pure (IRInfix IRAdd irA irB)
-        OpEquals -> pure (IRInfix IREquals irA irB)
+  if isStringType (getExprAnnotation a)
+    then
+      let (IRExtern fnName fnArgs fnReturn) = irStringConcat
+       in pure $ IRApply (IRFunctionType fnArgs fnReturn) (IRFuncPointer fnName) [irA, irB]
+    else pure (IRInfix IRAdd irA irB)
+fromInfix OpEquals a b = do
+  irA <- fromExpr a
+  irB <- fromExpr b
+  if isStringType (getExprAnnotation a)
+    then
+      let (IRExtern fnName fnArgs fnReturn) = irStringEquals
+       in pure $ IRApply (IRFunctionType fnArgs fnReturn) (IRFuncPointer fnName) [irA, irB]
+    else pure (IRInfix IREquals irA irB)
+
+isStringType :: Type Identity ann -> Bool
+isStringType (TPrim _ TPString) = True
+isStringType (TLiteral _ (TLString _)) = True
+isStringType _ = False
 
 functionReturnType :: IRType -> ([IRType], IRType)
 functionReturnType (IRStruct [IRPointer (IRFunctionType args ret), _]) =

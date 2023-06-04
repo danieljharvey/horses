@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stdbool.h>
 
 void printint(int i) {
   printf("%d", i);
@@ -26,4 +27,9 @@ char* stringconcat(const char *s1, const char *s2)
     memcpy(result, s1, len1);
     memcpy(result + len1, s2, len2 + 1); // +1 to copy the null-terminator
     return result;
+}
+
+// check two strings are the same
+bool stringequals(const char *s1, const char *s2) {
+  return (strcmp(s1, s2) == 0);
 }

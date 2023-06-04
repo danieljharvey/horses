@@ -75,6 +75,7 @@ spec = do
               ("200 + -100", "100"),
               ("(1 + 2 + 3 : Nat)", "Nat"),
               ("(1 + 2 + 3 : Int)", "Int"),
+              ("(\"horse\" : String)", "String"),
               ("\"hor\" + \"se\"", "\"horse\""),
               ("let a = if True then \"eg\" else \"og\"; a + \"g\"", "\"egg\" | \"ogg\""),
               ( "(\\pair -> case pair of (a,_) -> a : (Bool, Nat) -> Bool) (True, 1)",
