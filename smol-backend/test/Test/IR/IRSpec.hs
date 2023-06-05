@@ -84,7 +84,16 @@ spec = do
                 ("(1 + 1 : Int)", "2"),
                 ("(1 + 2 + 3 + 4 + 5 + 6 : Int)", "21"),
                 ("(if True then 1 else 2 : Nat)", "1"),
-                ("(if False then 1 else 2 : Nat)", "2")
+                ("(if False then 1 else 2 : Nat)", "2"),
+                ("\"horse\"", "horse"),
+                ("if True then \"horse\" else \"no-horse\"", "horse"),
+                ("\"hor\" + \"se\"", "horse"),
+                ("\"horse\" == \"horse\"", "True"),
+                ("\"hor\" + \"se\" == \"horse\"", "True"),
+                ("(\"dog\" : String) == (\"log\" : String)", "False"),
+                ("case \"dog\" of \"dog\" -> True | _ -> False", "True"),
+                ("case (\"log\" : String) of \"dog\" -> True | _ -> False", "False"),
+                ("case \"dog\" of \"dog\" -> True | _ -> False", "True")
               ]
 
         describe "IR compile" $ do

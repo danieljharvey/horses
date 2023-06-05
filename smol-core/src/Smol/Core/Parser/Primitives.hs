@@ -7,6 +7,7 @@ module Smol.Core.Parser.Primitives
     intPrimParser,
     truePrimParser,
     falsePrimParser,
+    stringPrimParser,
     unitParser,
   )
 where
@@ -15,6 +16,7 @@ import Data.Functor (($>))
 import qualified Data.List.NonEmpty as NE
 import qualified Data.Set.NonEmpty as NES
 import Data.Text (Text)
+import qualified Data.Text as T
 import Data.Void
 import GHC.Num.Natural
 import Smol.Core.Parser.Shared
@@ -33,6 +35,7 @@ primParser =
         <|> truePrimParser
         <|> falsePrimParser
         <|> PUnit <$ unitParser
+        <|> stringPrimParser
     )
 
 typeLiteralParser :: Parser TypeLiteral
@@ -42,6 +45,7 @@ typeLiteralParser =
         <|> TLBool <$> trueParser
         <|> TLBool <$> falseParser
         <|> TLUnit <$ unitParser
+        <|> TLString <$> multiStringParser
     )
 
 -- 0, 1, 2
@@ -62,13 +66,16 @@ intParser :: Parser Integer
 intParser =
   L.signed (string "" $> ()) L.decimal
 
-multiIntParser :: Parser (NES.NESet Integer)
-multiIntParser = do
+unionParser :: (Ord a) => Parser a -> Parser (NES.NESet a)
+unionParser parseA = do
   ints <-
     sepBy1
-      (myLexeme intParser)
+      (myLexeme parseA)
       (myString "|")
   pure (NES.fromList (NE.fromList ints))
+
+multiIntParser :: Parser (NES.NESet Integer)
+multiIntParser = unionParser intParser
 
 ---
 
@@ -89,23 +96,14 @@ falseParser = myString "False" $> False
 unitParser :: Parser ()
 unitParser = myString "Unit" $> ()
 
-{-
-     textPrim :: Parser Text
-textPrim = T.pack <$> (char '\"' *> manyTill L.charLiteral (char '\"'))
--}
+---
 
-{-
-stringPrim :: Parser Prim
-stringPrim =
-  MyString . StringType <$> textPrim
+stringPrimParser :: Parser Prim
+stringPrimParser =
+  PString <$> textPrim
 
-stringParser :: Parser ParserExpr
-stringParser =
-  myLexeme
-    ( withLocation
-        EPrim
-        stringPrim
-    )
--}
+textPrim :: Parser Text
+textPrim = T.pack <$> (char '"' *> manyTill L.charLiteral (char '"'))
 
-----
+multiStringParser :: Parser (NES.NESet Text)
+multiStringParser = unionParser textPrim

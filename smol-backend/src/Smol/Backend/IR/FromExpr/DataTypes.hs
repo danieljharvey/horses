@@ -120,6 +120,7 @@ howManyInts DTEnum = 1
 howManyInts (DTPrim Smol.TPInt) = 1
 howManyInts (DTPrim Smol.TPBool) = 1
 howManyInts (DTPrim Smol.TPNat) = 1
+howManyInts (DTPrim Smol.TPString) = 1
 howManyInts (DTTuple as) = getSum $ foldMap (Sum . howManyInts) as
 howManyInts (DTArray size a) = size * howManyInts a
 howManyInts (DTDataType whole _) = howManyInts whole -- wrong?
@@ -147,6 +148,7 @@ toRepresentation ::
 toRepresentation (Smol.TPrim _ prim) = pure $ DTPrim prim
 toRepresentation (Smol.TLiteral _ (Smol.TLInt _)) = pure $ DTPrim Smol.TPInt
 toRepresentation (Smol.TLiteral _ (Smol.TLBool _)) = pure $ DTPrim Smol.TPBool
+toRepresentation (Smol.TLiteral _ (Smol.TLString _)) = pure $ DTPrim Smol.TPString
 toRepresentation ty@Smol.TApp {} = do
   result <- typeToDataTypeInMemory ty
   case result of

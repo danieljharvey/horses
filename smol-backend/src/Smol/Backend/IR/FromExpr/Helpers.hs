@@ -8,6 +8,7 @@ module Smol.Backend.IR.FromExpr.Helpers
   ( flattenConstructorType,
     primFromConstructor,
     lookupTypeName,
+    isStringType,
   )
 where
 
@@ -19,6 +20,11 @@ import Smol.Backend.IR.FromExpr.Types
 import Smol.Core.Helpers
 import qualified Smol.Core.Typecheck.Shared as TC
 import qualified Smol.Core.Types as Smol
+
+isStringType :: Smol.Type Identity ann -> Bool
+isStringType (Smol.TPrim _ Smol.TPString) = True
+isStringType (Smol.TLiteral _ (Smol.TLString _)) = True
+isStringType _ = False
 
 flattenConstructorType ::
   ( Monad m,

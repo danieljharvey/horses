@@ -5,6 +5,7 @@ module Test.Typecheck.SubtypeSpec (spec) where
 import Control.Monad.Trans.Writer.CPS (runWriterT)
 import Data.Either
 import Data.Foldable (traverse_)
+import Data.List.NonEmpty (NonEmpty (..))
 import Smol.Core
 import Smol.Core.Typecheck.FromParsedExpr
 import Test.Helpers
@@ -95,24 +96,30 @@ spec = do
         let inputs =
               [ ("1", "2", "1 | 2"),
                 ("1 | 2", "2", "1 | 2"),
-                ("1 | 2", "3", "1 | 2 | 3")
+                ("1 | 2", "3", "1 | 2 | 3"),
+                ("\"eg\"", "\"g\"", "\"eg\" | \"g\"")
               ]
         traverse_
           ( \(one, two, result) -> it (show one <> " <> " <> show two) $ do
               let a =
-                    combine
-                      (fromParsedType (unsafeParseType one))
-                      (fromParsedType (unsafeParseType two))
+                    combineMany $
+                      fromParsedType (unsafeParseType one)
+                        :| [fromParsedType (unsafeParseType two)]
               fst <$> runWriterT a `shouldBe` Right (fromParsedType (unsafeParseType result))
           )
           inputs
 
-      fdescribe "Type addition" $ do
+      describe "Type addition" $ do
         let inputs =
               [ ("1", "1", "2"),
                 ("1", "2", "3"),
                 ("1 | 2", "2", "3 | 4"),
-                ("1 | 2", "3 | 4", "4 | 5 | 6")
+                ("1 | 2", "3 | 4", "4 | 5 | 6"),
+                ("1", "Nat", "Nat"),
+                ("Nat", "1", "Nat"),
+                ("\"a\"", "String", "String"),
+                ("String", "\"a\"", "String"),
+                ("\"po\"", "\"go\"", "\"pogo\"")
               ]
         traverse_
           ( \(one, two, result) -> it (show one <> " + " <> show two <> " = " <> show result) $ do

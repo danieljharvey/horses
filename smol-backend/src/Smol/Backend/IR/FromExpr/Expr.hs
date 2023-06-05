@@ -10,6 +10,7 @@ module Smol.Backend.IR.FromExpr.Expr
   )
 where
 
+import Control.Monad ((>=>))
 import Control.Monad.Identity
 import Control.Monad.State
 import Data.Bifunctor
@@ -29,7 +30,6 @@ import Smol.Backend.Types.PatternPredicate
 import Smol.Core.Helpers
 import Smol.Core.Typecheck (flattenConstructorApplication)
 import Smol.Core.Typecheck.Shared (getExprAnnotation)
-import Smol.Core.Typecheck.Subtype
 import Smol.Core.Types.Constructor
 import Smol.Core.Types.DataType
 import Smol.Core.Types.Expr
@@ -38,37 +38,56 @@ import Smol.Core.Types.Prim
 import Smol.Core.Types.Type
 import Smol.Core.Types.TypeName
 
-irPrintInt :: IRModulePart
+irPrintInt :: IRExtern
 irPrintInt =
-  IRExternDef
-    ( IRExtern
-        { ireName = "printint",
-          ireArgs = [IRInt32],
-          ireReturn = IRInt32
-        }
-    )
+  IRExtern
+    { ireName = "printint",
+      ireArgs = [IRInt32],
+      ireReturn = IRInt32
+    }
 
-irPrintBool :: IRModulePart
+irPrintBool :: IRExtern
 irPrintBool =
-  IRExternDef
-    ( IRExtern
-        { ireName = "printbool",
-          ireArgs = [IRInt2],
-          ireReturn = IRInt32
-        }
-    )
+  IRExtern
+    { ireName = "printbool",
+      ireArgs = [IRInt2],
+      ireReturn = IRInt32
+    }
+
+irPrintString :: IRExtern
+irPrintString =
+  IRExtern
+    { ireName = "printstring",
+      ireArgs = [IRPointer IRInt8],
+      ireReturn = IRInt32
+    }
+
+irStringConcat :: IRExtern
+irStringConcat =
+  IRExtern
+    { ireName = "stringconcat",
+      ireArgs = [IRPointer IRInt8, IRPointer IRInt8],
+      ireReturn = IRPointer IRInt8
+    }
+
+irStringEquals :: IRExtern
+irStringEquals =
+  IRExtern
+    { ireName = "stringequals",
+      ireArgs = [IRPointer IRInt8, IRPointer IRInt8],
+      ireReturn = IRInt2
+    }
 
 getPrinter ::
   (Show ann, Show (dep Identifier), Show (dep TypeName)) =>
   Type dep ann ->
-  IRModulePart
+  IRExtern
 getPrinter (TPrim _ TPInt) = irPrintInt
 getPrinter (TPrim _ TPNat) = irPrintInt
 getPrinter (TPrim _ TPBool) = irPrintBool
 getPrinter (TLiteral _ (TLBool _)) = irPrintBool
 getPrinter (TLiteral _ (TLInt _)) = irPrintInt
-getPrinter union | isNatLiteral union = irPrintInt
-getPrinter union | isIntLiteral union = irPrintInt
+getPrinter (TLiteral _ (TLString _)) = irPrintString
 getPrinter other = error ("could not find a printer for type " <> show other)
 
 getPrintFuncName ::
@@ -80,8 +99,7 @@ getPrintFuncName ::
   IRFunctionName
 getPrintFuncName ty =
   case getPrinter ty of
-    (IRExternDef (IRExtern n _ _)) -> n
-    other -> error (show other)
+    (IRExtern n _ _) -> n
 
 getPrintFuncType ::
   ( Show ann,
@@ -92,8 +110,7 @@ getPrintFuncType ::
   IRType
 getPrintFuncType ty =
   case getPrinter ty of
-    (IRExternDef (IRExtern _ fnArgs fnReturn)) -> IRFunctionType fnArgs fnReturn
-    other -> error (show other)
+    (IRExtern _ fnArgs fnReturn) -> IRFunctionType fnArgs fnReturn
 
 getFreshName :: (MonadState (FromExprState ann) m) => String -> m String
 getFreshName prefix = do
@@ -139,14 +156,18 @@ irFromExpr ::
   IRModule
 irFromExpr dataTypes expr =
   IRModule $
-    [getPrinter (getExprAnnotation expr)]
+    [ IRExternDef $ getPrinter (getExprAnnotation expr),
+      IRExternDef irStringConcat,
+      IRExternDef irStringEquals -- we should dynamically include these once we get a lot of stdlib helpers
+    ]
       <> modulePartsFromExpr dataTypes expr
 
-fromPrim :: Prim -> IRPrim
-fromPrim (PInt i) = IRPrimInt32 i
-fromPrim (PNat i) = IRPrimInt32 (fromIntegral i)
-fromPrim (PBool b) = IRPrimInt2 b
-fromPrim PUnit = IRPrimInt2 False -- Unit is represented the same as False
+fromPrim :: (Monad m) => Prim -> m IRExpr
+fromPrim (PInt i) = pure $ IRPrim (IRPrimInt32 i)
+fromPrim (PNat i) = pure $ IRPrim (IRPrimInt32 (fromIntegral i))
+fromPrim (PBool b) = pure $ IRPrim (IRPrimInt2 b)
+fromPrim PUnit = pure $ IRPrim (IRPrimInt2 False) -- Unit is represented the same as False
+fromPrim (PString txt) = pure $ IRString txt
 
 fromInfix ::
   (Show ann, MonadState (FromExprState ann) m) =>
@@ -154,11 +175,22 @@ fromInfix ::
   IdentityExpr (Type Identity ann) ->
   IdentityExpr (Type Identity ann) ->
   m IRExpr
-fromInfix op a b = do
-  let irOp = case op of
-        OpAdd -> IRAdd
-        OpEquals -> IREquals
-  IRInfix irOp <$> fromExpr a <*> fromExpr b
+fromInfix OpAdd a b = do
+  irA <- fromExpr a
+  irB <- fromExpr b
+  if Compile.isStringType (getExprAnnotation a)
+    then
+      let (IRExtern fnName fnArgs fnReturn) = irStringConcat
+       in pure $ IRApply (IRFunctionType fnArgs fnReturn) (IRFuncPointer fnName) [irA, irB]
+    else pure (IRInfix IRAdd irA irB)
+fromInfix OpEquals a b = do
+  irA <- fromExpr a
+  irB <- fromExpr b
+  if Compile.isStringType (getExprAnnotation a)
+    then
+      let (IRExtern fnName fnArgs fnReturn) = irStringEquals
+       in pure $ IRApply (IRFunctionType fnArgs fnReturn) (IRFuncPointer fnName) [irA, irB]
+    else pure (IRInfix IREquals irA irB)
 
 functionReturnType :: IRType -> ([IRType], IRType)
 functionReturnType (IRStruct [IRPointer (IRFunctionType args ret), _]) =
@@ -169,7 +201,7 @@ fromExpr ::
   (Show ann, MonadState (FromExprState ann) m) =>
   IdentityExpr (Type Identity ann) ->
   m IRExpr
-fromExpr (EPrim _ prim) = pure (IRPrim $ fromPrim prim)
+fromExpr (EPrim _ prim) = fromPrim prim
 fromExpr (EInfix _ op a b) = fromInfix op a b
 fromExpr (EAnn _ _ inner) = fromExpr inner
 fromExpr (EIf ty predExpr thenExpr elseExpr) = do
@@ -184,13 +216,13 @@ fromExpr (EIf ty predExpr thenExpr elseExpr) = do
       ( NE.fromList
           [ IRMatchCase
               { irmcType = IRInt2,
-                irmcPatternPredicate = [PathEquals (GetPath [] GetValue) (IRPrimInt2 True)],
+                irmcPatternPredicate = [PathEquals (GetPath [] GetValue) (IRPrim $ IRPrimInt2 True)],
                 irmcGetPath = mempty,
                 irmcExpr = irThen
               },
             IRMatchCase
               { irmcType = IRInt2,
-                irmcPatternPredicate = [PathEquals (GetPath [] GetValue) (IRPrimInt2 False)],
+                irmcPatternPredicate = [PathEquals (GetPath [] GetValue) (IRPrim $ IRPrimInt2 False)],
                 irmcGetPath = mempty,
                 irmcExpr = irElse
               }
@@ -248,7 +280,7 @@ fromExpr (EConstructor ty constructor) = do
   tyResult <- Compile.flattenConstructorType ty
   case tyResult of
     -- genuine enum, return number
-    (_typeName, []) -> IRPrim <$> getConstructorNumber (runIdentity constructor)
+    (_typeName, []) -> getConstructorNumber (runIdentity constructor)
     (_typeName, _) -> do
       (structType, specificStructType) <-
         bimap
@@ -259,7 +291,7 @@ fromExpr (EConstructor ty constructor) = do
       -- get number for constructor
       consNum <- getConstructorNumber (runIdentity constructor)
 
-      let setConsNum = IRSetTo [0] IRInt32 (IRPrim consNum)
+      let setConsNum = IRSetTo [0] IRInt32 consNum
 
       pure $
         IRInitialiseDataType
@@ -306,6 +338,7 @@ swapVar target replace =
 
 mapIRExpr :: (IRExpr -> IRExpr) -> IRExpr -> IRExpr
 mapIRExpr _ (IRVar a) = IRVar a
+mapIRExpr _ (IRString txt) = IRString txt
 mapIRExpr _ (IRAlloc ty) = IRAlloc ty
 mapIRExpr _ (IRPrim p) = IRPrim p
 mapIRExpr f (IRInfix op a b) = IRInfix op (f a) (f b)
@@ -419,7 +452,7 @@ constructorAppFromExpr ty constructor cnArgs = do
   -- get number for constructor
   consNum <- getConstructorNumber constructor
 
-  let setConsNum = IRSetTo [0] IRInt32 (IRPrim consNum)
+  let setConsNum = IRSetTo [0] IRInt32 consNum
 
   statements <-
     traverseInd
@@ -491,7 +524,7 @@ modulePartsFromExpr ::
   IdentityExpr (Type Identity ann) ->
   [IRModulePart]
 modulePartsFromExpr dataTypes expr =
-  let (mainExpr, FromExprState otherParts _ _ _) =
+  let (mainExpr, FromExprState {fesModuleParts = otherParts}) =
         runState (fromExpr expr) (FromExprState mempty dataTypes 1 mempty)
       printFuncName = getPrintFuncName (getExprAnnotation expr)
       printFuncType = getPrintFuncType (getExprAnnotation expr)
@@ -512,6 +545,6 @@ modulePartsFromExpr dataTypes expr =
 getConstructorNumber ::
   (MonadState (FromExprState ann) m) =>
   Constructor ->
-  m IRPrim
+  m IRExpr
 getConstructorNumber =
-  fmap fromPrim . Compile.primFromConstructor
+  Compile.primFromConstructor >=> fromPrim

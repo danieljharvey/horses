@@ -4,7 +4,6 @@
 module Smol.Core.Typecheck.Subtype
   ( isSubtypeOf,
     combineMany,
-    combine,
     combineTypeMaps,
     generaliseLiteral,
     isNatLiteral,
@@ -57,6 +56,7 @@ generaliseLiteral (TLiteral ann (TLBool _)) =
   TPrim ann TPBool
 generaliseLiteral a = a
 
+-- | used to combine branches of if or case matches
 combineMany ::
   ( MonadError (TCError ann) m,
     MonadWriter [Substitution ResolvedDep ann] m,
@@ -71,6 +71,7 @@ combineMany types =
 -- | when calculating type for addition, we try and do the actual sum,
 -- otherwise treat literals as their more generic types (int, nat, etc) and
 -- then subtype as usual to check for errors
+-- TODO: make this function part of `Type` so we can defer calculating it
 typeAddition ::
   ( Eq ann,
     Show ann,
@@ -87,11 +88,31 @@ typeAddition (TLiteral ann (TLInt as)) (TLiteral _ (TLInt bs)) =
       NES.unsafeFromSet $
         S.map (uncurry (+)) $
           S.cartesianProduct (NES.toSet as) (NES.toSet bs)
-typeAddition a b | isNatLiteral a = isSubtypeOf (TPrim (getTypeAnnotation a) TPNat) b
-typeAddition a b | isNatLiteral b = isSubtypeOf a (TPrim (getTypeAnnotation b) TPNat)
-typeAddition a b | isIntLiteral a = isSubtypeOf (TPrim (getTypeAnnotation a) TPInt) b
-typeAddition a b | isIntLiteral b = isSubtypeOf a (TPrim (getTypeAnnotation b) TPInt)
-typeAddition a b = isSubtypeOf a b `catchError` const (isSubtypeOf b a)
+typeAddition (TLiteral ann (TLString as)) (TLiteral _ (TLString bs)) =
+  pure $ TLiteral ann (TLString allLiterals)
+  where
+    allLiterals =
+      NES.unsafeFromSet $
+        S.map (uncurry (<>)) $
+          S.cartesianProduct (NES.toSet as) (NES.toSet bs)
+typeAddition (TLiteral ann (TLString _)) b =
+  isSubtypeOf (TPrim ann TPString) b
+typeAddition a (TLiteral ann (TLString _)) =
+  isSubtypeOf a (TPrim ann TPString)
+typeAddition a b
+  | isNatLiteral a =
+      isSubtypeOf (TPrim (getTypeAnnotation a) TPNat) b
+typeAddition a b
+  | isNatLiteral b =
+      isSubtypeOf a (TPrim (getTypeAnnotation b) TPNat)
+typeAddition a b
+  | isIntLiteral a =
+      isSubtypeOf (TPrim (getTypeAnnotation a) TPInt) b
+typeAddition a b
+  | isIntLiteral b =
+      isSubtypeOf a (TPrim (getTypeAnnotation b) TPInt)
+typeAddition a b =
+  isSubtypeOf a b `catchError` const (isSubtypeOf b a)
 
 -- try and combine two types, either by getting the subtype or union-ing
 -- literals together
@@ -112,6 +133,8 @@ combine a b =
     asUnion = case (a, b) of
       (TLiteral ann (TLInt as), TLiteral _ (TLInt bs)) ->
         pure $ TLiteral ann (TLInt $ as <> bs)
+      (TLiteral ann (TLString as), TLiteral _ (TLString bs)) ->
+        pure $ TLiteral ann (TLString $ as <> bs)
       (TLiteral ann (TLBool bA), TLiteral _ (TLBool bB))
         | bA /= bB ->
             pure $ TPrim ann TPBool -- don't have True | False, it's silly
@@ -128,6 +151,7 @@ isLiteralSubtypeOf (TLiteral _ (TLBool _)) (TPrim _ TPBool) = True -- a Bool lit
 isLiteralSubtypeOf (TLiteral _ (TLInt as)) (TLiteral _ (TLInt bs)) | NES.isSubsetOf as bs = True
 isLiteralSubtypeOf (TLiteral _ (TLInt a)) (TPrim _ TPNat) = all (>= 0) a -- a Int literal is a Nat if its non-negative
 isLiteralSubtypeOf (TLiteral _ (TLInt _)) (TPrim _ TPInt) = True -- a Nat literal is also an Int
+isLiteralSubtypeOf (TLiteral _ (TLString _)) (TPrim _ TPString) = True -- any string literal is a String
 isLiteralSubtypeOf (TPrim _ TPNat) (TPrim _ TPInt) = True -- a Nat is also an Int
 isLiteralSubtypeOf union (TPrim _ TPNat) | isNatLiteral union = True
 isLiteralSubtypeOf union (TPrim _ TPInt) | isIntLiteral union = True

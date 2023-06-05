@@ -13,6 +13,7 @@ module Smol.Backend.IR.ToLLVM.Helpers
     storeFunction,
     addVar,
     lookupVar,
+    lookupString,
     returnType,
     lookupFunctionType,
     irTypeNeedsPointer,
@@ -37,6 +38,7 @@ module Smol.Backend.IR.ToLLVM.Helpers
     struct,
     pointerType,
     primFromConstructor,
+    irFuncPointerToLLVM,
   )
 where
 
@@ -45,11 +47,14 @@ import Control.Monad.State
 import Data.Map.Strict (Map)
 import qualified Data.Map.Strict as M
 import Data.String
+import Data.Text (Text)
+import qualified Data.Text as T
 import GHC.Records (HasField (..))
 import qualified LLVM.AST as AST
 import qualified LLVM.AST as LLVM hiding (function)
 import qualified LLVM.AST.AddrSpace as AST
 import qualified LLVM.AST.AddrSpace as LLVM
+import qualified LLVM.AST.Constant as LLVM
 import qualified LLVM.AST.Operand as Op
 import LLVM.AST.Type as AST
 import LLVM.AST.Type as LLVM
@@ -228,7 +233,7 @@ fromClosure closure = do
   pure (fn, envAddress)
 
 emptyIRState :: IRState
-emptyIRState = IRState mempty mempty
+emptyIRState = IRState mempty mempty mempty
 
 storeExtern :: (MonadState IRState m) => IRExtern -> m ()
 storeExtern ext@(IRExtern name _ _) =
@@ -237,6 +242,26 @@ storeExtern ext@(IRExtern name _ _) =
 storeFunction :: (MonadState IRState m) => IRFunction -> m ()
 storeFunction fn@(IRFunction name _ _ _) =
   modify (\s -> s {irFunctions = irFunctions s <> M.singleton name (Left fn)})
+
+lookupString :: (MonadState IRState m, LLVM.MonadIRBuilder m, LLVM.MonadModuleBuilder m) => Text -> m LLVM.Operand
+lookupString txt = do
+  found <- gets (M.lookup txt . irStrings)
+
+  case found of
+    Just op -> pure op
+    Nothing -> do
+      count <- gets (M.size . irStrings)
+      let nm = LLVM.mkName (show count <> ".str")
+      op <- LLVM.ConstantOperand <$> LLVM.globalStringPtr (T.unpack txt) nm
+
+      modify
+        ( \irState ->
+            irState
+              { irStrings = irStrings irState <> M.singleton txt op
+              }
+        )
+
+      pure op
 
 addVar :: (MonadState IRState m) => IRIdentifier -> LLVM.Operand -> m ()
 addVar ident op =
@@ -283,6 +308,7 @@ irPrimToLLVM (IRPrimInt2 True) = LLVM.bit 1
 
 irTypeToLLVM :: IRType -> LLVM.Type
 irTypeToLLVM IRInt32 = LLVM.i32
+irTypeToLLVM IRInt8 = LLVM.i8
 irTypeToLLVM IRInt2 = LLVM.i1
 irTypeToLLVM (IRArray size inner) = LLVM.ArrayType size (irTypeToLLVM inner)
 irTypeToLLVM (IRStruct bits) =
@@ -350,3 +376,10 @@ irVarFromPath llExpr ident (GetPath as GetValue) = do
   addVar ident val
 irVarFromPath _llExpr _ident (GetPath _ (GetArrayTail _)) = do
   error "spread on arrays not implemented as we'll need some sort of malloc"
+
+irFuncPointerToLLVM :: (MonadState IRState m) => IRFunctionName -> m LLVM.Operand
+irFuncPointerToLLVM fnName = do
+  fnType <- lookupFunctionType fnName
+  pure $
+    LLVM.ConstantOperand
+      (LLVM.GlobalReference (pointerType fnType) (irFunctionNameToLLVM fnName))

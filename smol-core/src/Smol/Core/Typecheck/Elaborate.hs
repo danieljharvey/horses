@@ -164,8 +164,11 @@ infer inferExpr = do
       typedThen <- infer thenExpr
       typedElse <- infer elseExpr
       agreedType <-
-        getExprAnnotation typedThen
-          `combine` getExprAnnotation typedElse
+        combineMany
+          ( getExprAnnotation typedThen
+              NE.:| [ getExprAnnotation typedElse
+                    ]
+          )
       pure (EIf agreedType typedPred typedThen typedElse)
     (ETuple ann fstExpr restExpr) -> do
       typedFst <- infer fstExpr

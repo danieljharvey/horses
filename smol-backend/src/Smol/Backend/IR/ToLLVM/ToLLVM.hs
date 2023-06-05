@@ -93,6 +93,7 @@ irExprToLLVM ::
   IRExpr ->
   m LLVM.Operand
 irExprToLLVM (IRPrim prim) = pure $ irPrimToLLVM prim
+irExprToLLVM (IRString txt) = lookupString txt
 irExprToLLVM (IRApply fnType fn fnArgs) = do
   functionConst <- irExprToLLVM fn
   let (_, tyRet) = returnType fnType
@@ -130,14 +131,7 @@ irExprToLLVM (IRLet ident expr body) = do
   llExpr <- irExprToLLVM expr
   addVar ident llExpr
   irExprToLLVM body
-irExprToLLVM (IRInfix IRAdd a b) = do
-  lhs <- irExprToLLVM a
-  rhs <- irExprToLLVM b
-  LLVM.add lhs rhs
-irExprToLLVM (IRInfix IREquals a b) = do
-  lhs <- irExprToLLVM a
-  rhs <- irExprToLLVM b
-  LLVM.icmp LLVM.EQ lhs rhs
+irExprToLLVM (IRInfix op a b) = irInfixToLLVM op a b
 irExprToLLVM (IRStatements statements expr) = do
   traverse_ irStatementToLLVM statements
   irExprToLLVM expr
@@ -165,6 +159,7 @@ irExprToLLVM (IRMatch matchExpr tyRet matches) = mdo
   matchingInt <-
     selectToOperand
       llMatch
+      irExprToLLVM
       ( createSelectTable
           ( (\match -> (irmcPatternPredicate match, irmcType match)) <$> matches
           )
@@ -189,11 +184,26 @@ irExprToLLVM (IRMatch matchExpr tyRet matches) = mdo
   mergeBlock <- LLVM.block `LLVM.named` "merge"
   -- return value
   LLVM.load retValue 0
-irExprToLLVM (IRFuncPointer fnName) = do
-  fnType <- lookupFunctionType fnName
-  pure $
-    LLVM.ConstantOperand
-      (LLVM.GlobalReference (pointerType fnType) (irFunctionNameToLLVM fnName))
+irExprToLLVM (IRFuncPointer fnName) = irFuncPointerToLLVM fnName
+
+irInfixToLLVM ::
+  ( LLVM.MonadIRBuilder m,
+    LLVM.MonadModuleBuilder m,
+    MonadState IRState m,
+    MonadFix m
+  ) =>
+  IROp ->
+  IRExpr ->
+  IRExpr ->
+  m LLVM.Operand
+irInfixToLLVM IRAdd a b = do
+  lhs <- irExprToLLVM a
+  rhs <- irExprToLLVM b
+  LLVM.add lhs rhs
+irInfixToLLVM IREquals a b = do
+  lhs <- irExprToLLVM a
+  rhs <- irExprToLLVM b
+  LLVM.icmp LLVM.EQ lhs rhs
 
 irExprToLLVMBlock ::
   ( MonadFix m,

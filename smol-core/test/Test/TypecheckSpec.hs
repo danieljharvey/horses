@@ -55,7 +55,7 @@ typecheckEnv = TCEnv mempty mempty (builtInTypes LocalDefinition)
 spec :: Spec
 spec = do
   describe "TypecheckSpec" $ do
-    fdescribe "Parse and typecheck" $ do
+    describe "Parse and typecheck" $ do
       let inputs =
             [ ("True", "True"),
               ("False", "False"),
@@ -75,6 +75,9 @@ spec = do
               ("200 + -100", "100"),
               ("(1 + 2 + 3 : Nat)", "Nat"),
               ("(1 + 2 + 3 : Int)", "Int"),
+              ("(\"horse\" : String)", "String"),
+              ("\"hor\" + \"se\"", "\"horse\""),
+              ("let a = if True then \"eg\" else \"og\"; a + \"g\"", "\"egg\" | \"ogg\""),
               ( "(\\pair -> case pair of (a,_) -> a : (Bool, Nat) -> Bool) (True, 1)",
                 "Bool"
               ),
@@ -176,6 +179,7 @@ spec = do
               ("[1,2,3,4]", "[1 | 4 | 2 | 3]"),
               ("[True]", "[True]"),
               ("([1,2,3,4] : [Nat])", "[Nat]"),
+              ("case (\"dog\" : String) of \"log\" -> True | _ -> False", "Bool"),
               ("case ([1,2,3] : [Nat]) of [a] -> [a] | [_,...b] -> b", "[Nat]"),
               ("case ([1,2]: [Nat]) of [a,...] -> a | _ -> 0", "Nat"),
               ("let a = if True then 1 else 2; let b = if True then 7 else 9; a + b", "8 | 9 | 10 | 11")

@@ -73,7 +73,7 @@ spec = do
                 ]
     traverse_
       ( \(input, result) -> it (show input) $ do
-          let predResult = evalState (predicatesFromPattern id input) env
+          let predResult = evalState (predicatesFromPattern pure input) env
           predResult `shouldBe` result
       )
       testVals

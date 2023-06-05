@@ -35,6 +35,8 @@ fromType (Smol.TLiteral _ lit) = pure $ fromLit lit
     fromLit (Smol.TLBool _) = IRInt2
     fromLit (Smol.TLInt _) = IRInt32
     fromLit Smol.TLUnit = IRInt2 -- unit become bool?
+    fromLit (Smol.TLString _as) =
+      IRPointer IRInt8 -- a C string is a pointer to the char at the start of the string
 fromType (Smol.TFunc _ env tArg tBody) = do
   argType <- fromType tArg
   envType <- typeFromEnv env
@@ -84,3 +86,4 @@ fromTypePrim :: Smol.TypePrim -> IRType
 fromTypePrim Smol.TPBool = IRInt2
 fromTypePrim Smol.TPNat = IRInt32
 fromTypePrim Smol.TPInt = IRInt32
+fromTypePrim Smol.TPString = IRPointer IRInt8
