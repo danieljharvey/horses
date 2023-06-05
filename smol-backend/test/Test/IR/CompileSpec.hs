@@ -10,7 +10,7 @@ import Test.IR.RawSamples
 
 -- run the code, get the output, die
 run :: Module -> IO Text
-run = fmap Run.rrResult . Run.run
+run = fmap Run.rrResult . Run.run []
 
 spec :: Spec
 spec = do

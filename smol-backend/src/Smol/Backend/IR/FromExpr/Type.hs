@@ -30,6 +30,7 @@ fromType ::
 fromType (Smol.TPrim _ Smol.TPBool) = pure IRInt2
 fromType (Smol.TPrim _ Smol.TPNat) = pure IRInt32
 fromType (Smol.TPrim _ Smol.TPInt) = pure IRInt32
+fromType (Smol.TPrim _ Smol.TPString) = pure (IRPointer IRInt8)
 fromType (Smol.TLiteral _ lit) = pure $ fromLit lit
   where
     fromLit (Smol.TLBool _) = IRInt2
