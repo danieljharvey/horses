@@ -60,6 +60,8 @@ checkPattern checkTy checkPat = do
       pure (PLiteral ty (PNat b), mempty)
     (ty@(TPrim _ TPInt), PLiteral _ (PInt b)) ->
       pure (PLiteral ty (PInt b), mempty)
+    (ty@(TPrim _ TPString), PLiteral _ (PString s)) ->
+      pure (PLiteral ty (PString s), mempty)
     (ty@(TArray _ arrSize tyArr), PArray ann items spread) -> do
       inferEverything <- traverse (checkPattern tyArr) items
       (inferSpread, env2) <- case spread of

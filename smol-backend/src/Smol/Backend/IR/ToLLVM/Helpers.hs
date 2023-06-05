@@ -38,6 +38,7 @@ module Smol.Backend.IR.ToLLVM.Helpers
     struct,
     pointerType,
     primFromConstructor,
+    irFuncPointerToLLVM,
   )
 where
 
@@ -53,6 +54,7 @@ import qualified LLVM.AST as AST
 import qualified LLVM.AST as LLVM hiding (function)
 import qualified LLVM.AST.AddrSpace as AST
 import qualified LLVM.AST.AddrSpace as LLVM
+import qualified LLVM.AST.Constant as LLVM
 import qualified LLVM.AST.Operand as Op
 import LLVM.AST.Type as AST
 import LLVM.AST.Type as LLVM
@@ -374,3 +376,10 @@ irVarFromPath llExpr ident (GetPath as GetValue) = do
   addVar ident val
 irVarFromPath _llExpr _ident (GetPath _ (GetArrayTail _)) = do
   error "spread on arrays not implemented as we'll need some sort of malloc"
+
+irFuncPointerToLLVM :: (MonadState IRState m) => IRFunctionName -> m LLVM.Operand
+irFuncPointerToLLVM fnName = do
+  fnType <- lookupFunctionType fnName
+  pure $
+    LLVM.ConstantOperand
+      (LLVM.GlobalReference (pointerType fnType) (irFunctionNameToLLVM fnName))

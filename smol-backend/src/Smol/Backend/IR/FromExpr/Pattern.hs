@@ -86,6 +86,9 @@ predicatesFromPattern fromPrim =
               predicatesInner (path <> [1, i]) pat
           )
           pats
+    predicatesInner path (Smol.PLiteral ty prim) | isStringType ty = do
+      llPrim <- fromPrim prim
+      pure [StringEquals (GetPath path GetValue) llPrim]
     predicatesInner path (Smol.PLiteral _ prim) = do
       llPrim <- fromPrim prim
       pure [PathEquals (GetPath path GetValue) llPrim]

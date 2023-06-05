@@ -184,11 +184,7 @@ irExprToLLVM (IRMatch matchExpr tyRet matches) = mdo
   mergeBlock <- LLVM.block `LLVM.named` "merge"
   -- return value
   LLVM.load retValue 0
-irExprToLLVM (IRFuncPointer fnName) = do
-  fnType <- lookupFunctionType fnName
-  pure $
-    LLVM.ConstantOperand
-      (LLVM.GlobalReference (pointerType fnType) (irFunctionNameToLLVM fnName))
+irExprToLLVM (IRFuncPointer fnName) = irFuncPointerToLLVM fnName
 
 irInfixToLLVM ::
   ( LLVM.MonadIRBuilder m,

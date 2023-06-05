@@ -30,8 +30,7 @@ env =
     { fesDataTypes = builtInTypes Identity,
       fesFreshInt = 0,
       fesModuleParts = mempty,
-      fesVars = mempty,
-      fesStrings = mempty
+      fesVars = mempty
     }
 
 parseDepToIdentity :: Type ParseDep ann -> Type Identity ann

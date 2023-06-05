@@ -178,7 +178,7 @@ fromInfix ::
 fromInfix OpAdd a b = do
   irA <- fromExpr a
   irB <- fromExpr b
-  if isStringType (getExprAnnotation a)
+  if Compile.isStringType (getExprAnnotation a)
     then
       let (IRExtern fnName fnArgs fnReturn) = irStringConcat
        in pure $ IRApply (IRFunctionType fnArgs fnReturn) (IRFuncPointer fnName) [irA, irB]
@@ -186,16 +186,11 @@ fromInfix OpAdd a b = do
 fromInfix OpEquals a b = do
   irA <- fromExpr a
   irB <- fromExpr b
-  if isStringType (getExprAnnotation a)
+  if Compile.isStringType (getExprAnnotation a)
     then
       let (IRExtern fnName fnArgs fnReturn) = irStringEquals
        in pure $ IRApply (IRFunctionType fnArgs fnReturn) (IRFuncPointer fnName) [irA, irB]
     else pure (IRInfix IREquals irA irB)
-
-isStringType :: Type Identity ann -> Bool
-isStringType (TPrim _ TPString) = True
-isStringType (TLiteral _ (TLString _)) = True
-isStringType _ = False
 
 functionReturnType :: IRType -> ([IRType], IRType)
 functionReturnType (IRStruct [IRPointer (IRFunctionType args ret), _]) =
@@ -530,7 +525,7 @@ modulePartsFromExpr ::
   [IRModulePart]
 modulePartsFromExpr dataTypes expr =
   let (mainExpr, FromExprState {fesModuleParts = otherParts}) =
-        runState (fromExpr expr) (FromExprState mempty dataTypes 1 mempty mempty)
+        runState (fromExpr expr) (FromExprState mempty dataTypes 1 mempty)
       printFuncName = getPrintFuncName (getExprAnnotation expr)
       printFuncType = getPrintFuncType (getExprAnnotation expr)
    in otherParts

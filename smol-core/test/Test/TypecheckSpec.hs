@@ -179,6 +179,7 @@ spec = do
               ("[1,2,3,4]", "[1 | 4 | 2 | 3]"),
               ("[True]", "[True]"),
               ("([1,2,3,4] : [Nat])", "[Nat]"),
+              ("case (\"dog\" : String) of \"log\" -> True | _ -> False", "Bool"),
               ("case ([1,2,3] : [Nat]) of [a] -> [a] | [_,...b] -> b", "[Nat]"),
               ("case ([1,2]: [Nat]) of [a,...] -> a | _ -> 0", "Nat"),
               ("let a = if True then 1 else 2; let b = if True then 7 else 9; a + b", "8 | 9 | 10 | 11")

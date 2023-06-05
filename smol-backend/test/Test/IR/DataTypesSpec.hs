@@ -26,8 +26,7 @@ typeToDataType ty =
         { fesModuleParts = mempty,
           fesDataTypes = builtInTypes Identity,
           fesFreshInt = 0,
-          fesVars = mempty,
-          fesStrings = mempty
+          fesVars = mempty
         }
     )
 

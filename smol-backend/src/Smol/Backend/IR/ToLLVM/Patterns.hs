@@ -15,6 +15,7 @@ module Smol.Backend.IR.ToLLVM.Patterns
 where
 
 import Control.Monad (foldM)
+import Control.Monad.State
 import qualified Data.ByteString.Short as SBS
 import qualified Data.List.NonEmpty as NE
 import Data.String
@@ -35,7 +36,7 @@ patName i = "pat" <> fromString (show i)
 
 -- given a big predicate, make it into one operand
 predicatesToOperand ::
-  (L.MonadModuleBuilder m, L.MonadIRBuilder m) =>
+  (L.MonadModuleBuilder m, L.MonadIRBuilder m, MonadState IRState m) =>
   Op.Operand ->
   NE.NonEmpty (PatternPredicate IRExpr) ->
   (IRExpr -> m Op.Operand) ->
@@ -57,7 +58,17 @@ predicatesToOperand input nePreds irExprToLLVM = do
           else loadFromStruct input as
       llExpr <- irExprToLLVM prim
       L.icmp IP.EQ val llExpr
+    compilePred (StringEquals (GetPath as GetValue) prim) = do
+      val <-
+        if null as
+          then pure input
+          else loadFromStruct input as
+      llExpr <- irExprToLLVM prim
+      llFunction <- irFuncPointerToLLVM "stringequals"
+      L.call llFunction [(val, []), (llExpr, [])]
     compilePred (PathEquals (GetPath _ (GetArrayTail _)) _) =
+      error "predicatesToOperand GetArrayTail"
+    compilePred (StringEquals (GetPath _ (GetArrayTail _)) _) =
       error "predicatesToOperand GetArrayTail"
 
 -- | captures the idea of "if this predicate then 0, if this predicate then
@@ -84,7 +95,8 @@ data SelectList a
 -- so to make sure any further items we peek at are correct
 selectToOperand ::
   ( L.MonadModuleBuilder m,
-    L.MonadIRBuilder m
+    L.MonadIRBuilder m,
+    MonadState IRState m
   ) =>
   Op.Operand ->
   (IRExpr -> m Op.Operand) ->

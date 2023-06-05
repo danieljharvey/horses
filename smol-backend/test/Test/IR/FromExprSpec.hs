@@ -32,8 +32,7 @@ testEnv =
     { IR.fesModuleParts = mempty,
       IR.fesDataTypes = builtInTypes Identity,
       IR.fesFreshInt = 1,
-      IR.fesVars = mempty,
-      IR.fesStrings = mempty
+      IR.fesVars = mempty
     }
 
 getMainExpr :: Text -> IRExpr

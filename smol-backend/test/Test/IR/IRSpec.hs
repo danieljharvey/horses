@@ -76,7 +76,7 @@ spec = do
         resp `shouldBe` "42"
 
     describe "From expressions" $ do
-      fdescribe "Basic" $ do
+      describe "Basic" $ do
         let testVals =
               [ ("42", "42"),
                 ("True", "True"),
@@ -92,7 +92,8 @@ spec = do
                 ("\"hor\" + \"se\" == \"horse\"", "True"),
                 ("(\"dog\" : String) == (\"log\" : String)", "False"),
                 ("case \"dog\" of \"dog\" -> True | _ -> False", "True"),
-                ("case \"log\" of \"dog\" -> True | _ -> False", "True")
+                ("case (\"log\" : String) of \"dog\" -> True | _ -> False", "False"),
+                ("case \"dog\" of \"dog\" -> True | _ -> False", "True")
               ]
 
         describe "IR compile" $ do

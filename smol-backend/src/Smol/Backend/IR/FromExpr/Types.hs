@@ -8,7 +8,6 @@ where
 
 import Control.Monad.Identity
 import Data.Map.Strict (Map)
-import Data.Text (Text)
 import Smol.Backend.IR.IRExpr
 import qualified Smol.Core.Types as Smol
 
@@ -16,6 +15,5 @@ data FromExprState ann = FromExprState
   { fesModuleParts :: [IRModulePart],
     fesDataTypes :: Map (Identity Smol.TypeName) (Smol.DataType Identity ann),
     fesFreshInt :: Int,
-    fesVars :: Map IRIdentifier IRExpr,
-    fesStrings :: Map Text IRExpr
+    fesVars :: Map IRIdentifier IRExpr
   }
