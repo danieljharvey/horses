@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1685457894719,
+  "lastUpdate": 1685987114523,
   "repoUrl": "https://github.com/danieljharvey/mimsa",
   "entries": {
     "Store benchmarks in Github Pages": [
@@ -1711,6 +1711,50 @@ window.BENCHMARK_DATA = {
           {
             "name": "evaluate/evaluate parsing 2",
             "value": 0.23040952242856913,
+            "unit": "Time (ms)"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "danieljamesharvey@gmail.com",
+            "name": "Daniel Harvey",
+            "username": "danieljharvey"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "cc9f0281b830dc6052dbcca5eddc86c4dba9834c",
+          "message": "Let's implement strings in Smol! (#955)\n\n* Yes\r\n\r\n* Nice\r\n\r\n* oh no\r\n\r\n* yes\r\n\r\n* semi fucked\r\n\r\n* Well, shit\r\n\r\n* Failing test for string concatenation\r\n\r\n* Some neat string stuff\r\n\r\n* Pretty nice, got equality, just need to fix pattern matching\r\n\r\n* Pattern matching",
+          "timestamp": "2023-06-05T18:41:55+01:00",
+          "tree_id": "f1fd52588209295f3822fb35a9b858d64516d122",
+          "url": "https://github.com/danieljharvey/mimsa/commit/cc9f0281b830dc6052dbcca5eddc86c4dba9834c"
+        },
+        "date": 1685987113924,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "build stdlib/allFns",
+            "value": 0.10626455513333506,
+            "unit": "Time (ms)"
+          },
+          {
+            "name": "evaluate/evaluate big looping thing",
+            "value": 0.09964472994999946,
+            "unit": "Time (ms)"
+          },
+          {
+            "name": "evaluate/evaluate parsing",
+            "value": 0.03236522464705856,
+            "unit": "Time (ms)"
+          },
+          {
+            "name": "evaluate/evaluate parsing 2",
+            "value": 0.23107260877143618,
             "unit": "Time (ms)"
           }
         ]
