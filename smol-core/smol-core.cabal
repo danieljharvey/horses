@@ -58,6 +58,7 @@ library
   default-language: Haskell2010
   exposed-modules:
     Smol.Core
+    Smol.Core.EliminateGlobals
     Smol.Core.ExprUtils
     Smol.Core.Helpers
     Smol.Core.Interpreter
@@ -131,6 +132,7 @@ test-suite smol-core-tests
 
   other-modules:
     Smol.Core
+    Smol.Core.EliminateGlobals
     Smol.Core.ExprUtils
     Smol.Core.Helpers
     Smol.Core.Interpreter

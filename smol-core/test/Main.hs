@@ -1,5 +1,6 @@
 module Main (main) where
 
+import qualified Test.EliminateGlobalsSpec
 import Test.Hspec
 import qualified Test.Interpreter.InterpreterSpec
 import qualified Test.Modules.ModulesSpec
@@ -18,3 +19,4 @@ main = hspec $ do
   Test.ParserSpec.spec
   Test.Interpreter.InterpreterSpec.spec
   Test.Modules.ModulesSpec.spec
+  Test.EliminateGlobalsSpec.spec

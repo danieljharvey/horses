@@ -100,7 +100,7 @@ spec = do
 
       fdescribe "Basic with env" $ do
         let testVals =
-              [ ("42", [], "42"),
+              [ ("global egg = 42; egg! + egg!", [], "84"),
                 ( "let horse = getenv! \"ENV_HORSE\"; let time = getenv! \"ENV_TIME\"; horse + time",
                   [("ENV_HORSE", "horse"), ("ENV_TIME", "time")],
                   "horsetime"
