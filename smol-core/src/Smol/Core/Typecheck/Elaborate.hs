@@ -326,6 +326,7 @@ checkLambda (TFunc tAnn _ tFrom tTo) ident body = do
               (getExprAnnotation typedBody)
           )
   pure (ELambda lambdaType ident typedBody)
+checkLambda (TGlobals _ _ inner) ident body = checkLambda inner ident body -- ignore global, check with inner type
 checkLambda other _ _ =
   throwError (TCExpectedFunction other)
 

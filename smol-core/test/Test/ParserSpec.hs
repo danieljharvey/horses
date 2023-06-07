@@ -119,6 +119,7 @@ spec = do
               ("False", tyBoolLit False),
               ("1 | 2 | 3", tyIntLit [1, 2, 3]),
               ("\"horse\"", tyStrLit ["horse"]),
+              ("{ egg: 42 } => 42", TGlobals () (M.singleton "egg" (tyIntLit [42])) (tyIntLit [42])),
               ( "(a -> b) -> Maybe a -> Maybe b",
                 TFunc
                   ()

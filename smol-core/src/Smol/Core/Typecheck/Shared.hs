@@ -154,6 +154,7 @@ getApplyReturnType ::
   m (ResolvedType ann)
 getApplyReturnType (TFunc _ _ _ typ) = pure typ
 getApplyReturnType tApp@TApp {} = pure tApp
+getApplyReturnType (TGlobals _ _ inner) = getApplyReturnType inner
 getApplyReturnType other =
   throwError (TCExpectedFunction other)
 
@@ -254,7 +255,9 @@ lookupGlobal ident = do
   maybeVar <- asks (M.lookup ident . tceGlobals)
   case maybeVar of
     Just expr -> pure expr
-    Nothing -> throwError (TCCouldNotFindGlobal ident)
+    Nothing -> do
+      allGlobals <- asks (M.keysSet . tceGlobals)
+      throwError (TCCouldNotFindGlobal ident allGlobals)
 
 pushArg ::
   (MonadState (TCState ann) m) =>

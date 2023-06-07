@@ -5,12 +5,14 @@ module Test.IR.IRSpec (spec) where
 import Control.Monad.Identity
 import Data.Foldable (traverse_)
 import Data.Functor
+import qualified Data.Map as M
 import Data.Text (Text)
 import qualified LLVM.AST as LLVM
 import qualified Smol.Backend.Compile.RunLLVM as Run
 import Smol.Backend.IR.FromExpr.Expr
 import Smol.Backend.IR.FromResolvedExpr
 import Smol.Backend.IR.ToLLVM.ToLLVM
+import Smol.Core.EliminateGlobals (eliminateGlobals)
 import Smol.Core.Typecheck
 import Smol.Core.Types
 import Test.BuiltInTypes
@@ -21,17 +23,34 @@ import Test.IR.Samples
 -- run the code, get the output, die
 run :: LLVM.Module -> [(String, String)] -> IO Text
 run llModule env =
-  fmap Run.rrResult $ Run.run env llModule
+  Run.rrResult <$> Run.run env llModule
 
 evalExpr :: Text -> ResolvedExpr (Type ResolvedDep Annotation)
 evalExpr input =
-  case elaborate (builtInTypes emptyResolvedDep) (unsafeParseTypedExpr input $> mempty) of
+  case elaborate
+    (builtInTypes emptyResolvedDep)
+    (unsafeParseTypedExpr input $> mempty) of
     Right typedExpr -> typedExpr
     Left e -> error (show e)
 
+-- apply functions to globals (for testing)
+addEnvFunctions ::
+  ResolvedExpr (Type ResolvedDep ann) ->
+  ResolvedExpr (Type ResolvedDep ann)
+addEnvFunctions expr =
+  case getExprAnnotation expr of
+    TGlobals _ m _
+      | not (M.null m) ->
+          let ann = getExprAnnotation expr
+           in EApp
+                ann
+                (eliminateGlobals emptyResolvedDep expr)
+                (ERecord ann (M.singleton "egg" (EPrim ann (PInt 21))))
+    _ -> eliminateGlobals emptyResolvedDep expr
+
 createModule :: Text -> LLVM.Module
 createModule input = do
-  let expr = evalExpr input
+  let expr = addEnvFunctions (evalExpr input)
       irModule = irFromExpr (builtInTypes Identity) (fromResolvedType <$> fromResolvedExpr expr)
   irToLLVM irModule
 
@@ -101,6 +120,7 @@ spec = do
       fdescribe "Basic with env" $ do
         let testVals =
               [ ("global egg = 42; egg! + egg!", [], "84"),
+                ("egg!", [], "21"),
                 ( "let horse = getenv! \"ENV_HORSE\"; let time = getenv! \"ENV_TIME\"; horse + time",
                   [("ENV_HORSE", "horse"), ("ENV_TIME", "time")],
                   "horsetime"

@@ -64,9 +64,22 @@ parseType = parse (space *> typeParser <* eof) "type"
 parseTypeAndFormatError :: Text -> Either Text (ParsedType Annotation)
 parseTypeAndFormatError = parseAndFormat (space *> typeParser <* eof)
 
--- | top-level parser for type signatures
+-- | currently lets assume we only want globals at the start
 typeParser :: Parser (ParsedType Annotation)
 typeParser =
+  try typeWithGlobalParser <|> typeInnerParser
+
+typeWithGlobalParser :: Parser (ParsedType Annotation)
+typeWithGlobalParser = withLocation (\ann (items, expr) -> TGlobals ann items expr) $ do
+  args <- tyRecordArgs
+  myString "}"
+  myString "=>"
+  rest <- typeInnerParser
+  pure (args, rest)
+
+-- | top-level parser for type signatures
+typeInnerParser :: Parser (ParsedType Annotation)
+typeInnerParser =
   try (orInBrackets tyFunctionParser)
     <|> try tyAppParser
     <|> simpleTypeParser
@@ -162,7 +175,7 @@ tyFunctionParser = do
 tyTupleParser :: Parser (ParsedType Annotation)
 tyTupleParser = do
   myString "("
-  neArgs <- commaSep typeParser
+  neArgs <- commaSep typeInnerParser
   neTail <- case NE.nonEmpty (NE.tail neArgs) of
     Just ne -> pure ne
     _ -> fail "Expected at least two items in a tuple"
@@ -225,13 +238,13 @@ tyRecordItemParser :: Parser (Identifier, ParsedType Annotation)
 tyRecordItemParser = do
   name <- identifierParser
   myString ":"
-  expr <- typeParser
+  expr <- typeInnerParser
   pure (name, expr)
 
 tyArrayParser :: Parser (ParsedType Annotation)
 tyArrayParser = withLocation (`TArray` 0) $ do
   myString "["
-  arg <- typeParser
+  arg <- typeInnerParser
   myString "]"
   pure arg
 
@@ -243,7 +256,7 @@ tyRecordRowParser =
     ( do
         args <- recordArgs
         myString "|"
-        rest <- typeParser
+        rest <- typeInnerParser
         myString "}"
         pure (args, rest)
     )
