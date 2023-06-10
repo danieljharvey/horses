@@ -120,12 +120,12 @@ spec = do
       describe "Basic with env" $ do
         let testVals =
               [ ("global egg = 42; egg! + egg!", [], "84")
-                -- need records implemented
-                --("(egg! : 21)", [], "21"),
-                  {-( "let horse = (getenv! : String -> String) \"ENV_HORSE\"; let time = (getenv! : String -> String) \"ENV_TIME\"; horse + time",
-                  [("ENV_HORSE", "horse"), ("ENV_TIME", "time")],
-                  "horsetime"
-                )-}
+              -- need records implemented
+              -- ("(egg! : 21)", [], "21"),
+              {-( "let horse = (getenv! : String -> String) \"ENV_HORSE\"; let time = (getenv! : String -> String) \"ENV_TIME\"; horse + time",
+                [("ENV_HORSE", "horse"), ("ENV_TIME", "time")],
+                "horsetime"
+              )-}
               ]
 
         describe "IR compile with args" $ do
