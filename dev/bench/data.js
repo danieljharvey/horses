@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1685987114523,
+  "lastUpdate": 1686430999300,
   "repoUrl": "https://github.com/danieljharvey/mimsa",
   "entries": {
     "Store benchmarks in Github Pages": [
@@ -1755,6 +1755,50 @@ window.BENCHMARK_DATA = {
           {
             "name": "evaluate/evaluate parsing 2",
             "value": 0.23107260877143618,
+            "unit": "Time (ms)"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "danieljamesharvey@gmail.com",
+            "name": "Daniel Harvey",
+            "username": "danieljharvey"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "af8cb244c7c73bde79d40cd0b4eba98e19893800",
+          "message": "LOL (#961)\n\n* LOL\r\n\r\n* Well\r\n\r\n* Eliminate globals\r\n\r\n* Parse globals etc\r\n\r\n* Comment out failing for now\r\n\r\n* Format",
+          "timestamp": "2023-06-10T21:59:45+01:00",
+          "tree_id": "af1f6577c2d3689aebcebc3c7978cc25f73cfa34",
+          "url": "https://github.com/danieljharvey/mimsa/commit/af8cb244c7c73bde79d40cd0b4eba98e19893800"
+        },
+        "date": 1686430998740,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "build stdlib/allFns",
+            "value": 0.10696185501666368,
+            "unit": "Time (ms)"
+          },
+          {
+            "name": "evaluate/evaluate big looping thing",
+            "value": 0.09998829923333111,
+            "unit": "Time (ms)"
+          },
+          {
+            "name": "evaluate/evaluate parsing",
+            "value": 0.03245881152451067,
+            "unit": "Time (ms)"
+          },
+          {
+            "name": "evaluate/evaluate parsing 2",
+            "value": 0.23662154877142713,
             "unit": "Time (ms)"
           }
         ]
