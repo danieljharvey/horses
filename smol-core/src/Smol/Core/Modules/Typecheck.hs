@@ -173,13 +173,18 @@ typecheckOneExprDef ::
   (DefIdentifier, Expr ResolvedDep Annotation) ->
   m (Expr ResolvedDep (Type ResolvedDep Annotation))
 typecheckOneExprDef input _inputModule deps (def, expr) = do
-  let _exprTypeMap = getExprAnnotation <$> filterNameDefs (filterExprs deps)
+  let exprTypeMap = mapKey LocalDefinition $ getExprAnnotation <$> filterNameDefs (filterExprs deps)
 
   -- initial typechecking environment
-  -- env <- createTypecheckEnvironment inputModule deps typecheckedModules
+  let env =
+        TCEnv
+          { tceVars = exprTypeMap,
+            tceDataTypes = getDataTypeMap deps,
+            tceGlobals = mempty
+          }
 
   -- typecheck it
   liftEither $
     first
       (DefDoesNotTypeCheck input def)
-      (elaborate (getDataTypeMap deps) expr)
+      (elaborate env expr)

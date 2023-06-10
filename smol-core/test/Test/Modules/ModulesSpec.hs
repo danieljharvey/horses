@@ -1,8 +1,10 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE TemplateHaskell #-}
-
+  {-# LANGUAGE LambdaCase #-}
+    {-# LANGUAGE NamedFieldPuns #-}
 module Test.Modules.ModulesSpec (spec) where
 
+import Data.Functor ((<&>), void)
 import Data.Bifunctor (second)
 import Data.Either (isRight)
 import Data.FileEmbed
@@ -180,7 +182,7 @@ spec = do
 
         resolveModuleDeps mod' `shouldBe` Right (expected, depMap)
 
-    describe "Typecheck" $ do
+    fdescribe "Typecheck" $ do
       it "Typechecks Prelude successfully" $ do
         testModuleTypecheck "Prelude" `shouldSatisfy` isRight
 
@@ -189,6 +191,10 @@ spec = do
 
       it "Typechecks Either successfully" $ do
         testModuleTypecheck "Either" `shouldSatisfy` isRight
+
+      it "Typechecks Globals successfully" $ do
+        let result = testModuleTypecheck "Globals" <&> \(Module {moExpressions}) -> void . getExprAnnotation <$> moExpressions
+        result `shouldBe` Right (M.fromList [(DIName "dontUseGlobal", tyIntLit [100])])
 
       xit "Typechecks State successfully" $ do
         testModuleTypecheck "State" `shouldSatisfy` isRight

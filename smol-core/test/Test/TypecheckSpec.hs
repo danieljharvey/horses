@@ -45,7 +45,13 @@ testElaborate ::
   Expr ParseDep ann ->
   Either (TCError ann) (Expr ResolvedDep (Type ResolvedDep ann))
 testElaborate expr = do
-  case elaborate (builtInTypes emptyResolvedDep) (fromParsedExpr expr) of
+  let env =
+        TCEnv
+          { tceDataTypes = builtInTypes emptyResolvedDep,
+            tceVars = mempty,
+            tceGlobals = mempty
+          }
+  case elaborate env (fromParsedExpr expr) of
     Right typedExpr -> pure typedExpr
     Left e -> Left e
 
