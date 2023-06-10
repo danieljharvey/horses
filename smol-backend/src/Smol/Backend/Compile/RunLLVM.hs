@@ -21,7 +21,7 @@ import System.CPUTime
 import System.Directory
 import System.IO
 import System.Posix.Temp
-import System.Process
+import qualified System.Process as Sys
 import qualified Text.Printf as Printf
 
 -- these are saved in a file that is included in compilation
@@ -64,7 +64,7 @@ compile llvmModule outfile =
       hClose llvmHandle
       hClose runtimeHandle
       -- link the runtime with the assembly
-      callProcess
+      Sys.callProcess
         "clang"
         ["-Wno-override-module", "-lm", llvm, runtime, "-o", "../" <> outfile]
 
@@ -75,9 +75,13 @@ data RunResult = RunResult
   }
 
 -- run the code, get the output, die
-run :: Module -> IO RunResult
-run llvmModule = do
+run :: [(String, String)] -> Module -> IO RunResult
+run runArgs llvmModule = do
   (compTime, _) <- time (compile llvmModule "./a.out")
-  (runTime, result) <- time (cs <$> readProcess "./a.out" [] [])
+  let process =
+        (Sys.proc "./a.out" [])
+          { Sys.env = Just runArgs
+          }
+  (runTime, result) <- time (cs <$> Sys.readCreateProcess process "")
   removePathForcibly "./a.out"
   pure (RunResult result compTime runTime)

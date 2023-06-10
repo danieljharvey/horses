@@ -30,6 +30,7 @@ fromType ::
 fromType (Smol.TPrim _ Smol.TPBool) = pure IRInt2
 fromType (Smol.TPrim _ Smol.TPNat) = pure IRInt32
 fromType (Smol.TPrim _ Smol.TPInt) = pure IRInt32
+fromType (Smol.TPrim _ Smol.TPString) = pure (IRPointer IRInt8)
 fromType (Smol.TLiteral _ lit) = pure $ fromLit lit
   where
     fromLit (Smol.TLBool _) = IRInt2
@@ -56,6 +57,7 @@ fromType (Smol.TArray _ size item) = do
   pure $ IRStruct [IRInt32, IRArray size dtItem]
 fromType union | isNatLiteral union = pure IRInt32
 fromType union | isIntLiteral union = pure IRInt32
+fromType (Smol.TGlobals _ _ inner) = fromType inner
 fromType other =
   error $ "could not calculate IR type from smol type: " <> show other
 
