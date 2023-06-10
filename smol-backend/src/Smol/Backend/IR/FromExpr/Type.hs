@@ -57,6 +57,7 @@ fromType (Smol.TArray _ size item) = do
   pure $ IRStruct [IRInt32, IRArray size dtItem]
 fromType union | isNatLiteral union = pure IRInt32
 fromType union | isIntLiteral union = pure IRInt32
+fromType (Smol.TGlobals _ _ inner) = fromType inner
 fromType other =
   error $ "could not calculate IR type from smol type: " <> show other
 
