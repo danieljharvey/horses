@@ -1,14 +1,15 @@
+{-# LANGUAGE LambdaCase #-}
+{-# LANGUAGE NamedFieldPuns #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE TemplateHaskell #-}
-  {-# LANGUAGE LambdaCase #-}
-    {-# LANGUAGE NamedFieldPuns #-}
+
 module Test.Modules.ModulesSpec (spec) where
 
-import Data.Functor ((<&>), void)
 import Data.Bifunctor (second)
 import Data.Either (isRight)
 import Data.FileEmbed
 import Data.Foldable (find)
+import Data.Functor (void, (<&>))
 import Data.List (isInfixOf)
 import qualified Data.List.NonEmpty as NE
 import qualified Data.Map.Strict as M
@@ -194,7 +195,13 @@ spec = do
 
       it "Typechecks Globals successfully" $ do
         let result = testModuleTypecheck "Globals" <&> \(Module {moExpressions}) -> void . getExprAnnotation <$> moExpressions
-        result `shouldBe` Right (M.fromList [(DIName "dontUseGlobal", tyIntLit [100])])
+        result
+          `shouldBe` Right
+            ( M.fromList
+                [ (DIName "useGlobal", TGlobals () mempty (tyIntLit [100])),
+                  (DIName "useGlobalIndirectly", tyIntLit [100])
+                ]
+            )
 
       xit "Typechecks State successfully" $ do
         testModuleTypecheck "State" `shouldSatisfy` isRight

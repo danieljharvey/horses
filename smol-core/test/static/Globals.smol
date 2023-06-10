@@ -1,15 +1,6 @@
-type Wrap a = Wrap a
+def useGlobal: { valueA: 20 } => 20 =
+  valueA!
 
-def useGlobal: { valueA: 20, valueB: 22 } => Nat =
-  valueA! + valueB! + dontUseGlobal
-
-def dontUseGlobal = 100
-
-export def useGlobalIndirectly : {valueA: 20, valueB:22} => Nat -> Wrap Nat =
-  \a -> Wrap (a + useGlobal)
-
-def useGlobalInfer = (valueA!: 20) + (valueB!: 22) + dontUseGlobal
-
-export def useGlobalIndirectlyAndInferType (a: Nat): Wrap Nat =
-  Wrap (a + useGlobalInfer)
+export def useGlobalIndirectly : {valueA: 20 } => Int =
+  useGlobal + 1
 
