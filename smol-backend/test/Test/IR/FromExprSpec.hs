@@ -22,9 +22,15 @@ import Test.Hspec
 
 evalExpr :: Text -> IdentityExpr (Type Identity Annotation)
 evalExpr input =
-  case elaborate (builtInTypes emptyResolvedDep) (unsafeParseTypedExpr input $> mempty) of
-    Right typedExpr -> fromResolvedType <$> fromResolvedExpr typedExpr
-    Left e -> error (show e)
+  let env =
+        TCEnv
+          { tceDataTypes = builtInTypes emptyResolvedDep,
+            tceVars = mempty,
+            tceGlobals = mempty
+          }
+   in case elaborate env (unsafeParseTypedExpr input $> mempty) of
+        Right typedExpr -> fromResolvedType <$> fromResolvedExpr typedExpr
+        Left e -> error (show e)
 
 testEnv :: (Monoid ann) => IR.FromExprState ann
 testEnv =
