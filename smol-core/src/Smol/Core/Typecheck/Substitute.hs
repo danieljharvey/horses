@@ -76,23 +76,33 @@ substitute ::
   Substitution dep ann ->
   Type dep ann ->
   Type dep ann
-substitute sub@(Substitution i ty) = \case
+substitute sub = \case
+  TGlobals ann tGlobs tBody ->
+    TGlobals ann (fmap (substituteLocal sub) tGlobs) (substituteLocal sub tBody)
+  TLocal inner -> TLocal $ substituteLocal sub inner
+
+substituteLocal ::
+  (Eq (dep Identifier)) =>
+  Substitution dep ann ->
+  LocalType dep ann ->
+  LocalType dep ann
+substituteLocal sub@(Substitution i ty) = \case
   TVar _ a | Just a == getSubId i -> ty
   TVar ann a -> TVar ann a
   TUnknown _ a | Just a == getUnknownId i -> ty
   TUnknown ann a -> TUnknown ann a
   TConstructor ann a -> TConstructor ann a
   TFunc ann closure fn arg ->
-    TFunc ann (substitute sub <$> closure) (substitute sub fn) (substitute sub arg)
+    TFunc ann (substituteLocal sub <$> closure) (substituteLocal sub fn) (substituteLocal sub arg)
   TApp ann a b ->
-    TApp ann (substitute sub a) (substitute sub b)
+    TApp ann (substituteLocal sub a) (substituteLocal sub b)
   TArray ann size as ->
-    TArray ann size (substitute sub as)
+    TArray ann size (substituteLocal sub as)
   TTuple ann tFst tRest ->
-    TTuple ann (substitute sub tFst) (substitute sub <$> tRest)
+    TTuple ann (substituteLocal sub tFst) (substituteLocal sub <$> tRest)
   TGlobals ann tGlobs tBody ->
-    TGlobals ann (fmap (substitute sub) tGlobs) (substitute sub tBody)
+    TGlobals ann (fmap (substituteLocal sub) tGlobs) (substituteLocal sub tBody)
   TRecord ann items ->
-    TRecord ann (fmap (substitute sub) items)
+    TRecord ann (fmap (substituteLocal sub) items)
   prim@TPrim {} -> prim
   lit@TLiteral {} -> lit

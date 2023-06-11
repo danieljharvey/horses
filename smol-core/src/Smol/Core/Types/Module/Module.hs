@@ -180,13 +180,13 @@ printTypeDef mod' tn dt =
 
 -- given annotation and expr, pair annotation types with lambdas
 printPaired :: ParsedType ann -> ParsedExpr ann -> Doc style
-printPaired (TFunc _ _ fn arg) (ELambda _ ident body) =
+printPaired (TLocal (TFunc _ _ fn arg)) (ELambda _ ident body) =
   "(" <> prettyDoc ident
     <+> ":"
     <+> prettyDoc fn
       <> ")"
       <> line
-      <> printPaired arg body
+      <> printPaired (TLocal arg) body
 printPaired mt expr =
   ":"
     <+> prettyDoc mt

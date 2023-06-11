@@ -18,7 +18,7 @@ import Smol.Core.Types
 
 -- helper functions for manipulating Expr types
 --
-typeIsStruct :: Type dep ann -> Bool
+typeIsStruct :: LocalType dep ann -> Bool
 typeIsStruct TPrim {} = False
 typeIsStruct TLiteral {} = False
 typeIsStruct _ = True
@@ -160,6 +160,14 @@ mapSpreadDep resolve = go
 mapTypeDep :: (forall a. depA a -> depB a) -> Type depA ann -> Type depB ann
 mapTypeDep resolve = go
   where
+    go (TGlobals ann env inner) =
+        TGlobals ann (mapLocalTypeDep resolve <$> env) (mapLocalTypeDep resolve inner)
+    go (TLocal inner ) =
+      TLocal (mapLocalTypeDep resolve inner)
+
+mapLocalTypeDep :: (forall a. depA a -> depB a) -> LocalType depA ann -> LocalType depB ann
+mapLocalTypeDep resolve = go
+  where
     go (TVar ann v) = TVar ann (resolve v)
     go (TTuple ann a as) = TTuple ann (go a) (go <$> as)
     go (TArray ann i as) = TArray ann i (go as)
@@ -167,7 +175,6 @@ mapTypeDep resolve = go
     go (TPrim ann p) = TPrim ann p
     go (TFunc ann env a b) = TFunc ann (go <$> env) (go a) (go b)
     go (TUnknown ann i) = TUnknown ann i
-    go (TGlobals ann env inner) = TGlobals ann (go <$> env) (go inner)
     go (TRecord ann as) = TRecord ann (go <$> as)
     go (TApp ann a b) = TApp ann (go a) (go b)
     go (TConstructor ann constructor) = TConstructor ann (resolve constructor)

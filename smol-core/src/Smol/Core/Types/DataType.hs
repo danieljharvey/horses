@@ -27,7 +27,7 @@ import Smol.Core.Types.TypeName
 data DataType dep ann = DataType
   { dtName :: TypeName,
     dtVars :: [Identifier],
-    dtConstructors :: Map Constructor [Type dep ann]
+    dtConstructors :: Map Constructor [LocalType dep ann]
   }
   deriving stock (Functor, Generic)
 
