@@ -5,11 +5,12 @@
 
 module Test.Modules.ModulesSpec (spec) where
 
+import Data.Functor (void)
+import Data.String (fromString)
 import Data.Bifunctor (second)
 import Data.Either (isRight)
 import Data.FileEmbed
 import Data.Foldable (find)
-import Data.Functor (void, (<&>))
 import Data.List (isInfixOf)
 import qualified Data.List.NonEmpty as NE
 import qualified Data.Map.Strict as M
@@ -35,6 +36,14 @@ getModuleInput :: String -> Text
 getModuleInput moduleName = case find (\(filename, _) -> moduleName `isInfixOf` filename) testInputs of
   Just (_, code) -> code
   Nothing -> error $ "could not find " <> moduleName <> " code"
+
+findResult :: String -> Either ModuleError (Module dep ann) -> Expr dep ann 
+findResult depName = \case
+  Right (Module { moExpressions }) -> 
+    case M.lookup (DIName (fromString depName)) moExpressions of 
+      Just a -> a 
+      Nothing -> error "not found in result"
+  _ -> error "typecheck failed"
 
 testModuleTypecheck :: String -> Either ModuleError (Module ResolvedDep (Type ResolvedDep Annotation))
 testModuleTypecheck moduleName =
@@ -194,14 +203,16 @@ spec = do
         testModuleTypecheck "Either" `shouldSatisfy` isRight
 
       it "Typechecks Globals successfully" $ do
-        let result = testModuleTypecheck "Globals" <&> \(Module {moExpressions}) -> void . getExprAnnotation <$> moExpressions
-        result
-          `shouldBe` Right
-            ( M.fromList
-                [ (DIName "useGlobal", TGlobals () mempty (tyIntLit [100])),
-                  (DIName "useGlobalIndirectly", tyIntLit [100])
-                ]
-            )
+        let result = testModuleTypecheck "Globals"
+
+        void (getExprAnnotation (findResult "noGlobal" result)) 
+          `shouldBe` tyIntLit [100]
+
+        void (getExprAnnotation (findResult "useGlobal" result)) 
+          `shouldBe` TGlobals () (M.singleton "valueA" (tyIntLit [20])) (tyIntLit [20])
+
+        void (getExprAnnotation (findResult "useGlobalIndirectly" result)) 
+          `shouldBe` TGlobals () (M.singleton "valueA" (tyIntLit [20])) tyInt 
 
       xit "Typechecks State successfully" $ do
         testModuleTypecheck "State" `shouldSatisfy` isRight
