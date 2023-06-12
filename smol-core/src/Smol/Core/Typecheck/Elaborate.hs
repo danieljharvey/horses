@@ -19,7 +19,6 @@ import Control.Monad.Writer.CPS
 import Data.Foldable (foldl', toList)
 import Data.Functor
 import qualified Data.List.NonEmpty as NE
-import Data.Map.Strict (Map)
 import qualified Data.Map.Strict as M
 import qualified Data.Set as S
 import Smol.Core.ExprUtils
@@ -36,10 +35,10 @@ elaborate ::
     Show ann,
     MonadError (TCError ann) m
   ) =>
-  Map (ResolvedDep TypeName) (DataType ResolvedDep ann) ->
+  TCEnv ann ->
   ResolvedExpr ann ->
   m (ResolvedExpr (ResolvedType ann))
-elaborate dataTypes expr =
+elaborate env expr =
   fst
     <$> runReaderT
       ( runWriterT
@@ -48,7 +47,7 @@ elaborate dataTypes expr =
               (TCState mempty 0 mempty)
           )
       )
-      (TCEnv mempty mempty dataTypes)
+      env
 
 listenToGlobals ::
   ( MonadState (TCState ann) m,

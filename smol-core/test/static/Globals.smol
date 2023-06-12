@@ -1,0 +1,8 @@
+def noGlobal = 100
+
+def useGlobal: { valueA: 20 } => 20 =
+  valueA!
+
+export def useGlobalIndirectly : {valueA: 20 } => Int =
+  useGlobal + 1
+

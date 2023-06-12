@@ -28,7 +28,12 @@ run llModule env =
 evalExpr :: Text -> ResolvedExpr (Type ResolvedDep Annotation)
 evalExpr input =
   case elaborate
-    (builtInTypes emptyResolvedDep)
+    ( TCEnv
+        { tceDataTypes = builtInTypes emptyResolvedDep,
+          tceVars = mempty,
+          tceGlobals = mempty
+        }
+    )
     (unsafeParseTypedExpr input $> mempty) of
     Right typedExpr -> typedExpr
     Left e -> error (show e)
