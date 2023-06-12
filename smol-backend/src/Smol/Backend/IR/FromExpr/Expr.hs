@@ -3,13 +3,15 @@
 {-# LANGUAGE OverloadedStrings #-}
 
 module Smol.Backend.IR.FromExpr.Expr
-  ( irFromExpr,
+  ( irFromExpr
+    , irFromModule,
     fromExpr,
     FromExprState (..),
     getConstructorNumber,
   )
 where
 
+import Smol.Core.Types.Module (Module(..))
 import Control.Monad ((>=>))
 import Control.Monad.Identity
 import Control.Monad.State
@@ -144,6 +146,11 @@ lookupVar ident = do
     Just a -> pure a
     _ -> error $ "could not find var " <> show ident
 -}
+
+-- | turn a Smol module into an IR one
+-- no considerations for name collisions etc
+irFromModule :: Module Identity (Type Identity ann) -> IRModule
+irFromModule myModule = IRModule []
 
 -- in which we turn our higher level language into the middle level silly
 -- language
@@ -522,13 +529,17 @@ pushModulePart part =
 modulePartsFromExpr ::
   (Show ann) =>
   Map (Identity TypeName) (DataType Identity ann) ->
+  Map (Identity Identifier) (IdentityExpr (Type Identity ann)) ->
   IdentityExpr (Type Identity ann) ->
   [IRModulePart]
-modulePartsFromExpr dataTypes expr =
-  let (mainExpr, FromExprState {fesModuleParts = otherParts}) =
-        runState (fromExpr expr) (FromExprState mempty dataTypes 1 mempty)
-      printFuncName = getPrintFuncName (getExprAnnotation expr)
-      printFuncType = getPrintFuncType (getExprAnnotation expr)
+modulePartsFromExpr dataTypes otherExprs mainExpr =
+  let (irMainExpr, FromExprState {fesModuleParts = otherParts}) = do
+        let fromOtherExpr (name, expr) = do
+                irExpr <- fromExpr expr
+                pushModulePart (_ irExpr)
+        runState (fromExpr mainExpr) (FromExprState mempty dataTypes 1 mempty)
+      printFuncName = getPrintFuncName (getExprAnnotation mainExpr)
+      printFuncType = getPrintFuncType (getExprAnnotation mainExpr)
    in otherParts
         <> [ IRFunctionDef
                ( IRFunction
@@ -536,7 +547,7 @@ modulePartsFromExpr dataTypes expr =
                      irfArgs = [],
                      irfReturn = IRInt32,
                      irfBody =
-                       [ IRDiscard (IRApply printFuncType (IRFuncPointer printFuncName) [mainExpr]),
+                       [ IRDiscard (IRApply printFuncType (IRFuncPointer printFuncName) [irMainExpr]),
                          IRRet IRInt32 $ IRPrim $ IRPrimInt32 0
                        ]
                    }

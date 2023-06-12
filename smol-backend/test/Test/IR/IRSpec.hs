@@ -2,6 +2,7 @@
 
 module Test.IR.IRSpec (spec) where
 
+import Smol.Core.Types.Module
 import Control.Monad.Identity
 import Data.Foldable (traverse_)
 import Data.Functor
@@ -53,20 +54,26 @@ addEnvFunctions expr =
                 (ERecord ann (M.singleton "egg" (EPrim ann (PInt 21))))
     _ -> eliminateGlobals emptyResolvedDep expr
 
-createModule :: Text -> LLVM.Module
-createModule input = do
+-- | create a test module with our expression as `main`
+moduleFromExpr :: Expr dep ann -> Module dep ann
+moduleFromExpr expr 
+  = mempty { moExpressions = M.singleton (DIName "main") expr
+           }
+
+createModuleFromExpr :: Text -> LLVM.Module
+createModuleFromExpr input = do
   let expr = addEnvFunctions (evalExpr input)
       irModule = irFromExpr (builtInTypes Identity) (fromResolvedType <$> fromResolvedExpr expr)
   irToLLVM irModule
 
 testCompileIR :: (Text, Text) -> Spec
 testCompileIR (input, result) = it ("Via IR " <> show input) $ do
-  resp <- run (createModule input) []
+  resp <- run (createModuleFromExpr input) []
   resp `shouldBe` result
 
 testCompileIRWithEnv :: (Text, [(String, String)], Text) -> Spec
 testCompileIRWithEnv (input, runEnv, result) = it ("Via IR " <> show input) $ do
-  resp <- run (createModule input) runEnv
+  resp <- run (createModuleFromExpr input) runEnv
   resp `shouldBe` result
 
 spec :: Spec
