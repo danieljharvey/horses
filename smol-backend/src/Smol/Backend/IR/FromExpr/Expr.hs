@@ -1,22 +1,21 @@
 {-# LANGUAGE DerivingStrategies #-}
 {-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE OverloadedStrings #-}
 
 module Smol.Backend.IR.FromExpr.Expr
-  ( irFromExpr
-    , irFromModule,
+  ( irFromModule,
     fromExpr,
     FromExprState (..),
     getConstructorNumber,
   )
 where
 
-import Smol.Core.Types.Module (Module(..))
 import Control.Monad ((>=>))
 import Control.Monad.Identity
 import Control.Monad.State
 import Data.Bifunctor
-import Data.Foldable (toList)
+import Data.Foldable (toList, traverse_)
 import qualified Data.List.NonEmpty as NE
 import Data.Map.Strict (Map)
 import qualified Data.Map.Strict as M
@@ -30,13 +29,14 @@ import Smol.Backend.IR.IRExpr
 import Smol.Backend.Types.GetPath
 import Smol.Backend.Types.PatternPredicate
 import Smol.Core.Helpers
-import Smol.Core.Typecheck (flattenConstructorApplication)
+import Smol.Core.Typecheck (flattenConstructorApplication, getTypeAnnotation)
 import Smol.Core.Typecheck.Shared (getExprAnnotation)
 import Smol.Core.Types.Constructor
 import Smol.Core.Types.DataType
 import Smol.Core.Types.Expr
 import Smol.Core.Types.Identifier
 import Smol.Core.Types.Op
+import Smol.Core.Types.Module (DefIdentifier (..), Module (..))
 import Smol.Core.Types.Prim
 import Smol.Core.Types.Type
 import Smol.Core.Types.TypeName
@@ -149,26 +149,29 @@ lookupVar ident = do
 
 -- | turn a Smol module into an IR one
 -- no considerations for name collisions etc
-irFromModule :: Module Identity (Type Identity ann) -> IRModule
-irFromModule myModule = IRModule []
-
--- in which we turn our higher level language into the middle level silly
--- language
--- we should create the main function, which always prints its result
--- a side effect will be that it adds IRModuleParts to the state, these are all
--- combined
-irFromExpr ::
-  (Show ann) =>
-  Map (Identity TypeName) (DataType Identity ann) ->
-  IdentityExpr (Type Identity ann) ->
-  IRModule
-irFromExpr dataTypes expr =
-  IRModule $
-    [ IRExternDef $ getPrinter (getExprAnnotation expr),
-      IRExternDef irStringConcat,
-      IRExternDef irStringEquals -- we should dynamically include these once we get a lot of stdlib helpers
-    ]
-      <> modulePartsFromExpr dataTypes expr
+irFromModule :: (Show ann) => Module Identity (Type Identity ann) -> IRModule
+irFromModule myModule =
+  let mainFunc = case M.lookup (DIName "main") (moExpressions myModule) of
+        Just expr -> expr
+        Nothing -> error "expected a main function"
+      otherFuncs =
+        filterMapKeys
+          ( \case
+              DIName name -> Just name
+              _ -> Nothing
+          )
+          (M.delete (DIName "main") (moExpressions myModule))
+      dataTypes =
+        M.fromList
+          . fmap (bimap Identity (fmap getTypeAnnotation))
+          . M.toList
+          $ moDataTypes myModule
+   in IRModule $
+        [ IRExternDef $ getPrinter (getExprAnnotation mainFunc),
+          IRExternDef irStringConcat,
+          IRExternDef irStringEquals -- we should dynamically include these once we get a lot of stdlib helpers
+        ]
+          <> modulePartsFromExpr dataTypes otherFuncs mainFunc
 
 fromPrim :: (Monad m) => Prim -> m IRExpr
 fromPrim (PInt i) = pure $ IRPrim (IRPrimInt32 i)
@@ -520,6 +523,10 @@ appFromExpr ty fn val = do
 fromIdentifier :: Identifier -> IRIdentifier
 fromIdentifier (Identifier ident) = IRIdentifier (T.unpack ident)
 
+functionNameFromIdentifier :: Identifier -> IRFunctionName
+functionNameFromIdentifier (Identifier ident) =
+  IRFunctionName (T.unpack ident)
+
 pushModulePart :: (MonadState (FromExprState ann) m) => IRModulePart -> m ()
 pushModulePart part =
   modify (\s -> s {fesModuleParts = fesModuleParts s <> [part]})
@@ -529,15 +536,27 @@ pushModulePart part =
 modulePartsFromExpr ::
   (Show ann) =>
   Map (Identity TypeName) (DataType Identity ann) ->
-  Map (Identity Identifier) (IdentityExpr (Type Identity ann)) ->
+  Map Identifier (IdentityExpr (Type Identity ann)) ->
   IdentityExpr (Type Identity ann) ->
   [IRModulePart]
 modulePartsFromExpr dataTypes otherExprs mainExpr =
   let (irMainExpr, FromExprState {fesModuleParts = otherParts}) = do
         let fromOtherExpr (name, expr) = do
-                irExpr <- fromExpr expr
-                pushModulePart (_ irExpr)
-        runState (fromExpr mainExpr) (FromExprState mempty dataTypes 1 mempty)
+              irExpr <- fromExpr expr
+              pushModulePart
+                ( IRFunctionDef
+                    ( IRFunction
+                        { irfName = functionNameFromIdentifier name,
+                          irfArgs = [],
+                          irfReturn = IRInt32,
+                          irfBody = [IRRet IRInt32 irExpr]
+                        }
+                    )
+                )
+            action = do
+              traverse_ fromOtherExpr (M.toList otherExprs)
+              fromExpr mainExpr
+        runState action (FromExprState mempty dataTypes 1 mempty)
       printFuncName = getPrintFuncName (getExprAnnotation mainExpr)
       printFuncType = getPrintFuncType (getExprAnnotation mainExpr)
    in otherParts

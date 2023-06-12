@@ -5,6 +5,7 @@ import Smol.Core.ExprUtils
 import Smol.Core.Types.Expr
 import Smol.Core.Types.ResolvedDep
 import Smol.Core.Types.Type
+import Smol.Core.Types.Module
 
 -- for now, throw extra info away
 resolve :: ResolvedDep a -> Identity a
@@ -15,7 +16,13 @@ resolve (UniqueDefinition a _) = pure a
 -- | We have a ResolvedDep with lots of info, but when it comes to compiling
 -- we don't want to leak all that shit. `IdentityExpr` is no doubt the wrong
 -- choice but fuck it
-fromResolvedExpr :: ResolvedExpr ann -> IdentityExpr ann
+fromResolvedModule :: Module ResolvedDep ann -> Module Identity ann
+fromResolvedModule myMod = Module {
+  moExpressions = mapExprDep resolve <$> moExpressions myMod,
+  moDataTypes = (fmap . fmap) (mapTypeDep resolve) (moDataTypes myMod)
+                                 }
+
+fromResolvedExpr :: Expr ResolvedDep ann -> Expr Identity ann
 fromResolvedExpr = mapExprDep resolve
 
 fromResolvedType :: Type ResolvedDep ann -> Type Identity ann

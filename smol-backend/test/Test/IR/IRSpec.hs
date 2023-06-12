@@ -1,9 +1,14 @@
 {-# LANGUAGE OverloadedStrings #-}
 
 module Test.IR.IRSpec (spec) where
+import Smol.Core.Modules.FromParts
+import Smol.Core.Modules.ModuleError
+import Smol.Core.Modules.ResolveDeps
+import Smol.Core.Modules.Typecheck
 
-import Smol.Core.Types.Module
+import qualified Data.Text as T
 import Control.Monad.Identity
+import Data.Bifunctor (bimap)
 import Data.Foldable (traverse_)
 import Data.Functor
 import qualified Data.Map as M
@@ -16,6 +21,7 @@ import Smol.Backend.IR.ToLLVM.ToLLVM
 import Smol.Core.EliminateGlobals (eliminateGlobals)
 import Smol.Core.Typecheck
 import Smol.Core.Types
+import Smol.Core.Types.Module
 import Test.BuiltInTypes
 import Test.Helpers
 import Test.Hspec
@@ -55,25 +61,56 @@ addEnvFunctions expr =
     _ -> eliminateGlobals emptyResolvedDep expr
 
 -- | create a test module with our expression as `main`
-moduleFromExpr :: Expr dep ann -> Module dep ann
-moduleFromExpr expr 
-  = mempty { moExpressions = M.singleton (DIName "main") expr
-           }
+moduleFromExpr :: (Monoid ann) => Expr Identity (Type Identity ann) -> Module Identity (Type Identity ann)
+moduleFromExpr expr =
+  let dataTypesRaw :: M.Map (Identity TypeName) (DataType Identity ())
+      dataTypesRaw = builtInTypes Identity
 
-createModuleFromExpr :: Text -> LLVM.Module
-createModuleFromExpr input = do
+      massageDataTypes =
+        M.fromList
+          . fmap (bimap runIdentity (fmap (const (TPrim mempty TPInt))))
+          . M.toList
+   in mempty
+        { moExpressions = M.singleton (DIName "main") expr,
+          moDataTypes = massageDataTypes dataTypesRaw
+        }
+
+createLLVMModuleFromExpr :: Text -> LLVM.Module
+createLLVMModuleFromExpr input = do
   let expr = addEnvFunctions (evalExpr input)
-      irModule = irFromExpr (builtInTypes Identity) (fromResolvedType <$> fromResolvedExpr expr)
+      irModule = irFromModule $ moduleFromExpr (fromResolvedType <$> fromResolvedExpr expr)
   irToLLVM irModule
 
 testCompileIR :: (Text, Text) -> Spec
 testCompileIR (input, result) = it ("Via IR " <> show input) $ do
-  resp <- run (createModuleFromExpr input) []
+  resp <- run (createLLVMModuleFromExpr input) []
   resp `shouldBe` result
+
+createLLVMModuleFromModule :: Text -> LLVM.Module
+createLLVMModuleFromModule input = 
+  let typecheckedModule = case parseModuleAndFormatError input of
+        Right moduleParts -> do
+          case moduleFromModuleParts mempty moduleParts >>= resolveModuleDeps of
+            Left e -> error (show e)
+            Right (myModule, deps) -> do
+              typecheckModule mempty "" myModule deps
+        Left e -> error (show e)
+      irModule = irFromModule $ (fromResolvedType <$> fmap fromResolvedExpr typecheckedModule)
+   in irToLLVM irModule
+
+
+testCompileModuleIR :: ([Text], Text) -> Spec
+testCompileModuleIR (inputs, result) = 
+  let input = T.intercalate "\n" inputs
+   in it ("Via IR " <> show input) $ do
+      
+        resp <- run (createLLVMModuleFromExpr input) []
+        resp `shouldBe` result
+
 
 testCompileIRWithEnv :: (Text, [(String, String)], Text) -> Spec
 testCompileIRWithEnv (input, runEnv, result) = it ("Via IR " <> show input) $ do
-  resp <- run (createModuleFromExpr input) runEnv
+  resp <- run (createLLVMModuleFromExpr input) runEnv
   resp `shouldBe` result
 
 spec :: Spec
@@ -104,6 +141,12 @@ spec = do
       it "curried function" $ do
         resp <- run (irToLLVM irCurried) mempty
         resp `shouldBe` "42"
+
+    describe "From modules" $ do
+      let testModules = [(["type Identity a = Identity a", "def increment a = a + 1", "def main = case Identity (increment 41) of Identity a -> a"],
+            "42")]
+      describe "IR compile" $ do
+        traverse_ testCompileModuleIR testModules
 
     describe "From expressions" $ do
       describe "Basic" $ do
