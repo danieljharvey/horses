@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1686430999300,
+  "lastUpdate": 1686555176044,
   "repoUrl": "https://github.com/danieljharvey/mimsa",
   "entries": {
     "Store benchmarks in Github Pages": [
@@ -1799,6 +1799,50 @@ window.BENCHMARK_DATA = {
           {
             "name": "evaluate/evaluate parsing 2",
             "value": 0.23662154877142713,
+            "unit": "Time (ms)"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "danieljamesharvey@gmail.com",
+            "name": "Daniel Harvey",
+            "username": "danieljharvey"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "e26ca2a9320e5c59b7b12433bc7d36b2cdfa8b99",
+          "message": "Actually typecheck multiple definitions (#962)\n\n* Test module typechecking more throughly\r\n\r\n* Damn this shit is fucked\r\n\r\n* We need to make these types stricter\r\n\r\n* Skippy\r\n\r\n* Nice",
+          "timestamp": "2023-06-12T08:29:04+01:00",
+          "tree_id": "901e16ddc7e850d8357ce0f647c1afd5212540e9",
+          "url": "https://github.com/danieljharvey/mimsa/commit/e26ca2a9320e5c59b7b12433bc7d36b2cdfa8b99"
+        },
+        "date": 1686555175033,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "build stdlib/allFns",
+            "value": 0.1084147475666658,
+            "unit": "Time (ms)"
+          },
+          {
+            "name": "evaluate/evaluate big looping thing",
+            "value": 0.09734528003333945,
+            "unit": "Time (ms)"
+          },
+          {
+            "name": "evaluate/evaluate parsing",
+            "value": 0.03204064511029564,
+            "unit": "Time (ms)"
+          },
+          {
+            "name": "evaluate/evaluate parsing 2",
+            "value": 0.22909077028572092,
             "unit": "Time (ms)"
           }
         ]
