@@ -88,15 +88,12 @@ testCompileIR (input, result) = it ("Via IR " <> show input) $ do
 
 createLLVMModuleFromModule :: Text -> LLVM.Module
 createLLVMModuleFromModule input = 
-  let typecheckedModule = case parseModuleAndFormatError input of
-        Right moduleParts -> do
-          case moduleFromModuleParts mempty moduleParts >>= resolveModuleDeps of
-            Left e -> error (show e)
-            Right (myModule, deps) -> do
-              typecheckModule mempty "" myModule deps
-        Left e -> error (show e)
-      irModule = irFromModule $ (fromResolvedType <$> fmap fromResolvedExpr typecheckedModule)
-   in irToLLVM irModule
+  let parsedModule = unsafeParseModule input
+   in case resolveModuleDeps parsedModule >>=
+          (\(resolvedModule, deps) -> typecheckModule mempty "" resolvedModule deps) of
+    Right typecheckedModule ->
+      irToLLVM (irFromModule (fmap fromResolvedType fromResolvedModule typecheckedModule))
+    Left e -> error (show e)
 
 
 testCompileModuleIR :: ([Text], Text) -> Spec

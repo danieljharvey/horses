@@ -1,4 +1,6 @@
-module Smol.Backend.IR.FromResolvedExpr (fromResolvedExpr, fromResolvedType) where
+module Smol.Backend.IR.FromResolvedExpr (
+  fromResolvedModule,
+  fromResolvedExpr, fromResolvedType) where
 
 import Control.Monad.Identity
 import Smol.Core.ExprUtils
@@ -17,9 +19,9 @@ resolve (UniqueDefinition a _) = pure a
 -- we don't want to leak all that shit. `IdentityExpr` is no doubt the wrong
 -- choice but fuck it
 fromResolvedModule :: Module ResolvedDep ann -> Module Identity ann
-fromResolvedModule myMod = Module {
-  moExpressions = mapExprDep resolve <$> moExpressions myMod,
-  moDataTypes = (fmap . fmap) (mapTypeDep resolve) (moDataTypes myMod)
+fromResolvedModule _myMod = Module {
+--  moExpressions = mapExprDep resolve <$> moExpressions myMod,
+  --moDataTypes = (fmap . fmap) (mapTypeDep resolve) (moDataTypes myMod)
                                  }
 
 fromResolvedExpr :: Expr ResolvedDep ann -> Expr Identity ann
