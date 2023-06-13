@@ -21,6 +21,7 @@ import Smol.Core.Types
 typeIsStruct :: Type dep ann -> Bool
 typeIsStruct TPrim {} = False
 typeIsStruct TLiteral {} = False
+typeIsStruct TUnknown {} = False
 typeIsStruct _ = True
 
 -- | modify the outer annotation of an expression
