@@ -9,13 +9,13 @@
 
 module Smol.Core.Types.Expr
   ( Expr (..),
-    Op (..),
     ParsedExpr,
     ResolvedExpr,
     IdentityExpr,
   )
 where
 
+import Smol.Core.Types.Op
 import Control.Monad.Identity
 import Data.Aeson (FromJSON, ToJSON)
 import Data.Foldable (toList)
@@ -51,14 +51,6 @@ type ResolvedExpr ann = Expr ResolvedDep ann
 type IdentityExpr ann = Expr Identity ann
 
 ---------------------------
-
-data Op = OpAdd | OpEquals
-  deriving stock (Eq, Ord, Show, Generic)
-  deriving anyclass (FromJSON, ToJSON)
-
-instance Printer Op where
-  prettyDoc OpAdd = "+"
-  prettyDoc OpEquals = "=="
 
 data Expr dep ann
   = ELambda ann (dep Identifier) (Expr dep ann)

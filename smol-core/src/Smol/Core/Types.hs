@@ -3,6 +3,7 @@ module Smol.Core.Types
     module Smol.Core.Types.Annotated,
     module Smol.Core.Types.Constructor,
     module Smol.Core.Types.DataType,
+    module Smol.Core.Types.Op,
     module Smol.Core.Types.Expr,
     module Smol.Core.Types.Identifier,
     module Smol.Core.Types.ParseDep,
@@ -28,3 +29,4 @@ import Smol.Core.Types.ResolvedDep
 import Smol.Core.Types.Spread
 import Smol.Core.Types.Type
 import Smol.Core.Types.TypeName
+import Smol.Core.Types.Op

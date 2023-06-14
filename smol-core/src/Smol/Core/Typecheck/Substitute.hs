@@ -84,6 +84,8 @@ substitute sub@(Substitution i ty) = \case
   TConstructor ann a -> TConstructor ann a
   TFunc ann closure fn arg ->
     TFunc ann (substitute sub <$> closure) (substitute sub fn) (substitute sub arg)
+  TInfix ann op a b ->
+    TInfix ann op (substitute sub a) (substitute sub b)
   TApp ann a b ->
     TApp ann (substitute sub a) (substitute sub b)
   TArray ann size as ->

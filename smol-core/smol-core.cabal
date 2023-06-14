@@ -110,6 +110,7 @@ library
     Smol.Core.Types.Module.Module
     Smol.Core.Types.Module.ModuleHash
     Smol.Core.Types.Module.ModuleName
+    Smol.Core.Types.Op
     Smol.Core.Types.ParseDep
     Smol.Core.Types.Pattern
     Smol.Core.Types.PatternMatchError
@@ -184,6 +185,7 @@ test-suite smol-core-tests
     Smol.Core.Types.Module.Module
     Smol.Core.Types.Module.ModuleHash
     Smol.Core.Types.Module.ModuleName
+    Smol.Core.Types.Op
     Smol.Core.Types.ParseDep
     Smol.Core.Types.Pattern
     Smol.Core.Types.PatternMatchError

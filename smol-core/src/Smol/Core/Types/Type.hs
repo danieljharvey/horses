@@ -18,6 +18,7 @@ module Smol.Core.Types.Type
   )
 where
 
+import Smol.Core.Types.Op
 import Data.Aeson (FromJSON, FromJSONKey, ToJSON)
 import qualified Data.List.NonEmpty as NE
 import Data.Map.Strict
@@ -77,6 +78,7 @@ data Type dep ann
   | TRecord ann (Map Identifier (Type dep ann))
   | TApp ann (Type dep ann) (Type dep ann)
   | TConstructor ann (dep TypeName)
+  | TInfix ann Op (Type dep ann) (Type dep ann)
   deriving stock (Functor, Foldable, Generic, Traversable)
 
 deriving stock instance
