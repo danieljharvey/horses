@@ -1,3 +1,4 @@
+{-# LANGUAGE NamedFieldPuns #-}
 {-# LANGUAGE RankNTypes #-}
 
 module Smol.Core.ExprUtils
@@ -9,6 +10,7 @@ module Smol.Core.ExprUtils
     patternMonoid,
     mapExprDep,
     mapTypeDep,
+    mapDataTypeDep,
   )
 where
 
@@ -173,3 +175,8 @@ mapTypeDep resolve = go
     go (TRecord ann as) = TRecord ann (go <$> as)
     go (TApp ann a b) = TApp ann (go a) (go b)
     go (TConstructor ann constructor) = TConstructor ann (resolve constructor)
+
+mapDataTypeDep :: (forall a. depA a -> depB a) -> DataType depA ann -> DataType depB ann
+mapDataTypeDep resolve (DataType {dtName, dtVars, dtConstructors}) =
+  let newConstructors = (fmap . fmap) (mapTypeDep resolve) dtConstructors
+   in DataType {dtName, dtVars, dtConstructors = newConstructors}

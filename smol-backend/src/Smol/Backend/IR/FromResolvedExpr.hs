@@ -1,13 +1,20 @@
-module Smol.Backend.IR.FromResolvedExpr (
-  fromResolvedModule,
-  fromResolvedExpr, fromResolvedType) where
+{-# LANGUAGE NamedFieldPuns #-}
+{-# LANGUAGE RecordWildCards #-}
+
+module Smol.Backend.IR.FromResolvedExpr
+  ( fromResolvedModule,
+    fromResolvedExpr,
+    fromResolvedType,
+  )
+where
 
 import Control.Monad.Identity
 import Smol.Core.ExprUtils
+import Smol.Core.Types.DataType
 import Smol.Core.Types.Expr
+import Smol.Core.Types.Module
 import Smol.Core.Types.ResolvedDep
 import Smol.Core.Types.Type
-import Smol.Core.Types.Module
 
 -- for now, throw extra info away
 resolve :: ResolvedDep a -> Identity a
@@ -19,10 +26,19 @@ resolve (UniqueDefinition a _) = pure a
 -- we don't want to leak all that shit. `IdentityExpr` is no doubt the wrong
 -- choice but fuck it
 fromResolvedModule :: Module ResolvedDep ann -> Module Identity ann
-fromResolvedModule _myMod = Module {
---  moExpressions = mapExprDep resolve <$> moExpressions myMod,
-  --moDataTypes = (fmap . fmap) (mapTypeDep resolve) (moDataTypes myMod)
-                                 }
+fromResolvedModule (Module {..}) =
+  Module
+    { moExpressionExports,
+      moExpressionImports,
+      moDataTypeExports,
+      moDataTypeImports,
+      moNamedImports,
+      moExpressions = fromResolvedExpr <$> moExpressions,
+      moDataTypes = fromResolvedDataType <$> moDataTypes
+    }
+
+fromResolvedDataType :: DataType ResolvedDep ann -> DataType Identity ann
+fromResolvedDataType = mapDataTypeDep resolve
 
 fromResolvedExpr :: Expr ResolvedDep ann -> Expr Identity ann
 fromResolvedExpr = mapExprDep resolve

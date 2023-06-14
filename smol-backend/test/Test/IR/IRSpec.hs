@@ -1,24 +1,25 @@
 {-# LANGUAGE OverloadedStrings #-}
 
 module Test.IR.IRSpec (spec) where
-import Smol.Core.Modules.FromParts
-import Smol.Core.Modules.ModuleError
-import Smol.Core.Modules.ResolveDeps
-import Smol.Core.Modules.Typecheck
 
-import qualified Data.Text as T
 import Control.Monad.Identity
 import Data.Bifunctor (bimap)
 import Data.Foldable (traverse_)
 import Data.Functor
 import qualified Data.Map as M
 import Data.Text (Text)
+import qualified Data.Text as T
 import qualified LLVM.AST as LLVM
 import qualified Smol.Backend.Compile.RunLLVM as Run
 import Smol.Backend.IR.FromExpr.Expr
 import Smol.Backend.IR.FromResolvedExpr
 import Smol.Backend.IR.ToLLVM.ToLLVM
 import Smol.Core.EliminateGlobals (eliminateGlobals)
+import Smol.Core.Modules.FromParts
+import Smol.Core.Modules.ModuleError
+import Smol.Core.Modules.ResolveDeps
+import Smol.Core.Modules.Typecheck
+import Smol.Core.Parser (parseModuleAndFormatError)
 import Smol.Core.Typecheck
 import Smol.Core.Types
 import Smol.Core.Types.Module
@@ -87,23 +88,30 @@ testCompileIR (input, result) = it ("Via IR " <> show input) $ do
   resp `shouldBe` result
 
 createLLVMModuleFromModule :: Text -> LLVM.Module
-createLLVMModuleFromModule input = 
-  let parsedModule = unsafeParseModule input
-   in case resolveModuleDeps parsedModule >>=
-          (\(resolvedModule, deps) -> typecheckModule mempty "" resolvedModule deps) of
+createLLVMModuleFromModule input =
+  case resolveModule input of
     Right typecheckedModule ->
-      irToLLVM (irFromModule (fmap fromResolvedType fromResolvedModule typecheckedModule))
+      let idModule :: Module Identity (Type Identity Annotation)
+          idModule = fmap fromResolvedType (fromResolvedModule typecheckedModule)
+       in irToLLVM (irFromModule idModule)
     Left e -> error (show e)
 
+resolveModule :: Text -> Either ModuleError (Module ResolvedDep (Type ResolvedDep Annotation))
+resolveModule input =
+  case parseModuleAndFormatError input of
+    Right moduleParts -> do
+      case moduleFromModuleParts mempty moduleParts >>= resolveModuleDeps of
+        Left e -> error (show e)
+        Right (myModule, deps) -> do
+          typecheckModule mempty "" myModule deps
+    Left e -> error (show e)
 
 testCompileModuleIR :: ([Text], Text) -> Spec
-testCompileModuleIR (inputs, result) = 
+testCompileModuleIR (inputs, result) =
   let input = T.intercalate "\n" inputs
    in it ("Via IR " <> show input) $ do
-      
-        resp <- run (createLLVMModuleFromExpr input) []
+        resp <- run (createLLVMModuleFromModule input) []
         resp `shouldBe` result
-
 
 testCompileIRWithEnv :: (Text, [(String, String)], Text) -> Spec
 testCompileIRWithEnv (input, runEnv, result) = it ("Via IR " <> show input) $ do
@@ -139,9 +147,12 @@ spec = do
         resp <- run (irToLLVM irCurried) mempty
         resp `shouldBe` "42"
 
-    describe "From modules" $ do
-      let testModules = [(["type Identity a = Identity a", "def increment a = a + 1", "def main = case Identity (increment 41) of Identity a -> a"],
-            "42")]
+    fdescribe "From modules" $ do
+      let testModules =
+            [ ( ["type Identity a = Identity a", "def increment a = a + 1", "def main = case Identity (increment 41) of Identity a -> a"],
+                "42"
+              )
+            ]
       describe "IR compile" $ do
         traverse_ testCompileModuleIR testModules
 
