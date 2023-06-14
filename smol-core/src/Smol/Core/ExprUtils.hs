@@ -162,6 +162,7 @@ mapTypeDep :: (forall a. depA a -> depB a) -> Type depA ann -> Type depB ann
 mapTypeDep resolve = go
   where
     go (TVar ann v) = TVar ann (resolve v)
+    go (TInfix ann op a b) = TInfix ann op (go a) (go b)
     go (TTuple ann a as) = TTuple ann (go a) (go <$> as)
     go (TArray ann i as) = TArray ann i (go as)
     go (TLiteral ann a) = TLiteral ann a

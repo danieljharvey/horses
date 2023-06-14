@@ -103,6 +103,7 @@ inferInfix _ann OpAdd a b = do
   elabB <- infer b
   let tyA = getExprAnnotation elabA
       tyB = getExprAnnotation elabB
+
   addTy <- tyA `typeAddition` tyB
 
   pure (EInfix addTy OpAdd elabA elabB)

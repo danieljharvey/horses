@@ -178,7 +178,7 @@ spec = do
               ("0 + 0", "0"),
               ("0 + 1", "1"),
               ("1 + 1", "2"),
-              ("\\a -> a + 1", "Nat -> Nat"),
+              ("\\a -> a + 1", "a -> a + 1"),
               ("(\\pair -> case pair of (a,b) -> a + b : (Nat,Nat) -> Nat)", "(Nat,Nat) -> Nat"),
               ("let id = (\\i -> i : i -> i); case (Just 1) of Just a -> Just (id a) | Nothing -> Nothing", "Maybe 1"),
               ("[1,2]", "[ 1 | 2 ]"),

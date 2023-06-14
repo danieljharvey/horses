@@ -92,6 +92,7 @@ getSpreadAnnotation (SpreadWildcard ann) = Just ann
 
 getTypeAnnotation :: Type dep ann -> ann
 getTypeAnnotation (TPrim ann _) = ann
+getTypeAnnotation (TInfix ann _ _ _) = ann
 getTypeAnnotation (TUnknown ann _) = ann
 getTypeAnnotation (TConstructor ann _) = ann
 getTypeAnnotation (TApp ann _ _) = ann

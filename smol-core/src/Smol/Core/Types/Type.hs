@@ -18,7 +18,6 @@ module Smol.Core.Types.Type
   )
 where
 
-import Smol.Core.Types.Op
 import Data.Aeson (FromJSON, FromJSONKey, ToJSON)
 import qualified Data.List.NonEmpty as NE
 import Data.Map.Strict
@@ -32,6 +31,7 @@ import Prettyprinter ((<+>))
 import qualified Prettyprinter as PP
 import Smol.Core.Printer
 import Smol.Core.Types.Identifier
+import Smol.Core.Types.Op
 import Smol.Core.Types.ParseDep
 import Smol.Core.Types.ResolvedDep
 import Smol.Core.Types.TypeName
@@ -136,6 +136,7 @@ renderType ::
   Type dep ann ->
   PP.Doc style
 renderType (TPrim _ a) = prettyDoc a
+renderType (TInfix _ op a b) = prettyDoc a <+> prettyDoc op <+> prettyDoc b
 renderType (TLiteral _ l) = prettyDoc l
 renderType (TUnknown _ i) = "U" <> PP.pretty i
 renderType (TArray _ _ as) = "[" <> prettyDoc as <> "]"

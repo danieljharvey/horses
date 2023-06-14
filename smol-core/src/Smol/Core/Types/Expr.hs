@@ -15,7 +15,6 @@ module Smol.Core.Types.Expr
   )
 where
 
-import Smol.Core.Types.Op
 import Control.Monad.Identity
 import Data.Aeson (FromJSON, ToJSON)
 import Data.Foldable (toList)
@@ -31,6 +30,7 @@ import Smol.Core.Helpers
 import Smol.Core.Printer
 import Smol.Core.Types.Constructor
 import Smol.Core.Types.Identifier
+import Smol.Core.Types.Op
 import Smol.Core.Types.ParseDep
 import Smol.Core.Types.Pattern
 import Smol.Core.Types.Prim
