@@ -44,7 +44,7 @@ compile llvmModule outfile =
 
       let moduleText = cs (ppllvm llvmModule)
 
-      -- T.putStrLn moduleText
+      T.putStrLn moduleText
 
       -- write the llvmmodule Smol.Backend.to a file
       T.hPutStrLn llvmHandle moduleText

@@ -2,17 +2,16 @@
 
 module Test.IR.IRSpec (spec) where
 
-import Control.Monad.Identity
 import Data.Bifunctor (bimap)
 import Data.Foldable (traverse_)
 import Data.Functor
 import qualified Data.Map as M
 import Data.Text (Text)
 import qualified Data.Text as T
+import Debug.Trace
 import qualified LLVM.AST as LLVM
 import qualified Smol.Backend.Compile.RunLLVM as Run
 import Smol.Backend.IR.FromExpr.Expr
-import Smol.Backend.IR.FromResolvedExpr
 import Smol.Backend.IR.ToLLVM.ToLLVM
 import Smol.Core.EliminateGlobals (eliminateGlobals)
 import Smol.Core.Modules.FromParts
@@ -62,14 +61,18 @@ addEnvFunctions expr =
     _ -> eliminateGlobals emptyResolvedDep expr
 
 -- | create a test module with our expression as `main`
-moduleFromExpr :: (Monoid ann) => Expr Identity (Type Identity ann) -> Module Identity (Type Identity ann)
+moduleFromExpr :: (Monoid ann) => Expr ResolvedDep (Type ResolvedDep ann) -> Module ResolvedDep (Type ResolvedDep ann)
 moduleFromExpr expr =
-  let dataTypesRaw :: M.Map (Identity TypeName) (DataType Identity ())
-      dataTypesRaw = builtInTypes Identity
+  let dataTypesRaw :: M.Map (ResolvedDep TypeName) (DataType ResolvedDep ())
+      dataTypesRaw = builtInTypes LocalDefinition
+
+      getInner :: ResolvedDep a -> a
+      getInner (LocalDefinition a) = a
+      getInner (UniqueDefinition a _) = a
 
       massageDataTypes =
         M.fromList
-          . fmap (bimap runIdentity (fmap (const (TPrim mempty TPInt))))
+          . fmap (bimap getInner (fmap (const (TPrim mempty TPInt))))
           . M.toList
    in mempty
         { moExpressions = M.singleton (DIName "main") expr,
@@ -79,7 +82,7 @@ moduleFromExpr expr =
 createLLVMModuleFromExpr :: Text -> LLVM.Module
 createLLVMModuleFromExpr input = do
   let expr = addEnvFunctions (evalExpr input)
-      irModule = irFromModule $ moduleFromExpr (fromResolvedType <$> fromResolvedExpr expr)
+      irModule = irFromModule $ moduleFromExpr expr
   irToLLVM irModule
 
 testCompileIR :: (Text, Text) -> Spec
@@ -91,9 +94,7 @@ createLLVMModuleFromModule :: Text -> LLVM.Module
 createLLVMModuleFromModule input =
   case resolveModule input of
     Right typecheckedModule ->
-      let idModule :: Module Identity (Type Identity Annotation)
-          idModule = fmap fromResolvedType (fromResolvedModule typecheckedModule)
-       in irToLLVM (irFromModule idModule)
+      irToLLVM $ traceShowId (irFromModule typecheckedModule)
     Left e -> error (show e)
 
 resolveModule :: Text -> Either ModuleError (Module ResolvedDep (Type ResolvedDep Annotation))
@@ -149,7 +150,8 @@ spec = do
 
     fdescribe "From modules" $ do
       let testModules =
-            [ ( ["type Identity a = Identity a", "def increment a = a + 1", "def main = case Identity (increment 41) of Identity a -> a"],
+            [ (["def one = 1", "def main = one + one"], "2"),
+              ( ["type Identity a = Identity a", "def increment a = a + 1", "def main = case Identity (increment 41) of Identity a -> a"],
                 "42"
               )
             ]

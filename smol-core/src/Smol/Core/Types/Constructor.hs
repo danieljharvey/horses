@@ -26,7 +26,8 @@ newtype Constructor = Constructor Text
       JSON.ToJSON,
       JSON.ToJSONKey,
       JSON.FromJSON,
-      JSON.FromJSONKey
+      JSON.FromJSONKey,
+      Semigroup
     )
 
 instance Printer Constructor where

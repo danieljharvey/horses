@@ -2,7 +2,6 @@
 
 module Test.IR.PatternSpec (spec) where
 
-import Control.Monad.Identity
 import Control.Monad.State (evalState)
 import Data.Bifunctor
 import Data.Foldable (traverse_)
@@ -19,6 +18,7 @@ import qualified Smol.Core.Types.Pattern as Smol
   ( Pattern (PConstructor, PLiteral, PTuple, PWildcard),
   )
 import Smol.Core.Types.Prim (Prim (PBool, PInt, PNat))
+import Smol.Core.Types.ResolvedDep
 import Smol.Core.Types.Type (Type (TPrim), TypePrim (TPInt))
 import Test.BuiltInTypes (builtInTypes)
 import Test.Helpers (tyBool, tyCons)
@@ -27,21 +27,21 @@ import Test.Hspec (Spec, describe, it, shouldBe)
 env :: (Monoid ann) => FromExprState ann
 env =
   FromExprState
-    { fesDataTypes = builtInTypes Identity,
+    { fesDataTypes = builtInTypes LocalDefinition,
       fesFreshInt = 0,
       fesModuleParts = mempty,
       fesVars = mempty
     }
 
-parseDepToIdentity :: Type ParseDep ann -> Type Identity ann
-parseDepToIdentity = mapTypeDep (\(ParseDep a _) -> Identity a)
+parseDepToResolved :: Type ParseDep ann -> Type ResolvedDep ann
+parseDepToResolved = mapTypeDep (\(ParseDep a _) -> LocalDefinition a)
 
 spec :: Spec
 spec = do
   describe "predicatesFromPattern" $ do
     let ty = TPrim () TPInt
     let testVals =
-          first (fmap parseDepToIdentity)
+          first (fmap parseDepToResolved)
             <$> [ (Smol.PWildcard ty, []),
                   ( Smol.PLiteral ty (PBool True),
                     [PathEquals (GetPath [] GetValue) (PBool True)]

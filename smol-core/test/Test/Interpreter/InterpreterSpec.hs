@@ -15,7 +15,6 @@ import Test.Hspec
 -- for now, throw extra info away
 resolve :: ResolvedDep a -> Identity a
 resolve (LocalDefinition a) = pure a
-resolve (ModuleDefinition a _) = pure a
 resolve (UniqueDefinition a _) = pure a
 
 -- | We have a ResolvedDep with lots of info, but when it comes to compiling

@@ -12,15 +12,10 @@ where
 import Data.String
 import GHC.Generics (Generic)
 import Smol.Core.Printer
-import Smol.Core.Types.Module.ModuleHash
 
 data ResolvedDep identifier
   = LocalDefinition
       { rdIdentifier :: identifier
-      }
-  | ModuleDefinition
-      { rdIdentifier :: identifier,
-        rdModuleHash :: ModuleHash
       }
   | UniqueDefinition
       { rdIdentifier :: identifier,

@@ -3,7 +3,6 @@
 
 module Test.IR.FromExprSpec (spec) where
 
-import Control.Monad.Identity
 import Control.Monad.State
 import Data.Functor
 import qualified Data.List.NonEmpty as NE
@@ -11,7 +10,6 @@ import qualified Data.Map.Strict as M
 import Data.Maybe
 import Data.Text (Text)
 import qualified Smol.Backend.IR.FromExpr.Expr as IR
-import Smol.Backend.IR.FromResolvedExpr
 import Smol.Backend.IR.IRExpr
 import Smol.Backend.IR.ToLLVM.Patterns
 import Smol.Core.Typecheck
@@ -20,7 +18,7 @@ import Test.BuiltInTypes (builtInTypes)
 import Test.Helpers
 import Test.Hspec
 
-evalExpr :: Text -> IdentityExpr (Type Identity Annotation)
+evalExpr :: Text -> Expr ResolvedDep (Type ResolvedDep Annotation)
 evalExpr input =
   let env =
         TCEnv
@@ -29,14 +27,14 @@ evalExpr input =
             tceGlobals = mempty
           }
    in case elaborate env (unsafeParseTypedExpr input $> mempty) of
-        Right typedExpr -> fromResolvedType <$> fromResolvedExpr typedExpr
+        Right typedExpr -> typedExpr
         Left e -> error (show e)
 
 testEnv :: (Monoid ann) => IR.FromExprState ann
 testEnv =
   IR.FromExprState
     { IR.fesModuleParts = mempty,
-      IR.fesDataTypes = builtInTypes Identity,
+      IR.fesDataTypes = builtInTypes LocalDefinition,
       IR.fesFreshInt = 1,
       IR.fesVars = mempty
     }

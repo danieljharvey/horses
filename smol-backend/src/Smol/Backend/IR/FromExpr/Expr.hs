@@ -12,7 +12,6 @@ module Smol.Backend.IR.FromExpr.Expr
 where
 
 import Control.Monad ((>=>))
-import Control.Monad.Identity
 import Control.Monad.State
 import Data.Bifunctor
 import Data.Foldable (toList, traverse_)
@@ -38,6 +37,7 @@ import Smol.Core.Types.Identifier
 import Smol.Core.Types.Op
 import Smol.Core.Types.Module (DefIdentifier (..), Module (..))
 import Smol.Core.Types.Prim
+import Smol.Core.Types.ResolvedDep
 import Smol.Core.Types.Type
 import Smol.Core.Types.TypeName
 
@@ -149,7 +149,7 @@ lookupVar ident = do
 
 -- | turn a Smol module into an IR one
 -- no considerations for name collisions etc
-irFromModule :: (Show ann) => Module Identity (Type Identity ann) -> IRModule
+irFromModule :: (Show ann) => Module ResolvedDep (Type ResolvedDep ann) -> IRModule
 irFromModule myModule =
   let mainFunc = case M.lookup (DIName "main") (moExpressions myModule) of
         Just expr -> expr
@@ -163,7 +163,7 @@ irFromModule myModule =
           (M.delete (DIName "main") (moExpressions myModule))
       dataTypes =
         M.fromList
-          . fmap (bimap Identity (fmap getTypeAnnotation))
+          . fmap (bimap LocalDefinition (fmap getTypeAnnotation))
           . M.toList
           $ moDataTypes myModule
    in IRModule $
@@ -183,8 +183,8 @@ fromPrim (PString txt) = pure $ IRString txt
 fromInfix ::
   (Show ann, MonadState (FromExprState ann) m) =>
   Op ->
-  IdentityExpr (Type Identity ann) ->
-  IdentityExpr (Type Identity ann) ->
+  Expr ResolvedDep (Type ResolvedDep ann) ->
+  Expr ResolvedDep (Type ResolvedDep ann) ->
   m IRExpr
 fromInfix OpAdd a b = do
   irA <- fromExpr a
@@ -210,7 +210,7 @@ functionReturnType other = error ("non-function " <> show other)
 
 fromExpr ::
   (Show ann, MonadState (FromExprState ann) m) =>
-  IdentityExpr (Type Identity ann) ->
+  Expr ResolvedDep (Type ResolvedDep ann) ->
   m IRExpr
 fromExpr (EPrim _ prim) = fromPrim prim
 fromExpr (EInfix _ op a b) = fromInfix op a b
@@ -261,11 +261,14 @@ fromExpr (EPatternMatch ty matchExpr pats) = do
       responseType
       irPats
 fromExpr (ELambda ty ident body) =
-  lambdaFromExpr ty (runIdentity ident) body
+  closureFromExpr ty (Compile.resolveIdentifier ident) body
 fromExpr (EApp ty fn val) =
   appFromExpr ty fn val
-fromExpr (EVar _ var) =
-  pure $ IRVar (fromIdentifier (runIdentity var))
+fromExpr (EVar ty (LocalDefinition var)) = do
+  irType <- fromType ty
+  pure $ IRApply (IRFunctionType [] irType) (IRFuncPointer (functionNameFromIdentifier var)) []
+fromExpr (EVar _ var) = do
+  pure $ IRVar (fromIdentifier (Compile.resolveIdentifier var))
 fromExpr (ETuple ty tHead tTail) = do
   statements <-
     traverseInd
@@ -284,23 +287,23 @@ fromExpr (ETuple ty tHead tTail) = do
       statements
 fromExpr (ELet _ ident expr body) = do
   irExpr <- fromExpr expr
-  addVar (fromIdentifier (runIdentity ident)) irExpr -- remember pls
+  addVar (fromIdentifier (Compile.resolveIdentifier ident)) irExpr -- remember pls
   irBody <- fromExpr body
-  pure (IRLet (fromIdentifier (runIdentity ident)) irExpr irBody)
+  pure (IRLet (fromIdentifier (Compile.resolveIdentifier ident)) irExpr irBody)
 fromExpr (EConstructor ty constructor) = do
   tyResult <- Compile.flattenConstructorType ty
   case tyResult of
     -- genuine enum, return number
-    (_typeName, []) -> getConstructorNumber (runIdentity constructor)
+    (_typeName, []) -> getConstructorNumber (Compile.resolveConstructor constructor)
     (_typeName, _) -> do
       (structType, specificStructType) <-
         bimap
           fromDataTypeInMemory
           fromDataTypeInMemory
-          <$> constructorTypeInMemory ty (runIdentity constructor)
+          <$> constructorTypeInMemory ty (Compile.resolveConstructor constructor)
 
       -- get number for constructor
-      consNum <- getConstructorNumber (runIdentity constructor)
+      consNum <- getConstructorNumber (Compile.resolveConstructor constructor)
 
       let setConsNum = IRSetTo [0] IRInt32 consNum
 
@@ -331,7 +334,7 @@ fromExpr expr = error ("fuck: " <> show expr)
 
 -- | given an env type, put all it's items in scope
 -- replaces "a" with a reference it's position in scope
-bindingsFromEnv :: Map Identifier (Type Identity ann) -> IRExpr -> IRExpr
+bindingsFromEnv :: Map Identifier (Type ResolvedDep ann) -> IRExpr -> IRExpr
 bindingsFromEnv env inner =
   foldr
     ( \(ident, i) irExpr ->
@@ -369,15 +372,15 @@ mapIRExpr f (IRInitialiseDataType input a b args) =
   let mapSetTo (IRSetTo path ty expr) = IRSetTo path ty (f expr)
    in IRInitialiseDataType (f input) a b (mapSetTo <$> args)
 
-lambdaFromExpr ::
+closureFromExpr ::
   ( MonadState (FromExprState ann) m,
     Show ann
   ) =>
-  Type Identity ann ->
+  Type ResolvedDep ann ->
   Identifier ->
-  IdentityExpr (Type Identity ann) ->
+  Expr ResolvedDep (Type ResolvedDep ann) ->
   m IRExpr
-lambdaFromExpr ty ident body = do
+closureFromExpr ty ident body = do
   irType <- fromType ty
   let (argTypes, retType) = functionReturnType irType
   let argType = case argTypes of
@@ -432,7 +435,7 @@ structFromEnv ::
   ( MonadState (FromExprState ann) m,
     Show ann
   ) =>
-  Map Identifier (Type Identity ann) ->
+  Map Identifier (Type ResolvedDep ann) ->
   m [IRSetTo]
 structFromEnv env =
   traverseInd
@@ -448,9 +451,9 @@ constructorAppFromExpr ::
   ( MonadState (FromExprState ann) m,
     Show ann
   ) =>
-  Type Identity ann ->
+  Type ResolvedDep ann ->
   Constructor ->
-  [IdentityExpr (Type Identity ann)] ->
+  [Expr ResolvedDep (Type ResolvedDep ann)] ->
   m IRExpr
 constructorAppFromExpr ty constructor cnArgs = do
   -- the constructor case, build up everything we need pls
@@ -490,14 +493,14 @@ constructorAppFromExpr ty constructor cnArgs = do
 -- that into something ok
 appFromExpr ::
   (Show ann, MonadState (FromExprState ann) m) =>
-  Type Identity ann ->
-  IdentityExpr (Type Identity ann) ->
-  IdentityExpr (Type Identity ann) ->
+  Type ResolvedDep ann ->
+  Expr ResolvedDep (Type ResolvedDep ann) ->
+  Expr ResolvedDep (Type ResolvedDep ann) ->
   m IRExpr
 appFromExpr ty fn val = do
   case flattenConstructorApplication (EApp ty fn val) of
     Just (constructor, cnArgs) ->
-      constructorAppFromExpr ty (runIdentity constructor) cnArgs
+      constructorAppFromExpr ty (Compile.resolveConstructor constructor) cnArgs
     Nothing -> do
       -- regular function application (`id True` for instance)
       irFn <- fromExpr fn
@@ -535,21 +538,23 @@ pushModulePart part =
 -- module Core.parts to the State
 modulePartsFromExpr ::
   (Show ann) =>
-  Map (Identity TypeName) (DataType Identity ann) ->
-  Map Identifier (IdentityExpr (Type Identity ann)) ->
-  IdentityExpr (Type Identity ann) ->
+  Map (ResolvedDep TypeName) (DataType ResolvedDep ann) ->
+  Map Identifier (Expr ResolvedDep (Type ResolvedDep ann)) ->
+  Expr ResolvedDep (Type ResolvedDep ann) ->
   [IRModulePart]
 modulePartsFromExpr dataTypes otherExprs mainExpr =
   let (irMainExpr, FromExprState {fesModuleParts = otherParts}) = do
         let fromOtherExpr (name, expr) = do
               irExpr <- fromExpr expr
+              let modReturnType = IRInt32
+
               pushModulePart
                 ( IRFunctionDef
                     ( IRFunction
                         { irfName = functionNameFromIdentifier name,
                           irfArgs = [],
-                          irfReturn = IRInt32,
-                          irfBody = [IRRet IRInt32 irExpr]
+                          irfReturn = modReturnType,
+                          irfBody = [IRRet modReturnType irExpr]
                         }
                     )
                 )
