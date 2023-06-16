@@ -80,6 +80,7 @@ library
     Smol.Core.Parser.Expr
     Smol.Core.Parser.Identifiers
     Smol.Core.Parser.Module
+    Smol.Core.Parser.Op
     Smol.Core.Parser.Pattern
     Smol.Core.Parser.Primitives
     Smol.Core.Parser.Shared
@@ -156,6 +157,7 @@ test-suite smol-core-tests
     Smol.Core.Parser.Expr
     Smol.Core.Parser.Identifiers
     Smol.Core.Parser.Module
+    Smol.Core.Parser.Op
     Smol.Core.Parser.Pattern
     Smol.Core.Parser.Primitives
     Smol.Core.Parser.Shared
