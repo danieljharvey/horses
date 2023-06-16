@@ -40,8 +40,7 @@ elaborate ::
   ResolvedExpr ann ->
   m (ResolvedExpr (ResolvedType ann))
 elaborate env expr =
-  fmap simplifyType
-    <$> fst
+  fmap simplifyType . fst
     <$> runReaderT
       ( runWriterT
           ( evalStateT
