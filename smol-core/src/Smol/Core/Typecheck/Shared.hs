@@ -30,6 +30,7 @@ module Smol.Core.Typecheck.Shared
     freshen,
     primsFromTypeLiteral,
     typeLiteralFromPrim,
+    isNatLiteral, isIntLiteral
   )
 where
 
@@ -390,3 +391,15 @@ typeLiteralFromPrim (PInt a) = TLInt (NES.singleton a)
 typeLiteralFromPrim (PNat a) = TLInt (NES.singleton $ fromIntegral a)
 typeLiteralFromPrim (PString str) = TLString (NES.singleton str)
 typeLiteralFromPrim PUnit = TLUnit
+
+-- | this is a sign we're encoding unions all wrong I think, but let's just
+-- follow this through
+isNatLiteral :: Type dep ann -> Bool
+isNatLiteral (TLiteral _ (TLInt a)) | all (>= 0) a = True
+isNatLiteral _ = False
+
+isIntLiteral :: Type dep ann -> Bool
+isIntLiteral (TLiteral _ (TLInt _)) = True
+isIntLiteral _ = False
+
+

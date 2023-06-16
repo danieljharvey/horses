@@ -25,6 +25,7 @@ import Smol.Core.ExprUtils
 import Smol.Core.Helpers
 import Smol.Core.Typecheck.Pattern (checkPattern)
 import Smol.Core.Typecheck.Shared
+import Smol.Core.Typecheck.Simplify
 import Smol.Core.Typecheck.Substitute
 import Smol.Core.Typecheck.Subtype
 import Smol.Core.Typecheck.Types
@@ -39,7 +40,8 @@ elaborate ::
   ResolvedExpr ann ->
   m (ResolvedExpr (ResolvedType ann))
 elaborate env expr =
-  fst
+  fmap simplifyType
+    <$> fst
     <$> runReaderT
       ( runWriterT
           ( evalStateT
@@ -98,13 +100,13 @@ inferInfix ::
   ResolvedExpr ann ->
   ResolvedExpr ann ->
   m (ResolvedExpr (ResolvedType ann))
-inferInfix _ann OpAdd a b = do
+inferInfix ann OpAdd a b = do
   elabA <- infer a
   elabB <- infer b
   let tyA = getExprAnnotation elabA
       tyB = getExprAnnotation elabB
 
-  addTy <- tyA `typeAddition` tyB
+  let addTy = TInfix ann OpAdd tyA tyB
 
   pure (EInfix addTy OpAdd elabA elabB)
 -- equality is certainly a big bucket of worms
