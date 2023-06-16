@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1686932924576,
+  "lastUpdate": 1686935428705,
   "repoUrl": "https://github.com/danieljharvey/mimsa",
   "entries": {
     "Store benchmarks in Github Pages": [
@@ -1931,6 +1931,50 @@ window.BENCHMARK_DATA = {
           {
             "name": "evaluate/evaluate parsing 2",
             "value": 0.23788877322856805,
+            "unit": "Time (ms)"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "danieljamesharvey@gmail.com",
+            "name": "Daniel Harvey",
+            "username": "danieljharvey"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "f76cfa3e9736595825ff45acfada5f6261ca6ae1",
+          "message": "Move add to type level (#969)\n\n* Move add to type level\r\n\r\n* Well well well\r\n\r\n* Good\r\n\r\n* Damn\r\n\r\n* Yeah\r\n\r\n* Fix\r\n\r\n* Type annotations",
+          "timestamp": "2023-06-16T18:07:05+01:00",
+          "tree_id": "af2d8e657d2120203fad113b4dada030237bf325",
+          "url": "https://github.com/danieljharvey/mimsa/commit/f76cfa3e9736595825ff45acfada5f6261ca6ae1"
+        },
+        "date": 1686935427499,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "build stdlib/allFns",
+            "value": 0.10787330258333573,
+            "unit": "Time (ms)"
+          },
+          {
+            "name": "evaluate/evaluate big looping thing",
+            "value": 0.09262388966666786,
+            "unit": "Time (ms)"
+          },
+          {
+            "name": "evaluate/evaluate parsing",
+            "value": 0.032741204193627436,
+            "unit": "Time (ms)"
+          },
+          {
+            "name": "evaluate/evaluate parsing 2",
+            "value": 0.2108066703142843,
             "unit": "Time (ms)"
           }
         ]
