@@ -106,6 +106,12 @@ inferInfix ann OpAdd a b = do
   let tyA = getExprAnnotation elabA
       tyB = getExprAnnotation elabB
 
+  -- throw if these things are totally incompatible (we use `censor` to stop
+  -- "learning" anything about the oversimplified types)
+  _ <-
+    censor (const mempty) $
+      generaliseLiteral tyA `isSubtypeOf` generaliseLiteral tyB
+
   let addTy = TInfix ann OpAdd tyA tyB
 
   pure (EInfix addTy OpAdd elabA elabB)
@@ -114,21 +120,21 @@ inferInfix ann OpAdd a b = do
 inferInfix ann OpEquals a b = do
   elabA <- infer a
   elabB <- infer b
-  let tyA = generaliseLiteral (getExprAnnotation elabA)
-      tyB = generaliseLiteral (getExprAnnotation elabB)
+  let tyA = getExprAnnotation elabA
+      tyB = getExprAnnotation elabB
 
   -- throw if they're not the same
-  _ <- tyA `isSubtypeOf` tyB
+  _ <- generaliseLiteral tyA `isSubtypeOf` generaliseLiteral tyB
 
   -- check left is primitive
   when
-    (typeIsStruct tyA)
+    (typeIsStruct (simplifyType tyA))
     (throwError (TCCompoundTypeInEquality tyA))
   -- check right is primitive
   when
-    (typeIsStruct tyB)
+    (typeIsStruct (simplifyType tyB))
     (throwError (TCCompoundTypeInEquality tyB))
-  pure (EInfix (TPrim ann TPBool) OpEquals elabA elabB)
+  pure (EInfix (TInfix ann OpEquals tyA tyB) OpEquals elabA elabB)
 
 -- | infer synthesizes values
 -- from introduction forms

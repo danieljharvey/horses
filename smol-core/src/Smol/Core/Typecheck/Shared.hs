@@ -30,7 +30,8 @@ module Smol.Core.Typecheck.Shared
     freshen,
     primsFromTypeLiteral,
     typeLiteralFromPrim,
-    isNatLiteral, isIntLiteral
+    isNatLiteral,
+    isIntLiteral,
   )
 where
 
@@ -401,5 +402,3 @@ isNatLiteral _ = False
 isIntLiteral :: Type dep ann -> Bool
 isIntLiteral (TLiteral _ (TLInt _)) = True
 isIntLiteral _ = False
-
-

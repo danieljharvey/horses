@@ -45,16 +45,16 @@ combineTypeMaps (GlobalMap mapA) (GlobalMap mapB) = do
   mapBoth <- traverse combineTypes (M.intersectionWith (,) mapA mapB)
   pure $ GlobalMap (mapBoth <> mapA <> mapB)
 
--- given a number literal, get the smallest non-literal
+-- given a literal, get the "rough" type of it
 generaliseLiteral ::
   ResolvedType ann ->
   ResolvedType ann
-generaliseLiteral (TLiteral ann (TLInt tlA)) =
-  if all (>= 0) tlA
-    then TPrim ann TPNat
-    else TPrim ann TPInt
+generaliseLiteral (TLiteral ann (TLInt _)) =
+  TPrim ann TPInt
 generaliseLiteral (TLiteral ann (TLBool _)) =
   TPrim ann TPBool
+generaliseLiteral (TLiteral ann (TLString _)) =
+  TPrim ann TPString
 generaliseLiteral a = a
 
 -- | used to combine branches of if or case matches
