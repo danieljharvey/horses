@@ -48,7 +48,7 @@
             cabal-fmt
             cabal-install
             pkgs.zlib # used by `digest` package
-            pkgs.nodejs-19_x
+            pkgs.nodejs-18_x
             pkgs.clang_14
             pkgs.llvmPackages_14.llvm
             pkgs.nodePackages.ts-node
