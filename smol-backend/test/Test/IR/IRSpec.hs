@@ -8,7 +8,6 @@ import Data.Functor
 import qualified Data.Map as M
 import Data.Text (Text)
 import qualified Data.Text as T
-import Debug.Trace
 import qualified LLVM.AST as LLVM
 import qualified Smol.Backend.Compile.RunLLVM as Run
 import Smol.Backend.IR.FromExpr.Expr
@@ -94,7 +93,7 @@ createLLVMModuleFromModule :: Text -> LLVM.Module
 createLLVMModuleFromModule input =
   case resolveModule input of
     Right typecheckedModule ->
-      irToLLVM $ traceShowId (irFromModule typecheckedModule)
+      irToLLVM (irFromModule typecheckedModule)
     Left e -> error (show e)
 
 resolveModule :: Text -> Either ModuleError (Module ResolvedDep (Type ResolvedDep Annotation))
@@ -150,8 +149,18 @@ spec = do
 
     fdescribe "From modules" $ do
       let testModules =
-            [ (["def one = 1", "def main = one + one"], "2"),
-              ( ["type Identity a = Identity a", "def increment a = a + 1", "def main = case Identity (increment 41) of Identity a -> a"],
+            [ (["def one = 1",
+                    "def main = one + one"], "2"),
+              ( [
+                    "def increment a = a + 1",
+                        "def main = increment 41"],
+                "42"
+              ),
+              ([ "def add (a: Nat) (b : Nat): Nat = a + b",
+                    "def main = add 20 22"],"42"),
+              ( ["type Identity a = Identity a",
+                    "def increment a = a + 1",
+                        "def main = case Identity (increment 41) of Identity a -> a"],
                 "42"
               )
             ]

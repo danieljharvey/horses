@@ -17,7 +17,7 @@ module Smol.Core.Types.Module.Module
   )
 where
 
-import Data.Aeson (FromJSON, ToJSON)
+import Data.Aeson (FromJSON, FromJSONKey, ToJSON, ToJSONKey)
 import Data.Map.Strict (Map)
 import qualified Data.Map.Strict as M
 import Data.Set (Set)
@@ -114,7 +114,8 @@ deriving stock instance
   Show (Module dep ann)
 
 deriving anyclass instance
-  ( ToJSON ann,
+  ( ToJSONKey (dep Identifier),
+    ToJSON ann,
     ToJSON (dep TypeName),
     ToJSON (dep Constructor),
     ToJSON (dep Identifier)
@@ -122,7 +123,9 @@ deriving anyclass instance
   ToJSON (Module dep ann)
 
 deriving anyclass instance
-  ( FromJSON ann,
+  ( Ord (dep Identifier),
+    FromJSONKey (dep Identifier),
+    FromJSON ann,
     FromJSON (dep TypeName),
     FromJSON (dep Constructor),
     FromJSON (dep Identifier)

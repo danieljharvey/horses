@@ -16,7 +16,7 @@ module Smol.Core.Types.Expr
 where
 
 import Control.Monad.Identity
-import Data.Aeson (FromJSON, ToJSON)
+import Data.Aeson (FromJSON, FromJSONKey, ToJSON, ToJSONKey)
 import Data.Foldable (toList)
 import qualified Data.List.NonEmpty as NE
 import Data.Map.Strict (Map)
@@ -101,7 +101,8 @@ deriving stock instance
   Show (Expr dep ann)
 
 deriving anyclass instance
-  ( ToJSON ann,
+  ( ToJSONKey (dep Identifier),
+    ToJSON ann,
     ToJSON (dep Identifier),
     ToJSON (dep Constructor),
     ToJSON (dep TypeName)
@@ -109,7 +110,9 @@ deriving anyclass instance
   ToJSON (Expr dep ann)
 
 deriving anyclass instance
-  ( FromJSON ann,
+  ( Ord (dep Identifier),
+    FromJSONKey (dep Identifier),
+    FromJSON ann,
     FromJSON (dep Identifier),
     FromJSON (dep Constructor),
     FromJSON (dep TypeName)

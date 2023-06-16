@@ -53,14 +53,17 @@ deriving stock instance
   Show (DataType dep ann)
 
 deriving anyclass instance
-  ( ToJSON ann,
+  ( ToJSONKey (dep Identifier),
+    ToJSON ann,
     ToJSON (dep Identifier),
     ToJSON (dep TypeName)
   ) =>
   ToJSON (DataType dep ann)
 
 deriving anyclass instance
-  ( FromJSON ann,
+  ( Ord (dep Identifier),
+    FromJSONKey (dep Identifier),
+    FromJSON ann,
     FromJSON (dep Identifier),
     FromJSON (dep TypeName)
   ) =>

@@ -18,7 +18,7 @@ module Smol.Core.Types.Type
   )
 where
 
-import Data.Aeson (FromJSON, FromJSONKey, ToJSON)
+import Data.Aeson (FromJSON, FromJSONKey, ToJSON, ToJSONKey)
 import qualified Data.List.NonEmpty as NE
 import Data.Map.Strict
 import qualified Data.Map.Strict as M
@@ -69,7 +69,7 @@ instance Printer TypeLiteral where
 data Type dep ann
   = TLiteral ann TypeLiteral
   | TPrim ann TypePrim
-  | TFunc ann (Map Identifier (Type dep ann)) (Type dep ann) (Type dep ann)
+  | TFunc ann (Map (dep Identifier) (Type dep ann)) (Type dep ann) (Type dep ann)
   | TTuple ann (Type dep ann) (NE.NonEmpty (Type dep ann))
   | TArray ann Word64 (Type dep ann)
   | TVar ann (dep Identifier)
@@ -103,21 +103,25 @@ deriving stock instance
   Show (Type dep ann)
 
 deriving anyclass instance
-  ( FromJSON ann,
+  ( Ord (dep Identifier),
+    FromJSONKey (dep Identifier),
+    FromJSON ann,
     FromJSON (dep Identifier),
     FromJSON (dep TypeName)
   ) =>
   FromJSON (Type dep ann)
 
 deriving anyclass instance
-  ( ToJSON ann,
+  ( ToJSONKey (dep Identifier),
+    ToJSON ann,
     ToJSON (dep Identifier),
     ToJSON (dep TypeName)
   ) =>
   ToJSON (Type dep ann)
 
 deriving anyclass instance
-  ( FromJSON ann,
+  ( Ord (dep Identifier),
+    FromJSON ann,
     FromJSON (dep Identifier),
     FromJSON (dep TypeName),
     FromJSONKey ann,

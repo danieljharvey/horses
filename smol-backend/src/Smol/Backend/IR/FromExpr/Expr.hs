@@ -11,6 +11,7 @@ module Smol.Backend.IR.FromExpr.Expr
   )
 where
 
+import Debug.Trace
 import Control.Monad ((>=>))
 import Control.Monad.State
 import Data.Bifunctor
@@ -266,7 +267,28 @@ fromExpr (EApp ty fn val) =
   appFromExpr ty fn val
 fromExpr (EVar ty (LocalDefinition var)) = do
   irType <- fromType ty
-  pure $ IRApply (IRFunctionType [] irType) (IRFuncPointer (functionNameFromIdentifier var)) []
+  case ty of
+    TFunc _ _ arg ret -> do
+      irRet <- fromType ret
+      irArg <- fromType arg
+      let envType = IRStruct []
+          functionType = IRFunctionType [irArg, envType] irRet
+          closureType = IRStruct [IRPointer functionType, envType]
+
+      pure $
+        IRInitialiseDataType
+          (IRAlloc closureType)
+          closureType
+          closureType
+          ( [ IRSetTo
+                [0]
+                (IRPointer functionType)
+                (IRFuncPointer (functionNameFromIdentifier var))
+            ]
+          )
+    _ -> 
+      pure $ 
+        IRApply (IRFunctionType [] irType) (IRFuncPointer (functionNameFromIdentifier var)) []
 fromExpr (EVar _ var) = do
   pure $ IRVar (fromIdentifier (Compile.resolveIdentifier var))
 fromExpr (ETuple ty tHead tTail) = do
@@ -534,6 +556,44 @@ pushModulePart :: (MonadState (FromExprState ann) m) => IRModulePart -> m ()
 pushModulePart part =
   modify (\s -> s {fesModuleParts = fesModuleParts s <> [part]})
 
+fromOtherExpr ::
+  (Show ann, MonadState (FromExprState ann) m) =>
+  Identifier ->
+  Expr ResolvedDep (Type ResolvedDep ann) ->
+  m IRModulePart
+fromOtherExpr name (EAnn _ _ inner) = fromOtherExpr name inner
+fromOtherExpr name (ELambda _ ident body) = do
+  irBody <- fromExpr body
+  traceShowM irBody
+  irReturnType <- fromType (getExprAnnotation body)
+  
+  pure 
+    ( IRFunctionDef
+        ( IRFunction
+            { irfName = functionNameFromIdentifier name,
+              irfArgs = [(IRInt32, fromIdentifier (Compile.resolveIdentifier ident)) ,
+                        (IRStruct [], IRIdentifier "env")
+                        ],
+              irfReturn = irReturnType,
+              irfBody = [IRRet irReturnType irBody]
+            }
+        )
+    )
+fromOtherExpr name expr = do
+  irExpr <- fromExpr expr
+  irReturnType <- fromType (getExprAnnotation expr)
+
+  pure 
+    ( IRFunctionDef
+        ( IRFunction
+            { irfName = functionNameFromIdentifier name,
+              irfArgs = [],
+              irfReturn = irReturnType,
+              irfBody = [IRRet irReturnType irExpr]
+            }
+        )
+    )
+
 -- | given an expr, return the `main` function, as well as adding any extra
 -- module Core.parts to the State
 modulePartsFromExpr ::
@@ -544,22 +604,12 @@ modulePartsFromExpr ::
   [IRModulePart]
 modulePartsFromExpr dataTypes otherExprs mainExpr =
   let (irMainExpr, FromExprState {fesModuleParts = otherParts}) = do
-        let fromOtherExpr (name, expr) = do
-              irExpr <- fromExpr expr
-              let modReturnType = IRInt32
-
-              pushModulePart
-                ( IRFunctionDef
-                    ( IRFunction
-                        { irfName = functionNameFromIdentifier name,
-                          irfArgs = [],
-                          irfReturn = modReturnType,
-                          irfBody = [IRRet modReturnType irExpr]
-                        }
-                    )
+        let action = do
+              traverse_
+                ( uncurry fromOtherExpr
+                    >=> pushModulePart
                 )
-            action = do
-              traverse_ fromOtherExpr (M.toList otherExprs)
+                (M.toList otherExprs)
               fromExpr mainExpr
         runState action (FromExprState mempty dataTypes 1 mempty)
       printFuncName = getPrintFuncName (getExprAnnotation mainExpr)

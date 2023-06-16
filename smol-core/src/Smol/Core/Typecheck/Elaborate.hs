@@ -321,7 +321,7 @@ checkLambda (TFunc tAnn _ tFrom tTo) ident body = do
     Nothing -> pure tFrom
   (typedBody, typedClosure, subs) <- withVar ident realFrom $ do
     (tBody, subs) <- listen (check tTo body)
-    tClosure <- M.delete (rdIdentifier ident) <$> getClosureType tBody
+    tClosure <- M.delete ident <$> getClosureType tBody
     pure (tBody, tClosure, subs)
   let lambdaType =
         substituteMany
@@ -356,7 +356,7 @@ inferLambda ann ident body = do
     Nothing -> getUnknown ann
   (typedBody, typedClosure, subs) <- withVar ident tyArg $ do
     (tBody, subs) <- listen (infer body)
-    tClosure <- M.delete (rdIdentifier ident) <$> getClosureType tBody
+    tClosure <- M.delete ident <$> getClosureType tBody
     pure (tBody, tClosure, subs)
   let lambdaType =
         substituteMany
