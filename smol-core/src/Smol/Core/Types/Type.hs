@@ -31,6 +31,7 @@ import Prettyprinter ((<+>))
 import qualified Prettyprinter as PP
 import Smol.Core.Printer
 import Smol.Core.Types.Identifier
+import Smol.Core.Types.Op
 import Smol.Core.Types.ParseDep
 import Smol.Core.Types.ResolvedDep
 import Smol.Core.Types.TypeName
@@ -77,6 +78,7 @@ data Type dep ann
   | TRecord ann (Map Identifier (Type dep ann))
   | TApp ann (Type dep ann) (Type dep ann)
   | TConstructor ann (dep TypeName)
+  | TInfix ann Op (Type dep ann) (Type dep ann)
   deriving stock (Functor, Foldable, Generic, Traversable)
 
 deriving stock instance
@@ -134,6 +136,7 @@ renderType ::
   Type dep ann ->
   PP.Doc style
 renderType (TPrim _ a) = prettyDoc a
+renderType (TInfix _ op a b) = prettyDoc a <+> prettyDoc op <+> prettyDoc b
 renderType (TLiteral _ l) = prettyDoc l
 renderType (TUnknown _ i) = "U" <> PP.pretty i
 renderType (TArray _ _ as) = "[" <> prettyDoc as <> "]"

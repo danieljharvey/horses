@@ -8,6 +8,7 @@ import Data.Foldable (traverse_)
 import Data.List.NonEmpty (NonEmpty (..))
 import Smol.Core
 import Smol.Core.Typecheck.FromParsedExpr
+import Smol.Core.Typecheck.Simplify
 import Test.Helpers
 import Test.Hspec
 
@@ -27,9 +28,6 @@ spec = do
       it "Negative literal makes int" $ do
         generaliseLiteral (tyIntLit [-1])
           `shouldBe` TPrim () TPInt
-      it "Non-negative literal makes nat" $ do
-        generaliseLiteral (tyIntLit [0])
-          `shouldBe` TPrim () TPNat
 
     describe "Subtype" $ do
       describe "Everything defeats TUnknown" $ do
@@ -117,17 +115,35 @@ spec = do
                 ("1 | 2", "3 | 4", "4 | 5 | 6"),
                 ("1", "Nat", "Nat"),
                 ("Nat", "1", "Nat"),
+                ("Nat", "-100", "Int"),
+                ("Int", "Nat", "Int"),
+                ("Int", "Int", "Int"),
+                ("String", "String", "String"),
                 ("\"a\"", "String", "String"),
                 ("String", "\"a\"", "String"),
-                ("\"po\"", "\"go\"", "\"pogo\"")
+                ("\"po\"", "\"po\"", "\"popo\"")
               ]
         traverse_
           ( \(one, two, result) -> it (show one <> " + " <> show two <> " = " <> show result) $ do
               let a =
-                    typeAddition
-                      (fromParsedType (unsafeParseType one))
-                      (fromParsedType (unsafeParseType two))
-              fst <$> runWriterT a `shouldBe` Right (fromParsedType (unsafeParseType result))
+                    simplifyType
+                      ( TInfix
+                          ()
+                          OpAdd
+                          (fromParsedType (unsafeParseType one))
+                          (fromParsedType (unsafeParseType two))
+                      )
+              a `shouldBe` fromParsedType (unsafeParseType result)
+
+              let b =
+                    simplifyType
+                      ( TInfix
+                          ()
+                          OpAdd
+                          (fromParsedType (unsafeParseType two))
+                          (fromParsedType (unsafeParseType one))
+                      )
+              b `shouldBe` fromParsedType (unsafeParseType result)
           )
           inputs
 

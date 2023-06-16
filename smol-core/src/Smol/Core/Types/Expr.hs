@@ -9,7 +9,6 @@
 
 module Smol.Core.Types.Expr
   ( Expr (..),
-    Op (..),
     ParsedExpr,
     ResolvedExpr,
     IdentityExpr,
@@ -31,6 +30,7 @@ import Smol.Core.Helpers
 import Smol.Core.Printer
 import Smol.Core.Types.Constructor
 import Smol.Core.Types.Identifier
+import Smol.Core.Types.Op
 import Smol.Core.Types.ParseDep
 import Smol.Core.Types.Pattern
 import Smol.Core.Types.Prim
@@ -51,14 +51,6 @@ type ResolvedExpr ann = Expr ResolvedDep ann
 type IdentityExpr ann = Expr Identity ann
 
 ---------------------------
-
-data Op = OpAdd | OpEquals
-  deriving stock (Eq, Ord, Show, Generic)
-  deriving anyclass (FromJSON, ToJSON)
-
-instance Printer Op where
-  prettyDoc OpAdd = "+"
-  prettyDoc OpEquals = "=="
 
 data Expr dep ann
   = ELambda ann (dep Identifier) (Expr dep ann)

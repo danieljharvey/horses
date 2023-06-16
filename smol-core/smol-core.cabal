@@ -80,6 +80,7 @@ library
     Smol.Core.Parser.Expr
     Smol.Core.Parser.Identifiers
     Smol.Core.Parser.Module
+    Smol.Core.Parser.Op
     Smol.Core.Parser.Pattern
     Smol.Core.Parser.Primitives
     Smol.Core.Parser.Shared
@@ -94,6 +95,7 @@ library
     Smol.Core.Typecheck.FromParsedExpr
     Smol.Core.Typecheck.Pattern
     Smol.Core.Typecheck.Shared
+    Smol.Core.Typecheck.Simplify
     Smol.Core.Typecheck.Substitute
     Smol.Core.Typecheck.Subtype
     Smol.Core.Typecheck.Types
@@ -110,6 +112,7 @@ library
     Smol.Core.Types.Module.Module
     Smol.Core.Types.Module.ModuleHash
     Smol.Core.Types.Module.ModuleName
+    Smol.Core.Types.Op
     Smol.Core.Types.ParseDep
     Smol.Core.Types.Pattern
     Smol.Core.Types.PatternMatchError
@@ -154,6 +157,7 @@ test-suite smol-core-tests
     Smol.Core.Parser.Expr
     Smol.Core.Parser.Identifiers
     Smol.Core.Parser.Module
+    Smol.Core.Parser.Op
     Smol.Core.Parser.Pattern
     Smol.Core.Parser.Primitives
     Smol.Core.Parser.Shared
@@ -168,6 +172,7 @@ test-suite smol-core-tests
     Smol.Core.Typecheck.FromParsedExpr
     Smol.Core.Typecheck.Pattern
     Smol.Core.Typecheck.Shared
+    Smol.Core.Typecheck.Simplify
     Smol.Core.Typecheck.Substitute
     Smol.Core.Typecheck.Subtype
     Smol.Core.Typecheck.Types
@@ -184,6 +189,7 @@ test-suite smol-core-tests
     Smol.Core.Types.Module.Module
     Smol.Core.Types.Module.ModuleHash
     Smol.Core.Types.Module.ModuleName
+    Smol.Core.Types.Op
     Smol.Core.Types.ParseDep
     Smol.Core.Types.Pattern
     Smol.Core.Types.PatternMatchError

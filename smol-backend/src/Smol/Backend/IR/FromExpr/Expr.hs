@@ -34,6 +34,7 @@ import Smol.Core.Types.Constructor
 import Smol.Core.Types.DataType
 import Smol.Core.Types.Expr
 import Smol.Core.Types.Identifier
+import Smol.Core.Types.Op
 import Smol.Core.Types.Prim
 import Smol.Core.Types.Type
 import Smol.Core.Types.TypeName

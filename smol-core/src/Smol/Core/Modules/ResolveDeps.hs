@@ -78,6 +78,7 @@ resolveDataType (DataType {dtName, dtVars, dtConstructors}) =
 resolveType :: Type ParseDep ann -> Type ResolvedDep ann
 resolveType (TVar ann (ParseDep v _)) = TVar ann (LocalDefinition v)
 resolveType (TConstructor ann c) = TConstructor ann (resolveTypeName c)
+resolveType (TInfix ann op a b) = TInfix ann op (resolveType a) (resolveType b)
 resolveType (TPrim ann p) = TPrim ann p
 resolveType (TLiteral ann l) = TLiteral ann l
 resolveType (TFunc ann closure from to) =

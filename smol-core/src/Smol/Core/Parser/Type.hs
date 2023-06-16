@@ -23,6 +23,7 @@ import Smol.Core.Parser.Identifiers
   ( identifierParser,
     typeNameParser,
   )
+import Smol.Core.Parser.Op
 import qualified Smol.Core.Parser.Primitives as Prim
 import Smol.Core.Parser.Shared
   ( chainl1,
@@ -82,6 +83,7 @@ typeInnerParser :: Parser (ParsedType Annotation)
 typeInnerParser =
   try (orInBrackets tyFunctionParser)
     <|> try tyAppParser
+    <|> try typeInfixParser
     <|> simpleTypeParser
 
 -- | all the types except functions
@@ -96,6 +98,13 @@ simpleTypeParser =
           <|> tyArrayParser
           <|> try adtParser
    in orInBrackets parsers
+
+typeInfixParser :: Parser (ParsedType Annotation)
+typeInfixParser =
+  chainl1
+    simpleTypeParser
+    ( TInfix mempty <$> opParser
+    )
 
 adtParser :: Parser (ParsedType Annotation)
 adtParser =
@@ -129,13 +138,6 @@ typeLiteralParser :: Parser (ParsedType Annotation)
 typeLiteralParser =
   label "type literal" $ myLexeme (withLocation TLiteral Prim.typeLiteralParser)
 
--- | used where a function or type must be inside brackets for clarity
-subParser :: Parser (ParsedType Annotation)
-subParser =
-  try (orInBrackets tyAppParser)
-    <|> try simpleTypeParser
-    <|> try (inBrackets tyFunctionParser)
-
 tyPrimitiveParser :: Parser (ParsedType Annotation)
 tyPrimitiveParser = TPrim mempty <$> tyPrimParser
   where
@@ -167,10 +169,18 @@ tyFunctionParser = do
         myString "->"
         pure (TFunc mempty mempty)
 
-  val <- makeExprParser subParser [[arrParse]]
+  val <- makeExprParser functionArgParser [[arrParse]]
   case val of
     TFunc {} -> pure val
     _ -> fail "don't use function for parsing non-function values"
+
+-- | used where a function or type must be inside brackets for clarity
+functionArgParser :: Parser (ParsedType Annotation)
+functionArgParser =
+  try (orInBrackets tyAppParser)
+    <|> try typeInfixParser
+    <|> try simpleTypeParser
+    <|> try (inBrackets tyFunctionParser)
 
 tyTupleParser :: Parser (ParsedType Annotation)
 tyTupleParser = do

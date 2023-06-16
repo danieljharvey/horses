@@ -30,6 +30,8 @@ module Smol.Core.Typecheck.Shared
     freshen,
     primsFromTypeLiteral,
     typeLiteralFromPrim,
+    isNatLiteral,
+    isIntLiteral,
   )
 where
 
@@ -92,6 +94,7 @@ getSpreadAnnotation (SpreadWildcard ann) = Just ann
 
 getTypeAnnotation :: Type dep ann -> ann
 getTypeAnnotation (TPrim ann _) = ann
+getTypeAnnotation (TInfix ann _ _ _) = ann
 getTypeAnnotation (TUnknown ann _) = ann
 getTypeAnnotation (TConstructor ann _) = ann
 getTypeAnnotation (TApp ann _ _) = ann
@@ -389,3 +392,13 @@ typeLiteralFromPrim (PInt a) = TLInt (NES.singleton a)
 typeLiteralFromPrim (PNat a) = TLInt (NES.singleton $ fromIntegral a)
 typeLiteralFromPrim (PString str) = TLString (NES.singleton str)
 typeLiteralFromPrim PUnit = TLUnit
+
+-- | this is a sign we're encoding unions all wrong I think, but let's just
+-- follow this through
+isNatLiteral :: Type dep ann -> Bool
+isNatLiteral (TLiteral _ (TLInt a)) | all (>= 0) a = True
+isNatLiteral _ = False
+
+isIntLiteral :: Type dep ann -> Bool
+isIntLiteral (TLiteral _ (TLInt _)) = True
+isIntLiteral _ = False

@@ -24,6 +24,7 @@ import qualified Data.Set as S
 import qualified Data.Set.NonEmpty as NES
 import Smol.Core.Helpers
 import Smol.Core.Typecheck.Shared
+import Smol.Core.Typecheck.Simplify
 import Smol.Core.Typecheck.Substitute
 import Smol.Core.Typecheck.Types
 import Smol.Core.Types
@@ -44,16 +45,16 @@ combineTypeMaps (GlobalMap mapA) (GlobalMap mapB) = do
   mapBoth <- traverse combineTypes (M.intersectionWith (,) mapA mapB)
   pure $ GlobalMap (mapBoth <> mapA <> mapB)
 
--- given a number literal, get the smallest non-literal
+-- given a literal, get the "rough" type of it
 generaliseLiteral ::
   ResolvedType ann ->
   ResolvedType ann
-generaliseLiteral (TLiteral ann (TLInt tlA)) =
-  if all (>= 0) tlA
-    then TPrim ann TPNat
-    else TPrim ann TPInt
+generaliseLiteral (TLiteral ann (TLInt _)) =
+  TPrim ann TPInt
 generaliseLiteral (TLiteral ann (TLBool _)) =
   TPrim ann TPBool
+generaliseLiteral (TLiteral ann (TLString _)) =
+  TPrim ann TPString
 generaliseLiteral a = a
 
 -- | used to combine branches of if or case matches
@@ -157,21 +158,6 @@ isLiteralSubtypeOf union (TPrim _ TPNat) | isNatLiteral union = True
 isLiteralSubtypeOf union (TPrim _ TPInt) | isIntLiteral union = True
 isLiteralSubtypeOf _ _ = False
 
--- | this is a sign we're encoding unions all wrong I think, but let's just
--- follow this through
-isNatLiteral :: Type dep ann -> Bool
-isNatLiteral (TLiteral _ (TLInt a)) | all (>= 0) a = True
-isNatLiteral _ = False
-
-isIntLiteral :: Type dep ann -> Bool
-isIntLiteral (TLiteral _ (TLInt _)) = True
-isIntLiteral _ = False
-
--- smash two types together, learn something
--- Repeat after me, Duck is a subtype of Bird
--- 1 is a subtype of 1 | 2
--- 1 | 2 is a subtype of Nat
--- Nat is a subtype of Int
 isSubtypeOf ::
   ( MonadWriter [Substitution ResolvedDep ann] m,
     MonadError (TCError ann) m,
@@ -181,48 +167,64 @@ isSubtypeOf ::
   ResolvedType ann ->
   ResolvedType ann ->
   m (ResolvedType ann)
-isSubtypeOf a b | isLiteralSubtypeOf a b = pure b -- choose the more general of the two types
-isSubtypeOf (TGlobals annA globsA restA) (TGlobals _annB globsB restB) = do
-  tyRest <- isSubtypeOf restA restB
+isSubtypeOf a b = isSubtypeInner (simplifyType a) (simplifyType b)
+
+-- smash two types together, learn something
+-- Repeat after me, Duck is a subtype of Bird
+-- 1 is a subtype of 1 | 2
+-- 1 | 2 is a subtype of Nat
+-- Nat is a subtype of Int
+isSubtypeInner ::
+  ( MonadWriter [Substitution ResolvedDep ann] m,
+    MonadError (TCError ann) m,
+    Eq ann,
+    Show ann
+  ) =>
+  ResolvedType ann ->
+  ResolvedType ann ->
+  m (ResolvedType ann)
+isSubtypeInner a b | isLiteralSubtypeOf a b = pure b -- choose the more general of the two types
+isSubtypeInner (TGlobals annA globsA restA) (TGlobals _annB globsB restB) = do
+  tyRest <- isSubtypeInner restA restB
   (GlobalMap allGlobs) <- combineTypeMaps (GlobalMap globsA) (GlobalMap globsB)
   pure (TGlobals annA allGlobs tyRest)
-isSubtypeOf (TGlobals annA globsA restA) b =
-  isSubtypeOf (TGlobals annA globsA restA) (TGlobals annA globsA b)
-isSubtypeOf a (TGlobals annB globsB restB) =
-  isSubtypeOf (TGlobals annB globsB a) (TGlobals annB globsB restB)
-isSubtypeOf (TRecord annA itemsA) (TRecord _annB itemsB) =
+isSubtypeInner (TGlobals annA globsA restA) b =
+  isSubtypeInner (TGlobals annA globsA restA) (TGlobals annA globsA b)
+isSubtypeInner a (TGlobals annB globsB restB) =
+  isSubtypeInner (TGlobals annB globsB a) (TGlobals annB globsB restB)
+isSubtypeInner (TRecord annA itemsA) (TRecord _annB itemsB) =
   let missing = M.difference itemsB itemsA
    in if M.null missing
         then do
           (GlobalMap allItems) <- combineTypeMaps (GlobalMap itemsA) (GlobalMap itemsB)
           pure (TRecord annA allItems)
         else throwError (TCRecordMissingItems $ M.keysSet missing)
-isSubtypeOf (TVar ann a) (TVar ann' b) =
+isSubtypeInner (TVar ann a) (TVar ann' b) =
   if a == b
     then pure (TVar ann a)
     else throwError (TCTypeMismatch (TVar ann a) (TVar ann' b))
 -- unknowns go before vars because they are weaker, as such
-isSubtypeOf (TUnknown _ i) b =
+isSubtypeInner (TUnknown _ i) b =
   tell [Substitution (SubUnknown i) b]
     >> pure b
-isSubtypeOf a (TUnknown _ i) =
+isSubtypeInner a (TUnknown _ i) =
   tell [Substitution (SubUnknown i) a]
     >> pure a
-isSubtypeOf (TVar _ ident) b =
+isSubtypeInner (TVar _ ident) b =
   tell [Substitution (SubId ident) b]
     >> pure b
-isSubtypeOf a (TVar _ ident) =
+isSubtypeInner a (TVar _ ident) =
   tell [Substitution (SubId ident) a]
     >> pure a
-isSubtypeOf (TTuple annA fstA restA) (TTuple _annB fstB restB) =
+isSubtypeInner (TTuple annA fstA restA) (TTuple _annB fstB restB) =
   do
-    tyFst <- isSubtypeOf fstA fstB
-    tyRest <- neZipWithM isSubtypeOf restA restB
+    tyFst <- isSubtypeInner fstA fstB
+    tyRest <- neZipWithM isSubtypeInner restA restB
     pure (TTuple annA tyFst tyRest)
-isSubtypeOf (TArray ann i a) (TArray _ _ b) = do
-  inner <- isSubtypeOf a b
+isSubtypeInner (TArray ann i a) (TArray _ _ b) = do
+  inner <- isSubtypeInner a b
   pure (TArray ann i inner) -- should we checking array length?
-isSubtypeOf tA@(TApp tyAnn lA lB) tB@(TApp _ rA rB) = do
+isSubtypeInner tA@(TApp tyAnn lA lB) tB@(TApp _ rA rB) = do
   -- need to check for variables in here
   let result =
         first
@@ -231,20 +233,20 @@ isSubtypeOf tA@(TApp tyAnn lA lB) tB@(TApp _ rA rB) = do
   case result of
     Right ((typeNameA, argsA), (typeNameB, argsB)) -> do
       when (typeNameA /= typeNameB) $ throwError (TCTypeMismatch tA tB)
-      tyArgs <- zipWithM isSubtypeOf argsA argsB
+      tyArgs <- zipWithM isSubtypeInner argsA argsB
       let ann = getTypeAnnotation tA
       pure $ foldl' (TApp ann) (TConstructor ann typeNameA) tyArgs
     Left _ -> do
       -- this might be type vars instead of a concrete TConstructor etc,
       -- so just split and subtype as normal
-      tyA <- isSubtypeOf lA rA
-      tyB <- isSubtypeOf lB rB
+      tyA <- isSubtypeInner lA rA
+      tyB <- isSubtypeInner lB rB
       pure (TApp tyAnn tyA tyB)
-isSubtypeOf (TFunc ann lClosure lA lB) (TFunc _ rClosure rA rB) = do
-  tyA <- isSubtypeOf lA rA
-  tyB <- isSubtypeOf rB lB
+isSubtypeInner (TFunc ann lClosure lA lB) (TFunc _ rClosure rA rB) = do
+  tyA <- isSubtypeInner lA rA
+  tyB <- isSubtypeInner rB lB
   pure (TFunc ann (lClosure <> rClosure) tyA tyB)
-isSubtypeOf a b =
+isSubtypeInner a b =
   if (a $> ()) == (b $> ())
     then pure a
     else throwError (TCTypeMismatch a b)

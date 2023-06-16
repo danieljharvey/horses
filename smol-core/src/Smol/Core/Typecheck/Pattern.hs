@@ -16,6 +16,7 @@ import qualified Data.Map.Strict as M
 import qualified Data.Set.NonEmpty as NES
 import Smol.Core.Helpers
 import Smol.Core.Typecheck.Shared
+import Smol.Core.Typecheck.Simplify
 import Smol.Core.Typecheck.Substitute
 import Smol.Core.Typecheck.Types
 import Smol.Core.Types
@@ -35,7 +36,7 @@ checkPattern ::
       Map (ResolvedDep Identifier) (ResolvedType ann)
     )
 checkPattern checkTy checkPat = do
-  case (checkTy, checkPat) of
+  case (simplifyType checkTy, checkPat) of
     (TTuple _ tA tRest, PTuple ann pA pRest) | length tRest == length pRest -> do
       (patA, envA) <- checkPattern tA pA
       (patRest, envRest) <- neUnzip <$> neZipWithM checkPattern tRest pRest

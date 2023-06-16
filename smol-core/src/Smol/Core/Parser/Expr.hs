@@ -2,13 +2,13 @@
 
 module Smol.Core.Parser.Expr (expressionParser) where
 
-import Data.Functor (($>))
 import qualified Data.List.NonEmpty as NE
 import qualified Data.Map.Strict as M
 import qualified Data.Sequence as Seq
 import Data.Text (Text)
 import Data.Void
 import Smol.Core.Parser.Identifiers
+import Smol.Core.Parser.Op
 import Smol.Core.Parser.Pattern
 import Smol.Core.Parser.Primitives
 import Smol.Core.Parser.Shared
@@ -282,49 +282,6 @@ infixExpr =
           <|> try annotationParser
    in --          <|> try constructorParser
       orInBrackets parsers
-
-opParser :: Parser Op
-opParser =
-  {- try
-    ( Custom <$> infixOpParser
-    ) -}
-  try
-    ( myString "=="
-        $> OpEquals
-    ) {-
-      <|> try
-        ( myString "-"
-            $> Subtract
-        )
-      <|> try
-        ( myString "<>"
-            $> ArrayConcat
-        )
-      <|> try
-        ( myString ">="
-            $> GreaterThanOrEqualTo
-        )
-      <|> try
-        ( myString "<="
-            $> LessThanOrEqualTo
-        )
-      <|> try
-        ( myString ">"
-            $> GreaterThan
-        )
-      <|> try
-        ( myString "<"
-            $> LessThan
-        )
-      <|> try
-        ( myString "++"
-            $> StringConcat
-        )
-        -}
-    <|> try
-      ( myString "+"
-          $> OpAdd
-      )
 
 infixParser :: Parser ParserExpr
 infixParser =
