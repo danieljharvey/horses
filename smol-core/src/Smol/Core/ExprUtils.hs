@@ -14,9 +14,9 @@ module Smol.Core.ExprUtils
   )
 where
 
-import qualified Data.Map.Strict as M
 import Data.Bifunctor
 import qualified Data.List.NonEmpty as NE
+import qualified Data.Map.Strict as M
 import Smol.Core.Types
 
 -- helper functions for manipulating Expr types
@@ -116,8 +116,11 @@ patternMonoid f (PConstructor _ _ as) =
 -- | `ResolvedExpr` has module hashes and unique ids
 -- this is like NumberVars from main `mimsa`, but for now we'll bodge it
 -- to get things typechecking
-mapExprDep :: (Ord (depB Identifier)) =>
-  (forall a. depA a -> depB a) -> Expr depA ann -> Expr depB ann
+mapExprDep ::
+  (Ord (depB Identifier)) =>
+  (forall a. depA a -> depB a) ->
+  Expr depA ann ->
+  Expr depB ann
 mapExprDep resolve = go
   where
     go (EInfix ann op a b) = EInfix ann op (go a) (go b)
@@ -178,8 +181,11 @@ mapTypeDep resolve = go
     go (TApp ann a b) = TApp ann (go a) (go b)
     go (TConstructor ann constructor) = TConstructor ann (resolve constructor)
 
-mapDataTypeDep :: (Ord (depB Identifier)) =>
-    (forall a. depA a -> depB a) -> DataType depA ann -> DataType depB ann
+mapDataTypeDep ::
+  (Ord (depB Identifier)) =>
+  (forall a. depA a -> depB a) ->
+  DataType depA ann ->
+  DataType depB ann
 mapDataTypeDep resolve (DataType {dtName, dtVars, dtConstructors}) =
   let newConstructors = (fmap . fmap) (mapTypeDep resolve) dtConstructors
    in DataType {dtName, dtVars, dtConstructors = newConstructors}

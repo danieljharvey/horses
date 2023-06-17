@@ -149,18 +149,25 @@ spec = do
 
     fdescribe "From modules" $ do
       let testModules =
-            [ (["def one = 1",
-                    "def main = one + one"], "2"),
-              ( [
-                    "def increment a = a + 1",
-                        "def main = increment 41"],
+            [ ( [ "def one = 1",
+                  "def main = one + one"
+                ],
+                "2"
+              ),
+              ( [ "def increment a = a + 1",
+                  "def main = increment 41"
+                ],
                 "42"
               ),
-              ([ "def add (a: Nat) (b : Nat): Nat = a + b",
-                    "def main = add 20 22"],"42"),
-              ( ["type Identity a = Identity a",
-                    "def increment a = a + 1",
-                        "def main = case Identity (increment 41) of Identity a -> a"],
+              ( [ "def add (a: Nat) (b : Nat): Nat = a + b",
+                  "def main = add 20 22"
+                ],
+                "42"
+              ),
+              ( [ "type Identity a = Identity a",
+                  "def increment a = a + 1",
+                  "def main = case Identity (increment 41) of Identity a -> a"
+                ],
                 "42"
               )
             ]

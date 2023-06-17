@@ -82,7 +82,9 @@ resolveType (TInfix ann op a b) = TInfix ann op (resolveType a) (resolveType b)
 resolveType (TPrim ann p) = TPrim ann p
 resolveType (TLiteral ann l) = TLiteral ann l
 resolveType (TFunc ann closure from to) =
-  TFunc ann (resolveType <$> closure) (resolveType from) (resolveType to)
+  TFunc ann (M.mapKeys resolveId $ resolveType <$> closure) (resolveType from) (resolveType to)
+  where
+    resolveId (ParseDep v _) = LocalDefinition v
 resolveType (TTuple ann a as) =
   TTuple ann (resolveType a) (resolveType <$> as)
 resolveType (TArray ann size a) = TArray ann size (resolveType a)

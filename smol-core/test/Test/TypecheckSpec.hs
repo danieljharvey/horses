@@ -34,7 +34,7 @@ getLeft (Right a) = error (show a)
 
 -- simplify type for equality check
 -- remove anything that can't be described in a type signature
-simplifyType :: Type dep ann -> Type dep ann
+simplifyType :: (Ord (dep Identifier)) => Type dep ann -> Type dep ann
 simplifyType (TFunc ann _ fn arg) =
   TFunc ann mempty (simplifyType fn) (simplifyType arg)
 simplifyType (TArray ann _ as) = TArray ann 0 (simplifyType as)

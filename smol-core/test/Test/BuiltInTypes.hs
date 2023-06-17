@@ -14,7 +14,7 @@ import Smol.Core.Types
 -- | these should move to the test suite, and instead we should rely on types
 -- defined in module
 builtInTypes ::
-  (Monoid ann, Ord (dep TypeName)) =>
+  (Monoid ann, Ord (dep TypeName), Ord (dep Identifier)) =>
   (forall a. a -> dep a) ->
   Map (dep TypeName) (DataType dep ann)
 builtInTypes liftDep =

@@ -11,7 +11,6 @@ module Smol.Backend.IR.FromExpr.Expr
   )
 where
 
-import Debug.Trace
 import Control.Monad ((>=>))
 import Control.Monad.State
 import Data.Bifunctor
@@ -20,6 +19,7 @@ import qualified Data.List.NonEmpty as NE
 import Data.Map.Strict (Map)
 import qualified Data.Map.Strict as M
 import qualified Data.Text as T
+import Debug.Trace
 import Smol.Backend.IR.FromExpr.DataTypes
 import qualified Smol.Backend.IR.FromExpr.Helpers as Compile
 import Smol.Backend.IR.FromExpr.Pattern
@@ -286,8 +286,8 @@ fromExpr (EVar ty (LocalDefinition var)) = do
                 (IRFuncPointer (functionNameFromIdentifier var))
             ]
           )
-    _ -> 
-      pure $ 
+    _ ->
+      pure $
         IRApply (IRFunctionType [] irType) (IRFuncPointer (functionNameFromIdentifier var)) []
 fromExpr (EVar _ var) = do
   pure $ IRVar (fromIdentifier (Compile.resolveIdentifier var))
@@ -566,14 +566,15 @@ fromOtherExpr name (ELambda _ ident body) = do
   irBody <- fromExpr body
   traceShowM irBody
   irReturnType <- fromType (getExprAnnotation body)
-  
-  pure 
+
+  pure
     ( IRFunctionDef
         ( IRFunction
             { irfName = functionNameFromIdentifier name,
-              irfArgs = [(IRInt32, fromIdentifier (Compile.resolveIdentifier ident)) ,
-                        (IRStruct [], IRIdentifier "env")
-                        ],
+              irfArgs =
+                [ (IRInt32, fromIdentifier (Compile.resolveIdentifier ident)),
+                  (IRStruct [], IRIdentifier "env")
+                ],
               irfReturn = irReturnType,
               irfBody = [IRRet irReturnType irBody]
             }
@@ -583,7 +584,7 @@ fromOtherExpr name expr = do
   irExpr <- fromExpr expr
   irReturnType <- fromType (getExprAnnotation expr)
 
-  pure 
+  pure
     ( IRFunctionDef
         ( IRFunction
             { irfName = functionNameFromIdentifier name,

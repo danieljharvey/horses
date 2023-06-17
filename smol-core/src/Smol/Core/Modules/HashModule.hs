@@ -18,21 +18,34 @@ import Smol.Core.Types.TypeName
 -- we remove annotations before producing the hash
 -- so formatting does not affect it
 hashModule ::
-  (JSON.ToJSON (dep TypeName), JSON.ToJSON (dep Constructor), JSON.ToJSON (dep Identifier)) =>
+  ( JSON.ToJSON (dep TypeName),
+    JSON.ToJSON (dep Constructor),
+    JSON.ToJSON (dep Identifier),
+    JSON.ToJSONKey (dep Identifier)
+  ) =>
   Module dep ann ->
   (LBS.ByteString, ModuleHash)
 hashModule mod' = second coerce . contentAndHash $ mod' $> ()
 
 -- this is the only encode we should be doing
 serializeModule ::
-  (JSON.ToJSON (dep TypeName), JSON.ToJSON (dep Constructor), JSON.ToJSON (dep Identifier)) =>
+  ( JSON.ToJSON (dep TypeName),
+    JSON.ToJSON (dep Constructor),
+    JSON.ToJSON (dep Identifier),
+    JSON.ToJSONKey (dep Identifier)
+  ) =>
   Module dep ann ->
   (LBS.ByteString, ModuleHash)
 serializeModule = hashModule
 
 -- this is the only json decode we should be doing
 deserializeModule ::
-  (JSON.FromJSON (dep TypeName), JSON.FromJSON (dep Constructor), JSON.FromJSON (dep Identifier)) =>
+  ( Ord (dep Identifier),
+    JSON.FromJSONKey (dep Identifier),
+    JSON.FromJSON (dep TypeName),
+    JSON.FromJSON (dep Constructor),
+    JSON.FromJSON (dep Identifier)
+  ) =>
   LBS.ByteString ->
   Maybe (Module dep ())
 deserializeModule =
