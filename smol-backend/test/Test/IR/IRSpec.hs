@@ -179,7 +179,7 @@ spec = do
                 ],
                 "42"
               ),
-                   ( [ "type Identity a = Identity a",
+              ( [ "type Identity a = Identity a",
                   "def runIdentity (identA: Identity Int): Int = case identA of Identity b -> b",
                   "def main = runIdentity (Identity 42)"
                 ],

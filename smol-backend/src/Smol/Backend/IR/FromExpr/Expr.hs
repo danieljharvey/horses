@@ -11,11 +11,11 @@ module Smol.Backend.IR.FromExpr.Expr
   )
 where
 
-import Control.Monad.Writer
 import Control.Monad ((>=>))
 import Control.Monad.State
+import Control.Monad.Writer
 import Data.Bifunctor
-import Data.Foldable (toList, traverse_, foldl')
+import Data.Foldable (foldl', toList, traverse_)
 import qualified Data.List.NonEmpty as NE
 import Data.Map.Strict (Map)
 import qualified Data.Map.Strict as M
@@ -35,8 +35,8 @@ import Smol.Core.Types.Constructor
 import Smol.Core.Types.DataType
 import Smol.Core.Types.Expr
 import Smol.Core.Types.Identifier
-import Smol.Core.Types.Op
 import Smol.Core.Types.Module (DefIdentifier (..), Module (..))
+import Smol.Core.Types.Op
 import Smol.Core.Types.Prim
 import Smol.Core.Types.ResolvedDep
 import Smol.Core.Types.Type
@@ -198,8 +198,10 @@ functionReturnType (IRStruct [IRPointer (IRFunctionType args ret), _]) =
 functionReturnType other = error ("non-function " <> show other)
 
 fromExpr ::
-  (Show ann, MonadState (FromExprState ann) m,
-    MonadWriter (Map IRIdentifier IRExpr) m) =>
+  ( Show ann,
+    MonadState (FromExprState ann) m,
+    MonadWriter (Map IRIdentifier IRExpr) m
+  ) =>
   Expr ResolvedDep (Type ResolvedDep ann) ->
   m IRExpr
 fromExpr (EPrim _ prim) = fromPrim prim
@@ -266,19 +268,19 @@ fromExpr (EVar ty v@(LocalDefinition var)) = do
           closureType = IRStruct [IRPointer functionType, envType]
 
       -- ir puts the function in a closure with no env
-      let irExpr = IRInitialiseDataType
-                      (IRAlloc closureType)
-                      closureType
-                      closureType
-                      [ IRSetTo
-                          [0]
-                          (IRPointer functionType)
-                          (IRFuncPointer (functionNameFromIdentifier var))
-                      ]
+      let irExpr =
+            IRInitialiseDataType
+              (IRAlloc closureType)
+              closureType
+              closureType
+              [ IRSetTo
+                  [0]
+                  (IRPointer functionType)
+                  (IRFuncPointer (functionNameFromIdentifier var))
+              ]
 
       tell (M.singleton irIdentifier irExpr)
       pure (IRVar irIdentifier)
-
     _ -> do
       -- no args funcs are like thunked values
       let irExpr = IRApply (IRFunctionType [] irType) (IRFuncPointer (functionNameFromIdentifier var)) []
@@ -511,7 +513,8 @@ constructorAppFromExpr ty constructor cnArgs = do
 -- first, we need to deal with nested `app` around a constructor and flatten
 -- that into something ok
 appFromExpr ::
-  (Show ann, MonadState (FromExprState ann) m,
+  ( Show ann,
+    MonadState (FromExprState ann) m,
     MonadWriter (Map IRIdentifier IRExpr) m
   ) =>
   Type ResolvedDep ann ->
@@ -563,19 +566,20 @@ fromOtherExpr ::
 fromOtherExpr name (EAnn _ _ inner) = fromOtherExpr name inner
 fromOtherExpr name (ELambda ty ident body) = do
   (irBody, vars) <- runWriterT (fromExpr body)
-  
-  irType <- fromType ty
-  let (argTypes, irReturnType) = functionReturnType irType
-  let argType = case argTypes of
-        (a : _) -> a
-        _ -> error "why don't we have any args to this function?"
+
+  let (tFrom, tTo) = case ty of
+                       (TFunc _ _ tFrom' tTo') -> (tFrom', tTo')
+                       _ -> error "sdfdsf"
+
+  irReturnType <- fromType tTo
+  irArgType <- fromType tFrom
 
   pure
     ( IRFunctionDef
         ( IRFunction
             { irfName = functionNameFromIdentifier name,
               irfArgs =
-                [ (argType, fromIdentifier (Compile.resolveIdentifier ident)),
+                [ (irArgType, fromIdentifier (Compile.resolveIdentifier ident)),
                   (IRStruct [], IRIdentifier "env")
                 ],
               irfReturn = irReturnType,
@@ -584,7 +588,7 @@ fromOtherExpr name (ELambda ty ident body) = do
         )
     )
 fromOtherExpr name expr = do
-  (irExpr,vars) <- runWriterT (fromExpr expr)
+  (irExpr, vars) <- runWriterT (fromExpr expr)
   irReturnType <- fromType (getExprAnnotation expr)
 
   pure
@@ -599,8 +603,8 @@ fromOtherExpr name expr = do
     )
 
 addVarsToExpr :: Map IRIdentifier IRExpr -> IRExpr -> IRExpr
-addVarsToExpr vars expr
-  = foldl' (\e (ident, binding) -> IRLet ident binding e) expr (M.toList vars)
+addVarsToExpr vars expr =
+  foldl' (\e (ident, binding) -> IRLet ident binding e) expr (M.toList vars)
 
 -- | given an expr, return the `main` function, as well as adding any extra
 -- module Core.parts to the State
@@ -620,7 +624,7 @@ modulePartsFromExpr dataTypes otherExprs mainExpr =
                 (M.toList otherExprs)
               (irExpr, mainVars) <- runWriterT (fromExpr mainExpr)
               pure $ addVarsToExpr mainVars irExpr
-        runState action (FromExprState mempty dataTypes 1 mempty )
+        runState action (FromExprState mempty dataTypes 1 mempty)
       printFuncName = getPrintFuncName (getExprAnnotation mainExpr)
       printFuncType = getPrintFuncType (getExprAnnotation mainExpr)
    in otherParts

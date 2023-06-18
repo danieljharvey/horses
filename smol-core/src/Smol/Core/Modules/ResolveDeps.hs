@@ -101,9 +101,9 @@ resolveExpr ::
   Set Constructor ->
   m (Expr ResolvedDep ann)
 resolveExpr expr localDefs localTypes =
-    runReaderT
-      (resolveM expr)
-      initialEnv
+  runReaderT
+    (resolveM expr)
+    initialEnv
   where
     initialEnv = ResolveEnv mempty localDefs localTypes
 
