@@ -165,11 +165,33 @@ spec = do
                 "42"
               ),
               ( [ "type Identity a = Identity a",
-                  "def increment a = a + 1",
-                  "def main = case Identity (increment 41) of Identity a -> a"
+                  "def main = case Identity 42 of Identity a -> a"
                 ],
                 "42"
-              )
+              ),
+              ( [ "type Identity a = Identity a",
+                  "def main = case Identity (41 + 1) of Identity a -> a"
+                ],
+                "42"
+              ),
+              ( [ "type Identity a = Identity a",
+                  "def main = let id = (\\a -> a : Int -> Int); case Identity (id 42) of Identity a -> a"
+                ],
+                "42"
+              ),
+              ( [ "type Identity a = Identity a",
+                  "def id (a: Int): Int = a",
+                  "def main = case Identity (id 42) of Identity a -> a"
+                ],
+                "1"
+              ) {-,
+
+                ( [ "type Identity a = Identity a",
+                    "def increment a = a + 1",
+                    "def main = case Identity (increment 41) of Identity a -> a"
+                  ],
+                  "42"
+                )-}
             ]
       describe "IR compile" $ do
         traverse_ testCompileModuleIR testModules

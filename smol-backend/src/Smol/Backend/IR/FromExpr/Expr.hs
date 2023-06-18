@@ -11,6 +11,8 @@ module Smol.Backend.IR.FromExpr.Expr
   )
 where
 
+import Smol.Core.ExprUtils (bindExpr)
+import Control.Monad.Writer
 import Control.Monad ((>=>))
 import Control.Monad.State
 import Data.Bifunctor
@@ -136,17 +138,12 @@ addVar ::
 addVar ident expr =
   modify (\s -> s {fesVars = fesVars s <> M.singleton ident expr})
 
-{-
 lookupVar ::
   (MonadState (FromExprState ann) m) =>
   IRIdentifier ->
-  m IRExpr
-lookupVar ident = do
-  maybeExpr <- gets (M.lookup ident . vars)
-  case maybeExpr of
-    Just a -> pure a
-    _ -> error $ "could not find var " <> show ident
--}
+  m (Maybe IRExpr)
+lookupVar ident = 
+  gets (M.lookup ident . fesVars)
 
 -- | turn a Smol module into an IR one
 -- no considerations for name collisions etc
@@ -265,32 +262,8 @@ fromExpr (ELambda ty ident body) =
   closureFromExpr ty (Compile.resolveIdentifier ident) body
 fromExpr (EApp ty fn val) =
   appFromExpr ty fn val
-fromExpr (EVar ty (LocalDefinition var)) = do
-  irType <- fromType ty
-  case ty of
-    TFunc _ _ arg ret -> do
-      irRet <- fromType ret
-      irArg <- fromType arg
-      let envType = IRStruct []
-          functionType = IRFunctionType [irArg, envType] irRet
-          closureType = IRStruct [IRPointer functionType, envType]
-
-      pure $
-        IRInitialiseDataType
-          (IRAlloc closureType)
-          closureType
-          closureType
-          ( [ IRSetTo
-                [0]
-                (IRPointer functionType)
-                (IRFuncPointer (functionNameFromIdentifier var))
-            ]
-          )
-    _ ->
-      pure $
-        IRApply (IRFunctionType [] irType) (IRFuncPointer (functionNameFromIdentifier var)) []
-fromExpr (EVar _ var) = do
-  pure $ IRVar (fromIdentifier (Compile.resolveIdentifier var))
+fromExpr (EVar ty var) = 
+  pure (IRVar $ fromIdentifier $ Compile.resolveIdentifier var)
 fromExpr (ETuple ty tHead tTail) = do
   statements <-
     traverseInd
@@ -356,11 +329,11 @@ fromExpr expr = error ("fuck: " <> show expr)
 
 -- | given an env type, put all it's items in scope
 -- replaces "a" with a reference it's position in scope
-bindingsFromEnv :: Map Identifier (Type ResolvedDep ann) -> IRExpr -> IRExpr
+bindingsFromEnv :: Map (ResolvedDep Identifier) (Type ResolvedDep ann) -> IRExpr -> IRExpr
 bindingsFromEnv env inner =
   foldr
     ( \(ident, i) irExpr ->
-        swapVar (fromIdentifier ident) (IRStructPath [i] (IRVar "env")) irExpr
+        swapVar (fromIdentifier (Compile.resolveIdentifier ident)) (IRStructPath [i] (IRVar "env")) irExpr
     )
     inner
     (zip (M.keys env) [0 ..])
@@ -457,13 +430,13 @@ structFromEnv ::
   ( MonadState (FromExprState ann) m,
     Show ann
   ) =>
-  Map Identifier (Type ResolvedDep ann) ->
+  Map (ResolvedDep Identifier) (Type ResolvedDep ann) ->
   m [IRSetTo]
 structFromEnv env =
   traverseInd
     ( \(ident, ty) i -> do
         irType <- fromType ty
-        let irVal = IRVar (fromIdentifier ident)
+        let irVal = IRVar (fromIdentifier (Compile.resolveIdentifier ident))
         pure (IRSetTo [1, i] irType irVal)
     )
     (M.toList env)
@@ -595,6 +568,55 @@ fromOtherExpr name expr = do
         )
     )
 
+-- | basically we want to look at the expr, and add a bunch of 
+-- IRLet LocalFunctionName (IRSetupClosureForIt etc) at the start
+-- so the closure code is shared and always in scope
+hoistFunctions :: (MonadState (FromExprState ann) m) => 
+  Expr ResolvedDep (Type ResolvedDep ann) -> 
+      m (Expr ResolvedDep (Type ResolvedDep ann))
+hoistFunctions expr
+  = case runWriterT (putFunctionsInScope expr) of
+      Right a -> a
+
+putFunctionsInScope :: (MonadState (FromExprState ann) m,
+  MonadWriter (Map IRIdentifier IRExpr) m) =>
+  Expr ResolvedDep (Type ResolvedDep ann) ->
+  m (Expr ResolvedDep (Type ResolvedDep ann))
+putFunctionsInScope expr@(EVar ty v@(LocalDefinition var)) = do
+  let irIdentifier = fromIdentifier $ Compile.resolveIdentifier v
+  irType <- fromType ty
+  case ty of
+    TFunc _ _ arg ret -> do
+      irRet <- fromType ret
+      irArg <- fromType arg
+      let envType = IRStruct []
+          functionType = IRFunctionType [irArg, envType] irRet
+          closureType = IRStruct [IRPointer functionType, envType]
+
+      envStatements <- structFromEnv mempty
+
+      -- ir puts the function in a closure with no env
+      let irExpr = IRInitialiseDataType
+                      (IRAlloc closureType)
+                      closureType
+                      closureType
+                      ([ IRSetTo
+                          [0]
+                          (IRPointer functionType)
+                          (IRFuncPointer (functionNameFromIdentifier var))
+                      ] <> envStatements)
+
+      tell (M.singleton irIdentifier irExpr)
+      pure expr 
+      
+    _ -> do
+      -- no args funcs are like thunked values
+      let irExpr = IRApply (IRFunctionType [] irType) (IRFuncPointer (functionNameFromIdentifier var)) []
+      tell (M.singleton irIdentifier irExpr) 
+      pure expr 
+putFunctionsInScope expr@(EVar _ _) = pure expr
+putFunctionsIntoScope other = bindExpr putFunctionsInScope other
+
 -- | given an expr, return the `main` function, as well as adding any extra
 -- module Core.parts to the State
 modulePartsFromExpr ::
@@ -612,7 +634,7 @@ modulePartsFromExpr dataTypes otherExprs mainExpr =
                 )
                 (M.toList otherExprs)
               fromExpr mainExpr
-        runState action (FromExprState mempty dataTypes 1 mempty)
+        runState action (FromExprState mempty dataTypes 1 mempty )
       printFuncName = getPrintFuncName (getExprAnnotation mainExpr)
       printFuncType = getPrintFuncType (getExprAnnotation mainExpr)
    in otherParts
@@ -622,7 +644,7 @@ modulePartsFromExpr dataTypes otherExprs mainExpr =
                      irfArgs = [],
                      irfReturn = IRInt32,
                      irfBody =
-                       [ IRDiscard (IRApply printFuncType (IRFuncPointer printFuncName) [irMainExpr]),
+                       [ IRDiscard (IRApply printFuncType (IRFuncPointer printFuncName) [traceShowId irMainExpr]),
                          IRRet IRInt32 $ IRPrim $ IRPrimInt32 0
                        ]
                    }

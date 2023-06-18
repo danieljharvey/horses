@@ -18,7 +18,7 @@ import qualified Smol.Core.Types as Smol
 
 typeFromEnv ::
   (Show ann, MonadState (FromExprState ann) m) =>
-  Map Smol.Identifier (Smol.Type Smol.ResolvedDep ann) ->
+  Map (Smol.ResolvedDep Smol.Identifier) (Smol.Type Smol.ResolvedDep ann) ->
   m IRType
 typeFromEnv env = IRStruct <$> traverse fromType (M.elems env)
 
