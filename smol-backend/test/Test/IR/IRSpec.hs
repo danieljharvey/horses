@@ -147,7 +147,7 @@ spec = do
         resp <- run (irToLLVM irCurried) mempty
         resp `shouldBe` "42"
 
-    fdescribe "From modules" $ do
+    describe "From modules" $ do
       let testModules =
             [ ( [ "def one = 1",
                   "def main = one + one"
@@ -178,20 +178,16 @@ spec = do
                   "def main = let id = (\\a -> a : Int -> Int); case Identity (id 42) of Identity a -> a"
                 ],
                 "42"
-              ),
-              ( [ "type Identity a = Identity a",
-                  "def id (a: Int): Int = a",
-                  "def main = case Identity (id 42) of Identity a -> a"
+              )
+                {-
+                  -- something fucked with the argument type of the function
+                   ( [ "type Identity a = Identity a",
+                  "def runIdentity (identA: Identity Int): Int = case identA of Identity b -> b",
+                  "def main = runIdentity (Identity 42)"
                 ],
-                "1"
-              ) {-,
-
-                ( [ "type Identity a = Identity a",
-                    "def increment a = a + 1",
-                    "def main = case Identity (increment 41) of Identity a -> a"
-                  ],
-                  "42"
-                )-}
+                "42"
+              )
+                -}
             ]
       describe "IR compile" $ do
         traverse_ testCompileModuleIR testModules

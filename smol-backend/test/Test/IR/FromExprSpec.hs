@@ -3,6 +3,7 @@
 
 module Test.IR.FromExprSpec (spec) where
 
+import Control.Monad.Writer
 import Control.Monad.State
 import Data.Functor
 import qualified Data.List.NonEmpty as NE
@@ -45,8 +46,8 @@ getMainExpr = fst . createIR
 createIR :: Text -> (IRExpr, [IRModulePart])
 createIR input = do
   let smolExpr = evalExpr input
-      (mainExpr, IR.FromExprState {IR.fesModuleParts = otherParts}) =
-        runState (IR.fromExpr smolExpr) testEnv
+      ((mainExpr,_), IR.FromExprState {IR.fesModuleParts = otherParts}) =
+        runState (runWriterT $ IR.fromExpr smolExpr) testEnv
    in (mainExpr, otherParts)
 
 findFunction :: IRFunctionName -> [IRModulePart] -> IRFunction

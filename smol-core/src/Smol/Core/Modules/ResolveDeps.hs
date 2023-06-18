@@ -37,7 +37,7 @@ resolveModuleDeps parsedModule = do
         pure (Left (resolveDataType dt))
       resolveIt (DTExpr expr, defIds, _entities) =
         Right <$> resolveExpr expr defIds (allConstructors parsedModule)
-  resolvedMap <- traverse resolveIt map'
+  resolvedMap <- evalStateT (traverse resolveIt map') (ResolveState 0)
   let newExpressions =
         M.mapMaybe
           ( \case
@@ -95,19 +95,17 @@ resolveType (TRecord ann as) = TRecord ann (resolveType <$> as)
 resolveType (TApp ann fn arg) = TApp ann (resolveType fn) (resolveType arg)
 
 resolveExpr ::
-  (Show ann, MonadError ModuleError m) =>
+  (Show ann, MonadError ModuleError m, MonadState ResolveState m) =>
   Expr ParseDep ann ->
   Set DefIdentifier ->
   Set Constructor ->
   m (Expr ResolvedDep ann)
 resolveExpr expr localDefs localTypes =
-  liftEither $
-    runReader
-      (evalStateT (runExceptT $ resolveM expr) initialState)
+    runReaderT
+      (resolveM expr)
       initialEnv
   where
     initialEnv = ResolveEnv mempty localDefs localTypes
-    initialState = ResolveState 0
 
 resolveIdentifier ::
   ( MonadReader ResolveEnv m,
