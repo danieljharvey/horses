@@ -561,16 +561,21 @@ fromOtherExpr ::
   Expr ResolvedDep (Type ResolvedDep ann) ->
   m IRModulePart
 fromOtherExpr name (EAnn _ _ inner) = fromOtherExpr name inner
-fromOtherExpr name (ELambda _ ident body) = do
+fromOtherExpr name (ELambda ty ident body) = do
   (irBody, vars) <- runWriterT (fromExpr body)
-  irReturnType <- fromType (getExprAnnotation body)
+  
+  irType <- fromType ty
+  let (argTypes, irReturnType) = functionReturnType irType
+  let argType = case argTypes of
+        (a : _) -> a
+        _ -> error "why don't we have any args to this function?"
 
   pure
     ( IRFunctionDef
         ( IRFunction
             { irfName = functionNameFromIdentifier name,
               irfArgs =
-                [ (IRInt32, fromIdentifier (Compile.resolveIdentifier ident)),
+                [ (argType, fromIdentifier (Compile.resolveIdentifier ident)),
                   (IRStruct [], IRIdentifier "env")
                 ],
               irfReturn = irReturnType,

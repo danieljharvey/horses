@@ -178,16 +178,13 @@ spec = do
                   "def main = let id = (\\a -> a : Int -> Int); case Identity (id 42) of Identity a -> a"
                 ],
                 "42"
-              )
-                {-
-                  -- something fucked with the argument type of the function
+              ),
                    ( [ "type Identity a = Identity a",
                   "def runIdentity (identA: Identity Int): Int = case identA of Identity b -> b",
                   "def main = runIdentity (Identity 42)"
                 ],
                 "42"
               )
-                -}
             ]
       describe "IR compile" $ do
         traverse_ testCompileModuleIR testModules
