@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1686935428705,
+  "lastUpdate": 1687170000238,
   "repoUrl": "https://github.com/danieljharvey/mimsa",
   "entries": {
     "Store benchmarks in Github Pages": [
@@ -1975,6 +1975,50 @@ window.BENCHMARK_DATA = {
           {
             "name": "evaluate/evaluate parsing 2",
             "value": 0.2108066703142843,
+            "unit": "Time (ms)"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "danieljamesharvey@gmail.com",
+            "name": "Daniel Harvey",
+            "username": "danieljharvey"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "1006596a2d2150a919c7e57d0b9b1adfb814ca2c",
+          "message": "Compile entire module to LLVM (wip) (#965)\n\n* Compile entire module\r\n\r\n* WIP tiresome shit\r\n\r\n* Messing around with module in test more\r\n\r\n* WIP\r\n\r\n* We can do static values, but we must flatten lambdas into functions next\r\n\r\n* Nearly put 'dep Identifier' in TFunc\r\n\r\n* Fix closure types\r\n\r\n* So lost\r\n\r\n* Fucking scoping\r\n\r\n* Correct argument type\r\n\r\n* Ahh fuck\r\n\r\n* Well, well, well",
+          "timestamp": "2023-06-19T11:15:58+01:00",
+          "tree_id": "833cb4152387f4386482a50c6201fb068c723698",
+          "url": "https://github.com/danieljharvey/mimsa/commit/1006596a2d2150a919c7e57d0b9b1adfb814ca2c"
+        },
+        "date": 1687169998819,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "build stdlib/allFns",
+            "value": 0.14460917467857415,
+            "unit": "Time (ms)"
+          },
+          {
+            "name": "evaluate/evaluate big looping thing",
+            "value": 0.13423907671429028,
+            "unit": "Time (ms)"
+          },
+          {
+            "name": "evaluate/evaluate parsing",
+            "value": 0.040002131285714074,
+            "unit": "Time (ms)"
+          },
+          {
+            "name": "evaluate/evaluate parsing 2",
+            "value": 0.2977149371999929,
             "unit": "Time (ms)"
           }
         ]
