@@ -135,6 +135,7 @@ unsafeParseModule input = case parseModuleAndFormatError input of
   Left e -> error (show e)
 
 -- | parse a typed expr, ie parse it and fill the type with crap
+-- this should not be compiled because `fromParsedExpr is nonsense
 unsafeParseTypedExpr :: Text -> ResolvedExpr (Type ResolvedDep Annotation)
 unsafeParseTypedExpr input = case parseExprAndFormatError input of
   Right expr -> fromParsedExpr expr $> TPrim mempty TPBool

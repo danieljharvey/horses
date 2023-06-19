@@ -128,12 +128,12 @@ getClosureType ::
     Ord ann
   ) =>
   ResolvedExpr (ResolvedType ann) ->
-  m (Map Identifier (ResolvedType ann))
+  m (Map (ResolvedDep Identifier) (ResolvedType ann))
 getClosureType body =
   mconcat
     <$> traverse
       ( \ident ->
-          M.singleton (rdIdentifier ident) <$> lookupVar ident
+          M.singleton ident <$> lookupVar ident
       )
       (S.toList (freeVars body))
 

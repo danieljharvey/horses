@@ -64,7 +64,6 @@ library
     Smol.Backend.IR.FromExpr.Pattern
     Smol.Backend.IR.FromExpr.Type
     Smol.Backend.IR.FromExpr.Types
-    Smol.Backend.IR.FromResolvedExpr
     Smol.Backend.IR.IRExpr
     Smol.Backend.IR.ToLLVM.Helpers
     Smol.Backend.IR.ToLLVM.Patterns
@@ -91,7 +90,6 @@ test-suite smol-backend-tests
     Smol.Backend.IR.FromExpr.Pattern
     Smol.Backend.IR.FromExpr.Type
     Smol.Backend.IR.FromExpr.Types
-    Smol.Backend.IR.FromResolvedExpr
     Smol.Backend.IR.IRExpr
     Smol.Backend.IR.ToLLVM.Helpers
     Smol.Backend.IR.ToLLVM.Patterns

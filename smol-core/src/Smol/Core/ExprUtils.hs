@@ -1,3 +1,4 @@
+{-# LANGUAGE NamedFieldPuns #-}
 {-# LANGUAGE RankNTypes #-}
 
 module Smol.Core.ExprUtils
@@ -9,11 +10,13 @@ module Smol.Core.ExprUtils
     patternMonoid,
     mapExprDep,
     mapTypeDep,
+    mapDataTypeDep,
   )
 where
 
 import Data.Bifunctor
 import qualified Data.List.NonEmpty as NE
+import qualified Data.Map.Strict as M
 import Smol.Core.Types
 
 -- helper functions for manipulating Expr types
@@ -113,7 +116,11 @@ patternMonoid f (PConstructor _ _ as) =
 -- | `ResolvedExpr` has module hashes and unique ids
 -- this is like NumberVars from main `mimsa`, but for now we'll bodge it
 -- to get things typechecking
-mapExprDep :: (forall a. depA a -> depB a) -> Expr depA ann -> Expr depB ann
+mapExprDep ::
+  (Ord (depB Identifier)) =>
+  (forall a. depA a -> depB a) ->
+  Expr depA ann ->
+  Expr depB ann
 mapExprDep resolve = go
   where
     go (EInfix ann op a b) = EInfix ann op (go a) (go b)
@@ -158,7 +165,7 @@ mapSpreadDep resolve = go
     go (SpreadWildcard ann) = SpreadWildcard ann
     go (SpreadValue ann a) = SpreadValue ann (resolve a)
 
-mapTypeDep :: (forall a. depA a -> depB a) -> Type depA ann -> Type depB ann
+mapTypeDep :: (Ord (depB Identifier)) => (forall a. depA a -> depB a) -> Type depA ann -> Type depB ann
 mapTypeDep resolve = go
   where
     go (TVar ann v) = TVar ann (resolve v)
@@ -167,9 +174,18 @@ mapTypeDep resolve = go
     go (TArray ann i as) = TArray ann i (go as)
     go (TLiteral ann a) = TLiteral ann a
     go (TPrim ann p) = TPrim ann p
-    go (TFunc ann env a b) = TFunc ann (go <$> env) (go a) (go b)
+    go (TFunc ann env a b) = TFunc ann (M.mapKeys resolve $ go <$> env) (go a) (go b)
     go (TUnknown ann i) = TUnknown ann i
     go (TGlobals ann env inner) = TGlobals ann (go <$> env) (go inner)
     go (TRecord ann as) = TRecord ann (go <$> as)
     go (TApp ann a b) = TApp ann (go a) (go b)
     go (TConstructor ann constructor) = TConstructor ann (resolve constructor)
+
+mapDataTypeDep ::
+  (Ord (depB Identifier)) =>
+  (forall a. depA a -> depB a) ->
+  DataType depA ann ->
+  DataType depB ann
+mapDataTypeDep resolve (DataType {dtName, dtVars, dtConstructors}) =
+  let newConstructors = (fmap . fmap) (mapTypeDep resolve) dtConstructors
+   in DataType {dtName, dtVars, dtConstructors = newConstructors}

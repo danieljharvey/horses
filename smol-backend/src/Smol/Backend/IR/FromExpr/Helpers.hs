@@ -9,19 +9,30 @@ module Smol.Backend.IR.FromExpr.Helpers
     primFromConstructor,
     lookupTypeName,
     isStringType,
+    resolveConstructor,
+    resolveIdentifier,
   )
 where
 
-import Control.Monad.Identity
 import Control.Monad.State
 import qualified Data.Map.Strict as M
+import Data.String (fromString)
 import GHC.Records (HasField (..))
 import Smol.Backend.IR.FromExpr.Types
 import Smol.Core.Helpers
 import qualified Smol.Core.Typecheck.Shared as TC
 import qualified Smol.Core.Types as Smol
+import Smol.Core.Types.ResolvedDep
 
-isStringType :: Smol.Type Identity ann -> Bool
+resolveConstructor :: Smol.ResolvedDep Smol.Constructor -> Smol.Constructor
+resolveConstructor (LocalDefinition c) = c
+resolveConstructor (UniqueDefinition c idx) = c <> fromString ("_" <> show idx)
+
+resolveIdentifier :: Smol.ResolvedDep Smol.Identifier -> Smol.Identifier
+resolveIdentifier (LocalDefinition c) = c
+resolveIdentifier (UniqueDefinition i idx) = i <> fromString ("_" <> show idx)
+
+isStringType :: Smol.Type dep ann -> Bool
 isStringType (Smol.TPrim _ Smol.TPString) = True
 isStringType (Smol.TLiteral _ (Smol.TLString _)) = True
 isStringType _ = False
@@ -56,7 +67,7 @@ lookupConstructor ::
   ( MonadState (FromExprState ann) m
   ) =>
   Smol.Constructor ->
-  m (Smol.DataType Identity ann)
+  m (Smol.DataType ResolvedDep ann)
 lookupConstructor constructor = do
   maybeDt <-
     gets
@@ -73,15 +84,15 @@ lookupConstructor constructor = do
 lookupTypeName ::
   ( MonadState (FromExprState ann) m
   ) =>
-  Identity Smol.TypeName ->
-  m (Smol.DataType Identity ann)
+  ResolvedDep Smol.TypeName ->
+  m (Smol.DataType ResolvedDep ann)
 lookupTypeName tn = do
   maybeDt <- gets (M.lookup tn . getField @"fesDataTypes")
   case maybeDt of
     Just dt -> pure dt
     Nothing -> error $ "couldn't find datatype for " <> show tn
 
-getConstructorNumber :: Smol.DataType Identity ann -> Smol.Constructor -> Integer
+getConstructorNumber :: Smol.DataType ResolvedDep ann -> Smol.Constructor -> Integer
 getConstructorNumber (Smol.DataType _ _ constructors) constructor =
   case M.lookup constructor (mapToNumbered constructors) of
     Just i -> i

@@ -5,7 +5,6 @@
 
 module Smol.Backend.IR.FromExpr.Type (fromType, typeFromEnv, fromDataTypeInMemory) where
 
-import Control.Monad.Identity
 import Control.Monad.State
 import qualified Data.List.NonEmpty as NE
 import Data.Map.Strict (Map)
@@ -19,13 +18,13 @@ import qualified Smol.Core.Types as Smol
 
 typeFromEnv ::
   (Show ann, MonadState (FromExprState ann) m) =>
-  Map Smol.Identifier (Smol.Type Identity ann) ->
+  Map (Smol.ResolvedDep Smol.Identifier) (Smol.Type Smol.ResolvedDep ann) ->
   m IRType
 typeFromEnv env = IRStruct <$> traverse fromType (M.elems env)
 
 fromType ::
   (Show ann, MonadState (FromExprState ann) m) =>
-  Smol.Type Identity ann ->
+  Smol.Type Smol.ResolvedDep ann ->
   m IRType
 fromType (Smol.TPrim _ Smol.TPBool) = pure IRInt2
 fromType (Smol.TPrim _ Smol.TPNat) = pure IRInt32
@@ -68,8 +67,8 @@ fromType other =
 -- in it
 getIrTypeForDataType ::
   (Show ann, MonadState (FromExprState ann) m) =>
-  Smol.DataType Identity ann ->
-  [Smol.Type Identity ann] ->
+  Smol.DataType Smol.ResolvedDep ann ->
+  [Smol.Type Smol.ResolvedDep ann] ->
   m IRType
 getIrTypeForDataType dt dtArgs =
   fromDataTypeInMemory <$> getDataTypeInMemory dt dtArgs

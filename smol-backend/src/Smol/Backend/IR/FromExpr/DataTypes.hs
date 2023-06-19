@@ -12,7 +12,6 @@ module Smol.Backend.IR.FromExpr.DataTypes
 where
 
 import Control.Monad.Except
-import Control.Monad.Identity
 import Control.Monad.State
 import qualified Data.List.NonEmpty as NE
 import Data.Map.Strict (Map)
@@ -25,12 +24,13 @@ import Smol.Core.Typecheck.Substitute
 import Smol.Core.Typecheck.Subtype
 import qualified Smol.Core.Typecheck.Types as Smol
 import qualified Smol.Core.Types as Smol
+import Smol.Core.Types.ResolvedDep
 
 patternTypeInMemory ::
   ( Show ann,
     MonadState (FromExprState ann) m
   ) =>
-  Smol.Pattern Identity (Smol.Type Identity ann) ->
+  Smol.Pattern ResolvedDep (Smol.Type ResolvedDep ann) ->
   m DataTypeInMemory
 patternTypeInMemory (Smol.PLiteral ty _) =
   toRepresentation ty
@@ -43,13 +43,13 @@ patternTypeInMemory (Smol.PArray ty _ _) =
 patternTypeInMemory (Smol.PWildcard ty) =
   toRepresentation ty
 patternTypeInMemory (Smol.PConstructor ty c _) =
-  snd <$> constructorTypeInMemory ty (runIdentity c)
+  snd <$> constructorTypeInMemory ty (resolveConstructor c)
 
 constructorTypeInMemory ::
   ( MonadState (FromExprState ann) m,
     Show ann
   ) =>
-  Smol.Type Identity ann ->
+  Smol.Type ResolvedDep ann ->
   Smol.Constructor ->
   m (DataTypeInMemory, DataTypeInMemory)
 constructorTypeInMemory ty constructor = do
@@ -71,7 +71,7 @@ typeToDataTypeInMemory ::
   ( MonadState (FromExprState ann) m,
     Show ann
   ) =>
-  Smol.Type Identity ann ->
+  Smol.Type ResolvedDep ann ->
   m (Either (Smol.TCError ann) DataTypeInMemory)
 typeToDataTypeInMemory ty = do
   result <- runExceptT $ flattenConstructorType ty
@@ -89,8 +89,8 @@ getDataTypeInMemory ::
   ( Show ann,
     MonadState (FromExprState ann) m
   ) =>
-  Smol.DataType Identity ann ->
-  [Smol.Type Identity ann] ->
+  Smol.DataType ResolvedDep ann ->
+  [Smol.Type ResolvedDep ann] ->
   m DataTypeInMemory
 getDataTypeInMemory (Smol.DataType _ [] _constructors) [] =
   pure DTEnum
@@ -132,18 +132,18 @@ resolveDataType ::
     MonadState (FromExprState ann) m
   ) =>
   [Smol.Identifier] ->
-  [Smol.Type Identity ann] ->
-  [Smol.Type Identity ann] ->
+  [Smol.Type ResolvedDep ann] ->
+  [Smol.Type ResolvedDep ann] ->
   m [DataTypeInMemory]
 resolveDataType dtVars constructorArgs args =
-  let substitutions = zipWith Substitution (SubId . Identity <$> dtVars) args
+  let substitutions = zipWith Substitution (SubId . LocalDefinition <$> dtVars) args
    in traverse toRepresentation $ substituteMany substitutions <$> constructorArgs
 
 toRepresentation ::
   ( Show ann,
     MonadState (FromExprState ann) m
   ) =>
-  Smol.Type Identity ann ->
+  Smol.Type ResolvedDep ann ->
   m DataTypeInMemory
 toRepresentation (Smol.TPrim _ prim) = pure $ DTPrim prim
 toRepresentation (Smol.TLiteral _ (Smol.TLInt _)) = pure $ DTPrim Smol.TPInt

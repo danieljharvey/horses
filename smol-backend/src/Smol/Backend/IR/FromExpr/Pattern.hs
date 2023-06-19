@@ -8,7 +8,6 @@ module Smol.Backend.IR.FromExpr.Pattern
   )
 where
 
-import Control.Monad.Identity
 import Control.Monad.State
 import qualified Data.List.NonEmpty as NE
 import Data.Map.Strict (Map)
@@ -27,7 +26,7 @@ destructurePattern ::
     Ord p
   ) =>
   (Smol.Identifier -> p) ->
-  Smol.Pattern Identity (Smol.Type Identity ann) ->
+  Smol.Pattern Smol.ResolvedDep (Smol.Type Smol.ResolvedDep ann) ->
   m (Map p GetPath)
 destructurePattern fromIdentifier =
   destructInner []
@@ -44,7 +43,7 @@ destructurePattern fromIdentifier =
             Smol.SpreadWildcard _ -> mempty
             Smol.SpreadValue _ ident ->
               M.singleton
-                (fromIdentifier (runIdentity ident))
+                (fromIdentifier (resolveIdentifier ident))
                 (GetPath path (GetArrayTail (fromIntegral $ length as)))
       mappend spreadPath . mconcat <$> traverseInd (\pat i -> destructInner (pathSoFar <> [i]) pat) as
     destructInner path (Smol.PConstructor _ _ pArgs) = do
@@ -53,14 +52,14 @@ destructurePattern fromIdentifier =
       -- then return path
       mconcat <$> traverseInd (\pat i -> destructInner (path <> [i + 1]) pat) pArgs
     destructInner path (Smol.PVar _ ident) =
-      pure $ M.singleton (fromIdentifier (runIdentity ident)) (GetPath path GetValue)
+      pure $ M.singleton (fromIdentifier (resolveIdentifier ident)) (GetPath path GetValue)
 
 predicatesFromPattern ::
   ( MonadState (FromExprState ann) m,
     Show ann
   ) =>
   (Smol.Prim -> m p) ->
-  Smol.Pattern Identity (Smol.Type Identity ann) ->
+  Smol.Pattern Smol.ResolvedDep (Smol.Type Smol.ResolvedDep ann) ->
   m [PatternPredicate p]
 predicatesFromPattern fromPrim =
   predicatesInner []
@@ -101,12 +100,12 @@ predicatesFromPattern fromPrim =
       case tyArgs of
         -- if no args, it's a primitive
         [] -> do
-          prim <- primFromConstructor (runIdentity constructor)
+          prim <- primFromConstructor (resolveConstructor constructor)
           llPrim <- fromPrim prim
           pure [PathEquals (GetPath path GetValue) llPrim]
         _ -> do
           -- if there's args it's a struct
-          prim <- primFromConstructor (runIdentity constructor)
+          prim <- primFromConstructor (resolveConstructor constructor)
           llPrim <- fromPrim prim
           let constructorPath = PathEquals (GetPath (path <> [0]) GetValue) llPrim
 

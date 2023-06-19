@@ -2,21 +2,22 @@
 
 module Test.IR.IRSpec (spec) where
 
-import Control.Monad.Identity
 import Data.Foldable (traverse_)
-import Data.Functor
 import qualified Data.Map as M
 import Data.Text (Text)
+import qualified Data.Text as T
 import qualified LLVM.AST as LLVM
 import qualified Smol.Backend.Compile.RunLLVM as Run
 import Smol.Backend.IR.FromExpr.Expr
-import Smol.Backend.IR.FromResolvedExpr
 import Smol.Backend.IR.ToLLVM.ToLLVM
-import Smol.Core.EliminateGlobals (eliminateGlobals)
-import Smol.Core.Typecheck
+import Smol.Core.Modules.FromParts
+import Smol.Core.Modules.ModuleError
+import Smol.Core.Modules.ResolveDeps
+import Smol.Core.Modules.Typecheck
+import Smol.Core.Parser (parseModuleAndFormatError)
 import Smol.Core.Types
+import Smol.Core.Types.Module
 import Test.BuiltInTypes
-import Test.Helpers
 import Test.Hspec
 import Test.IR.Samples
 
@@ -25,49 +26,43 @@ run :: LLVM.Module -> [(String, String)] -> IO Text
 run llModule env =
   Run.rrResult <$> Run.run env llModule
 
-evalExpr :: Text -> ResolvedExpr (Type ResolvedDep Annotation)
-evalExpr input =
-  case elaborate
-    ( TCEnv
-        { tceDataTypes = builtInTypes emptyResolvedDep,
-          tceVars = mempty,
-          tceGlobals = mempty
-        }
-    )
-    (unsafeParseTypedExpr input $> mempty) of
-    Right typedExpr -> typedExpr
-    Left e -> error (show e)
-
--- apply functions to globals (for testing)
-addEnvFunctions ::
-  ResolvedExpr (Type ResolvedDep ann) ->
-  ResolvedExpr (Type ResolvedDep ann)
-addEnvFunctions expr =
-  case getExprAnnotation expr of
-    TGlobals _ m _
-      | not (M.null m) ->
-          let ann = getExprAnnotation expr
-           in EApp
-                ann
-                (eliminateGlobals emptyResolvedDep expr)
-                (ERecord ann (M.singleton "egg" (EPrim ann (PInt 21))))
-    _ -> eliminateGlobals emptyResolvedDep expr
-
-createModule :: Text -> LLVM.Module
-createModule input = do
-  let expr = addEnvFunctions (evalExpr input)
-      irModule = irFromExpr (builtInTypes Identity) (fromResolvedType <$> fromResolvedExpr expr)
-  irToLLVM irModule
+createLLVMModuleFromExpr :: Text -> LLVM.Module
+createLLVMModuleFromExpr input =
+  createLLVMModuleFromModule $ "def main = " <> input
 
 testCompileIR :: (Text, Text) -> Spec
 testCompileIR (input, result) = it ("Via IR " <> show input) $ do
-  resp <- run (createModule input) []
+  resp <- run (createLLVMModuleFromExpr input) []
   resp `shouldBe` result
 
-testCompileIRWithEnv :: (Text, [(String, String)], Text) -> Spec
-testCompileIRWithEnv (input, runEnv, result) = it ("Via IR " <> show input) $ do
-  resp <- run (createModule input) runEnv
-  resp `shouldBe` result
+createLLVMModuleFromModule :: Text -> LLVM.Module
+createLLVMModuleFromModule input =
+  case resolveModule input of
+    Right typecheckedModule ->
+      irToLLVM (irFromModule typecheckedModule)
+    Left e -> error (show e)
+
+-- add the empty ones for testing
+addTestDataTypesToModule :: (Monoid ann) => Module ParseDep ann -> Module ParseDep ann
+addTestDataTypesToModule myModule =
+  myModule {moDataTypes = moDataTypes myModule <> M.mapKeys pdIdentifier (builtInTypes emptyParseDep)}
+
+resolveModule :: Text -> Either ModuleError (Module ResolvedDep (Type ResolvedDep Annotation))
+resolveModule input =
+  case parseModuleAndFormatError input of
+    Right moduleParts -> do
+      case moduleFromModuleParts mempty moduleParts >>= resolveModuleDeps . addTestDataTypesToModule of
+        Left e -> error (show e)
+        Right (myModule, deps) -> do
+          typecheckModule mempty "" myModule deps
+    Left e -> error (show e)
+
+testCompileModuleIR :: ([Text], Text) -> Spec
+testCompileModuleIR (inputs, result) =
+  let input = T.intercalate "\n" inputs
+   in it ("Via IR " <> show input) $ do
+        resp <- run (createLLVMModuleFromModule input) []
+        resp `shouldBe` result
 
 spec :: Spec
 spec = do
@@ -98,6 +93,48 @@ spec = do
         resp <- run (irToLLVM irCurried) mempty
         resp `shouldBe` "42"
 
+    describe "From modules" $ do
+      let testModules =
+            [ ( [ "def one = 1",
+                  "def main = one + one"
+                ],
+                "2"
+              ),
+              ( [ "def increment a = (a + 1 : Int)",
+                  "def main = increment 41"
+                ],
+                "42"
+              ),
+              ( [ "def add (a: Nat) (b : Nat): Nat = a + b",
+                  "def main = add 20 22"
+                ],
+                "42"
+              ),
+              ( [ "type Identity a = Identity a",
+                  "def main = case Identity 42 of Identity a -> a"
+                ],
+                "42"
+              ),
+              ( [ "type Identity a = Identity a",
+                  "def main = case Identity (41 + 1) of Identity a -> a"
+                ],
+                "42"
+              ),
+              ( [ "type Identity a = Identity a",
+                  "def main = let id = (\\a -> a : Int -> Int); case Identity (id 42) of Identity a -> a"
+                ],
+                "42"
+              ),
+              ( [ "type Identity a = Identity a",
+                  "def runIdentity (identA: Identity Int): Int = case identA of Identity b -> b",
+                  "def main = runIdentity (Identity 42)"
+                ],
+                "42"
+              )
+            ]
+      describe "IR compile" $ do
+        traverse_ testCompileModuleIR testModules
+
     describe "From expressions" $ do
       describe "Basic" $ do
         let testVals =
@@ -121,20 +158,6 @@ spec = do
 
         describe "IR compile" $ do
           traverse_ testCompileIR testVals
-
-      describe "Basic with env" $ do
-        let testVals =
-              [ ("global egg = 42; egg! + egg!", [], "84")
-              -- need records implemented
-              -- ("(egg! : 21)", [], "21"),
-              {-( "let horse = (getenv! : String -> String) \"ENV_HORSE\"; let time = (getenv! : String -> String) \"ENV_TIME\"; horse + time",
-                [("ENV_HORSE", "horse"), ("ENV_TIME", "time")],
-                "horsetime"
-              )-}
-              ]
-
-        describe "IR compile with args" $ do
-          traverse_ testCompileIRWithEnv testVals
 
       describe "Functions" $ do
         let testVals =

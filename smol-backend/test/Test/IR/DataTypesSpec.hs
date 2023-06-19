@@ -2,12 +2,10 @@
 
 module Test.IR.DataTypesSpec (spec) where
 
-import Control.Monad.Identity
 import Control.Monad.State
 import qualified Data.Map.Strict as M
 import qualified Smol.Backend.IR.FromExpr.DataTypes as DT
 import Smol.Backend.IR.FromExpr.Types
-import Smol.Backend.IR.FromResolvedExpr
 import Smol.Core.Typecheck.FromParsedExpr
 import qualified Smol.Core.Typecheck.Types as Smol
 import Smol.Core.Types
@@ -17,28 +15,28 @@ import Test.Helpers
 import Test.Hspec
 
 typeToDataType ::
-  Smol.Type Identity () ->
+  Smol.Type ResolvedDep () ->
   Either (Smol.TCError ()) DT.DataTypeInMemory
 typeToDataType ty =
   evalState
     (DT.typeToDataTypeInMemory ty)
     ( FromExprState
         { fesModuleParts = mempty,
-          fesDataTypes = builtInTypes Identity,
+          fesDataTypes = builtInTypes LocalDefinition,
           fesFreshInt = 0,
           fesVars = mempty
         }
     )
 
-parseToIdentity :: Type ParseDep a -> Type Identity a
-parseToIdentity = fromResolvedType . fromParsedType
+parseToResolvedDep :: Type ParseDep a -> Type ResolvedDep a
+parseToResolvedDep = fromParsedType
 
 spec :: Spec
 spec = do
   describe "Data types in memory" $ do
     it "Enum shaped datatype" $ do
       let ty = tyCons "Ord" []
-      typeToDataType (parseToIdentity ty)
+      typeToDataType (parseToResolvedDep ty)
         `shouldBe` Right DT.DTEnum
 
     it "Maybe Int" $ do
@@ -52,7 +50,7 @@ spec = do
                       ("Nothing", [])
                     ]
               }
-      typeToDataType (parseToIdentity ty)
+      typeToDataType (parseToResolvedDep ty)
         `shouldBe` Right expected
 
     it "Either Int Bool" $ do
@@ -66,7 +64,7 @@ spec = do
                       ("Right", [DT.DTPrim TPBool])
                     ]
               }
-      typeToDataType (parseToIdentity ty)
+      typeToDataType (parseToResolvedDep ty)
         `shouldBe` Right expected
 
     it "These Int Bool" $ do
@@ -81,5 +79,5 @@ spec = do
                       ("These", [DT.DTPrim TPInt, DT.DTPrim TPBool])
                     ]
               }
-      typeToDataType (parseToIdentity ty)
+      typeToDataType (parseToResolvedDep ty)
         `shouldBe` Right expected

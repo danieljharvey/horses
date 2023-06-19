@@ -7,6 +7,7 @@
 
 module Smol.Core.Modules.ResolveDeps
   ( resolveModuleDeps,
+    resolveExprDeps,
   )
 where
 
@@ -27,6 +28,12 @@ import Smol.Core.Modules.Uses
 import Smol.Core.Types.Module.DefIdentifier
 import Smol.Core.Types.Module.Module
 
+resolveExprDeps ::
+  (Show ann, MonadError ModuleError m) =>
+  Expr ParseDep ann ->
+  m (Expr ResolvedDep ann)
+resolveExprDeps expr = evalStateT (resolveExpr expr mempty mempty) (ResolveState 0)
+
 resolveModuleDeps ::
   (Show ann, Eq ann, MonadError ModuleError m) =>
   Module ParseDep ann ->
@@ -37,7 +44,7 @@ resolveModuleDeps parsedModule = do
         pure (Left (resolveDataType dt))
       resolveIt (DTExpr expr, defIds, _entities) =
         Right <$> resolveExpr expr defIds (allConstructors parsedModule)
-  resolvedMap <- traverse resolveIt map'
+  resolvedMap <- evalStateT (traverse resolveIt map') (ResolveState 0)
   let newExpressions =
         M.mapMaybe
           ( \case
@@ -82,7 +89,9 @@ resolveType (TInfix ann op a b) = TInfix ann op (resolveType a) (resolveType b)
 resolveType (TPrim ann p) = TPrim ann p
 resolveType (TLiteral ann l) = TLiteral ann l
 resolveType (TFunc ann closure from to) =
-  TFunc ann (resolveType <$> closure) (resolveType from) (resolveType to)
+  TFunc ann (M.mapKeys resolveId $ resolveType <$> closure) (resolveType from) (resolveType to)
+  where
+    resolveId (ParseDep v _) = LocalDefinition v
 resolveType (TTuple ann a as) =
   TTuple ann (resolveType a) (resolveType <$> as)
 resolveType (TArray ann size a) = TArray ann size (resolveType a)
@@ -93,19 +102,17 @@ resolveType (TRecord ann as) = TRecord ann (resolveType <$> as)
 resolveType (TApp ann fn arg) = TApp ann (resolveType fn) (resolveType arg)
 
 resolveExpr ::
-  (Show ann, MonadError ModuleError m) =>
+  (Show ann, MonadError ModuleError m, MonadState ResolveState m) =>
   Expr ParseDep ann ->
   Set DefIdentifier ->
   Set Constructor ->
   m (Expr ResolvedDep ann)
 resolveExpr expr localDefs localTypes =
-  liftEither $
-    runReader
-      (evalStateT (runExceptT $ resolveM expr) initialState)
-      initialEnv
+  runReaderT
+    (resolveM expr)
+    initialEnv
   where
     initialEnv = ResolveEnv mempty localDefs localTypes
-    initialState = ResolveState 0
 
 resolveIdentifier ::
   ( MonadReader ResolveEnv m,
