@@ -43,6 +43,7 @@
           buildInputs = with haskellPackages; [
             ghc
             hlint
+            haskell-language-server
             ormolu
             ghcid
             cabal-fmt
