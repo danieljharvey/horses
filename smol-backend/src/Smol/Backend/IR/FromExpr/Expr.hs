@@ -568,8 +568,8 @@ fromOtherExpr name (ELambda ty ident body) = do
   (irBody, vars) <- runWriterT (fromExpr body)
 
   let (tFrom, tTo) = case ty of
-                       (TFunc _ _ tFrom' tTo') -> (tFrom', tTo')
-                       _ -> error "sdfdsf"
+        (TFunc _ _ tFrom' tTo') -> (tFrom', tTo')
+        _ -> error "sdfdsf"
 
   irReturnType <- fromType tTo
   irArgType <- fromType tFrom

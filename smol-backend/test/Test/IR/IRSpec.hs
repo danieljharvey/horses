@@ -2,9 +2,7 @@
 
 module Test.IR.IRSpec (spec) where
 
-import Data.Bifunctor (bimap)
 import Data.Foldable (traverse_)
-import Data.Functor
 import qualified Data.Map as M
 import Data.Text (Text)
 import qualified Data.Text as T
@@ -12,17 +10,14 @@ import qualified LLVM.AST as LLVM
 import qualified Smol.Backend.Compile.RunLLVM as Run
 import Smol.Backend.IR.FromExpr.Expr
 import Smol.Backend.IR.ToLLVM.ToLLVM
-import Smol.Core.EliminateGlobals (eliminateGlobals)
 import Smol.Core.Modules.FromParts
 import Smol.Core.Modules.ModuleError
 import Smol.Core.Modules.ResolveDeps
 import Smol.Core.Modules.Typecheck
 import Smol.Core.Parser (parseModuleAndFormatError)
-import Smol.Core.Typecheck
 import Smol.Core.Types
 import Smol.Core.Types.Module
 import Test.BuiltInTypes
-import Test.Helpers
 import Test.Hspec
 import Test.IR.Samples
 
@@ -31,58 +26,9 @@ run :: LLVM.Module -> [(String, String)] -> IO Text
 run llModule env =
   Run.rrResult <$> Run.run env llModule
 
-evalExpr :: Text -> ResolvedExpr (Type ResolvedDep Annotation)
-evalExpr input =
-  case elaborate
-    ( TCEnv
-        { tceDataTypes = builtInTypes emptyResolvedDep,
-          tceVars = mempty,
-          tceGlobals = mempty
-        }
-    )
-    (unsafeParseTypedExpr input $> mempty) of
-    Right typedExpr -> typedExpr
-    Left e -> error (show e)
-
--- apply functions to globals (for testing)
-addEnvFunctions ::
-  ResolvedExpr (Type ResolvedDep ann) ->
-  ResolvedExpr (Type ResolvedDep ann)
-addEnvFunctions expr =
-  case getExprAnnotation expr of
-    TGlobals _ m _
-      | not (M.null m) ->
-          let ann = getExprAnnotation expr
-           in EApp
-                ann
-                (eliminateGlobals emptyResolvedDep expr)
-                (ERecord ann (M.singleton "egg" (EPrim ann (PInt 21))))
-    _ -> eliminateGlobals emptyResolvedDep expr
-
--- | create a test module with our expression as `main`
-moduleFromExpr :: (Monoid ann) => Expr ResolvedDep (Type ResolvedDep ann) -> Module ResolvedDep (Type ResolvedDep ann)
-moduleFromExpr expr =
-  let dataTypesRaw :: M.Map (ResolvedDep TypeName) (DataType ResolvedDep ())
-      dataTypesRaw = builtInTypes LocalDefinition
-
-      getInner :: ResolvedDep a -> a
-      getInner (LocalDefinition a) = a
-      getInner (UniqueDefinition a _) = a
-
-      massageDataTypes =
-        M.fromList
-          . fmap (bimap getInner (fmap (const (TPrim mempty TPInt))))
-          . M.toList
-   in mempty
-        { moExpressions = M.singleton (DIName "main") expr,
-          moDataTypes = massageDataTypes dataTypesRaw
-        }
-
 createLLVMModuleFromExpr :: Text -> LLVM.Module
-createLLVMModuleFromExpr input = do
-  let expr = addEnvFunctions (evalExpr input)
-      irModule = irFromModule $ moduleFromExpr expr
-  irToLLVM irModule
+createLLVMModuleFromExpr input =
+  createLLVMModuleFromModule $ "def main = " <> input
 
 testCompileIR :: (Text, Text) -> Spec
 testCompileIR (input, result) = it ("Via IR " <> show input) $ do
@@ -96,11 +42,16 @@ createLLVMModuleFromModule input =
       irToLLVM (irFromModule typecheckedModule)
     Left e -> error (show e)
 
+-- add the empty ones for testing
+addTestDataTypesToModule :: (Monoid ann) => Module ParseDep ann -> Module ParseDep ann
+addTestDataTypesToModule myModule =
+  myModule {moDataTypes = moDataTypes myModule <> M.mapKeys pdIdentifier (builtInTypes emptyParseDep)}
+
 resolveModule :: Text -> Either ModuleError (Module ResolvedDep (Type ResolvedDep Annotation))
 resolveModule input =
   case parseModuleAndFormatError input of
     Right moduleParts -> do
-      case moduleFromModuleParts mempty moduleParts >>= resolveModuleDeps of
+      case moduleFromModuleParts mempty moduleParts >>= resolveModuleDeps . addTestDataTypesToModule of
         Left e -> error (show e)
         Right (myModule, deps) -> do
           typecheckModule mempty "" myModule deps
@@ -112,11 +63,6 @@ testCompileModuleIR (inputs, result) =
    in it ("Via IR " <> show input) $ do
         resp <- run (createLLVMModuleFromModule input) []
         resp `shouldBe` result
-
-testCompileIRWithEnv :: (Text, [(String, String)], Text) -> Spec
-testCompileIRWithEnv (input, runEnv, result) = it ("Via IR " <> show input) $ do
-  resp <- run (createLLVMModuleFromExpr input) runEnv
-  resp `shouldBe` result
 
 spec :: Spec
 spec = do
@@ -154,7 +100,7 @@ spec = do
                 ],
                 "2"
               ),
-              ( [ "def increment a = a + 1",
+              ( [ "def increment a = (a + 1 : Int)",
                   "def main = increment 41"
                 ],
                 "42"
@@ -212,20 +158,6 @@ spec = do
 
         describe "IR compile" $ do
           traverse_ testCompileIR testVals
-
-      describe "Basic with env" $ do
-        let testVals =
-              [ ("global egg = 42; egg! + egg!", [], "84")
-              -- need records implemented
-              -- ("(egg! : 21)", [], "21"),
-              {-( "let horse = (getenv! : String -> String) \"ENV_HORSE\"; let time = (getenv! : String -> String) \"ENV_TIME\"; horse + time",
-                [("ENV_HORSE", "horse"), ("ENV_TIME", "time")],
-                "horsetime"
-              )-}
-              ]
-
-        describe "IR compile with args" $ do
-          traverse_ testCompileIRWithEnv testVals
 
       describe "Functions" $ do
         let testVals =

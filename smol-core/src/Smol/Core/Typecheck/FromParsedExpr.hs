@@ -1,3 +1,4 @@
+-- don't use this!
 module Smol.Core.Typecheck.FromParsedExpr (fromParsedExpr, fromParsedType) where
 
 import Smol.Core.ExprUtils

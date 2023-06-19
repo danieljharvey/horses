@@ -7,6 +7,7 @@
 
 module Smol.Core.Modules.ResolveDeps
   ( resolveModuleDeps,
+    resolveExprDeps,
   )
 where
 
@@ -26,6 +27,12 @@ import Smol.Core.Modules.Types.DepType
 import Smol.Core.Modules.Uses
 import Smol.Core.Types.Module.DefIdentifier
 import Smol.Core.Types.Module.Module
+
+resolveExprDeps ::
+  (Show ann, MonadError ModuleError m) =>
+  Expr ParseDep ann ->
+  m (Expr ResolvedDep ann)
+resolveExprDeps expr = evalStateT (resolveExpr expr mempty mempty) (ResolveState 0)
 
 resolveModuleDeps ::
   (Show ann, Eq ann, MonadError ModuleError m) =>
