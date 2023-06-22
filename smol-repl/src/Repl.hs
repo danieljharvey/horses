@@ -56,7 +56,7 @@ repl = do
               case moduleFromModuleParts mempty moduleParts  >>= resolveModuleDeps of
                 Left e -> printDiagnostic (moduleErrorDiagnostic e) >> loop
                 Right (myModule, deps) -> do
-                  case typecheckModule mempty "" myModule deps of
+                  case typecheckModule mempty (T.pack input) myModule deps of
                     Left e -> printDiagnostic (moduleErrorDiagnostic e) >> loop
                     Right tcModule -> do
                       let llvmIR = irToLLVM (irFromModule tcModule)
