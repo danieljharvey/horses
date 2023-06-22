@@ -21,10 +21,6 @@ ghcid-test:
 ghcid-repl:
 	ghcid -c "cabal repl repl:exe:mimsa-repl" -l=hlint
 
-.PHONY: ghcid-server
-ghcid-server:
-	ghcid -c "cabal repl server:exe:mimsa-server" -l=hlint
-
 .PHONY: ghcid-backends
 ghcid-backends:
 	ghcid -c "cabal repl backends:lib:backends" -l=hlint
@@ -58,7 +54,6 @@ build:
 .PHONY: install
 install:
 	cabal install repl:exe:mimsa-repl --overwrite-policy=always
-	cabal install server:exe:mimsa-server --overwrite-policy=always
 
 .PHONY: run-server
 run-server:
@@ -119,11 +114,6 @@ format:
 .PHONY: hlint
 hlint:
 	@hlint $(HS_FILES)
-
-.PHONY: generate-swagger
-generate-swagger:
-	@cabal build server:exe:mimsa-server
-	$(shell cabal list-bin server:exe:mimsa-server) generate-swagger
 
 .PHONY: format-cabal
 format-cabal:
