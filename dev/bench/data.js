@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1687430734716,
+  "lastUpdate": 1687466949352,
   "repoUrl": "https://github.com/danieljharvey/mimsa",
   "entries": {
     "Store benchmarks in Github Pages": [
@@ -2151,6 +2151,50 @@ window.BENCHMARK_DATA = {
           {
             "name": "evaluate/evaluate parsing 2",
             "value": 0.2375699237428616,
+            "unit": "Time (ms)"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "danieljamesharvey@gmail.com",
+            "name": "Daniel Harvey",
+            "username": "danieljharvey"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "c93a962b176279edae29c0a612f6f6e03ed94137",
+          "message": "Delete server and UI (#975)\n\n* Delete server and UI\r\n\r\n* Fix lint paths\r\n\r\n* Don't test swagger",
+          "timestamp": "2023-06-22T21:45:50+01:00",
+          "tree_id": "8d3a96dc60399fa4a783971a4a30c164b2ce91ce",
+          "url": "https://github.com/danieljharvey/mimsa/commit/c93a962b176279edae29c0a612f6f6e03ed94137"
+        },
+        "date": 1687466948728,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "build stdlib/allFns",
+            "value": 0.10687156753333692,
+            "unit": "Time (ms)"
+          },
+          {
+            "name": "evaluate/evaluate big looping thing",
+            "value": 0.10066790746666442,
+            "unit": "Time (ms)"
+          },
+          {
+            "name": "evaluate/evaluate parsing",
+            "value": 0.0318934682598039,
+            "unit": "Time (ms)"
+          },
+          {
+            "name": "evaluate/evaluate parsing 2",
+            "value": 0.2322356900571419,
             "unit": "Time (ms)"
           }
         ]
