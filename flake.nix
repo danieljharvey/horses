@@ -11,7 +11,7 @@
       let
         pkgs = nixpkgs.legacyPackages.${system};
         
-        compilerVersion = "ghc944";
+        compilerVersion = "ghc961";
 
         # fix things
         haskell = pkgs.haskell // {
@@ -28,24 +28,6 @@
         };
 
         haskellPackages = haskell.packages.${compilerVersion};
-
-        newCompilerVersion = "ghc961";
-
-        # fix things
-        newHaskell = pkgs.haskell // {
-          packages = pkgs.haskell.packages // {
-            "${newCompilerVersion}" =
-              pkgs.haskell.packages."${newCompilerVersion}".override {
-                overrides = self: super: {
-                  # On aarch64-darwin, this creates a cycle for some reason; didn't look too much into it.
-                  ghcid = pkgs.haskell.lib.dontCheck (pkgs.haskell.lib.overrideCabal super.ghcid (drv: { enableSeparateBinOutput = false; }));
-                };
-
-              };
-          };
-        };
-
-        newHaskellPackages = newHaskell.packages.${newCompilerVersion};
 
         jailbreakUnbreak = pkg:
           pkgs.haskell.lib.doJailbreak (pkg.overrideAttrs (_: { meta = { }; }));
@@ -65,7 +47,7 @@
             ghcid
             cabal-fmt
             cabal-install
-            newHaskellPackages.ghc
+            ghc
             pkgs.zlib # used by `digest` package
             pkgs.nodejs-18_x
             pkgs.clang_14
