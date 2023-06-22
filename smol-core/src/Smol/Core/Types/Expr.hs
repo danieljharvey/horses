@@ -65,7 +65,6 @@ data Expr dep ann
   | ETuple ann (Expr dep ann) (NE.NonEmpty (Expr dep ann))
   | EArray ann (Seq (Expr dep ann))
   | EGlobal ann Identifier
-  | EGlobalLet ann Identifier (Expr dep ann) (Expr dep ann)
   | ERecord ann (Map Identifier (Expr dep ann))
   | ERecordAccess ann (Expr dep ann) Identifier
   | EPatternMatch
@@ -161,45 +160,6 @@ prettyInfixList (ifHead NE.:| ifRest) =
 -- when on multilines, indent by `i`, if not then nothing
 indentMulti :: Integer -> PP.Doc style -> PP.Doc style
 indentMulti i doc = PP.flatAlt (PP.indent (fromIntegral i) doc) doc
-
-prettyGlobalLet ::
-  ( Printer (dep Constructor),
-    Printer (dep Identifier),
-    Printer (dep TypeName)
-  ) =>
-  Identifier ->
-  Expr dep ann ->
-  Expr dep ann ->
-  PP.Doc style
-prettyGlobalLet var expr1 expr2 =
-  let (args, letExpr, maybeMt) = splitExpr expr1
-      prettyVar = case maybeMt of
-        Just mt ->
-          "(" <> prettyDoc var <> ":" <+> prettyDoc mt <> ")"
-        Nothing ->
-          prettyDoc var
-   in PP.group
-        ( "global"
-            <+> prettyVar <> prettyArgs args
-            <+> "="
-              <> PP.line
-              <> indentMulti 2 (prettyDoc letExpr)
-              <> newlineOrIn
-              <> prettyDoc expr2
-        )
-  where
-    prettyArgs [] = ""
-    prettyArgs as = PP.space <> PP.hsep (prettyDoc <$> as)
-
-    splitExpr expr =
-      case expr of
-        (ELambda _ a rest) ->
-          let (as, expr', mt) = splitExpr rest
-           in ([a] <> as, expr', mt)
-        (EAnn _ mt annExpr) ->
-          let (as, expr', _) = splitExpr annExpr
-           in (as, expr', Just mt)
-        other -> ([], other, Nothing)
 
 prettyLet ::
   ( Printer (dep Constructor),
@@ -415,8 +375,6 @@ prettyExpr (EPatternMatch _ expr matches) =
   prettyPatternMatch expr matches
 prettyExpr (EGlobal _ global) =
   prettyDoc global <> "!"
-prettyExpr (EGlobalLet _ var expr1 expr2) =
-  prettyGlobalLet var expr1 expr2
 prettyExpr (EArray _ as) =
   prettyArray as
 

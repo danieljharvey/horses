@@ -44,7 +44,6 @@ mapOuterExprAnnotation f expr' =
     ETuple ann a b -> ETuple (f ann) a b
     EArray ann a -> EArray (f ann) a
     EGlobal ann a -> EGlobal (f ann) a
-    EGlobalLet ann a b c -> EGlobalLet (f ann) a b c
     ERecord ann a -> ERecord (f ann) a
     ERecordAccess ann b c -> ERecordAccess (f ann) b c
     EPatternMatch ann a b -> EPatternMatch (f ann) a b
@@ -63,8 +62,6 @@ mapExpr f (EIf ann predExp thenExp elseExp) =
 mapExpr f (ETuple ann a as) = ETuple ann (f a) (f <$> as)
 mapExpr f (EArray ann as) = EArray ann (f <$> as)
 mapExpr _ (EGlobal ann ident) = EGlobal ann ident
-mapExpr f (EGlobalLet ann ident expr rest) =
-  EGlobalLet ann ident (f expr) (f rest)
 mapExpr f (ERecord ann as) = ERecord ann (f <$> as)
 mapExpr f (ERecordAccess ann expr ident) =
   ERecordAccess ann (f expr) ident
@@ -85,8 +82,6 @@ bindExpr f (EIf ann predExp thenExp elseExp) =
 bindExpr f (ETuple ann a as) = ETuple ann <$> f a <*> traverse f as
 bindExpr f (EArray ann as) = EArray ann <$> traverse f as
 bindExpr _ (EGlobal ann ident) = pure $ EGlobal ann ident
-bindExpr f (EGlobalLet ann ident expr rest) =
-  EGlobalLet ann ident <$> f expr <*> f rest
 bindExpr f (ERecord ann as) = ERecord ann <$> traverse f as
 bindExpr f (ERecordAccess ann expr ident) =
   ERecordAccess ann <$> f expr <*> pure ident
@@ -139,8 +134,6 @@ mapExprDep resolve = go
     go (ETuple ann a as) = ETuple ann (go a) (go <$> as)
     go (EArray ann as) = EArray ann (go <$> as)
     go (EGlobal ann ident) = EGlobal ann ident
-    go (EGlobalLet ann ident expr rest) =
-      EGlobalLet ann ident (go expr) (go rest)
     go (ERecord ann as) = ERecord ann (go <$> as)
     go (ERecordAccess ann expr ident) =
       ERecordAccess ann (go expr) ident

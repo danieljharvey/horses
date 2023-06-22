@@ -231,8 +231,6 @@ resolveM (EArray ann as) =
   EArray ann <$> traverse resolveM as
 resolveM (EGlobal ann g) =
   pure $ EGlobal ann g
-resolveM (EGlobalLet ann g expr rest) =
-  EGlobalLet ann g <$> resolveM expr <*> resolveM rest
 resolveM (ERecord ann as) =
   ERecord ann <$> traverse resolveM as
 resolveM (ERecordAccess ann expr name) =

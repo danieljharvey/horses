@@ -700,32 +700,6 @@ spec = do
 
         testElaborate input `shouldSatisfy` isLeft
 
-      it "Global doesn't float outside it's let" $ do
-        let input =
-              EGlobalLet
-                ()
-                "dog"
-                (bool True)
-                (EAnn () tyBool (EGlobal () "dog"))
-
-            expected :: Type dep ()
-            expected = tyBool
-
-        getExprAnnotation <$> testElaborate input `shouldBe` Right expected
-
-      it "Providing a global means we can infer it's type when used" $ do
-        let input =
-              EGlobalLet
-                ()
-                "dog"
-                (bool True)
-                (EGlobal () "dog")
-
-            expected :: Type dep ()
-            expected = tyBoolLit True
-
-        getExprAnnotation <$> testElaborate input `shouldBe` Right expected
-
       it "Empty record" $ do
         let input = ERecord () mempty
 

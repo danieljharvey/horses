@@ -1,13 +1,11 @@
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE OverloadedStrings #-}
 
-module Smol.Core.Interpreter.Interpret (interpret, emptyEnv, InterpretEnv (..)) where
+module Smol.Core.Interpreter.Interpret (interpret) where
 
 import Control.Monad.Identity
-import Control.Monad.Reader
 import Data.Foldable (toList)
 import qualified Data.List.NonEmpty as NE
-import Data.Map.Strict (Map)
 import qualified Data.Map.Strict as M
 import Data.Monoid
 import qualified Data.Sequence as Seq
@@ -15,34 +13,8 @@ import Smol.Core.Interpreter.Convert
 import Smol.Core.Interpreter.Types
 import Smol.Core.Types
 
-newtype InterpretEnv ann = InterpretEnv {ieGlobals :: Map Identifier (IExpr ann)}
-
-emptyEnv :: InterpretEnv ann
-emptyEnv = InterpretEnv mempty
-
--- | we should probably transform the AST and pipe this stuff around manually
--- before interpreting BUT for now let's do it like vars
-addGlobal ::
-  (MonadReader (InterpretEnv ann) m) =>
-  Identifier ->
-  IExpr ann ->
-  m a ->
-  m a
-addGlobal ident iExpr =
-  local (\ie -> ie {ieGlobals = M.singleton ident iExpr <> ieGlobals ie})
-
-lookupGlobal ::
-  (MonadReader (InterpretEnv ann) m) =>
-  Identifier ->
-  m (IExpr ann)
-lookupGlobal ident = do
-  maybeGlobal <- asks (M.lookup ident . ieGlobals)
-  case maybeGlobal of
-    Just g -> pure g
-    Nothing -> error $ "Could not find global " <> show ident
-
 interpretInfix ::
-  (MonadReader (InterpretEnv ann) m) =>
+  (Monad m) =>
   ann ->
   Op ->
   IExpr ann ->
@@ -60,16 +32,14 @@ interpretInfix _ _ _ _ = error "haven't implemented other infixes"
 
 -- | just keep reducing the thing until the smallest thing
 interpret ::
-  ( MonadReader (InterpretEnv ann) m,
+  ( Monad m,
     Monoid ann,
     Show ann
   ) =>
   IExpr ann ->
   m (IExpr ann)
 interpret (IVar ann a) = pure (IVar ann a)
-interpret (IGlobal _ a) = lookupGlobal a
-interpret (IGlobalLet _ ident expr body) =
-  addGlobal ident expr (interpret body)
+interpret (IGlobal _ _) = error "Cannot use globals in interpreter"
 interpret (IPrim ann p) = pure (IPrim ann p)
 interpret (IInfix ann op a b) = do
   rA <- interpret a
@@ -110,7 +80,7 @@ interpret (IAnn _ _ expr) = interpret expr
 
 interpretPatternMatch ::
   ( Monoid ann,
-    MonadReader (InterpretEnv ann) m,
+    Monad m,
     Show ann
   ) =>
   IExpr ann ->

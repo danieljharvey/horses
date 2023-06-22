@@ -193,13 +193,6 @@ infer inferExpr = do
         Nothing -> error "what type is empty list"
         Just tyAs -> combineMany (getExprAnnotation <$> tyAs)
       pure (EArray (TArray ann size ty) typedAs)
-    (EGlobalLet _ann ident value rest) -> do
-      ((tyVal, tyRest), globs) <- listenToGlobals $ do
-        tyVal <- infer value
-        tyRest <- withGlobal ident (getExprAnnotation tyVal) (infer rest)
-        pure (tyVal, tyRest)
-      tellGlobal (filterIdent ident globs)
-      pure (EGlobalLet (getExprAnnotation tyRest) ident tyVal tyRest)
     (EGlobal _ ident) -> do
       globType <- lookupGlobal ident
       tellGlobal (GlobalMap (M.singleton ident globType)) -- 'raise' constraint
