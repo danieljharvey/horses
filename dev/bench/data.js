@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1687467088319,
+  "lastUpdate": 1687472830364,
   "repoUrl": "https://github.com/danieljharvey/mimsa",
   "entries": {
     "Store benchmarks in Github Pages": [
@@ -2239,6 +2239,50 @@ window.BENCHMARK_DATA = {
           {
             "name": "evaluate/evaluate parsing 2",
             "value": 0.2307106274285738,
+            "unit": "Time (ms)"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "danieljamesharvey@gmail.com",
+            "name": "Daniel Harvey",
+            "username": "danieljharvey"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "d4fe237eb594c6a44ba283ce98a908d5d8047ed8",
+          "message": "Basic repl for Smol (#978)\n\n* Well\r\n\r\n* Make it somewhat work\r\n\r\n* Fix CI\r\n\r\n* Format",
+          "timestamp": "2023-06-22T23:23:53+01:00",
+          "tree_id": "4eef970001416aaeecbfd1486035f201247e77fc",
+          "url": "https://github.com/danieljharvey/mimsa/commit/d4fe237eb594c6a44ba283ce98a908d5d8047ed8"
+        },
+        "date": 1687472829773,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "build stdlib/allFns",
+            "value": 0.11066278815476599,
+            "unit": "Time (ms)"
+          },
+          {
+            "name": "evaluate/evaluate big looping thing",
+            "value": 0.10258211001666848,
+            "unit": "Time (ms)"
+          },
+          {
+            "name": "evaluate/evaluate parsing",
+            "value": 0.03322637141176628,
+            "unit": "Time (ms)"
+          },
+          {
+            "name": "evaluate/evaluate parsing 2",
+            "value": 0.24156285679998749,
             "unit": "Time (ms)"
           }
         ]
