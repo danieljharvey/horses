@@ -12,12 +12,11 @@ module Repl
 where
 
 import Control.Monad.IO.Class
+import Data.Text (Text)
+import qualified Data.Text as T
 import Data.Void
 import qualified Error.Diagnose as Diag
 import Error.Diagnose.Compat.Megaparsec
-import System.Console.Haskeline
-import Data.Text (Text)
-import qualified Data.Text as T
 import qualified Smol.Backend.Compile.RunLLVM as Run
 import Smol.Backend.IR.FromExpr.Expr
 import Smol.Backend.IR.ToLLVM.ToLLVM
@@ -26,6 +25,7 @@ import Smol.Core.Modules.ModuleError
 import Smol.Core.Modules.ResolveDeps
 import Smol.Core.Modules.Typecheck
 import Smol.Core.Parser (parseModule)
+import System.Console.Haskeline
 import Text.Megaparsec
 
 type ParseErrorType = ParseErrorBundle Text Void
@@ -53,7 +53,7 @@ repl = do
             Left bundle -> do
               printDiagnostic (fromErrorBundle bundle input) >> loop
             Right moduleParts -> do
-              case moduleFromModuleParts mempty moduleParts  >>= resolveModuleDeps of
+              case moduleFromModuleParts mempty moduleParts >>= resolveModuleDeps of
                 Left e -> printDiagnostic (moduleErrorDiagnostic e) >> loop
                 Right (myModule, deps) -> do
                   case typecheckModule mempty (T.pack input) myModule deps of
