@@ -1,84 +1,74 @@
-cabal-version: 2.2
-name:          smol-repl
-version:       0.1.0.0
-description:
-  Please see the README on GitHub at <https://github.com/githubuser/function-boys#readme>
+cabal-version:      2.4
+name:               smol-repl
+version:            0.1.0.0
 
-homepage:      https://github.com/danieljharvey/mimsa#readme
-bug-reports:   https://github.com/danieljharvey/mimsa/issues
-author:        Daniel J Harvey
-maintainer:    danieljamesharvey@gmail.com
-copyright:     2021 Daniel J Harvey
-license:       BSD-3-Clause
-license-file:  LICENSE
-build-type:    Simple
+-- A short (one-line) description of the package.
+-- synopsis:
 
-source-repository head
-  type:     git
-  location: https://github.com/danieljharvey/mimsa
+-- A longer description of the package.
+-- description:
 
-common common-all
+-- A URL where users can report bugs.
+-- bug-reports:
+
+-- The license under which the package is released.
+-- license:
+author:             Daniel Harvey
+maintainer:         danieljamesharvey@gmail.com
+
+-- A copyright notice.
+-- copyright:
+-- category:
+extra-source-files:
+  CHANGELOG.md
+  static/runtime.c
+
+common shared
   ghc-options:
-    -Wall -Wno-unticked-promoted-constructors -Wcompat
+    -threaded -rtsopts -with-rtsopts=-N -Wall
+    -Wno-unticked-promoted-constructors -Wcompat
     -Wincomplete-record-updates -Wincomplete-uni-patterns
     -Wredundant-constraints -Wmissing-deriving-strategies
 
-executable smol-repl
-  import:           common-all
-  main-is:          Main.hs
-  other-modules:
-    Check.Main
-    Compile.Main
-    Eval.Main
-    Init.Main
-    Repl.Actions
-    Repl.Actions.Bindings
-    Repl.Actions.BindModule
-    Repl.Actions.Compile
-    Repl.Actions.Evaluate
-    Repl.Actions.ListModules
-    Repl.Helpers
-    Repl.Main
-    Repl.Parser
-    Repl.Persistence
-    Repl.ReplM
-    Repl.Types
-    Shared.LoadProject
-
-  hs-source-dirs:   src
-  ghc-options:      -threaded -rtsopts -with-rtsopts=-N
   build-depends:
-    , aeson
-    , backends
-    , base                  >=4.7 && <5
-    , bifunctors
-    , binary
-    , bytestring
-    , containers
-    , core
-    , cryptonite
+    , base
     , diagnose
-    , directory
-    , exceptions
-    , file-embed
-    , hashable
     , haskeline
     , megaparsec
-    , memory
-    , mimsa
-    , monad-logger
-    , mtl
-    , openapi3
-    , optparse-applicative
-    , parallel
-    , parser-combinators
-    , prettyprinter
-    , QuickCheck
-    , servant
-    , servant-server
+    , smol-core
+    , smol-backend
     , text
-    , transformers
-    , wasm
-    , zip-archive
+
+  other-modules:
+    Repl
+
+library
+  import:           shared
+
+  -- Modules included in this executable, other than Main.
+  -- other-modules:
+
+  -- LANGUAGE extensions used by modules in this package.
+  -- other-extensions:
+  hs-source-dirs:   src
+  default-language: Haskell2010
+
+executable smol-repl
+  main-is:          Main.hs
+  import:           shared
+  hs-source-dirs:   app
+  hs-source-dirs:   src
+  ghc-options:      -threaded -rtsopts -with-rtsopts=-N
+  other-modules:
+    Repl
+  build-depends:
+    base,
+    diagnose,
+    haskeline,
+    megaparsec,
+    smol-backend,
+    smol-core,
+    smol-repl,
+    text
 
   default-language: Haskell2010
