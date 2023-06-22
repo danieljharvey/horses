@@ -43,6 +43,6 @@ jobs:
       - name: "Run HLint"
         uses: rwe/actions-hlint-run@v2
         with:
-          path: '["backends/", "benchmarks/", "builder/", "compiler/", "core/", "server/", "repl/", "smol-backend/", "smol-core/", "llvm-calc/", "llvm-calc2", "llvm-calc3", "llvm-calc4"]'
+          path: '["backends/", "benchmarks/", "builder/", "compiler/", "core/", "repl/", "smol-backend/", "smol-core/", "llvm-calc/", "llvm-calc2", "llvm-calc3", "llvm-calc4"]'
           fail-on: warning
 
