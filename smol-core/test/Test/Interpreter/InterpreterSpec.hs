@@ -3,7 +3,6 @@
 module Test.Interpreter.InterpreterSpec (spec) where
 
 import Control.Monad.Identity
-import Control.Monad.Reader
 import Data.Foldable (traverse_)
 import qualified Data.List.NonEmpty as NE
 import Data.Text (Text)
@@ -29,7 +28,7 @@ toIdentity = fromResolvedExpr . fromParsedExpr
 doInterpret :: Text -> IdentityExpr ()
 doInterpret =
   toExpr
-    . flip runReader emptyEnv
+    . runIdentity
     . interpret
     . fromExpr
     . toIdentity
@@ -51,8 +50,6 @@ spec = do
               ("case (Just 1) of Just a -> a + 41 | Nothing -> 0", "42"),
               ("case Nothing of Just a -> a + 41 | Nothing -> 0", "0"),
               ("let stuff = { x: 1, y : 2 }; stuff.x + stuff.y", "3"),
-              ("global dog = 100; dog! + 1", "101"),
-              ("global dog = 100; global dog = 200; dog!", "200"),
               ("let id = \\a -> a; (id 1, id 2, id 3)", "(1,2,3)"),
               ("[1,2 + 3]", "[1,5]"),
               ("case [1,2,3] of [_, ...rest] -> rest | _ -> [42]", "[2,3]")
