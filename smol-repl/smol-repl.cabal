@@ -1,0 +1,65 @@
+cabal-version:      2.4
+name:               smol-repl
+version:            0.1.0.0
+
+-- The license under which the package is released.
+-- license:
+author:             Daniel Harvey
+maintainer:         danieljamesharvey@gmail.com
+
+-- A copyright notice.
+-- copyright:
+-- category:
+extra-source-files:
+  CHANGELOG.md
+  static/runtime.c
+
+common shared
+  ghc-options:
+    -threaded -rtsopts -with-rtsopts=-N -Wall
+    -Wno-unticked-promoted-constructors -Wcompat
+    -Wincomplete-record-updates -Wincomplete-uni-patterns
+    -Wredundant-constraints -Wmissing-deriving-strategies
+
+  build-depends:
+    , base
+    , diagnose
+    , haskeline
+    , megaparsec
+    , smol-core
+    , smol-backend
+    , text
+
+  other-modules:
+    Repl
+
+library
+  import:           shared
+
+  -- Modules included in this executable, other than Main.
+  -- other-modules:
+
+  -- LANGUAGE extensions used by modules in this package.
+  -- other-extensions:
+  hs-source-dirs:   src
+  default-language: Haskell2010
+
+executable smol-repl
+  main-is:          Main.hs
+  import:           shared
+  hs-source-dirs:   app
+  hs-source-dirs:   src
+  ghc-options:      -threaded -rtsopts -with-rtsopts=-N
+  other-modules:
+    Repl
+  build-depends:
+    base,
+    diagnose,
+    haskeline,
+    megaparsec,
+    smol-backend,
+    smol-core,
+    smol-repl,
+    text
+
+  default-language: Haskell2010

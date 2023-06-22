@@ -91,6 +91,10 @@ test-llvm-calc3:
 test-llvm-calc4:
 	cabal run llvm-calc4:tests
 
+.PHONY: build-smol-repl
+build-smol-repl:
+	cabal build smol-repl
+
 .PHONY: test-backends
 test-backends:
 	cabal run backends:test:backends-tests

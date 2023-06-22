@@ -25,6 +25,7 @@ jobs:
             repl/**/*.hs
             smol-backend/**/*.hs
             smol-core/**/*.hs
+            smol-repl/**/*.hs
             llvm-calc/**/*.hs
             llvm-calc2/**/*.hs
             llvm-calc3/**/*.hs
@@ -43,6 +44,6 @@ jobs:
       - name: "Run HLint"
         uses: rwe/actions-hlint-run@v2
         with:
-          path: '["backends/", "benchmarks/", "builder/", "compiler/", "core/", "repl/", "smol-backend/", "smol-core/", "llvm-calc/", "llvm-calc2", "llvm-calc3", "llvm-calc4"]'
+          path: '["backends/", "benchmarks/", "builder/", "compiler/", "core/", "repl/", "smol-backend/", "smol-core/", "smol-repl/", "llvm-calc/", "llvm-calc2", "llvm-calc3", "llvm-calc4"]'
           fail-on: warning
 
