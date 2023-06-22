@@ -32,8 +32,7 @@ interpretInfix _ _ _ _ = error "haven't implemented other infixes"
 
 -- | just keep reducing the thing until the smallest thing
 interpret ::
-  (
-    Monad m,
+  ( Monad m,
     Monoid ann,
     Show ann
   ) =>
