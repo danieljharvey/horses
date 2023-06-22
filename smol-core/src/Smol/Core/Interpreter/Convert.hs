@@ -41,8 +41,6 @@ fromExpr (ELet ann ident expr rest) =
   fromExpr (EApp ann (ELambda ann ident rest) expr)
 fromExpr (EArray ann as) =
   IArray ann (fromExpr <$> as)
-fromExpr (EGlobalLet ann ident expr rest) =
-  IGlobalLet ann ident (fromExpr expr) (fromExpr rest)
 fromExpr (EGlobal ann ident) = IGlobal ann ident
 fromExpr (EConstructor ann constructor) = IConstructor ann (runIdentity constructor)
 fromExpr (EPatternMatch ann patExpr pats) =
@@ -74,8 +72,6 @@ toExpr (IInfix ann op a b) = EInfix ann op (toExpr a) (toExpr b)
 toExpr (IApp ann (ILambda _ ident rest) expr) =
   ELet ann (Identity ident) (toExpr expr) (toExpr $ rest (IVar ann ident))
 toExpr (IApp ann fn arg) = EApp ann (toExpr fn) (toExpr arg)
-toExpr (IGlobalLet ann ident expr rest) =
-  EGlobalLet ann ident (toExpr expr) (toExpr rest)
 toExpr (IGlobal ann ident) = EGlobal ann ident
 toExpr (IIf ann predE thenE elseE) =
   EIf ann (toExpr predE) (toExpr thenE) (toExpr elseE)

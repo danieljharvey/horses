@@ -68,8 +68,6 @@ interpret ::
   m (IExpr ann)
 interpret (IVar ann a) = pure (IVar ann a)
 interpret (IGlobal _ a) = lookupGlobal a
-interpret (IGlobalLet _ ident expr body) =
-  addGlobal ident expr (interpret body)
 interpret (IPrim ann p) = pure (IPrim ann p)
 interpret (IInfix ann op a b) = do
   rA <- interpret a

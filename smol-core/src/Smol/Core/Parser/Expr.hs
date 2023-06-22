@@ -37,7 +37,6 @@ complexParser :: Parser ParserExpr
 complexParser =
   arrayParser
     <|> try letParser
-    <|> globalLetParser
     --    <|> letPatternParser
     <|> try appParser
     <|> ifParser
@@ -82,7 +81,6 @@ argParser =
         literalParser
           --  <|> arrayParser
           <|> letParser
-          <|> globalLetParser
           -- <|> letPatternParser
           <|> ifParser
           <|> tupleParser
@@ -201,15 +199,6 @@ letParser = addLocation $ do
   boundExpr <- expressionParser
   _ <- try (myString ";") <|> myString "in"
   ELet mempty ident boundExpr <$> expressionParser
-
-globalLetParser :: Parser ParserExpr
-globalLetParser = addLocation $ do
-  _ <- myString "global"
-  ident <- identifierParser
-  _ <- myString "="
-  boundExpr <- expressionParser
-  _ <- try (myString ";") <|> myString "in"
-  EGlobalLet mempty ident boundExpr <$> expressionParser
 
 {-
      textPrim :: Parser Text

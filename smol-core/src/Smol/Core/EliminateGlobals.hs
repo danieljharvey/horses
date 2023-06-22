@@ -37,6 +37,7 @@ collectAndReplaceGlobals ::
   Expr dep ann ->
   m (Expr dep ann)
 collectAndReplaceGlobals liftIdent = \case
+  {-
   (EGlobalLet ann var expr body) -> do
     tidyExpr <- collectAndReplaceGlobals liftIdent expr
     (result, ElimEnv idents) <-
@@ -49,6 +50,7 @@ collectAndReplaceGlobals liftIdent = \case
         )
     tell (ElimEnv $ S.delete var idents)
     pure result
+-}
   (EGlobal ann var) -> do
     tell (ElimEnv (S.singleton var))
     found <- asks (S.member var . runElimEnv)

@@ -31,7 +31,6 @@ data IExpr ann
       (NE.NonEmpty (IExpr ann))
   | IArray ann (Seq (IExpr ann))
   | IGlobal ann Identifier
-  | IGlobalLet ann Identifier (IExpr ann) (IExpr ann)
   | IRecord ann (Map Identifier (IExpr ann))
   | IRecordAccess ann (IExpr ann) Identifier
   | IPatternMatch

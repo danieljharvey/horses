@@ -74,7 +74,6 @@ getExprAnnotation (EVar ann _) = ann
 getExprAnnotation (ETuple ann _ _) = ann
 getExprAnnotation (EArray ann _) = ann
 getExprAnnotation (EGlobal ann _) = ann
-getExprAnnotation (EGlobalLet ann _ _ _) = ann
 getExprAnnotation (ERecord ann _) = ann
 getExprAnnotation (ERecordAccess ann _ _) = ann
 getExprAnnotation (EPatternMatch ann _ _) = ann

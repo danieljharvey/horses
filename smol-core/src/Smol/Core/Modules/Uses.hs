@@ -76,8 +76,6 @@ extractUses_ (EPatternMatch _ match patterns) =
       )
         <$> NE.toList patterns
 extractUses_ (EGlobal {}) = mempty
-extractUses_ (EGlobalLet _ _ val body) =
-  extractUses val <> extractUses body
 
 -- for vars, remove any vars introduced in patterns in the expressions
 -- for everything else, keep both
