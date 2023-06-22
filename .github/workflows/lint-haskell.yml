@@ -22,7 +22,6 @@ jobs:
             builder/**/*.hs
             compiler/**/*.hs
             core/**/*.hs
-            server/**/*.hs
             repl/**/*.hs
             smol-backend/**/*.hs
             smol-core/**/*.hs

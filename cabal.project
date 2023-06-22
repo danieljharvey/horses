@@ -2,7 +2,6 @@ packages:
   benchmarks/benchmarks.cabal,
   builder/builder.cabal,
   compiler/mimsa.cabal,
-  server/server.cabal,
   backends/backends.cabal,
   repl/repl.cabal,
   core/core.cabal,
