@@ -121,9 +121,6 @@ jobs:
       - name: Test compiler
         run: yarn global add typescript@4.4 ts-node@10.9.1 & make test
 
-      - name: Generate swagger json
-        run: make generate-swagger
-
   bench:
     runs-on: ubuntu-latest
     needs: build
