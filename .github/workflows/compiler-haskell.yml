@@ -8,7 +8,6 @@ on:
       - "benchmarks/**"
       - "builder/**"
       - "compiler/**"
-      - "server/**"
       - "repl/**"
       - "core/**"
       - "backends/**"
@@ -22,7 +21,6 @@ on:
       - "benchmarks/**"
       - "builder/**"
       - "compiler/**"
-      - "server/**"
       - "repl/**"
       - "core/**"
       - "backends/**"
@@ -123,9 +121,6 @@ jobs:
       - name: Test compiler
         run: yarn global add typescript@4.4 ts-node@10.9.1 & make test
 
-      - name: Generate swagger json
-        run: make generate-swagger
-
   bench:
     runs-on: ubuntu-latest
     needs: build
@@ -146,7 +141,6 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-1-cabal-global-${{ matrix.plan.ghc }}
 
-
       - name: Cache cabal-installed programs in ~/.local/bin
         id: cabal-programs
         uses: actions/cache@v3
@@ -164,7 +158,6 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-1-cabal-work-${{ matrix.plan.ghc }}
 
-
       - name: Run benchmarks
         run: make bench
 
@@ -174,7 +167,7 @@ jobs:
 
       # Download previous benchmark result from cache (if exists)
       - name: Download previous benchmark data
-        uses: actions/cache@v1
+        uses: actions/cache@v3
         with:
           path: ./cache
           key: ${{ runner.os }}-benchmark
