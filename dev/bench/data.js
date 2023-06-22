@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1687186482235,
+  "lastUpdate": 1687429769863,
   "repoUrl": "https://github.com/danieljharvey/mimsa",
   "entries": {
     "Store benchmarks in Github Pages": [
@@ -2063,6 +2063,50 @@ window.BENCHMARK_DATA = {
           {
             "name": "evaluate/evaluate parsing 2",
             "value": 0.21287696459999747,
+            "unit": "Time (ms)"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "danieljamesharvey@gmail.com",
+            "name": "Daniel Harvey",
+            "username": "danieljharvey"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "596ffcfe195dc51af362076d2b1ffec6062ed6d6",
+          "message": "Remove let global (#973)\n\n* sadsdf\r\n\r\n* Removed it\r\n\r\n* Remove global let",
+          "timestamp": "2023-06-22T11:26:12+01:00",
+          "tree_id": "637209f0a99d4066a95c5b55b36b102638946497",
+          "url": "https://github.com/danieljharvey/mimsa/commit/596ffcfe195dc51af362076d2b1ffec6062ed6d6"
+        },
+        "date": 1687429769256,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "build stdlib/allFns",
+            "value": 0.10635613631666786,
+            "unit": "Time (ms)"
+          },
+          {
+            "name": "evaluate/evaluate big looping thing",
+            "value": 0.09917966676666613,
+            "unit": "Time (ms)"
+          },
+          {
+            "name": "evaluate/evaluate parsing",
+            "value": 0.03184264923039206,
+            "unit": "Time (ms)"
+          },
+          {
+            "name": "evaluate/evaluate parsing 2",
+            "value": 0.2323923784857121,
             "unit": "Time (ms)"
           }
         ]
