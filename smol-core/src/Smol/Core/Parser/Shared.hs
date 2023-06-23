@@ -74,7 +74,13 @@ chainl1 p op = do x <- p; rest x
         <|> return x
 
 myLexeme :: Parser a -> Parser a
-myLexeme = L.lexeme (L.space space1 empty empty)
+myLexeme =
+  L.lexeme
+    ( L.space
+        space1
+        (L.skipLineComment "//")
+        (L.skipBlockComment "/*" "*/")
+    )
 
 myString :: Text -> Parser ()
 myString s = myLexeme (string s) $> ()

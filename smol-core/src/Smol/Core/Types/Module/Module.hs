@@ -11,7 +11,6 @@
 
 module Smol.Core.Types.Module.Module
   ( Module (..),
-    DefPart (..),
     ModuleItem (..),
     Import (..),
   )
@@ -25,7 +24,6 @@ import qualified Data.Set as S
 import GHC.Generics (Generic)
 import Prettyprinter
 import Smol.Core.Printer
-import Smol.Core.Types.Annotated
 import Smol.Core.Types.Constructor
 import Smol.Core.Types.DataType
 import Smol.Core.Types.Expr
@@ -41,22 +39,14 @@ import Smol.Core.Types.TypeName
 -- it defines some datatypes, infixes and definitions
 -- and it probably exports one or more of those
 
-data DefPart ann
-  = -- | typeless argument `a`
-    DefArg (Annotated Identifier ann)
-  | -- | argument with type `(a: String) ->`
-    DefTypedArg (Annotated Identifier ann) (ParsedType ann)
-  | -- | type with no binding `String`
-    DefType (ParsedType ann)
-  deriving stock (Eq, Ord, Show, Functor)
-
 -- item parsed from file, kept like this so we can order them and have
 -- duplicates
 -- we will remove duplicates when we work out dependencies between everything
 -- TODO: add more annotations to everything so we can produce clearer errors
 -- when things don't make sense (duplicate defs etc)
 data ModuleItem ann
-  = ModuleExpression Identifier [DefPart ann] (ParsedExpr ann)
+  = ModuleExpression Identifier [Identifier] (ParsedExpr ann)
+  | ModuleExpressionType Identifier (Type ParseDep ann)
   | ModuleDataType (DataType ParseDep ann)
   | ModuleExport (ModuleItem ann)
   | ModuleImport Import

@@ -40,12 +40,14 @@ addModulePart modules part mod' =
   case part of
     ModuleExpression name bits expr -> do
       errorIfExpressionAlreadyDefined mod' (DIName name)
-      exp' <- exprAndTypeFromParts (DIName name) bits expr
+      let exp' = exprAndTypeFromParts bits expr
       pure $
         mod'
           { moExpressions =
               M.singleton (DIName name) exp' <> moExpressions mod'
           }
+    ModuleExpressionType _name _ty -> do
+      error "addModulePart ModuleExpressionType"
     ModuleDataType dt@(DataType tyCon _ _) -> do
       let typeName = coerce tyCon
       checkDataType mod' dt
@@ -112,79 +114,18 @@ addModulePart modules part mod' =
                 <> moDataTypeImports mod'
           }
 
-addAnnotation :: Maybe (Type ParseDep ann) -> Expr ParseDep ann -> Expr ParseDep ann
-addAnnotation mt expr =
-  -- add type annotation to expression
-  case mt of
-    Just typeAnnotation ->
-      EAnn
-        (getTypeAnnotation typeAnnotation)
-        typeAnnotation
-        expr
-    _ -> expr
-
-includesExplicitTypes :: [DefPart ann] -> Bool
-includesExplicitTypes =
-  any
-    ( \case
-        (DefArg _) -> False
-        _ -> True
-    )
-
-includesReturnType :: [DefPart ann] -> Bool
-includesReturnType =
-  any
-    ( \case
-        (DefType _) -> True
-        _ -> False
-    )
-
 -- given the bits of things, make a coherent type and expression
 -- 1) check we have any type annotations
 -- 2) if so - ensure we have a full set (error if not) and create annotation
 -- 3) if not, just return expr
 exprAndTypeFromParts ::
-  (MonadError ModuleError m, Monoid ann) =>
-  DefIdentifier ->
-  [DefPart ann] ->
+  (Monoid ann) =>
+  [Identifier] ->
   Expr ParseDep ann ->
-  m (Expr ParseDep ann)
-exprAndTypeFromParts def parts expr = do
-  let expr' =
-        foldr
-          ( \part rest -> case part of
-              (DefArg (Annotated _ ident)) -> ELambda mempty (emptyParseDep ident) rest
-              (DefTypedArg (Annotated _ ident) _) -> ELambda mempty (emptyParseDep ident) rest
-              (DefType _) -> rest
-          )
-          expr
-          parts
-  -- if we only have un-typed args, don't bother, we only want them as
-  -- placeholders
-  if not (includesExplicitTypes parts)
-    then pure expr'
-    else do
-      if includesReturnType parts
-        then pure ()
-        else throwError (DefMissingReturnType def)
-      mt <-
-        foldr
-          ( \part mRest -> do
-              rest <- mRest
-              case part of
-                (DefArg (Annotated _ name)) ->
-                  throwError (DefMissingTypeAnnotation def name)
-                (DefTypedArg _ thisMt) -> pure $ case rest of
-                  Just rest' ->
-                    Just
-                      (TFunc mempty mempty thisMt rest')
-                  _ -> Just thisMt
-                (DefType thisMt) -> pure $ case rest of
-                  Just rest' ->
-                    Just
-                      (TFunc mempty mempty rest' thisMt)
-                  _ -> Just thisMt
-          )
-          (pure Nothing)
-          parts
-      pure $ addAnnotation mt expr'
+  Expr ParseDep ann
+exprAndTypeFromParts parts expr = do
+  foldr
+    ( ELambda mempty . emptyParseDep
+    )
+    expr
+    parts

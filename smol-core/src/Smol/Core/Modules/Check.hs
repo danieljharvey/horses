@@ -45,6 +45,7 @@ getModuleItemIdentifier (ModuleExpression name _ _) = Just (DIName name)
 getModuleItemIdentifier (ModuleDataType (DataType typeName _ _)) = Just (DIType typeName)
 getModuleItemIdentifier (ModuleExport a) = getModuleItemIdentifier a
 getModuleItemIdentifier (ModuleImport _) = Nothing
+getModuleItemIdentifier (ModuleExpressionType name _) = Just (DIName name)
 
 -- getModuleItemIdentifier (ModuleTest testName _) = Just (DITest testName)
 

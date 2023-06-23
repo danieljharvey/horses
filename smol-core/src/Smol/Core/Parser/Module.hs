@@ -3,7 +3,6 @@
 
 module Smol.Core.Parser.Module
   ( moduleParser,
-    DefPart (..),
   )
 where
 
@@ -35,10 +34,23 @@ moduleParser =
                 <|> pure mempty
             )
 
+-- why is this fucked? because we don't stop parsing at the end of a def
+-- parsing >>>
+-- id : a -> a
+-- id a = a
+-- <<<
+-- fails because we continue parsing the definition as part of the type
+-- therefore we need indentation sensitive parsers:
+-- https://markkarpov.com/tutorial/megaparsec.html#indentationsensitive-parsing
+--
+-- we should try parsing as "the identifier should not be indented but the rest
+-- must be"
+
 -- we've excluded Export here
 parseModuleItem :: Parser [ModuleItem Annotation]
 parseModuleItem =
-  moduleDefinitionParser
+  try moduleTypeDefinitionParser
+    <|> try moduleDefinitionParser
     <|> try moduleTypeDeclarationParser
     <|> parseImport
 
@@ -57,41 +69,31 @@ moduleTypeDeclarationParser = do
 
 -------
 
-annotatedIdentifier :: Parser (Annotated Identifier Annotation)
-annotatedIdentifier = withLocation Annotated identifierParser
-
 -- definitions
--- def oneHundred = 100
--- def id a = a
--- def exclaim (str: String) = str ++ "!!!"
--- def exclaim2 (str: String): String = str ++ "!!!"
-
-defPartParser :: Parser (DefPart Annotation)
-defPartParser =
-  let parseDefArg = DefArg <$> annotatedIdentifier
-      parseTypeArg =
-        inBrackets
-          ( do
-              name <- annotatedIdentifier
-              myString ":"
-              DefTypedArg name <$> typeParser
-          )
-      parseDefType = do
-        myString ":"
-        DefType <$> typeParser
-   in parseDefType <|> parseTypeArg <|> parseDefArg
-
+-- oneHundred = 100
+-- id a = a
+-- const a b = a
+--
 -- top level definition
 moduleDefinitionParser :: Parser [ModuleItem Annotation]
 moduleDefinitionParser = do
-  myString "def"
   name <- identifierParser
   parts <-
-    chainl1 ((: []) <$> defPartParser) (pure (<>))
+    chainl1 ((: []) <$> identifierParser) (pure (<>))
       <|> pure mempty
   myString "="
   expr <- expressionParser
   pure [ModuleExpression name parts expr]
+
+-- top level type definition
+-- id : a -> a
+-- compose : (b -> c) -> (a -> b) -> (a -> c)
+moduleTypeDefinitionParser :: Parser [ModuleItem Annotation]
+moduleTypeDefinitionParser = do
+  name <- identifierParser
+  myString ":"
+  ty <- typeParser
+  pure [ModuleExpressionType name ty]
 
 parseExport :: Parser [ModuleItem Annotation]
 parseExport = do
@@ -128,23 +130,3 @@ parseImportAll = do
   myString "from"
   hash <- parseHash
   pure [ModuleImport (ImportAllFromHash hash)]
-
-{-
--- `infix <|> = altMaybe`
-parseInfix :: Parser [ModuleItem Annotation]
-parseInfix = do
-  myString "infix"
-  infixOp <- infixOpParser
-  myString "="
-  boundExpr <- expressionParser
-  pure [ModuleInfix infixOp boundExpr]
-
--- `test "1 + 1 == 2" = 1 + 1 == 2`
-parseTest :: Parser [ModuleItem Annotation]
-parseTest = do
-  myString "test"
-  testName <- testNameParser
-  myString "="
-  boundExpr <- expressionParser
-  pure [ModuleTest testName boundExpr]
--}
