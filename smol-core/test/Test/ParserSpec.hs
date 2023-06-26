@@ -31,13 +31,13 @@ spec = do
       let singleDefs =
             [ "type Dog a = Woof String | Other a",
               "id a = a",
-              "id : a -> a",
+              "id: a -> a",
               "compose f g a = f (g a)",
               "compose : (c -> b) -> (a -> b) -> (a -> c)"
             ]
 
       it "All defs" $ do
-        let result = traceShowId $ parseModuleAndFormatError (T.intercalate "\n" (T.pack <$> singleDefs))
+        let result = traceShowId $ parseModuleAndFormatError (T.intercalate ";" (T.pack <$> singleDefs))
         result `shouldSatisfy` isRight
 
       traverse_

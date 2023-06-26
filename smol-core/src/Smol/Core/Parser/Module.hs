@@ -28,11 +28,7 @@ type Parser = Parsec Void Text
 -- use `registerParseError` from https://hackage.haskell.org/package/megaparsec-9.2.1/docs/Text-Megaparsec.html
 moduleParser :: Parser [ModuleItem Annotation]
 moduleParser =
-  let bigParsers = parseModuleItem <|> parseExport
-   in mconcat
-        <$> ( chainl1 ((: []) <$> bigParsers) (pure (<>))
-                <|> pure mempty
-            )
+  sepBy parseModuleItem (myString ";")
 
 -- why is this fucked? because we don't stop parsing at the end of a def
 -- parsing >>>
@@ -47,7 +43,7 @@ moduleParser =
 -- must be"
 
 -- we've excluded Export here
-parseModuleItem :: Parser [ModuleItem Annotation]
+parseModuleItem :: Parser (ModuleItem Annotation)
 parseModuleItem =
   try moduleTypeDefinitionParser
     <|> try moduleDefinitionParser
@@ -62,10 +58,8 @@ parseModuleItem =
 -- type definitions
 -- type Maybe a = Just a | Nothing
 -- type Tree a = Branch (Tree a) a (Tree a) | Leaf a
-moduleTypeDeclarationParser :: Parser [ModuleItem Annotation]
-moduleTypeDeclarationParser = do
-  td <- dataTypeParser
-  pure [ModuleDataType td]
+moduleTypeDeclarationParser :: Parser (ModuleItem Annotation)
+moduleTypeDeclarationParser = ModuleDataType <$> dataTypeParser
 
 -------
 
@@ -75,7 +69,7 @@ moduleTypeDeclarationParser = do
 -- const a b = a
 --
 -- top level definition
-moduleDefinitionParser :: Parser [ModuleItem Annotation]
+moduleDefinitionParser :: Parser (ModuleItem Annotation)
 moduleDefinitionParser = do
   name <- identifierParser
   parts <-
@@ -83,23 +77,17 @@ moduleDefinitionParser = do
       <|> pure mempty
   myString "="
   expr <- expressionParser
-  pure [ModuleExpression name parts expr]
+  pure (ModuleExpression name parts expr)
 
 -- top level type definition
 -- id : a -> a
 -- compose : (b -> c) -> (a -> b) -> (a -> c)
-moduleTypeDefinitionParser :: Parser [ModuleItem Annotation]
+moduleTypeDefinitionParser :: Parser (ModuleItem Annotation)
 moduleTypeDefinitionParser = do
   name <- identifierParser
   myString ":"
   ty <- typeParser
-  pure [ModuleExpressionType name ty]
-
-parseExport :: Parser [ModuleItem Annotation]
-parseExport = do
-  myString "export"
-  items <- parseModuleItem
-  pure (ModuleExport <$> items)
+  pure (ModuleExpressionType name ty)
 
 parseHash :: Parser ModuleHash
 parseHash =
@@ -110,23 +98,23 @@ parseHash =
 
 -- TODO: maybe make these into one parser that handles both to avoid
 -- backtracking
-parseImport :: Parser [ModuleItem Annotation]
+parseImport :: Parser (ModuleItem Annotation)
 parseImport = try parseImportAll <|> parseImportNamed
 
 -- `import Prelude from a123123bcbcbcb`
-parseImportNamed :: Parser [ModuleItem Annotation]
+parseImportNamed :: Parser (ModuleItem Annotation)
 parseImportNamed = do
   myString "import"
   modName <- moduleNameParser
   myString "from"
   hash <- parseHash
-  pure [ModuleImport (ImportNamedFromHash hash modName)]
+  pure (ModuleImport (ImportNamedFromHash hash modName))
 
 -- `import * from a123123bcbcbcb`
-parseImportAll :: Parser [ModuleItem Annotation]
+parseImportAll :: Parser (ModuleItem Annotation)
 parseImportAll = do
   myString "import"
   myString "*"
   myString "from"
   hash <- parseHash
-  pure [ModuleImport (ImportAllFromHash hash)]
+  pure (ModuleImport (ImportAllFromHash hash))

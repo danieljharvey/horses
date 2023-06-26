@@ -1,32 +1,32 @@
-id : a -> a
-id a = a
+id : a -> a;
+id a = a;
 
 compose :
   (b -> c) ->
   (a -> b) ->
-  (a -> c)
-compose f g a = f (g a)
+  (a -> c);
+compose f g a = f (g a);
 
-not : Bool -> Bool
-not a = if a then False else True
+not : Bool -> Bool;
+not a = if a then False else True;
 
-and : Bool -> Bool -> Bool
-and a b = if a then b else False
+and : Bool -> Bool -> Bool;
+and a b = if a then b else False;
 
-or : Bool -> Bool -> Bool
-or a b = if a then True else b
+or : Bool -> Bool -> Bool;
+or a b = if a then True else b;
 
-fst : (a, b) -> a
-fst pair = case pair of (a, _) -> a
+fst : (a, b) -> a;
+fst pair = case pair of (a, _) -> a;
 
-snd : (a, b) -> b
-snd pair = case pair of (_, b) -> b
+snd : (a, b) -> b;
+snd pair = case pair of (_, b) -> b;
 
-const : a -> b -> a
-const a b = a
+const : a -> b -> a;
+const a b = a;
 
-type Identity a = Identity a
+type Identity a = Identity a;
 
-runIdentity : Identity a -> a
+runIdentity : Identity a -> a;
 runIdentity identity = case identity of Identity a -> a
 
