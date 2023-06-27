@@ -1,9 +1,9 @@
 module Repl where
 
-import qualified Smol.Check as Check
 import Control.Applicative
 import Data.Text (Text)
 import qualified Options.Applicative as Opt
+import qualified Smol.Check as Check
 import qualified Smol.Repl as Repl
 import System.IO
 
@@ -35,7 +35,7 @@ filePathParse =
     (Opt.metavar "<file path>")
 
 optionsParse :: Opt.Parser AppAction
-optionsParse = parseAppAction 
+optionsParse = parseAppAction
 
 helpfulPreferences :: Opt.ParserPrefs
 helpfulPreferences =
@@ -48,10 +48,10 @@ main :: IO ()
 main = do
   hSetBuffering stdout LineBuffering
   hSetBuffering stderr LineBuffering
-  action  <-
+  action <-
     Opt.customExecParser
       helpfulPreferences
       (Opt.info (optionsParse <**> Opt.helper) Opt.fullDesc)
   case action of
-    Repl -> Repl.repl 
+    Repl -> Repl.repl
     Check filePath -> Check.check filePath

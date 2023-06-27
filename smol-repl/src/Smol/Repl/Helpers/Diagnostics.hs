@@ -7,17 +7,18 @@
 {-# OPTIONS -Wno-orphans #-}
 
 module Smol.Repl.Helpers.Diagnostics
-  ( fromErrorBundle, printDiagnostic
+  ( fromErrorBundle,
+    printDiagnostic,
   )
 where
 
 import Control.Monad.IO.Class
 import Data.Text (Text)
+import qualified Data.Text as T
 import Data.Void
 import qualified Error.Diagnose as Diag
 import Error.Diagnose.Compat.Megaparsec
 import Text.Megaparsec
-import qualified Data.Text as T
 
 type ParseErrorType = ParseErrorBundle Text Void
 

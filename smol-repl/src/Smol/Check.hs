@@ -9,17 +9,17 @@ import Control.Monad.IO.Class (MonadIO, liftIO)
 import Data.Text (Text)
 import qualified Data.Text as T
 import qualified Data.Text.IO as T
-import System.Exit
-import Prelude hiding (init)
 import Smol.Core.Modules.FromParts
 import Smol.Core.Modules.ModuleError
 import Smol.Core.Modules.ResolveDeps
 import Smol.Core.Modules.Typecheck
 import Smol.Core.Parser (parseModule)
 import Smol.Repl.Helpers.Diagnostics
+import System.Exit
+import Prelude hiding (init)
 
 -- read a file, check if it is OK etc
-checkFile :: (MonadIO m) => Text ->  m ExitCode
+checkFile :: (MonadIO m) => Text -> m ExitCode
 checkFile filePath = liftIO $ do
   putStrLn ("Reading " <> show filePath)
   input <- T.readFile (T.unpack filePath)

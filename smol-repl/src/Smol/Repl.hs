@@ -21,8 +21,8 @@ import Smol.Core.Modules.ModuleError
 import Smol.Core.Modules.ResolveDeps
 import Smol.Core.Modules.Typecheck
 import Smol.Core.Parser (parseModule)
-import System.Console.Haskeline
 import Smol.Repl.Helpers.Diagnostics
+import System.Console.Haskeline
 
 repl :: IO ()
 repl = do
