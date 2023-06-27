@@ -1,6 +1,6 @@
 module Main where
 
-import Repl (repl)
+import qualified Repl as Repl
 
 main :: IO ()
-main = repl
+main = Repl.main
