@@ -26,12 +26,16 @@ common shared
     , diagnose
     , haskeline
     , megaparsec
+    , optparse-applicative
     , smol-core
     , smol-backend
     , text
 
   other-modules:
-    Repl
+    Repl,
+    Smol.Repl,
+    Smol.Check,
+    Smol.Repl.Helpers.Diagnostics
 
 library
   import:           shared
@@ -45,8 +49,8 @@ library
   default-language: Haskell2010
 
 executable smol-repl
-  main-is:          Main.hs
   import:           shared
+  main-is:          Main.hs
   hs-source-dirs:   app
   hs-source-dirs:   src
   ghc-options:      -threaded -rtsopts -with-rtsopts=-N

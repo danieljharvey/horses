@@ -43,6 +43,10 @@ ghcid-smol-test:
 ghcid-smol-backend-test:
 	ghcid -c "cabal repl smol-backend:test:smol-backend-tests" --test "main"
 
+.PHONY: ghcid-smol-repl
+ghcid-smol-repl:
+	ghcid -c "cabal repl smol-repl"
+
 .PHONY: update
 update:
 	cabal update
@@ -54,6 +58,10 @@ build:
 .PHONY: install
 install:
 	cabal install repl:exe:mimsa-repl --overwrite-policy=always
+
+.PHONY: smol-repl
+smol-repl:
+	cabal run smol-repl:exe:smol-repl
 
 .PHONY: run-server
 run-server:

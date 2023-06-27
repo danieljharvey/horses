@@ -1,85 +1,57 @@
-{-# LANGUAGE DerivingStrategies #-}
-{-# LANGUAGE FlexibleContexts #-}
-{-# LANGUAGE FlexibleInstances #-}
-{-# LANGUAGE MultiParamTypeClasses #-}
-{-# LANGUAGE OverloadedStrings #-}
+module Repl where
 
-{-# OPTIONS -Wno-orphans #-}
-
-module Repl
-  ( repl,
-  )
-where
-
-import Control.Monad.IO.Class
+import Control.Applicative
 import Data.Text (Text)
-import qualified Data.Text as T
-import Data.Void
-import qualified Error.Diagnose as Diag
-import Error.Diagnose.Compat.Megaparsec
-import qualified Smol.Backend.Compile.RunLLVM as Run
-import Smol.Backend.IR.FromExpr.Expr
-import Smol.Backend.IR.ToLLVM.ToLLVM
-import Smol.Core.Modules.FromParts
-import Smol.Core.Modules.ModuleError
-import Smol.Core.Modules.ResolveDeps
-import Smol.Core.Modules.Typecheck
-import Smol.Core.Parser (parseModule)
-import System.Console.Haskeline
-import Text.Megaparsec
+import qualified Options.Applicative as Opt
+import qualified Smol.Check as Check
+import qualified Smol.Repl as Repl
+import System.IO
 
-type ParseErrorType = ParseErrorBundle Text Void
+data AppAction
+  = Repl
+  | Check Text -- check if a file is `ok`
 
-replFilename :: FilePath
-replFilename = "repl"
+parseAppAction :: Opt.Parser AppAction
+parseAppAction =
+  Opt.hsubparser
+    ( Opt.command
+        "repl"
+        ( Opt.info
+            (pure Repl)
+            (Opt.progDesc "Start new module-based Smol repl")
+        )
+        <> Opt.command
+          "check"
+          ( Opt.info
+              (Check <$> filePathParse)
+              (Opt.progDesc "Check whether a file is valid and OK etc")
+          )
+    )
 
-instance HasHints Void msg where
-  hints _ = mempty
+filePathParse :: Opt.Parser Text
+filePathParse =
+  Opt.argument
+    Opt.str
+    (Opt.metavar "<file path>")
 
-repl :: IO ()
-repl = do
-  putStrLn "Welcome to smol"
-  putStrLn "Exit with :quit"
-  runInputT defaultSettings loop
-  where
-    loop :: InputT IO ()
-    loop = do
-      minput <- getInputLine ":> "
-      case minput of
-        Nothing -> return ()
-        Just ":quit" -> return ()
-        Just input -> do
-          case parseModule (T.pack input) of
-            Left bundle -> do
-              printDiagnostic (fromErrorBundle bundle input) >> loop
-            Right moduleParts -> do
-              case moduleFromModuleParts mempty moduleParts >>= resolveModuleDeps of
-                Left e -> printDiagnostic (moduleErrorDiagnostic e) >> loop
-                Right (myModule, deps) -> do
-                  case typecheckModule mempty (T.pack input) myModule deps of
-                    Left e -> printDiagnostic (moduleErrorDiagnostic e) >> loop
-                    Right tcModule -> do
-                      let llvmIR = irToLLVM (irFromModule tcModule)
-                      resp <- liftIO $ fmap Run.rrResult (Run.run [] llvmIR)
-                      liftIO $ putStrLn (T.unpack resp)
-                      loop
+optionsParse :: Opt.Parser AppAction
+optionsParse = parseAppAction
 
-printDiagnostic :: (MonadIO m) => Diag.Diagnostic Text -> m ()
-printDiagnostic =
-  Diag.printDiagnostic
-    Diag.stderr
-    True
-    True
-    4
-    Diag.defaultStyle
+helpfulPreferences :: Opt.ParserPrefs
+helpfulPreferences =
+  Opt.defaultPrefs
+    { Opt.prefShowHelpOnError = True,
+      Opt.prefShowHelpOnEmpty = True
+    }
 
--- | turn Megaparsec error + input into a Diagnostic
-fromErrorBundle :: ParseErrorType -> String -> Diag.Diagnostic Text
-fromErrorBundle bundle input =
-  let diag =
-        errorDiagnosticFromBundle
-          Nothing
-          "Parse error on input"
-          Nothing
-          bundle
-   in Diag.addFile diag replFilename input
+main :: IO ()
+main = do
+  hSetBuffering stdout LineBuffering
+  hSetBuffering stderr LineBuffering
+  action <-
+    Opt.customExecParser
+      helpfulPreferences
+      (Opt.info (optionsParse <**> Opt.helper) Opt.fullDesc)
+  case action of
+    Repl -> Repl.repl
+    Check filePath -> Check.check filePath
