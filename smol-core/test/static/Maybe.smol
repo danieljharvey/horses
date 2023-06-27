@@ -1,13 +1,15 @@
-export type Maybe a =
+type Maybe a =
     Just a
   | Nothing
 
-export def fromMaybe (val: Maybe a) (fallback: a): a =
+def fromMaybe : Maybe a -> a -> a
+def fromMaybe val fallback =
   case val of
     Just a -> a
     | _ -> fallback
 
-export def fmap (f: a -> b) (maybeA: Maybe a): Maybe b
-  = case maybeA of
+def fmap : (a -> b) -> Maybe a -> Maybe b
+def fmap f maybeA =
+  case maybeA of
       Just a -> Just (f a)
       | _ -> Nothing

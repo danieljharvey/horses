@@ -66,10 +66,17 @@ data Import
   | ImportNamedFromHash ModuleHash ModuleName
   deriving stock (Eq, Ord, Show)
 
+-- a single expression of zero or more exprs and an optional type
+data TopLevelExpression dep ann
+  = TopLevelExpression
+      { meExprs :: [Expr dep ann],
+        meType :: Maybe (Type dep ann)
+      } deriving stock (Functor, Generic)
+
 -- this is the checked module, it contains no duplicates and we don't care
 -- about ordering
 data Module dep ann = Module
-  { moExpressions :: Map DefIdentifier (Expr dep ann),
+  { moExpressions :: Map DefIdentifier (TopLevelExpression dep ann),
     moExpressionExports :: Set DefIdentifier,
     moExpressionImports :: Map DefIdentifier ModuleHash, -- what we imported, where it's from
     moDataTypes :: Map TypeName (DataType dep ann),
@@ -121,6 +128,9 @@ deriving anyclass instance
     FromJSON (dep Identifier)
   ) =>
   FromJSON (Module dep ann)
+
+instance Printer (TopLevelExpression ParseDep ann) where
+  prettyDoc (TopLevelExpression meExprs meType) = ""
 
 instance Printer (Module ParseDep ann) where
   prettyDoc mod' =

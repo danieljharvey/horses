@@ -14,7 +14,6 @@ import qualified Data.Sequence as Seq
 import Data.Text (Text)
 import qualified Data.Text as T
 import qualified Data.Text.Encoding as T
-import Debug.Trace
 import Smol.Core
 import Test.Helpers
 import Test.Hspec
@@ -27,22 +26,22 @@ testInputs =
 spec :: Spec
 spec = do
   describe "Parser" $ do
-    fdescribe "Module" $ do
+    describe "Module" $ do
       let singleDefs =
             [ "type Dog a = Woof String | Other a",
-              "id a = a",
-              "id: a -> a",
-              "compose f g a = f (g a)",
-              "compose : (c -> b) -> (a -> b) -> (a -> c)"
+              "def id : a -> a",
+              "def id a = a",
+              "def compose f g a = f (g a)",
+              "def compose : (c -> b) -> (a -> b) -> (a -> c)"
             ]
 
       it "All defs" $ do
-        let result = traceShowId $ parseModuleAndFormatError (T.intercalate ";" (T.pack <$> singleDefs))
+        let result = parseModuleAndFormatError (T.intercalate "\n" (T.pack <$> singleDefs))
         result `shouldSatisfy` isRight
 
       traverse_
         ( \input -> it ("Parses module item: " <> input) $ do
-            let result = traceShowId $ parseModuleAndFormatError (T.pack input)
+            let result = parseModuleAndFormatError (T.pack input)
 
             result `shouldSatisfy` isRight
         )
@@ -121,7 +120,7 @@ spec = do
         )
         strings
 
-    fdescribe "Type" $ do
+    describe "Type" $ do
       let strings =
             [ ("True", tyBoolLit True),
               ("False", tyBoolLit False),

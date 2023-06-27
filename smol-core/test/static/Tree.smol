@@ -1,14 +1,16 @@
-export type Tree a =
+type Tree a =
   Branch (Tree a) a (Tree a) | Leaf a
 
-export def fmap f =
+def fmap : (a -> b) -> Tree a -> Tree b
+def fmap f =
   let map = \innerTree ->
     case innerTree of
       (Branch left a right) -> Branch (map left) (f a) (map right)
     | (Leaf a) -> Leaf (f a)
   in map
 
-export def invert =
+def invert : Tree a -> Tree b
+def invert =
   let invertTree = \innerTree ->
     case innerTree of
       (Branch left a right) -> Branch (invertTree right) a (invertTree left) 

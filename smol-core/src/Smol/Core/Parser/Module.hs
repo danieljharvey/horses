@@ -28,7 +28,10 @@ type Parser = Parsec Void Text
 -- use `registerParseError` from https://hackage.haskell.org/package/megaparsec-9.2.1/docs/Text-Megaparsec.html
 moduleParser :: Parser [ModuleItem Annotation]
 moduleParser =
-  sepBy parseModuleItem (myString ";")
+  mconcat
+        <$> ( chainl1 ((\a -> [[a]]) <$> parseModuleItem) (pure (<>))
+                <|> pure mempty
+            )
 
 -- why is this fucked? because we don't stop parsing at the end of a def
 -- parsing >>>
@@ -71,23 +74,23 @@ moduleTypeDeclarationParser = ModuleDataType <$> dataTypeParser
 -- top level definition
 moduleDefinitionParser :: Parser (ModuleItem Annotation)
 moduleDefinitionParser = do
+  myString "def"
   name <- identifierParser
   parts <-
     chainl1 ((: []) <$> identifierParser) (pure (<>))
       <|> pure mempty
   myString "="
-  expr <- expressionParser
-  pure (ModuleExpression name parts expr)
+  ModuleExpression name parts <$> expressionParser
 
 -- top level type definition
 -- id : a -> a
 -- compose : (b -> c) -> (a -> b) -> (a -> c)
 moduleTypeDefinitionParser :: Parser (ModuleItem Annotation)
 moduleTypeDefinitionParser = do
+  myString "def"
   name <- identifierParser
   myString ":"
-  ty <- typeParser
-  pure (ModuleExpressionType name ty)
+  ModuleExpressionType name <$> typeParser
 
 parseHash :: Parser ModuleHash
 parseHash =

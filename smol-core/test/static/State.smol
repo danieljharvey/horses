@@ -1,22 +1,27 @@
-export type State s a =
+type State s a =
   State (s -> (a, s))
 
-export def get =
+def get : State s a -> s
+def get =
   State (\s -> (s, s))
 
-export def put s =
+def put : s -> State s Unit
+def put s =
   State (\oldS -> (Unit, s))
 
-export def pure a =
+def pure : a -> State s a
+def pure a =
   State (\s -> (a, s))
 
-export def fmap (f: a -> b) (state: State s a): State s b = 
+def fmap : (a -> b) -> State s a -> State s b
+def fmap f state =
   case state of (State sas) ->
     State (\s -> 
         case sas s of (a, s) -> (f a, s)
     )
 
-export def ap (stateF: State s (a -> b)) (stateA: State s a): State s b = 
+def ap : State s (a -> b) -> State s a -> State s b
+def ap stateF stateA =
   State (\s -> case stateF of (State sfs) -> 
     let fs = sfs s; 
     case fs of (f, ss) -> 
@@ -24,16 +29,12 @@ export def ap (stateF: State s (a -> b)) (stateA: State s a): State s b =
         let as = sas ss; 
         case as of (a, sss) -> (f a, sss))
 
-export def bind f state = State (\s ->
+def bind : (a -> State s b) -> State s a -> State s b
+def bind f state = State (\s ->
   case state of (State sas) ->
     case (sas s) of (a, ss) ->
       case f a of (State sbs) -> sbs ss)
 
-export def run state s = case state of (State sas) -> sas s
-
-export def exec state = case run state of (_,a) -> a
-
-export def eval state = case run state of (a,_) -> a
-
-export def liftA2 f stateA stateB = ap (fmap f stateA) stateB
+def run : State s a -> s -> (a, s)
+def run state s = case state of (State sas) -> sas s
 
