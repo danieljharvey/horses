@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1687848523047,
+  "lastUpdate": 1687964040563,
   "repoUrl": "https://github.com/danieljharvey/mimsa",
   "entries": {
     "Store benchmarks in Github Pages": [
@@ -2327,6 +2327,50 @@ window.BENCHMARK_DATA = {
           {
             "name": "evaluate/evaluate parsing 2",
             "value": 0.297091809799997,
+            "unit": "Time (ms)"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "danieljamesharvey@gmail.com",
+            "name": "Daniel Harvey",
+            "username": "danieljharvey"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "ef6bc80fc58a465d471da4d6878ae7952377ecf8",
+          "message": "Typechecker / parser fixes (#982)\n\n* WIP investigate\r\n\r\n* Yerp\r\n\r\n* Disable bad test",
+          "timestamp": "2023-06-28T15:50:38+01:00",
+          "tree_id": "7bf1ba4ada8eba2aef6ab56a17864b191cb2fffa",
+          "url": "https://github.com/danieljharvey/mimsa/commit/ef6bc80fc58a465d471da4d6878ae7952377ecf8"
+        },
+        "date": 1687964039961,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "build stdlib/allFns",
+            "value": 0.11701885890476293,
+            "unit": "Time (ms)"
+          },
+          {
+            "name": "evaluate/evaluate big looping thing",
+            "value": 0.09536816948333675,
+            "unit": "Time (ms)"
+          },
+          {
+            "name": "evaluate/evaluate parsing",
+            "value": 0.03265703345147186,
+            "unit": "Time (ms)"
+          },
+          {
+            "name": "evaluate/evaluate parsing 2",
+            "value": 0.22283595928571945,
             "unit": "Time (ms)"
           }
         ]
