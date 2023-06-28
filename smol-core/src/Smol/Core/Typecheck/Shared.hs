@@ -35,6 +35,8 @@ module Smol.Core.Typecheck.Shared
   )
 where
 
+import Control.Monad (void)
+import Debug.Trace
 import Control.Monad.Except
 import Control.Monad.Reader
 import Control.Monad.State
@@ -325,6 +327,7 @@ popArgs maxArgs = do
 -- untangle a bunch of TApp (TApp (TConstructor typeName) 1) True into `(typeName, [1, True])`
 -- to make it easier to match up with patterns
 flattenConstructorType ::
+  (Show (dep Identifier), Show (dep TypeName)) =>
   Type dep ann ->
   Either (Type dep ann) (dep TypeName, [Type dep ann])
 flattenConstructorType (TApp _ f a) = do
@@ -332,7 +335,10 @@ flattenConstructorType (TApp _ f a) = do
   pure (typeName, as <> [a])
 flattenConstructorType (TConstructor _ typeName) =
   pure (typeName, mempty)
-flattenConstructorType ty = throwError ty
+flattenConstructorType ty = do
+  traceM "flatten fail"
+  traceShowM (void ty)
+  throwError ty
 
 -- untangle a bunch of TApp (TApp (TConstructor typeName) 1) True into `(typeName, [1, True])`
 -- to make it easier to match up with patterns

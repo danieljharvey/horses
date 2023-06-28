@@ -86,6 +86,18 @@ builtInTypes liftDep =
                 ("Nil", mempty)
               ]
           )
+      exprDt =
+        DataType
+          "Expr"
+          ["ann"]
+          ( M.fromList
+              [ ( "EInt",
+                  [ TVar mempty (liftDep "ann"),
+                    TPrim mempty TPInt
+                  ]
+                )
+              ]
+          )
    in M.fromList
         [ (liftDep "Maybe", maybeDt),
           (liftDep "Either", eitherDt),
@@ -93,5 +105,6 @@ builtInTypes liftDep =
           (liftDep "These", theseDt),
           (liftDep "Identity", identityDt),
           (liftDep "List", listDt),
-          (liftDep "State", stateDt)
+          (liftDep "State", stateDt),
+          (liftDep "Expr", exprDt)
         ]

@@ -36,6 +36,7 @@ checkPattern ::
       Map (ResolvedDep Identifier) (ResolvedType ann)
     )
 checkPattern checkTy checkPat = do
+  tracePrettyM "checkPattern" (checkTy, checkPat)
   case (simplifyType checkTy, checkPat) of
     (TTuple _ tA tRest, PTuple ann pA pRest) | length tRest == length pRest -> do
       (patA, envA) <- checkPattern tA pA
@@ -43,7 +44,8 @@ checkPattern checkTy checkPat = do
       let ty = TTuple ann (getPatternAnnotation patA) (getPatternAnnotation <$> patRest)
           env = envA <> mconcat (NE.toList envRest)
       pure (PTuple ty patA patRest, env)
-    (ty, PVar _ ident) ->
+    (ty, PVar _ ident) -> do
+      tracePrettyM "ident" (ident,ty)
       pure (PVar ty ident, M.singleton ident ty)
     (ty, PWildcard _) -> pure (PWildcard ty, mempty)
     (ty@(TLiteral _ (TLInt as)), PLiteral _ (PInt i))
@@ -99,8 +101,16 @@ checkPattern checkTy checkPat = do
 
       case flattened of
         Left _ -> do
+          blah <- zipWithM checkPattern consArgs args
+          tracePrettyM "blah" blah
+
           (patArgs, envArgs) <-
             unzip <$> zipWithM checkPattern consArgs args
+
+          tracePrettyM "consArgs" consArgs
+          tracePrettyM "args" args
+          tracePrettyM "envArgs" envArgs
+          tracePrettyM "patArgs" patArgs
 
           -- check number of args matches what constructor expects
           when
@@ -110,6 +120,7 @@ checkPattern checkTy checkPat = do
 
           let constructorTy = dataTypeWithVars ann patTypeName consArgs
           pure (PConstructor constructorTy constructor patArgs, mconcat envArgs)
+
         Right (typeName, tyArgs) -> do
           -- check constructor lives in type
           when (typeName /= patTypeName) $
@@ -120,6 +131,8 @@ checkPattern checkTy checkPat = do
 
           (patArgs, envArgs) <-
             unzip <$> zipWithM checkPattern resolvedArgs args -- tyArgs was consArgs
+
+          tracePrettyM "envArgs" envArgs
 
           -- check number of args matches what constructor expects
           when

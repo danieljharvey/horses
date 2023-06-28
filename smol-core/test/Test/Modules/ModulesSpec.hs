@@ -192,7 +192,7 @@ spec = do
 
         resolveModuleDeps mod' `shouldBe` Right (expected, depMap)
 
-    describe "Typecheck" $ do
+    fdescribe "Typecheck" $ do
       it "Typechecks Prelude successfully" $ do
         testModuleTypecheck "Prelude" `shouldSatisfy` isRight
 
@@ -201,6 +201,9 @@ spec = do
 
       it "Typechecks Either successfully" $ do
         testModuleTypecheck "Either" `shouldSatisfy` isRight
+
+      fit "Typechecks Expr successfully" $ do
+        testModuleTypecheck "Expr" `shouldSatisfy` isRight
 
       -- these are a mess and we need to simplify the types
       xit "Typechecks Globals successfully" $ do

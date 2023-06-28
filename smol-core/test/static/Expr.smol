@@ -1,0 +1,11 @@
+type Expr ann
+    = ENumber ann Int
+    | EAdd ann (Expr ann) (Expr ann)
+
+def run expr =
+    case expr of
+        a -> 100
+        |  (ENumber _ i) -> i
+        | (EAdd _ _ _) -> 100
+
+def main = run (EAdd Unit (ENumber Unit 1) (ENumber Unit 41))
