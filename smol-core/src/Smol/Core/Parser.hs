@@ -7,6 +7,7 @@ module Smol.Core.Parser
     parseType,
     parseModule,
     parseModuleAndFormatError,
+    parseDataTypeAndFormatError,
   )
 where
 
@@ -14,6 +15,7 @@ import Data.Bifunctor (first)
 import Data.Text (Text)
 import qualified Data.Text as T
 import Data.Void
+import Smol.Core.Parser.DataType (dataTypeParser)
 import Smol.Core.Parser.Expr
 import Smol.Core.Parser.Module
 import Smol.Core.Parser.Type
@@ -43,3 +45,6 @@ parseModule = parse (space *> moduleParser <* eof) "repl"
 
 parseModuleAndFormatError :: Text -> Either Text [ModuleItem Annotation]
 parseModuleAndFormatError = parseAndFormat (space *> moduleParser <* eof)
+
+parseDataTypeAndFormatError :: Text -> Either Text (DataType ParseDep Annotation)
+parseDataTypeAndFormatError = parseAndFormat (space *> dataTypeParser <* eof)

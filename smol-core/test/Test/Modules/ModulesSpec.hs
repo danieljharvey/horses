@@ -202,6 +202,9 @@ spec = do
       it "Typechecks Either successfully" $ do
         testModuleTypecheck "Either" `shouldSatisfy` isRight
 
+      it "Typechecks Expr successfully" $ do
+        testModuleTypecheck "Expr" `shouldSatisfy` isRight
+
       -- these are a mess and we need to simplify the types
       xit "Typechecks Globals successfully" $ do
         let result = testModuleTypecheck "Globals"

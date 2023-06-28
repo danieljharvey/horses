@@ -325,6 +325,7 @@ popArgs maxArgs = do
 -- untangle a bunch of TApp (TApp (TConstructor typeName) 1) True into `(typeName, [1, True])`
 -- to make it easier to match up with patterns
 flattenConstructorType ::
+  (Show (dep Identifier), Show (dep TypeName)) =>
   Type dep ann ->
   Either (Type dep ann) (dep TypeName, [Type dep ann])
 flattenConstructorType (TApp _ f a) = do

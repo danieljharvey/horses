@@ -35,7 +35,7 @@ checkPattern ::
     ( Pattern ResolvedDep (ResolvedType ann),
       Map (ResolvedDep Identifier) (ResolvedType ann)
     )
-checkPattern checkTy checkPat = do
+checkPattern checkTy checkPat =
   case (simplifyType checkTy, checkPat) of
     (TTuple _ tA tRest, PTuple ann pA pRest) | length tRest == length pRest -> do
       (patA, envA) <- checkPattern tA pA

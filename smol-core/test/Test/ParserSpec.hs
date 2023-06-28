@@ -161,3 +161,17 @@ spec = do
               Left e -> error (T.unpack e)
         )
         strings
+
+    describe "DataType" $ do
+      let strings =
+            [ ( "type Expr ann = EInt ann Int",
+                DataType "Expr" ["ann"] (M.singleton "EInt" [TVar () "ann", TPrim () TPInt])
+              )
+            ]
+      traverse_
+        ( \(str, dt) -> it (T.unpack str) $ do
+            case parseDataTypeAndFormatError str of
+              Right parsedDt -> parsedDt $> () `shouldBe` dt
+              Left e -> error (T.unpack e)
+        )
+        strings
