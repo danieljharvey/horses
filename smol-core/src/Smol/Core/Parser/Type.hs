@@ -1,6 +1,6 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-module Smol.Core.Parser.Type (parseTypeAndFormatError, parseType, typeParser) where
+module Smol.Core.Parser.Type (parseTypeAndFormatError, parseType, typeParser, simpleTypeParser) where
 
 import Control.Monad ((>=>))
 import Control.Monad.Combinators.Expr

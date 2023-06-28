@@ -51,6 +51,6 @@ oneTypeConstructor :: Parser (Map Constructor [ParsedType Annotation])
 oneTypeConstructor = do
   constructor <- myLexeme constructorParserInternal
   args <-
-    some typeParser
+    some (try simpleTypeParser <|> inBrackets typeParser)
       <|> pure mempty
   pure (M.singleton constructor args)

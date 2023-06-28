@@ -209,12 +209,9 @@ infer inferExpr = do
         other -> throwError (TCExpectedRecord other)
       pure (ERecordAccess tyResult typedExpr ident)
     (EPatternMatch _ matchExpr pats) -> do
-      tracePrettyM "pats" $ NE.toList pats
       elabExpr <- infer matchExpr
       let withPair (pat, patExpr) = do
-            tracePrettyM "pat" pat
             (elabPat, newVars) <- checkPattern (getExprAnnotation elabExpr) pat
-            tracePrettyM "newVars" newVars
             elabPatExpr <- withNewVars newVars (infer patExpr)
             pure (elabPat, elabPatExpr)
       elabPats <- traverse withPair pats
@@ -406,7 +403,6 @@ check typ expr = do
       elabExpr <- infer matchExpr
       let withPair (pat, patExpr) = do
             (elabPat, newVars) <- checkPattern (getExprAnnotation elabExpr) pat
-            tracePrettyM "newVars" newVars
             elabPatExpr <- withNewVars newVars (check typ patExpr)
             pure (elabPat, elabPatExpr)
       elabPats <- traverse withPair pats

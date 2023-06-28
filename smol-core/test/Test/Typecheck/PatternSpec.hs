@@ -11,7 +11,7 @@ import Test.Hspec
 
 spec :: Spec
 spec = do
-  fdescribe "checkPattern" $ do
+  describe "checkPattern" $ do
     let emptyEnv = TCEnv mempty mempty (builtInTypes emptyResolvedDep)
     it "PVar" $ do
       snd <$> runReaderT (checkPattern tyInt (PVar () "a")) emptyEnv

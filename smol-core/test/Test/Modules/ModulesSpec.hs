@@ -192,7 +192,7 @@ spec = do
 
         resolveModuleDeps mod' `shouldBe` Right (expected, depMap)
 
-    fdescribe "Typecheck" $ do
+    describe "Typecheck" $ do
       it "Typechecks Prelude successfully" $ do
         testModuleTypecheck "Prelude" `shouldSatisfy` isRight
 
@@ -202,7 +202,7 @@ spec = do
       it "Typechecks Either successfully" $ do
         testModuleTypecheck "Either" `shouldSatisfy` isRight
 
-      fit "Typechecks Expr successfully" $ do
+      it "Typechecks Expr successfully" $ do
         testModuleTypecheck "Expr" `shouldSatisfy` isRight
 
       -- these are a mess and we need to simplify the types
@@ -218,5 +218,5 @@ spec = do
         void (getExprAnnotation (findResult "useGlobalIndirectly" result))
           `shouldBe` TGlobals () (M.singleton "valueA" (tyIntLit [20])) tyInt
 
-      xit "Typechecks State successfully" $ do
+      it "Typechecks State successfully" $ do
         testModuleTypecheck "State" `shouldSatisfy` isRight
