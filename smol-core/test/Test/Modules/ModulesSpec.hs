@@ -5,7 +5,6 @@
 
 module Test.Modules.ModulesSpec (spec) where
 
-import System.IO.Unsafe
 import Data.Bifunctor (second)
 import Data.Either (isRight)
 import Data.FileEmbed
@@ -26,6 +25,7 @@ import Smol.Core.Modules.ResolveDeps
 import Smol.Core.Modules.Typecheck
 import Smol.Core.Types.Module.DefIdentifier
 import Smol.Core.Types.Module.Module
+import System.IO.Unsafe
 import Test.Helpers
 import Test.Hspec
 
@@ -55,8 +55,9 @@ testModuleTypecheck moduleName =
         Left e -> error (show e)
         Right (myModule, deps) -> do
           case typecheckModule mempty (getModuleInput moduleName) myModule deps of
-            Left e -> showModuleError e >>
-                Left e
+            Left e ->
+              showModuleError e
+                >> Left e
             Right a -> pure a
     Left e -> error (show e)
 

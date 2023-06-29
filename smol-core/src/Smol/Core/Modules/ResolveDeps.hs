@@ -11,7 +11,6 @@ module Smol.Core.Modules.ResolveDeps
   )
 where
 
-import Debug.Trace
 import Control.Monad.Except
 import Control.Monad.Reader
 import Control.Monad.State
@@ -185,13 +184,14 @@ withNewIdentifiers ::
   m a ->
   m a
 withNewIdentifiers resolvedIdentifiers =
-  local (\re -> traceShowId $ re {reExisting = resolvedIdentifiers <> reExisting re})
+  local (\re -> re {reExisting = resolvedIdentifiers <> reExisting re})
 
 data ResolveEnv = ResolveEnv
   { reExisting :: Map Identifier Int,
     reLocal :: Set DefIdentifier,
     reLocalConstructor :: Set Constructor
-  } deriving stock (Eq,Ord,Show)
+  }
+  deriving stock (Eq, Ord, Show)
 
 newtype ResolveState = ResolveState {rsUnique :: Int}
 
@@ -202,7 +202,6 @@ resolveM ::
 resolveM (EVar ann ident) = EVar ann <$> resolveIdentifier ident
 resolveM (ELet ann ident body rest) = do
   (unique, innerIdent, newIdent) <- newIdentifier ident
-  traceShowM (unique, innerIdent, "let" :: String)
   (body', rest') <-
     withNewIdentifier
       unique

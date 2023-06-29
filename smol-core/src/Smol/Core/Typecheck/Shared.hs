@@ -154,12 +154,14 @@ reduceType = reduceTypeInner
 getApplyReturnType ::
   (MonadError (TCError ann) m) =>
   ResolvedType ann ->
-  m (ResolvedType ann)
-getApplyReturnType (TFunc _ _ _ typ) = pure typ
-getApplyReturnType tApp@TApp {} = pure tApp
+  m (Maybe (ResolvedType ann))
+getApplyReturnType (TFunc _ _ _ typ) = pure (Just typ)
+getApplyReturnType tApp@TApp {} = pure (Just tApp)
 getApplyReturnType (TGlobals _ _ inner) = getApplyReturnType inner
+getApplyReturnType (TUnknown {}) =
+  pure Nothing
 getApplyReturnType other =
-  throwError (TCExpectedFunction other)
+  throwError $ TCExpectedFunction other
 
 -- | given the constructor name, see where it lives and gather details
 lookupConstructor ::

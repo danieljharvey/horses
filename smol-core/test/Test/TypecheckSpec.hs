@@ -3,7 +3,6 @@
 
 module Test.TypecheckSpec (spec) where
 
-import Control.Monad.Except
 import Control.Monad.Reader
 import Control.Monad.State
 import Data.Bifunctor
@@ -241,26 +240,26 @@ spec = do
       it "Simple function" $ do
         let input = fromParsedType $ unsafeParseType "Nat -> Int"
             expected = fromParsedType $ unsafeParseType "Int"
-        runExcept (getApplyReturnType input)
-          `shouldBe` Right expected
+        getApplyReturnType input
+          `shouldBe` Right (Just expected)
 
       it "Nested function" $ do
         let input = fromParsedType $ unsafeParseType "Nat -> Int -> Bool"
             expected = fromParsedType $ unsafeParseType "Int -> Bool"
-        runExcept (getApplyReturnType input)
-          `shouldBe` Right expected
+        getApplyReturnType input
+          `shouldBe` Right (Just expected)
 
       it "Nested function with constructors" $ do
         let input = fromParsedType $ unsafeParseType "Nat -> Maybe Int -> Maybe Bool"
             expected = fromParsedType $ unsafeParseType "Maybe Int -> Maybe Bool"
-        runExcept (getApplyReturnType input)
-          `shouldBe` Right expected
+        getApplyReturnType input
+          `shouldBe` Right (Just expected)
 
       it "Nested higher-order function with constructors" $ do
         let input = fromParsedType $ unsafeParseType "(a -> b) -> Maybe a -> Maybe b"
             expected = fromParsedType $ unsafeParseType "Maybe a -> Maybe b"
-        runExcept (getApplyReturnType input)
-          `shouldBe` Right expected
+        getApplyReturnType input
+          `shouldBe` Right (Just expected)
 
     describe "getRequiredEnv" $ do
       it "Empty" $ do

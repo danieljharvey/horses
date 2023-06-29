@@ -162,10 +162,18 @@ infer inferExpr = do
     (ELambda ann ident body) -> inferLambda ann ident body
     (ELet ann ident expr body) ->
       withRecursiveFn (ELambda ann ident body) expr $ do
-        typedExpr <- infer expr
-        typedBody <- withVar ident (getExprAnnotation typedExpr) (infer body)
-        pure (ELet (getExprAnnotation typedBody) ident typedExpr typedBody)
-    (EApp _ fn arg) -> inferApplication Nothing fn arg
+        tyUnknown <- getUnknown ann
+        typedExpr <- withVar ident tyUnknown (infer expr)
+        let tyExpr =
+              substituteMany
+                [ Substitution
+                    (SubType tyUnknown)
+                    (getExprAnnotation typedExpr)
+                ]
+                (getExprAnnotation typedExpr)
+        typedBody <- withVar ident tyExpr (infer body)
+        pure $ ELet (getExprAnnotation typedBody) ident typedExpr typedBody
+    (EApp ann fn arg) -> inferApplication ann Nothing fn arg
     (EIf _ predExpr thenExpr elseExpr) -> do
       typedPred <- check (TPrim (getExprAnnotation predExpr) TPBool) predExpr
       typedThen <- infer thenExpr
@@ -237,11 +245,12 @@ inferApplication ::
     MonadState (TCState ann) m,
     MonadWriter [Substitution ResolvedDep ann] m
   ) =>
+  ann ->
   Maybe (ResolvedType ann) ->
   ResolvedExpr ann ->
   ResolvedExpr ann ->
   m (ResolvedExpr (ResolvedType ann))
-inferApplication maybeCheckType fn arg = withRecursiveFn fn arg $ do
+inferApplication ann maybeCheckType fn arg = withRecursiveFn fn arg $ do
   typedArg <- infer arg
 
   -- if we are applying to a variable, then we need to be a bit clever and
@@ -275,11 +284,16 @@ inferApplication maybeCheckType fn arg = withRecursiveFn fn arg $ do
     pushArg (getExprAnnotation typedArg)
       >> inferFn fn
 
-  retType <- getApplyReturnType (getExprAnnotation typedFn)
+  maybeReturnType <- getApplyReturnType (getExprAnnotation typedFn)
 
-  finalReturnType <- case maybeCheckType of
-    Just typ -> retType `isSubtypeOf` typ
-    Nothing -> pure retType
+  finalReturnType <- case maybeReturnType of
+    Nothing -> case maybeCheckType of
+      Just typ -> pure typ
+      Nothing -> getUnknown ann
+    Just retType -> do
+      case maybeCheckType of
+        Just typ -> retType `isSubtypeOf` typ
+        Nothing -> pure retType
 
   pure (EApp finalReturnType typedFn typedArg)
 
@@ -327,8 +341,25 @@ checkLambda (TFunc tAnn _ tFrom tTo) ident body = do
           )
   pure (ELambda lambdaType ident typedBody)
 checkLambda (TGlobals _ _ inner) ident body = checkLambda inner ident body -- ignore global, check with inner type
-checkLambda other _ _ =
-  throwError (TCExpectedFunction other)
+checkLambda other@(TUnknown {}) ident body = do
+  -- unknown type - make a new unknown and keep smashing
+  let tAnn = getTypeAnnotation other
+  tyFrom <- getUnknown tAnn
+  (typedBody, typedClosure, subs) <- withVar ident tyFrom $ do
+    (tBody, subs) <- listen (infer body)
+    tClosure <- M.delete ident <$> getClosureType tAnn tBody
+    pure (tBody, tClosure, subs)
+  let lambdaType =
+        substituteMany
+          subs
+          ( TFunc
+              tAnn
+              typedClosure
+              tyFrom
+              (getExprAnnotation typedBody)
+          )
+  pure (ELambda lambdaType ident typedBody)
+checkLambda other _ _ = throwError (TCExpectedFunction other)
 
 inferLambda ::
   ( Ord ann,
@@ -379,7 +410,8 @@ check typ expr = do
       typedThen <- check typ thenExpr
       typedElse <- check typ elseExpr
       pure (EIf typ typedPred typedThen typedElse)
-    EApp _ fn arg -> inferApplication (Just typ) fn arg
+    EApp ann fn arg ->
+      inferApplication ann (Just typ) fn arg
     ETuple _ fstExpr restExpr ->
       case typ of
         TTuple tAnn tFst tRest -> do
