@@ -35,7 +35,7 @@ data VarType = Variable | Global
 
 data TCError ann
   = TCUnknownError
-  | TCCouldNotFindVar (ResolvedDep Identifier)
+  | TCCouldNotFindVar ann (ResolvedDep Identifier)
   | TCCouldNotFindGlobal Identifier (Set Identifier)
   | TCTypeMismatch (ResolvedType ann) (ResolvedType ann)
   | TCExpectedFunction (ResolvedType ann)

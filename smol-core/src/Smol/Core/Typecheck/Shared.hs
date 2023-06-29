@@ -126,13 +126,14 @@ getClosureType ::
     MonadError (TCError ann) m,
     Ord ann
   ) =>
+  ann ->
   ResolvedExpr (ResolvedType ann) ->
   m (Map (ResolvedDep Identifier) (ResolvedType ann))
-getClosureType body =
+getClosureType ann body =
   mconcat
     <$> traverse
       ( \ident ->
-          M.singleton ident <$> lookupVar ident
+          M.singleton ident <$> lookupVar ann ident
       )
       (S.toList (freeVars body))
 
@@ -217,13 +218,14 @@ typeForConstructor ann typeName vars args = do
 
 lookupVar ::
   (MonadReader (TCEnv ann) m, MonadError (TCError ann) m) =>
+  ann ->
   ResolvedDep Identifier ->
   m (ResolvedType ann)
-lookupVar ident = do
+lookupVar ann ident = do
   maybeVar <- asks (M.lookup ident . tceVars)
   case maybeVar of
     Just expr -> pure expr
-    Nothing -> throwError (TCCouldNotFindVar ident)
+    Nothing -> throwError (TCCouldNotFindVar ann ident)
 
 withVar ::
   (MonadReader (TCEnv ann) m) =>
