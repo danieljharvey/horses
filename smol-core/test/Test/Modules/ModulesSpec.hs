@@ -17,6 +17,7 @@ import qualified Data.Set as S
 import Data.String (fromString)
 import Data.Text (Text)
 import qualified Data.Text.Encoding as T
+import Error.Diagnose (defaultStyle, printDiagnostic, stdout)
 import Smol.Core
 import Smol.Core.Modules.FromParts
 import Smol.Core.Modules.ModuleError
@@ -24,6 +25,7 @@ import Smol.Core.Modules.ResolveDeps
 import Smol.Core.Modules.Typecheck
 import Smol.Core.Types.Module.DefIdentifier
 import Smol.Core.Types.Module.Module
+import System.IO.Unsafe
 import Test.Helpers
 import Test.Hspec
 
@@ -52,8 +54,17 @@ testModuleTypecheck moduleName =
       case moduleFromModuleParts mempty moduleParts >>= resolveModuleDeps of
         Left e -> error (show e)
         Right (myModule, deps) -> do
-          typecheckModule mempty "" myModule deps
+          case typecheckModule mempty (getModuleInput moduleName) myModule deps of
+            Left e ->
+              showModuleError e
+                >> Left e
+            Right a -> pure a
     Left e -> error (show e)
+
+showModuleError :: ModuleError -> a
+showModuleError modErr = unsafePerformIO $ do
+  printDiagnostic stdout True True 2 defaultStyle (moduleErrorDiagnostic modErr)
+  error "oh no"
 
 spec :: Spec
 spec = do

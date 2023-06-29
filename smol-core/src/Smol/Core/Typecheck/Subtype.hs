@@ -216,6 +216,8 @@ isSubtypeInner (TVar _ ident) b =
 isSubtypeInner a (TVar _ ident) =
   tell [Substitution (SubId ident) a]
     >> pure a
+isSubtypeInner (TInfix ann op a b) c =
+  TInfix ann op <$> isSubtypeInner a c <*> isSubtypeInner b c
 isSubtypeInner (TTuple annA fstA restA) (TTuple _annB fstB restB) =
   do
     tyFst <- isSubtypeInner fstA fstB

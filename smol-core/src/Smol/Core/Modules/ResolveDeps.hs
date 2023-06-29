@@ -191,6 +191,7 @@ data ResolveEnv = ResolveEnv
     reLocal :: Set DefIdentifier,
     reLocalConstructor :: Set Constructor
   }
+  deriving stock (Eq, Ord, Show)
 
 newtype ResolveState = ResolveState {rsUnique :: Int}
 

@@ -188,3 +188,22 @@ spec = do
                 `shouldSatisfy` isLeft
           )
           validPairs
+
+      describe "Plus" $ do
+        it "U1 + U2 <: Int" $ do
+          fst
+            <$> runWriterT
+              ( isSubtypeOf
+                  (TInfix () OpAdd (TUnknown () 1) (TUnknown () 2))
+                  tyInt
+              )
+            `shouldSatisfy` isRight
+
+        it "U1 == U2 <: Bool" $ do
+          fst
+            <$> runWriterT
+              ( isSubtypeOf
+                  (TInfix () OpEquals (TUnknown () 1) (TUnknown () 2))
+                  tyBool
+              )
+            `shouldSatisfy` isRight

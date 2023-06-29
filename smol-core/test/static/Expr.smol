@@ -7,4 +7,11 @@ def run expr =
           (ENumber _ i) -> i
         | (EAdd _ _ _) -> 100
 
+def run2 expr =
+      let go = \inner ->
+          case inner of
+              (ENumber _ i) -> i
+            | (EAdd _ a b) -> go a + go b
+      in go expr
+
 def main = run (EAdd Unit (ENumber Unit 1) (ENumber Unit 41))
