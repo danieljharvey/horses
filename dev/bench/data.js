@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1687964040563,
+  "lastUpdate": 1688076402456,
   "repoUrl": "https://github.com/danieljharvey/mimsa",
   "entries": {
     "Store benchmarks in Github Pages": [
@@ -2371,6 +2371,50 @@ window.BENCHMARK_DATA = {
           {
             "name": "evaluate/evaluate parsing 2",
             "value": 0.22283595928571945,
+            "unit": "Time (ms)"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "danieljamesharvey@gmail.com",
+            "name": "Daniel Harvey",
+            "username": "danieljharvey"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "b2ec6eeaf62a23ae1d3f04fd6105536f2812be8d",
+          "message": "Fix recursive types (#983)\n\n* WIP\r\n\r\n* Good old lads",
+          "timestamp": "2023-06-29T23:02:37+01:00",
+          "tree_id": "4a392085556370d165331fa52952e32f16dc0904",
+          "url": "https://github.com/danieljharvey/mimsa/commit/b2ec6eeaf62a23ae1d3f04fd6105536f2812be8d"
+        },
+        "date": 1688076400980,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "build stdlib/allFns",
+            "value": 0.13952755996427862,
+            "unit": "Time (ms)"
+          },
+          {
+            "name": "evaluate/evaluate big looping thing",
+            "value": 0.11388989644047756,
+            "unit": "Time (ms)"
+          },
+          {
+            "name": "evaluate/evaluate parsing",
+            "value": 0.03560165503571318,
+            "unit": "Time (ms)"
+          },
+          {
+            "name": "evaluate/evaluate parsing 2",
+            "value": 0.25777360620000994,
             "unit": "Time (ms)"
           }
         ]
