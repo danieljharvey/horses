@@ -5,6 +5,7 @@
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE MonoLocalBinds #-}
+{-# LANGUAGE NamedFieldPuns #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE StandaloneDeriving #-}
 {-# LANGUAGE UndecidableInstances #-}
@@ -31,6 +32,7 @@ import Smol.Core.Types.Identifier
 import Smol.Core.Types.Module.DefIdentifier
 import Smol.Core.Types.Module.ModuleHash
 import Smol.Core.Types.Module.ModuleName
+import Smol.Core.Types.Module.TopLevelExpression
 import Smol.Core.Types.ParseDep
 import Smol.Core.Types.Type
 import Smol.Core.Types.TypeName
@@ -65,13 +67,6 @@ data Import
   = ImportAllFromHash ModuleHash
   | ImportNamedFromHash ModuleHash ModuleName
   deriving stock (Eq, Ord, Show)
-
--- a single expression of zero or more exprs and an optional type
-data TopLevelExpression dep ann
-  = TopLevelExpression
-      { meExprs :: [Expr dep ann],
-        meType :: Maybe (Type dep ann)
-      } deriving stock (Functor, Generic)
 
 -- this is the checked module, it contains no duplicates and we don't care
 -- about ordering
@@ -128,9 +123,6 @@ deriving anyclass instance
     FromJSON (dep Identifier)
   ) =>
   FromJSON (Module dep ann)
-
-instance Printer (TopLevelExpression ParseDep ann) where
-  prettyDoc (TopLevelExpression meExprs meType) = ""
 
 instance Printer (Module ParseDep ann) where
   prettyDoc mod' =
@@ -197,26 +189,27 @@ printPaired mt expr =
       <> line
       <> indentMulti 2 (prettyDoc expr)
 
-printDefinition :: Module ParseDep ann -> DefIdentifier -> ParsedExpr ann -> Doc a
-printDefinition mod' def expr =
-  let prettyExp =
-        if S.member def (moExpressionExports mod')
-          then "export "
-          else ""
-   in prettyExp <> case def of
-        DIName name -> case expr of
-          (EAnn _ mt rest) ->
-            "def"
-              <+> prettyDoc name
-                <> line
-                <> indentMulti 2 (printPaired mt rest)
-          other ->
+printDefinition :: Module ParseDep ann -> DefIdentifier -> TopLevelExpression ParseDep ann -> Doc a
+printDefinition mod' def (TopLevelExpression {tleType, tleExpr}) =
+  case def of
+    DIName name ->
+      let prettyExpr =
             "def"
               <+> prettyDoc name
               <+> "="
                 <> line
-                <> indentMulti 2 (prettyDoc other)
-        DIType _ -> error "printDefinition is printing type oh no"
+                <> indentMulti 2 (prettyDoc tleExpr)
+          prettyType = case tleType of
+            Just ty ->
+              "def"
+                <+> prettyDoc name
+                <+> ":"
+                  <> line
+                  <> indentMulti 2 (prettyDoc ty)
+                  <> "\n"
+            Nothing -> ""
+       in prettyType <> prettyExpr
+    DIType _ -> error "printDefinition is printing type oh no"
 
 {- DIInfix infixOp ->
           "infix" <+> prettyDoc infixOp <+> "=" <+> prettyDoc expr

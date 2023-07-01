@@ -101,6 +101,14 @@ resolveType (TGlobals ann bits inner) =
 resolveType (TRecord ann as) = TRecord ann (resolveType <$> as)
 resolveType (TApp ann fn arg) = TApp ann (resolveType fn) (resolveType arg)
 
+-- resolve Expr (s) and Type pls
+resolveTopLevelExpression ::
+  TopLevelExpression ParseDep ann ->
+  Set DefIdentifier ->
+  Set Constructor ->
+  m (TopLevelExpression ResolvedDep ann)
+resolveTopLevelExpression tle localDefs localTypes = undefined
+
 resolveExpr ::
   (Show ann, MonadError ModuleError m, MonadState ResolveState m) =>
   Expr ParseDep ann ->

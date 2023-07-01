@@ -29,9 +29,9 @@ type Parser = Parsec Void Text
 moduleParser :: Parser [ModuleItem Annotation]
 moduleParser =
   mconcat
-        <$> ( chainl1 ((\a -> [[a]]) <$> parseModuleItem) (pure (<>))
-                <|> pure mempty
-            )
+    <$> ( chainl1 ((\a -> [[a]]) <$> parseModuleItem) (pure (<>))
+            <|> pure mempty
+        )
 
 -- why is this fucked? because we don't stop parsing at the end of a def
 -- parsing >>>

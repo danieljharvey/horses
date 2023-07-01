@@ -27,6 +27,7 @@ import Smol.Core.Types.Module.DefIdentifier
 import qualified Smol.Core.Types.Module.Entity as E
 import Smol.Core.Types.Module.Module
 import Smol.Core.Types.Module.ModuleHash
+import Smol.Core.Types.Module.TopLevelExpression
 
 filterExprs :: Map k (DepType dep ann) -> Map k (Expr dep ann)
 filterExprs =
@@ -187,14 +188,14 @@ getExprDependencies ::
   (MonadError ModuleError m) =>
   (Expr dep ann -> Set E.Entity) ->
   Module dep ann ->
-  Expr dep ann ->
+  TopLevelExpression dep ann ->
   m (DepType dep ann, Set DefIdentifier, Set E.Entity)
 getExprDependencies getUses mod' expr = do
-  let allUses = getUses expr
+  let allUses = getUses (tleExpr expr)
   exprDefIds <- getExprDeps mod' allUses
   consDefIds <- getConstructorUses mod' allUses
   typeDefIds <- getTypeUses mod' allUses
-  pure (DTExpr expr, exprDefIds <> typeDefIds <> consDefIds, allUses)
+  pure (DTExpr (tleExpr expr), exprDefIds <> typeDefIds <> consDefIds, allUses)
 
 getExprDeps ::
   (MonadError ModuleError m) =>

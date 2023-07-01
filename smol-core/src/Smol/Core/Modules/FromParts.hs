@@ -1,6 +1,6 @@
 {-# LANGUAGE DerivingStrategies #-}
 {-# LANGUAGE FlexibleContexts #-}
-{-# LANGUAGE LambdaCase #-}
+{-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE TupleSections #-}
 
 module Smol.Core.Modules.FromParts (addModulePart, moduleFromModuleParts, exprAndTypeFromParts) where
@@ -16,6 +16,7 @@ import Smol.Core.Modules.Monad
 import Smol.Core.Types.Module.DefIdentifier
 import Smol.Core.Types.Module.Module
 import Smol.Core.Types.Module.ModuleHash
+import Smol.Core.Types.Module.TopLevelExpression
 
 moduleFromModuleParts ::
   ( MonadError ModuleError m,
@@ -122,10 +123,12 @@ exprAndTypeFromParts ::
   (Monoid ann) =>
   [Identifier] ->
   Expr ParseDep ann ->
-  Expr ParseDep ann
-exprAndTypeFromParts parts expr = do
-  foldr
-    ( ELambda mempty . emptyParseDep
-    )
-    expr
-    parts
+  TopLevelExpression ParseDep ann
+exprAndTypeFromParts parts expr =
+  let tleExpr =
+        foldr
+          (ELambda mempty . emptyParseDep)
+          expr
+          parts
+      tleType = Nothing
+   in TopLevelExpression {..}
