@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1688076402456,
+  "lastUpdate": 1688309191241,
   "repoUrl": "https://github.com/danieljharvey/mimsa",
   "entries": {
     "Store benchmarks in Github Pages": [
@@ -2415,6 +2415,50 @@ window.BENCHMARK_DATA = {
           {
             "name": "evaluate/evaluate parsing 2",
             "value": 0.25777360620000994,
+            "unit": "Time (ms)"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "danieljamesharvey@gmail.com",
+            "name": "Daniel Harvey",
+            "username": "danieljharvey"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "3100a25d58bcfab6b3a681618e1c4c4bc5b54f54",
+          "message": "Nicer type signatures (#984)\n\n* Start of good module parsing\r\n\r\n* Well\r\n\r\n* now to fix pretty printer\r\n\r\n* Start putting TopLevelExpression everywhere\r\n\r\n* Great\r\n\r\n* Well\r\n\r\n* Lint\r\n\r\n* Great",
+          "timestamp": "2023-07-02T15:42:20+01:00",
+          "tree_id": "c00d9fbe64668d08248d91fad8d49e2593d42cad",
+          "url": "https://github.com/danieljharvey/mimsa/commit/3100a25d58bcfab6b3a681618e1c4c4bc5b54f54"
+        },
+        "date": 1688309189924,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "build stdlib/allFns",
+            "value": 0.15974226407143172,
+            "unit": "Time (ms)"
+          },
+          {
+            "name": "evaluate/evaluate big looping thing",
+            "value": 0.1469675157500022,
+            "unit": "Time (ms)"
+          },
+          {
+            "name": "evaluate/evaluate parsing",
+            "value": 0.04422170309890261,
+            "unit": "Time (ms)"
+          },
+          {
+            "name": "evaluate/evaluate parsing 2",
+            "value": 0.3218246098999942,
             "unit": "Time (ms)"
           }
         ]
