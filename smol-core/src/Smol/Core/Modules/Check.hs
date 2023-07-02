@@ -3,8 +3,7 @@
 {-# LANGUAGE LambdaCase #-}
 
 module Smol.Core.Modules.Check
-  ( getModuleType,
-    getModuleItemIdentifier,
+  ( getModuleItemIdentifier,
     lookupModuleDefType,
     lookupModuleDef,
     filterNameDefs,
@@ -19,11 +18,12 @@ import Smol.Core
 import Smol.Core.Helpers (filterMapKeys)
 import Smol.Core.Types.Module.DefIdentifier
 import Smol.Core.Types.Module.Module
+import Smol.Core.Types.Module.TopLevelExpression
 
 lookupModuleDef ::
   Module dep (Type dep ann) ->
   DefIdentifier ->
-  Maybe (Expr dep (Type dep ann))
+  Maybe (TopLevelExpression dep (Type dep ann))
 lookupModuleDef mod' defId =
   let defs =
         M.filterWithKey
@@ -36,7 +36,7 @@ lookupModuleDefType ::
   DefIdentifier ->
   Maybe (Type dep ann)
 lookupModuleDefType =
-  (fmap . fmap) getExprAnnotation . lookupModuleDef
+  (fmap . fmap) (getExprAnnotation . tleExpr) . lookupModuleDef
 
 -- used in logging etc, "what is this thing"
 getModuleItemIdentifier :: ModuleItem ann -> Maybe DefIdentifier
@@ -45,19 +45,9 @@ getModuleItemIdentifier (ModuleExpression name _ _) = Just (DIName name)
 getModuleItemIdentifier (ModuleDataType (DataType typeName _ _)) = Just (DIType typeName)
 getModuleItemIdentifier (ModuleExport a) = getModuleItemIdentifier a
 getModuleItemIdentifier (ModuleImport _) = Nothing
+getModuleItemIdentifier (ModuleExpressionType name _) = Just (DIName name)
 
 -- getModuleItemIdentifier (ModuleTest testName _) = Just (DITest testName)
-
--- return type of module as a MTRecord of dep -> monotype
--- TODO: module should probably be it's own MTModule or something
--- as we'll want to pass them about at some point I think
-getModuleType :: (Monoid ann) => Module dep (Type dep ann) -> Type dep ann
-getModuleType mod' =
-  let defs =
-        M.filterWithKey
-          (\k _ -> S.member k (moExpressionExports mod'))
-          (moExpressions mod')
-   in TRecord mempty (getExprAnnotation <$> filterNameDefs defs)
 
 filterNameDefs :: Map DefIdentifier a -> Map Identifier a
 filterNameDefs =

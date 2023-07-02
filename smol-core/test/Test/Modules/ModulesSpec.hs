@@ -23,8 +23,7 @@ import Smol.Core.Modules.FromParts
 import Smol.Core.Modules.ModuleError
 import Smol.Core.Modules.ResolveDeps
 import Smol.Core.Modules.Typecheck
-import Smol.Core.Types.Module.DefIdentifier
-import Smol.Core.Types.Module.Module
+import Smol.Core.Types.Module hiding (Entity (..))
 import System.IO.Unsafe
 import Test.Helpers
 import Test.Hspec
@@ -43,7 +42,7 @@ findResult :: String -> Either ModuleError (Module dep ann) -> Expr dep ann
 findResult depName = \case
   Right (Module {moExpressions}) ->
     case M.lookup (DIName (fromString depName)) moExpressions of
-      Just a -> a
+      Just a -> tleExpr a
       Nothing -> error "not found in result"
   _ -> error "typecheck failed"
 
@@ -81,7 +80,7 @@ spec = do
 
             expected =
               mempty
-                { moExpressions = M.singleton (DIName "main") expr
+                { moExpressions = M.singleton (DIName "main") (TopLevelExpression expr Nothing)
                 }
 
         fst <$> resolveModuleDeps mod' `shouldBe` Right expected
@@ -102,7 +101,7 @@ spec = do
 
             expected =
               mempty
-                { moExpressions = M.singleton (DIName "main") expr
+                { moExpressions = M.singleton (DIName "main") (TopLevelExpression expr Nothing)
                 }
 
         fst <$> resolveModuleDeps mod' `shouldBe` Right expected
@@ -113,7 +112,7 @@ spec = do
 
             expected =
               mempty
-                { moExpressions = M.singleton (DIName "main") expr
+                { moExpressions = M.singleton (DIName "main") (TopLevelExpression expr Nothing)
                 }
 
         fst <$> resolveModuleDeps mod' `shouldBe` Right expected
@@ -132,7 +131,7 @@ spec = do
                 )
             expected =
               mempty
-                { moExpressions = M.singleton (DIName "main") expr
+                { moExpressions = M.singleton (DIName "main") (TopLevelExpression expr Nothing)
                 }
 
         fst <$> resolveModuleDeps mod' `shouldBe` Right expected
@@ -156,8 +155,8 @@ spec = do
               mempty
                 { moExpressions =
                     M.fromList
-                      [ (DIName "main", mainExpr),
-                        (DIName "dep", depExpr)
+                      [ (DIName "main", TopLevelExpression mainExpr Nothing),
+                        (DIName "dep", TopLevelExpression depExpr Nothing)
                       ]
                 }
 
@@ -179,7 +178,7 @@ spec = do
             expected =
               mempty
                 { moExpressions =
-                    M.singleton (DIName "main") mainExpr,
+                    M.singleton (DIName "main") (TopLevelExpression mainExpr Nothing),
                   moDataTypes =
                     M.singleton
                       "Moybe"
@@ -229,5 +228,8 @@ spec = do
         void (getExprAnnotation (findResult "useGlobalIndirectly" result))
           `shouldBe` TGlobals () (M.singleton "valueA" (tyIntLit [20])) tyInt
 
-      xit "Typechecks State successfully" $ do
+      it "Typechecks Reader successfully" $ do
+        testModuleTypecheck "Reader" `shouldSatisfy` isRight
+
+      it "Typechecks State successfully" $ do
         testModuleTypecheck "State" `shouldSatisfy` isRight

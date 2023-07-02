@@ -27,18 +27,25 @@ spec :: Spec
 spec = do
   describe "Parser" $ do
     describe "Module" $ do
-      it "Parses a single type" $ do
-        let result = parseModuleAndFormatError "type Dog a = Woof String | Other a"
+      let singleDefs =
+            [ "type Dog a = Woof String | Other a",
+              "def id : a -> a",
+              "def id a = a",
+              "def compose f g a = f (g a)",
+              "def compose : (c -> b) -> (a -> b) -> (a -> c)"
+            ]
+
+      it "All defs" $ do
+        let result = parseModuleAndFormatError (T.intercalate "\n" (T.pack <$> singleDefs))
         result `shouldSatisfy` isRight
 
-      -- broken because Nat parses as part of union
-      xit "Parses type and def" $ do
-        let result = parseModuleAndFormatError "type What a = Just a | Nathing"
-        result `shouldBe` Right []
+      traverse_
+        ( \input -> it ("Parses module item: " <> input) $ do
+            let result = parseModuleAndFormatError (T.pack input)
 
-      it "Parses a single definition" $ do
-        let result = parseModuleAndFormatError "def id a = a"
-        result `shouldSatisfy` isRight
+            result `shouldSatisfy` isRight
+        )
+        singleDefs
 
       traverse_
         ( \(filename, contents) ->
@@ -152,7 +159,8 @@ spec = do
               ("[Bool]", TArray () 0 tyBool),
               ("String", TPrim () TPString),
               ("Either e a", tyCons "Either" [tyVar "e", tyVar "a"]),
-              ("s -> (a, s)", TFunc () mempty (tyVar "s") (tyTuple (tyVar "a") [tyVar "s"]))
+              ("s -> (a, s)", TFunc () mempty (tyVar "s") (tyTuple (tyVar "a") [tyVar "s"])),
+              ("(b -> c) -> (a -> b)", TFunc () mempty (TFunc () mempty (tyVar "b") (tyVar "c")) (TFunc () mempty (tyVar "a") (tyVar "b")))
             ]
       traverse_
         ( \(str, ty) -> it (T.unpack str) $ do

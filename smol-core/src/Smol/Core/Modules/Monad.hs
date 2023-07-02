@@ -24,6 +24,7 @@ import Smol.Core.Modules.ModuleError
 import Smol.Core.Types.Module.DefIdentifier
 import Smol.Core.Types.Module.Module
 import Smol.Core.Types.Module.ModuleHash
+import Smol.Core.Types.Module.TopLevelExpression
 
 lookupModule ::
   (MonadError ModuleError m) =>
@@ -40,7 +41,7 @@ lookupModuleDep ::
   Map ModuleHash (Module dep (Type dep Annotation)) ->
   DefIdentifier ->
   ModuleHash ->
-  m (Expr dep (Type dep Annotation))
+  m (TopLevelExpression dep (Type dep Annotation))
 lookupModuleDep typecheckedModules def modHash = do
   case M.lookup modHash typecheckedModules of
     Just mod' ->

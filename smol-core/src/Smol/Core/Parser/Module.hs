@@ -3,7 +3,6 @@
 
 module Smol.Core.Parser.Module
   ( moduleParser,
-    DefPart (..),
   )
 where
 
@@ -29,16 +28,16 @@ type Parser = Parsec Void Text
 -- use `registerParseError` from https://hackage.haskell.org/package/megaparsec-9.2.1/docs/Text-Megaparsec.html
 moduleParser :: Parser [ModuleItem Annotation]
 moduleParser =
-  let bigParsers = parseModuleItem <|> parseExport
-   in mconcat
-        <$> ( chainl1 ((: []) <$> bigParsers) (pure (<>))
-                <|> pure mempty
-            )
+  mconcat
+    <$> ( chainl1 ((\a -> [[a]]) <$> parseModuleItem) (pure (<>))
+            <|> pure mempty
+        )
 
 -- we've excluded Export here
-parseModuleItem :: Parser [ModuleItem Annotation]
+parseModuleItem :: Parser (ModuleItem Annotation)
 parseModuleItem =
-  moduleDefinitionParser
+  try moduleTypeDefinitionParser
+    <|> try moduleDefinitionParser
     <|> try moduleTypeDeclarationParser
     <|> parseImport
 
@@ -50,54 +49,36 @@ parseModuleItem =
 -- type definitions
 -- type Maybe a = Just a | Nothing
 -- type Tree a = Branch (Tree a) a (Tree a) | Leaf a
-moduleTypeDeclarationParser :: Parser [ModuleItem Annotation]
-moduleTypeDeclarationParser = do
-  td <- dataTypeParser
-  pure [ModuleDataType td]
+moduleTypeDeclarationParser :: Parser (ModuleItem Annotation)
+moduleTypeDeclarationParser = ModuleDataType <$> dataTypeParser
 
 -------
-
-annotatedIdentifier :: Parser (Annotated Identifier Annotation)
-annotatedIdentifier = withLocation Annotated identifierParser
 
 -- definitions
 -- def oneHundred = 100
 -- def id a = a
--- def exclaim (str: String) = str ++ "!!!"
--- def exclaim2 (str: String): String = str ++ "!!!"
-
-defPartParser :: Parser (DefPart Annotation)
-defPartParser =
-  let parseDefArg = DefArg <$> annotatedIdentifier
-      parseTypeArg =
-        inBrackets
-          ( do
-              name <- annotatedIdentifier
-              myString ":"
-              DefTypedArg name <$> typeParser
-          )
-      parseDefType = do
-        myString ":"
-        DefType <$> typeParser
-   in parseDefType <|> parseTypeArg <|> parseDefArg
-
+-- def const a b = a
+--
 -- top level definition
-moduleDefinitionParser :: Parser [ModuleItem Annotation]
+moduleDefinitionParser :: Parser (ModuleItem Annotation)
 moduleDefinitionParser = do
   myString "def"
   name <- identifierParser
   parts <-
-    chainl1 ((: []) <$> defPartParser) (pure (<>))
+    chainl1 ((: []) <$> identifierParser) (pure (<>))
       <|> pure mempty
   myString "="
-  expr <- expressionParser
-  pure [ModuleExpression name parts expr]
+  ModuleExpression name parts <$> expressionParser
 
-parseExport :: Parser [ModuleItem Annotation]
-parseExport = do
-  myString "export"
-  items <- parseModuleItem
-  pure (ModuleExport <$> items)
+-- top level type definition
+-- def id : a -> a
+-- def compose : (b -> c) -> (a -> b) -> (a -> c)
+moduleTypeDefinitionParser :: Parser (ModuleItem Annotation)
+moduleTypeDefinitionParser = do
+  myString "def"
+  name <- identifierParser
+  myString ":"
+  ModuleExpressionType name <$> typeParser
 
 parseHash :: Parser ModuleHash
 parseHash =
@@ -108,43 +89,22 @@ parseHash =
 
 -- TODO: maybe make these into one parser that handles both to avoid
 -- backtracking
-parseImport :: Parser [ModuleItem Annotation]
+parseImport :: Parser (ModuleItem Annotation)
 parseImport = try parseImportAll <|> parseImportNamed
 
 -- `import Prelude from a123123bcbcbcb`
-parseImportNamed :: Parser [ModuleItem Annotation]
+parseImportNamed :: Parser (ModuleItem Annotation)
 parseImportNamed = do
   myString "import"
   modName <- moduleNameParser
   myString "from"
   hash <- parseHash
-  pure [ModuleImport (ImportNamedFromHash hash modName)]
+  pure (ModuleImport (ImportNamedFromHash hash modName))
 
 -- `import * from a123123bcbcbcb`
-parseImportAll :: Parser [ModuleItem Annotation]
+parseImportAll :: Parser (ModuleItem Annotation)
 parseImportAll = do
   myString "import"
   myString "*"
   myString "from"
-  hash <- parseHash
-  pure [ModuleImport (ImportAllFromHash hash)]
-
-{-
--- `infix <|> = altMaybe`
-parseInfix :: Parser [ModuleItem Annotation]
-parseInfix = do
-  myString "infix"
-  infixOp <- infixOpParser
-  myString "="
-  boundExpr <- expressionParser
-  pure [ModuleInfix infixOp boundExpr]
-
--- `test "1 + 1 == 2" = 1 + 1 == 2`
-parseTest :: Parser [ModuleItem Annotation]
-parseTest = do
-  myString "test"
-  testName <- testNameParser
-  myString "="
-  boundExpr <- expressionParser
-  pure [ModuleTest testName boundExpr]
--}
+  ModuleImport . ImportAllFromHash <$> parseHash

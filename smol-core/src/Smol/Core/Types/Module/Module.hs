@@ -5,13 +5,13 @@
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE MonoLocalBinds #-}
+{-# LANGUAGE NamedFieldPuns #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE StandaloneDeriving #-}
 {-# LANGUAGE UndecidableInstances #-}
 
 module Smol.Core.Types.Module.Module
   ( Module (..),
-    DefPart (..),
     ModuleItem (..),
     Import (..),
   )
@@ -25,7 +25,6 @@ import qualified Data.Set as S
 import GHC.Generics (Generic)
 import Prettyprinter
 import Smol.Core.Printer
-import Smol.Core.Types.Annotated
 import Smol.Core.Types.Constructor
 import Smol.Core.Types.DataType
 import Smol.Core.Types.Expr
@@ -33,6 +32,7 @@ import Smol.Core.Types.Identifier
 import Smol.Core.Types.Module.DefIdentifier
 import Smol.Core.Types.Module.ModuleHash
 import Smol.Core.Types.Module.ModuleName
+import Smol.Core.Types.Module.TopLevelExpression
 import Smol.Core.Types.ParseDep
 import Smol.Core.Types.Type
 import Smol.Core.Types.TypeName
@@ -41,22 +41,14 @@ import Smol.Core.Types.TypeName
 -- it defines some datatypes, infixes and definitions
 -- and it probably exports one or more of those
 
-data DefPart ann
-  = -- | typeless argument `a`
-    DefArg (Annotated Identifier ann)
-  | -- | argument with type `(a: String) ->`
-    DefTypedArg (Annotated Identifier ann) (ParsedType ann)
-  | -- | type with no binding `String`
-    DefType (ParsedType ann)
-  deriving stock (Eq, Ord, Show, Functor)
-
 -- item parsed from file, kept like this so we can order them and have
 -- duplicates
 -- we will remove duplicates when we work out dependencies between everything
 -- TODO: add more annotations to everything so we can produce clearer errors
 -- when things don't make sense (duplicate defs etc)
 data ModuleItem ann
-  = ModuleExpression Identifier [DefPart ann] (ParsedExpr ann)
+  = ModuleExpression Identifier [Identifier] (ParsedExpr ann)
+  | ModuleExpressionType Identifier (Type ParseDep ann)
   | ModuleDataType (DataType ParseDep ann)
   | ModuleExport (ModuleItem ann)
   | ModuleImport Import
@@ -79,7 +71,7 @@ data Import
 -- this is the checked module, it contains no duplicates and we don't care
 -- about ordering
 data Module dep ann = Module
-  { moExpressions :: Map DefIdentifier (Expr dep ann),
+  { moExpressions :: Map DefIdentifier (TopLevelExpression dep ann),
     moExpressionExports :: Set DefIdentifier,
     moExpressionImports :: Map DefIdentifier ModuleHash, -- what we imported, where it's from
     moDataTypes :: Map TypeName (DataType dep ann),
@@ -135,7 +127,7 @@ deriving anyclass instance
 instance Printer (Module ParseDep ann) where
   prettyDoc mod' =
     let printedDefs =
-          uncurry (printDefinition mod')
+          uncurry printDefinition
             <$> M.toList (moExpressions mod')
         printedTypes =
           uncurry (printTypeDef mod')
@@ -181,42 +173,27 @@ printTypeDef mod' tn dt =
           else ""
    in prettyExp <> prettyDoc dt
 
--- given annotation and expr, pair annotation types with lambdas
-printPaired :: ParsedType ann -> ParsedExpr ann -> Doc style
-printPaired (TFunc _ _ fn arg) (ELambda _ ident body) =
-  "(" <> prettyDoc ident
-    <+> ":"
-    <+> prettyDoc fn
-      <> ")"
-      <> line
-      <> printPaired arg body
-printPaired mt expr =
-  ":"
-    <+> prettyDoc mt
-    <+> "="
-      <> line
-      <> indentMulti 2 (prettyDoc expr)
-
-printDefinition :: Module ParseDep ann -> DefIdentifier -> ParsedExpr ann -> Doc a
-printDefinition mod' def expr =
-  let prettyExp =
-        if S.member def (moExpressionExports mod')
-          then "export "
-          else ""
-   in prettyExp <> case def of
-        DIName name -> case expr of
-          (EAnn _ mt rest) ->
-            "def"
-              <+> prettyDoc name
-                <> line
-                <> indentMulti 2 (printPaired mt rest)
-          other ->
+printDefinition :: DefIdentifier -> TopLevelExpression ParseDep ann -> Doc a
+printDefinition def (TopLevelExpression {tleType, tleExpr}) =
+  case def of
+    DIName name ->
+      let prettyExpr =
             "def"
               <+> prettyDoc name
               <+> "="
                 <> line
-                <> indentMulti 2 (prettyDoc other)
-        DIType _ -> error "printDefinition is printing type oh no"
+                <> indentMulti 2 (prettyDoc tleExpr)
+          prettyType = case tleType of
+            Just ty ->
+              "def"
+                <+> prettyDoc name
+                <+> ":"
+                  <> line
+                  <> indentMulti 2 (prettyDoc ty)
+                  <> "\n"
+            Nothing -> ""
+       in prettyType <> prettyExpr
+    DIType _ -> error "printDefinition is printing type oh no"
 
 {- DIInfix infixOp ->
           "infix" <+> prettyDoc infixOp <+> "=" <+> prettyDoc expr

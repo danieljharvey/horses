@@ -1,7 +1,8 @@
 {-# LANGUAGE OverloadedStrings #-}
 
 module Smol.Core.Parser
-  ( parseExpr,
+  ( parseAndFormat,
+    parseExpr,
     parseExprAndFormatError,
     parseTypeAndFormatError,
     parseType,

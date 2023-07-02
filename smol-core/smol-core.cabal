@@ -111,6 +111,7 @@ library
     Smol.Core.Types.Module.Module
     Smol.Core.Types.Module.ModuleHash
     Smol.Core.Types.Module.ModuleName
+    Smol.Core.Types.Module.TopLevelExpression
     Smol.Core.Types.Op
     Smol.Core.Types.ParseDep
     Smol.Core.Types.Pattern

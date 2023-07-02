@@ -35,7 +35,7 @@ import Smol.Core.Types.Constructor
 import Smol.Core.Types.DataType
 import Smol.Core.Types.Expr
 import Smol.Core.Types.Identifier
-import Smol.Core.Types.Module (DefIdentifier (..), Module (..))
+import Smol.Core.Types.Module (DefIdentifier (..), Module (..), TopLevelExpression (..))
 import Smol.Core.Types.Op
 import Smol.Core.Types.Prim
 import Smol.Core.Types.ResolvedDep
@@ -156,11 +156,11 @@ irFromModule myModule =
           . M.toList
           $ moDataTypes myModule
    in IRModule $
-        [ IRExternDef $ getPrinter (getExprAnnotation mainFunc),
+        [ IRExternDef $ getPrinter (getExprAnnotation $ tleExpr mainFunc),
           IRExternDef irStringConcat,
           IRExternDef irStringEquals -- we should dynamically include these once we get a lot of stdlib helpers
         ]
-          <> modulePartsFromExpr dataTypes otherFuncs mainFunc
+          <> modulePartsFromExpr dataTypes (tleExpr <$> otherFuncs) (tleExpr mainFunc)
 
 fromPrim :: (Monad m) => Prim -> m IRExpr
 fromPrim (PInt i) = pure $ IRPrim (IRPrimInt32 i)
