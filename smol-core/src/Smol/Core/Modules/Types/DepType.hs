@@ -8,9 +8,10 @@ module Smol.Core.Modules.Types.DepType
 where
 
 import Smol.Core
+import Smol.Core.Types.Module.TopLevelExpression
 
 data DepType dep ann
-  = DTExpr (Expr dep ann)
+  = DTExpr (TopLevelExpression dep ann)
   | DTData (DataType dep ann)
 
 deriving stock instance

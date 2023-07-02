@@ -9,26 +9,15 @@
 {-# LANGUAGE UndecidableInstances #-}
 
 module Smol.Core.Types.Module.TopLevelExpression
-  ( TopLevelExpression(..)
+  ( TopLevelExpression (..),
   )
 where
 
 import Data.Aeson (FromJSON, FromJSONKey, ToJSON, ToJSONKey)
-import Data.Map.Strict (Map)
-import qualified Data.Map.Strict as M
-import Data.Set (Set)
-import qualified Data.Set as S
 import GHC.Generics (Generic)
-import Prettyprinter
-import Smol.Core.Printer
 import Smol.Core.Types.Constructor
-import Smol.Core.Types.DataType
 import Smol.Core.Types.Expr
 import Smol.Core.Types.Identifier
-import Smol.Core.Types.Module.DefIdentifier
-import Smol.Core.Types.Module.ModuleHash
-import Smol.Core.Types.Module.ModuleName
-import Smol.Core.Types.ParseDep
 import Smol.Core.Types.Type
 import Smol.Core.Types.TypeName
 
@@ -89,10 +78,11 @@ deriving anyclass instance
   ToJSONKey (TopLevelExpression dep ann)
 
 deriving anyclass instance
-  ( FromJSONKey (dep Identifier), Ord (dep Identifier), FromJSON ann,
+  ( FromJSONKey (dep Identifier),
+    Ord (dep Identifier),
+    FromJSON ann,
     FromJSON (dep Identifier),
     FromJSON (dep Constructor),
     FromJSON (dep TypeName)
   ) =>
   FromJSON (TopLevelExpression dep ann)
-

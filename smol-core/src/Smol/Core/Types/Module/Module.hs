@@ -127,7 +127,7 @@ deriving anyclass instance
 instance Printer (Module ParseDep ann) where
   prettyDoc mod' =
     let printedDefs =
-          uncurry (printDefinition mod')
+          uncurry printDefinition
             <$> M.toList (moExpressions mod')
         printedTypes =
           uncurry (printTypeDef mod')
@@ -173,24 +173,8 @@ printTypeDef mod' tn dt =
           else ""
    in prettyExp <> prettyDoc dt
 
--- given annotation and expr, pair annotation types with lambdas
-printPaired :: ParsedType ann -> ParsedExpr ann -> Doc style
-printPaired (TFunc _ _ fn arg) (ELambda _ ident body) =
-  "(" <> prettyDoc ident
-    <+> ":"
-    <+> prettyDoc fn
-      <> ")"
-      <> line
-      <> printPaired arg body
-printPaired mt expr =
-  ":"
-    <+> prettyDoc mt
-    <+> "="
-      <> line
-      <> indentMulti 2 (prettyDoc expr)
-
-printDefinition :: Module ParseDep ann -> DefIdentifier -> TopLevelExpression ParseDep ann -> Doc a
-printDefinition mod' def (TopLevelExpression {tleType, tleExpr}) =
+printDefinition :: DefIdentifier -> TopLevelExpression ParseDep ann -> Doc a
+printDefinition def (TopLevelExpression {tleType, tleExpr}) =
   case def of
     DIName name ->
       let prettyExpr =

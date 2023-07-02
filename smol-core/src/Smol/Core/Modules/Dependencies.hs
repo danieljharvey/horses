@@ -29,11 +29,11 @@ import Smol.Core.Types.Module.Module
 import Smol.Core.Types.Module.ModuleHash
 import Smol.Core.Types.Module.TopLevelExpression
 
-filterExprs :: Map k (DepType dep ann) -> Map k (Expr dep ann)
+filterExprs :: Map k (DepType dep ann) -> Map k (TopLevelExpression dep ann)
 filterExprs =
   M.mapMaybe
     ( \case
-        (DTExpr expr) -> Just expr
+        (DTExpr tle) -> Just tle
         _ -> Nothing
     )
 
@@ -195,7 +195,7 @@ getExprDependencies getUses mod' expr = do
   exprDefIds <- getExprDeps mod' allUses
   consDefIds <- getConstructorUses mod' allUses
   typeDefIds <- getTypeUses mod' allUses
-  pure (DTExpr (tleExpr expr), exprDefIds <> typeDefIds <> consDefIds, allUses)
+  pure (DTExpr expr, exprDefIds <> typeDefIds <> consDefIds, allUses)
 
 getExprDeps ::
   (MonadError ModuleError m) =>

@@ -5,8 +5,12 @@ def run : Reader (r -> a) -> r -> a
 def run reader r =
   case reader of (Reader ra) -> ra r
 
+/*
+
+// this breaks typechecking with
+// Unification error! Expected matching types but found (U2 -> U3) -> Reader U2 U3 and Reader.
 def ask : Reader (r -> r)
-def ask = Reader (Prelude.id)
+def ask = let id = \a -> a in Reader id
 
 def local : (r -> r) -> Reader (r -> a) -> Reader (r -> a)
 def local envF reader =
@@ -22,4 +26,4 @@ def monoid innerM =
   { mappend: \rA -> \rB -> Reader (\r -> innerM.append (run rA r) (run rB r)),
     mempty: Reader (\r -> innerM.empty)
   }
-
+*/

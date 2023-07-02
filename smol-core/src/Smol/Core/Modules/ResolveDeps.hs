@@ -27,6 +27,7 @@ import Smol.Core.Modules.Types.DepType
 import Smol.Core.Modules.Uses
 import Smol.Core.Types.Module.DefIdentifier
 import Smol.Core.Types.Module.Module
+import Smol.Core.Types.Module.TopLevelExpression
 
 resolveExprDeps ::
   (Show ann, MonadError ModuleError m) =>
@@ -43,7 +44,7 @@ resolveModuleDeps parsedModule = do
   let resolveIt (DTData dt, _, _) =
         pure (Left (resolveDataType dt))
       resolveIt (DTExpr expr, defIds, _entities) =
-        Right <$> resolveExpr expr defIds (allConstructors parsedModule)
+        Right <$> resolveTopLevelExpression expr defIds (allConstructors parsedModule)
   resolvedMap <- evalStateT (traverse resolveIt map') (ResolveState 0)
   let newExpressions =
         M.mapMaybe
@@ -103,11 +104,17 @@ resolveType (TApp ann fn arg) = TApp ann (resolveType fn) (resolveType arg)
 
 -- resolve Expr (s) and Type pls
 resolveTopLevelExpression ::
+  (Show ann, MonadState ResolveState m, MonadError ModuleError m) =>
   TopLevelExpression ParseDep ann ->
   Set DefIdentifier ->
   Set Constructor ->
   m (TopLevelExpression ResolvedDep ann)
-resolveTopLevelExpression tle localDefs localTypes = undefined
+resolveTopLevelExpression tle localDefs localTypes = flip runReaderT initialEnv $ do
+  resolvedExpr <- resolveM (tleExpr tle)
+  let resolvedType = fmap resolveType (tleType tle)
+  pure (TopLevelExpression {tleExpr = resolvedExpr, tleType = resolvedType})
+  where
+    initialEnv = ResolveEnv mempty localDefs localTypes
 
 resolveExpr ::
   (Show ann, MonadError ModuleError m, MonadState ResolveState m) =>

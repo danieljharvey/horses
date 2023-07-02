@@ -9,9 +9,6 @@ import qualified Builder as Build
 import Control.Monad.Except
 import Data.Bifunctor (first)
 import Data.Map.Strict (Map)
--- import Smol.Core.Modules.HashModule
--- import Smol.Core.Modules.Monad
-
 import qualified Data.Map.Strict as M
 import Data.Maybe (fromMaybe, mapMaybe)
 import Data.Set (Set)
@@ -22,9 +19,7 @@ import Smol.Core.Modules.Check (filterNameDefs, filterTypeDefs)
 import Smol.Core.Modules.Dependencies
 import Smol.Core.Modules.ModuleError
 import Smol.Core.Modules.Types.DepType
-import Smol.Core.Types.Module.DefIdentifier
-import Smol.Core.Types.Module.Module
-import Smol.Core.Types.Module.ModuleHash
+import Smol.Core.Types.Module
 
 getModuleDefIdentifiers ::
   Map DefIdentifier (Set DefIdentifier) ->
@@ -170,10 +165,10 @@ typecheckOneExprDef ::
   Text ->
   Module ResolvedDep Annotation ->
   Map DefIdentifier (DepType ResolvedDep (Type ResolvedDep Annotation)) ->
-  (DefIdentifier, Expr ResolvedDep Annotation) ->
-  m (Expr ResolvedDep (Type ResolvedDep Annotation))
-typecheckOneExprDef input _inputModule deps (def, expr) = do
-  let exprTypeMap = mapKey LocalDefinition $ getExprAnnotation <$> filterNameDefs (filterExprs deps)
+  (DefIdentifier, TopLevelExpression ResolvedDep Annotation) ->
+  m (TopLevelExpression ResolvedDep (Type ResolvedDep Annotation))
+typecheckOneExprDef input _inputModule deps (def, tle) = do
+  let exprTypeMap = mapKey LocalDefinition $ getExprAnnotation . tleExpr <$> filterNameDefs (filterExprs deps)
 
   -- initial typechecking environment
   let env =
@@ -183,8 +178,21 @@ typecheckOneExprDef input _inputModule deps (def, expr) = do
             tceGlobals = mempty
           }
 
+  -- if we have a type, add an annotation
+  let actualExpr = case tleType tle of
+        Nothing -> tleExpr tle
+        Just ty -> EAnn (getTypeAnnotation ty) ty (tleExpr tle)
+
   -- typecheck it
-  liftEither $
-    first
-      (DefDoesNotTypeCheck input def)
-      (elaborate env expr)
+  newExpr <-
+    liftEither $
+      first
+        (DefDoesNotTypeCheck input def)
+        (elaborate env actualExpr)
+
+  -- split the type out again
+  let (typedType, typedExpr) = case newExpr of
+        (EAnn _ ty expr) -> (Just ty, expr)
+        other -> (Nothing, other)
+
+  pure (TopLevelExpression typedExpr typedType)

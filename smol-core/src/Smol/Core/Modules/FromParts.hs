@@ -1,5 +1,6 @@
 {-# LANGUAGE DerivingStrategies #-}
 {-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE TupleSections #-}
 
@@ -9,6 +10,7 @@ import Control.Monad.Except
 import Data.Coerce
 import Data.Map.Strict (Map)
 import qualified Data.Map.Strict as M
+import Data.Maybe (mapMaybe)
 import qualified Data.Set as S
 import Smol.Core
 import Smol.Core.Modules.ModuleError
@@ -28,27 +30,28 @@ moduleFromModuleParts ::
 moduleFromModuleParts modules parts =
   let addPart part output = do
         mod' <- output
-        addModulePart modules part mod'
+        addModulePart modules parts part mod'
    in foldr addPart (pure mempty) parts
 
 addModulePart ::
   (MonadError ModuleError m, Monoid ann) =>
   Map ModuleHash (Module ParseDep Annotation) ->
+  [ModuleItem ann] ->
   ModuleItem ann ->
   Module ParseDep ann ->
   m (Module ParseDep ann)
-addModulePart modules part mod' =
+addModulePart modules allParts part mod' =
   case part of
     ModuleExpression name bits expr -> do
       errorIfExpressionAlreadyDefined mod' (DIName name)
-      let exp' = exprAndTypeFromParts bits expr
+      let exp' = exprAndTypeFromParts allParts name bits expr
       pure $
         mod'
           { moExpressions =
               M.singleton (DIName name) exp' <> moExpressions mod'
           }
     ModuleExpressionType _name _ty -> do
-      error "addModulePart ModuleExpressionType"
+      pure mod' -- we sort these elsewhere
     ModuleDataType dt@(DataType tyCon _ _) -> do
       let typeName = coerce tyCon
       checkDataType mod' dt
@@ -60,7 +63,7 @@ addModulePart modules part mod' =
           }
     ModuleExport modItem -> do
       -- get whatever is inside
-      innerModule <- addModulePart modules modItem mod'
+      innerModule <- addModulePart modules allParts modItem mod'
       -- get the keys, add them to exports
       let defExports = case modItem of
             ModuleExpression name _ _ -> S.singleton (DIName name)
@@ -121,14 +124,27 @@ addModulePart modules part mod' =
 -- 3) if not, just return expr
 exprAndTypeFromParts ::
   (Monoid ann) =>
+  [ModuleItem ann] ->
+  Identifier ->
   [Identifier] ->
   Expr ParseDep ann ->
   TopLevelExpression ParseDep ann
-exprAndTypeFromParts parts expr =
+exprAndTypeFromParts moduleItems ident idents expr =
   let tleExpr =
         foldr
           (ELambda mempty . emptyParseDep)
           expr
-          parts
-      tleType = Nothing
+          idents
+      tleType = findTypeExpression ident moduleItems
    in TopLevelExpression {..}
+
+findTypeExpression :: Identifier -> [ModuleItem ann] -> Maybe (Type ParseDep ann)
+findTypeExpression ident moduleItems =
+  case mapMaybe
+    ( \case
+        ModuleExpressionType name ty | name == ident -> Just ty
+        _ -> Nothing
+    )
+    moduleItems of
+    [a] -> Just a
+    _ -> Nothing -- we should have better errors for multiple type declarations, but for now, chill out friend
