@@ -119,5 +119,4 @@ parseImportAll = do
   myString "import"
   myString "*"
   myString "from"
-  hash <- parseHash
-  pure (ModuleImport (ImportAllFromHash hash))
+  ModuleImport . ImportAllFromHash <$> parseHash
