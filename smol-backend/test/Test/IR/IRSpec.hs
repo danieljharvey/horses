@@ -105,7 +105,8 @@ spec = do
                 ],
                 "42"
               ),
-              ( [ "def add (a: Nat) (b : Nat): Nat = a + b",
+              ( [ "def add : Nat -> Nat -> Nat",
+                  "def add a b = a + b",
                   "def main = add 20 22"
                 ],
                 "42"
@@ -126,7 +127,8 @@ spec = do
                 "42"
               ),
               ( [ "type Identity a = Identity a",
-                  "def runIdentity (identA: Identity Int): Int = case identA of Identity b -> b",
+                  "def runIdentity : Identity Int -> Int",
+                  "def runIdentity identA = case identA of Identity b -> b",
                   "def main = runIdentity (Identity 42)"
                 ],
                 "42"
