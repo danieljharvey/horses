@@ -3,8 +3,6 @@
 
 module Smol.Core.Modules.Typecheck (typecheckModule) where
 
--- import Smol.Core.Types.Module.ModuleName
-
 import qualified Builder as Build
 import Control.Monad.Except
 import Data.Bifunctor (first)

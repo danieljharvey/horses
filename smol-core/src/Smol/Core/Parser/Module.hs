@@ -33,18 +33,6 @@ moduleParser =
             <|> pure mempty
         )
 
--- why is this fucked? because we don't stop parsing at the end of a def
--- parsing >>>
--- id : a -> a
--- id a = a
--- <<<
--- fails because we continue parsing the definition as part of the type
--- therefore we need indentation sensitive parsers:
--- https://markkarpov.com/tutorial/megaparsec.html#indentationsensitive-parsing
---
--- we should try parsing as "the identifier should not be indented but the rest
--- must be"
-
 -- we've excluded Export here
 parseModuleItem :: Parser (ModuleItem Annotation)
 parseModuleItem =
@@ -67,9 +55,9 @@ moduleTypeDeclarationParser = ModuleDataType <$> dataTypeParser
 -------
 
 -- definitions
--- oneHundred = 100
--- id a = a
--- const a b = a
+-- def oneHundred = 100
+-- def id a = a
+-- def const a b = a
 --
 -- top level definition
 moduleDefinitionParser :: Parser (ModuleItem Annotation)
@@ -83,8 +71,8 @@ moduleDefinitionParser = do
   ModuleExpression name parts <$> expressionParser
 
 -- top level type definition
--- id : a -> a
--- compose : (b -> c) -> (a -> b) -> (a -> c)
+-- def id : a -> a
+-- def compose : (b -> c) -> (a -> b) -> (a -> c)
 moduleTypeDefinitionParser :: Parser (ModuleItem Annotation)
 moduleTypeDefinitionParser = do
   myString "def"
