@@ -24,8 +24,10 @@
                   # has wrong version of unix-compat, so we ignore it
                   shelly = pkgs.haskell.lib.doJailbreak super.shelly;
                   # has wrong version of something, so allow-newer
-                  ormolu = pkgs.haskell.lib.doJailbreak super.ormolu;
-
+                  ormolu = pkgs.haskell.lib.doJailbreak (pkgs.haskell.lib.overrideCabal super.ormolu {
+                    version = "0.7.0.0";
+                    sha256 = "+jyUVEGAt4q09eH9Ma3pIXPlyzGI0isHLk/cLuJkfB0=";
+                  });
                 };
 
               };
