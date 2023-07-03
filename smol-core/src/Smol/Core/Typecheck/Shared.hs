@@ -12,7 +12,6 @@ module Smol.Core.Typecheck.Shared
     reduceType,
     lookupVar,
     popArg,
-    popArgs,
     flattenConstructorType,
     flattenConstructorApplication,
     withVar,
@@ -314,17 +313,6 @@ freshen ty = do
           )
           pairs
   pure (substituteMany subs ty, undo)
-
--- | pass stack arg to action and remove it
-popArgs :: (Show ann, MonadState (TCState ann) m) => Int -> m [ResolvedType ann]
-popArgs 0 = pure mempty
-popArgs maxArgs = do
-  maybeArg <- popArg
-  case maybeArg of
-    Just arg -> do
-      moreArgs <- popArgs (maxArgs - 1)
-      pure $ arg : moreArgs
-    Nothing -> pure mempty
 
 -- untangle a bunch of TApp (TApp (TConstructor typeName) 1) True into `(typeName, [1, True])`
 -- to make it easier to match up with patterns
