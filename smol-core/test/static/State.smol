@@ -1,12 +1,12 @@
 type State s a =
   State (s -> (a, s))
 
-/*
 def pure : a -> State s a
 def pure a =
   State (\s -> (a, s))
 
-def get : State s a -> s
+
+def get : State s s
 def get =
   State (\s -> (s, s))
 
@@ -39,4 +39,3 @@ def bind f state = State (\s ->
 def run : State s a -> s -> (a, s)
 def run state s = case state of (State sas) -> sas s
 
-*/

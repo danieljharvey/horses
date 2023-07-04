@@ -159,8 +159,15 @@ spec = do
               ("[Bool]", TArray () 0 tyBool),
               ("String", TPrim () TPString),
               ("Either e a", tyCons "Either" [tyVar "e", tyVar "a"]),
-              ("s -> (a, s)", TFunc () mempty (tyVar "s") (tyTuple (tyVar "a") [tyVar "s"])),
-              ("(b -> c) -> (a -> b)", TFunc () mempty (TFunc () mempty (tyVar "b") (tyVar "c")) (TFunc () mempty (tyVar "a") (tyVar "b")))
+              ( "s -> (a, s)",
+                TFunc () mempty (tyVar "s") (tyTuple (tyVar "a") [tyVar "s"])
+              ),
+              ( "(b -> c) -> (a -> b)",
+                TFunc () mempty (TFunc () mempty (tyVar "b") (tyVar "c")) (TFunc () mempty (tyVar "a") (tyVar "b"))
+              ),
+              ( "a -> State s a",
+                TFunc () mempty (tyVar "a") (tyCons "State" [tyVar "s", tyVar "a"])
+              )
             ]
       traverse_
         ( \(str, ty) -> it (T.unpack str) $ do

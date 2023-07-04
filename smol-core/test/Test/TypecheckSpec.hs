@@ -128,7 +128,7 @@ spec = do
               ( "(\\a -> a : Maybe a -> Maybe a) (Nothing : Maybe Nat)",
                 "Maybe Nat"
               ),
-              ( "(\\a -> a : Maybe a -> Maybe a) Just 1",
+              ( "(\\a -> a : Maybe a -> Maybe a) (Just 1)",
                 "Maybe 1"
               ),
               ( "(\\f -> \\ident -> case ident of Identity a -> Identity (f a) : (a -> b) -> Identity a -> Identity b)",

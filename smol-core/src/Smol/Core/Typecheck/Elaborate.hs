@@ -16,7 +16,7 @@ import Control.Monad.Reader
 import Control.Monad.State
 import Control.Monad.Trans.Writer.CPS (runWriterT)
 import Control.Monad.Writer.CPS
-import Data.Foldable (foldl', toList)
+import Data.Foldable (toList)
 import Data.Functor
 import qualified Data.List.NonEmpty as NE
 import qualified Data.Map.Strict as M
@@ -228,14 +228,10 @@ infer inferExpr = do
       pure (EPatternMatch typ elabExpr elabPats)
     (EConstructor ann constructor) -> do
       (typeName, vars, _, args) <- lookupConstructor constructor
+
       tyConstructor <- typeForConstructor ann typeName vars args
-      tyArgs <- popArgs (length args)
-      let ty =
-            foldl'
-              (TApp ann)
-              tyConstructor
-              tyArgs
-      pure (EConstructor (reduceType ty) constructor)
+
+      pure (EConstructor tyConstructor constructor)
 
 inferApplication ::
   ( Ord ann,
@@ -258,6 +254,7 @@ inferApplication ann maybeCheckType fn arg = withRecursiveFn fn arg $ do
   let inferFn exprFn = do
         typedFn <- infer exprFn -- get type of fn
         (freshTyVar, undoSubs) <- freshen (getExprAnnotation typedFn)
+
         case freshTyVar of
           (TFunc tAnn tClosure tArg tBody) -> do
             -- if this is a func, it may be ready to be applied
@@ -290,10 +287,9 @@ inferApplication ann maybeCheckType fn arg = withRecursiveFn fn arg $ do
     Nothing -> case maybeCheckType of
       Just typ -> pure typ
       Nothing -> getUnknown ann
-    Just retType -> do
-      case maybeCheckType of
-        Just typ -> retType `isSubtypeOf` typ
-        Nothing -> pure retType
+    Just retType -> case maybeCheckType of
+      Just typ -> retType `isSubtypeOf` typ
+      Nothing -> pure retType
 
   pure (EApp finalReturnType typedFn typedArg)
 
