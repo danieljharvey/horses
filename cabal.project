@@ -21,8 +21,16 @@ package diagnose
 
 source-repository-package
   type: git
-  location: https://github.com/haskell-servant
+  location: https://github.com/haskell-servant/servant
   tag: 5da422bca11c5bead39c4c06d692181ab482c726
+  subdir: servant-server
+
+source-repository-package
+  type: git
+  location: https://github.com/haskell-servant/servant
+  tag: 5da422bca11c5bead39c4c06d692181ab482c726
+  subdir: servant
+
 
 source-repository-package
   type: git
