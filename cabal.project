@@ -21,19 +21,6 @@ package diagnose
 
 source-repository-package
   type: git
-  location: https://github.com/haskell-servant/servant
-  tag: 5da422bca11c5bead39c4c06d692181ab482c726
-  subdir: servant-server
-
-source-repository-package
-  type: git
-  location: https://github.com/haskell-servant/servant
-  tag: 5da422bca11c5bead39c4c06d692181ab482c726
-  subdir: servant
-
-
-source-repository-package
-  type: git
   location: https://github.com/9999years/prometheus-haskell
   tag: d1809083b0543fff6e997fd1fbbe63e25ae21622
   subdir: prometheus-client
