@@ -51,10 +51,10 @@ resolveModule :: Text -> Either ModuleError (Module ResolvedDep (Type ResolvedDe
 resolveModule input =
   case parseModuleAndFormatError input of
     Right moduleParts -> do
-      case moduleFromModuleParts mempty moduleParts >>= resolveModuleDeps . addTestDataTypesToModule of
+      case moduleFromModuleParts moduleParts >>= resolveModuleDeps . addTestDataTypesToModule of
         Left e -> error (show e)
         Right (myModule, deps) -> do
-          typecheckModule mempty "" myModule deps
+          typecheckModule input myModule deps
     Left e -> error (show e)
 
 testCompileModuleIR :: ([Text], Text) -> Spec

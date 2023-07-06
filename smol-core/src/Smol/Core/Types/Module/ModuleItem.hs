@@ -11,8 +11,7 @@
 {-# LANGUAGE UndecidableInstances #-}
 
 module Smol.Core.Types.Module.ModuleItem
-  (
-    ModuleItem (..),
+  ( ModuleItem (..),
   )
 where
 
@@ -128,7 +127,7 @@ indentMulti i doc = flatAlt (indent i doc) doc
 
 printTypeDef :: TypeName -> DataType ParseDep ann -> Doc style
 printTypeDef _tn =
-   prettyDoc
+  prettyDoc
 
 printDefinition :: Identifier -> TopLevelExpression ParseDep ann -> Doc a
 printDefinition name (TopLevelExpression {tleType, tleExpr}) =
@@ -150,7 +149,7 @@ printDefinition name (TopLevelExpression {tleType, tleExpr}) =
    in prettyType <> prettyExpr
 
 instance Semigroup (Module dep ann) where
-  (Module a b ) <> (Module a' b' ) =
+  (Module a b) <> (Module a' b') =
     Module (a <> a') (b <> b')
 
 instance Monoid (Module dep ann) where

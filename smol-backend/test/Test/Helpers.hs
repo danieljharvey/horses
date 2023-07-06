@@ -129,7 +129,7 @@ unsafeParseType input = case parseTypeAndFormatError input of
 
 unsafeParseModule :: Text -> Module ParseDep ()
 unsafeParseModule input = case parseModuleAndFormatError input of
-  Right parts -> case moduleFromModuleParts mempty parts of
+  Right parts -> case moduleFromModuleParts parts of
     Right a -> a $> ()
     Left e -> error (show e)
   Left e -> error (show e)

@@ -35,7 +35,7 @@ import Smol.Core.Types.Constructor
 import Smol.Core.Types.DataType
 import Smol.Core.Types.Expr
 import Smol.Core.Types.Identifier
-import Smol.Core.Types.Module (DefIdentifier (..), Module (..), TopLevelExpression (..))
+import Smol.Core.Types.Module (Module (..), TopLevelExpression (..))
 import Smol.Core.Types.Op
 import Smol.Core.Types.Prim
 import Smol.Core.Types.ResolvedDep
@@ -140,16 +140,11 @@ addVar ident expr =
 -- no considerations for name collisions etc
 irFromModule :: (Show ann) => Module ResolvedDep (Type ResolvedDep ann) -> IRModule
 irFromModule myModule =
-  let mainFunc = case M.lookup (DIName "main") (moExpressions myModule) of
+  let mainFunc = case M.lookup "main" (moExpressions myModule) of
         Just expr -> expr
         Nothing -> error "expected a main function"
       otherFuncs =
-        filterMapKeys
-          ( \case
-              DIName name -> Just name
-              _ -> Nothing
-          )
-          (M.delete (DIName "main") (moExpressions myModule))
+        M.delete "main" (moExpressions myModule)
       dataTypes =
         M.fromList
           . fmap (bimap LocalDefinition (fmap getTypeAnnotation))

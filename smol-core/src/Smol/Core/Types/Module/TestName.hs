@@ -14,4 +14,4 @@ newtype TestName = TestName Text
   deriving newtype (Eq, Ord, Show, FromJSON, ToJSON)
 
 instance Printer TestName where
- prettyDoc (TestName tn) = prettyDoc tn
+  prettyDoc (TestName tn) = prettyDoc tn

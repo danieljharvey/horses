@@ -2,10 +2,7 @@
 {-# LANGUAGE FlexibleContexts #-}
 
 module Smol.Core.Modules.Monad
-  (
-
-
-    errorIfExpressionAlreadyDefined,
+  ( errorIfExpressionAlreadyDefined,
     checkDataType,
   )
 where
