@@ -52,7 +52,8 @@ spec = do
               ("let stuff = { x: 1, y : 2 }; stuff.x + stuff.y", "3"),
               ("let id = \\a -> a; (id 1, id 2, id 3)", "(1,2,3)"),
               ("[1,2 + 3]", "[1,5]"),
-              ("case [1,2,3] of [_, ...rest] -> rest | _ -> [42]", "[2,3]")
+              ("case [1,2,3] of [_, ...rest] -> rest | _ -> [42]", "[2,3]"),
+              ("let f = \\a -> if a == 10 then a else a + f (a + 1); f 0","25")
             ]
       traverse_
         ( \(input, expect) ->

@@ -3,6 +3,7 @@
 
 module Smol.Core.Interpreter.Interpret (interpret) where
 
+import Control.Monad (void)
 import Control.Monad.Identity
 import Data.Foldable (toList)
 import qualified Data.List.NonEmpty as NE
@@ -14,7 +15,7 @@ import Smol.Core.Interpreter.Types
 import Smol.Core.Types
 
 interpretInfix ::
-  (Monad m) =>
+  (Show ann, Monad m) =>
   ann ->
   Op ->
   IExpr ann ->
@@ -22,7 +23,16 @@ interpretInfix ::
   m (IExpr ann)
 interpretInfix ann OpAdd (IPrim _ (PInt a)) (IPrim _ (PInt b)) =
   pure $ IPrim ann (PInt $ a + b)
-interpretInfix _ _ _ _ = error "haven't implemented other infixes"
+interpretInfix ann OpEquals a b =
+  pure $ IPrim ann (PBool (void (toExpr a) == void (toExpr b)))
+interpretInfix _ op a b =
+  error $
+    "Infix not implemented: "
+      <> show (toExpr a)
+      <> " "
+      <> show op
+      <> " "
+      <> show (toExpr b)
 
 -- | just keep reducing the thing until the smallest thing
 interpret ::
