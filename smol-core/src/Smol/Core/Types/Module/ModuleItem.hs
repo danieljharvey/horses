@@ -10,8 +10,8 @@
 {-# LANGUAGE StandaloneDeriving #-}
 {-# LANGUAGE UndecidableInstances #-}
 
-module Smol.Core.Types.Module.Module
-  ( Module (..),
+module Smol.Core.Types.Module.ModuleItem
+  ( ModuleItem (..),
   )
 where
 
@@ -23,14 +23,35 @@ import Prettyprinter
 import Smol.Core.Printer
 import Smol.Core.Types.Constructor
 import Smol.Core.Types.DataType
+import Smol.Core.Types.Expr
 import Smol.Core.Types.Identifier
+import Smol.Core.Types.Module.TestName
 import Smol.Core.Types.Module.TopLevelExpression
 import Smol.Core.Types.ParseDep
+import Smol.Core.Types.Type
 import Smol.Core.Types.TypeName
 
 -- a module is, broadly, one file
 -- it defines some datatypes, infixes and definitions
 -- and it probably exports one or more of those
+
+-- item parsed from file, kept like this so we can order them and have
+-- duplicates
+-- we will remove duplicates when we work out dependencies between everything
+-- TODO: add more annotations to everything so we can produce clearer errors
+-- when things don't make sense (duplicate defs etc)
+data ModuleItem ann
+  = ModuleExpression Identifier [Identifier] (ParsedExpr ann)
+  | ModuleExpressionType Identifier (Type ParseDep ann)
+  | ModuleDataType (DataType ParseDep ann)
+  | ModuleTest TestName Identifier
+  deriving stock (Eq, Ord, Functor)
+
+deriving stock instance
+  ( Show ann,
+    Show (DataType ParseDep ann)
+  ) =>
+  Show (ModuleItem ann)
 
 -- this is the checked module, it contains no duplicates and we don't care
 -- about ordering

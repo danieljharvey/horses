@@ -34,9 +34,7 @@ common shared
     , builder
     , bytestring
     , containers
-    , cryptonite
     , diagnose
-    , file-embed
     , megaparsec
     , memory
     , mtl                  >=2.3.0.0
@@ -49,13 +47,12 @@ common shared
 library
   import:           shared
 
-  -- Modules included in this executable, other than Main.
-  -- other-modules:
-
   -- LANGUAGE extensions used by modules in this package.
   -- other-extensions:
   hs-source-dirs:   src
   default-language: Haskell2010
+
+  -- Modules included in this executable, other than Main.
   exposed-modules:
     Smol.Core
     Smol.Core.ExprUtils
@@ -67,7 +64,6 @@ library
     Smol.Core.Modules.Check
     Smol.Core.Modules.Dependencies
     Smol.Core.Modules.FromParts
-    Smol.Core.Modules.HashModule
     Smol.Core.Modules.ModuleError
     Smol.Core.Modules.Monad
     Smol.Core.Modules.ResolveDeps
@@ -109,8 +105,9 @@ library
     Smol.Core.Types.Module.DefIdentifier
     Smol.Core.Types.Module.Entity
     Smol.Core.Types.Module.Module
-    Smol.Core.Types.Module.ModuleHash
+    Smol.Core.Types.Module.ModuleItem
     Smol.Core.Types.Module.ModuleName
+    Smol.Core.Types.Module.TestName
     Smol.Core.Types.Module.TopLevelExpression
     Smol.Core.Types.Op
     Smol.Core.Types.ParseDep
@@ -130,75 +127,11 @@ test-suite smol-core-tests
   hs-source-dirs:   test
   hs-source-dirs:   src
   build-depends:
+    , file-embed
     , hspec       >=2.8.3 && <3
     , hspec-core  >=2.8.3 && <3
 
   other-modules:
-    Smol.Core
-    Smol.Core.ExprUtils
-    Smol.Core.Helpers
-    Smol.Core.Interpreter
-    Smol.Core.Interpreter.Convert
-    Smol.Core.Interpreter.Interpret
-    Smol.Core.Interpreter.Types
-    Smol.Core.Modules.Check
-    Smol.Core.Modules.Dependencies
-    Smol.Core.Modules.FromParts
-    Smol.Core.Modules.HashModule
-    Smol.Core.Modules.ModuleError
-    Smol.Core.Modules.Monad
-    Smol.Core.Modules.ResolveDeps
-    Smol.Core.Modules.Typecheck
-    Smol.Core.Modules.Types.DepType
-    Smol.Core.Modules.Uses
-    Smol.Core.Parser
-    Smol.Core.Parser.DataType
-    Smol.Core.Parser.Expr
-    Smol.Core.Parser.Identifiers
-    Smol.Core.Parser.Module
-    Smol.Core.Parser.Op
-    Smol.Core.Parser.Pattern
-    Smol.Core.Parser.Primitives
-    Smol.Core.Parser.Shared
-    Smol.Core.Parser.Type
-    Smol.Core.Printer
-    Smol.Core.SourceSpan
-    Smol.Core.Typecheck
-    Smol.Core.Typecheck.Elaborate
-    Smol.Core.Typecheck.Errors
-    Smol.Core.Typecheck.Exhaustiveness
-    Smol.Core.Typecheck.FreeVars
-    Smol.Core.Typecheck.FromParsedExpr
-    Smol.Core.Typecheck.Pattern
-    Smol.Core.Typecheck.Shared
-    Smol.Core.Typecheck.Simplify
-    Smol.Core.Typecheck.Substitute
-    Smol.Core.Typecheck.Subtype
-    Smol.Core.Typecheck.Types
-    Smol.Core.Types
-    Smol.Core.Types.Annotated
-    Smol.Core.Types.Annotation
-    Smol.Core.Types.Constructor
-    Smol.Core.Types.DataType
-    Smol.Core.Types.Expr
-    Smol.Core.Types.Identifier
-    Smol.Core.Types.Module
-    Smol.Core.Types.Module.DefIdentifier
-    Smol.Core.Types.Module.Entity
-    Smol.Core.Types.Module.Module
-    Smol.Core.Types.Module.ModuleHash
-    Smol.Core.Types.Module.ModuleName
-    Smol.Core.Types.Op
-    Smol.Core.Types.ParseDep
-    Smol.Core.Types.Pattern
-    Smol.Core.Types.PatternMatchError
-    Smol.Core.Types.Prim
-    Smol.Core.Types.ResolvedDep
-    Smol.Core.Types.SourceSpan
-    Smol.Core.Types.Spread
-    Smol.Core.Types.Type
-    Smol.Core.Types.TypeName
-    Smol.Core.TypeUtils
     Test.BuiltInTypes
     Test.Helpers
     Test.Interpreter.InterpreterSpec

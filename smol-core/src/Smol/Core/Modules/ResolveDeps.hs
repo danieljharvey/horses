@@ -1,6 +1,5 @@
 {-# LANGUAGE DerivingStrategies #-}
 {-# LANGUAGE FlexibleContexts #-}
-{-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE NamedFieldPuns #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE RankNTypes #-}
@@ -47,10 +46,10 @@ resolveModuleDeps parsedModule = do
         Right <$> resolveTopLevelExpression expr defIds (allConstructors parsedModule)
   resolvedMap <- evalStateT (traverse resolveIt map') (ResolveState 0)
   let newExpressions =
-        M.mapMaybe
-          ( \case
-              Right expr -> Just expr
-              Left _ -> Nothing
+        mapMaybeWithKey
+          ( \k a -> case (k, a) of
+              (DIName identifier, Right expr) -> Just (identifier, expr)
+              _ -> Nothing
           )
           resolvedMap
       newDataTypes =

@@ -13,41 +13,33 @@ where
 
 import Data.Map.Strict (Map)
 import qualified Data.Map.Strict as M
-import qualified Data.Set as S
 import Smol.Core
 import Smol.Core.Helpers (filterMapKeys)
 import Smol.Core.Types.Module.DefIdentifier
 import Smol.Core.Types.Module.Module
+import Smol.Core.Types.Module.ModuleItem
 import Smol.Core.Types.Module.TopLevelExpression
 
 lookupModuleDef ::
   Module dep (Type dep ann) ->
-  DefIdentifier ->
+  Identifier ->
   Maybe (TopLevelExpression dep (Type dep ann))
 lookupModuleDef mod' defId =
-  let defs =
-        M.filterWithKey
-          (\k _ -> S.member k (moExpressionExports mod'))
-          (moExpressions mod')
-   in M.lookup defId defs
+  M.lookup defId (moExpressions mod')
 
 lookupModuleDefType ::
   Module dep (Type dep ann) ->
-  DefIdentifier ->
+  Identifier ->
   Maybe (Type dep ann)
 lookupModuleDefType =
   (fmap . fmap) (getExprAnnotation . tleExpr) . lookupModuleDef
 
 -- used in logging etc, "what is this thing"
 getModuleItemIdentifier :: ModuleItem ann -> Maybe DefIdentifier
--- getModuleItemIdentifier (ModuleInfix infixOp _) = Just (DIInfix infixOp)
 getModuleItemIdentifier (ModuleExpression name _ _) = Just (DIName name)
 getModuleItemIdentifier (ModuleDataType (DataType typeName _ _)) = Just (DIType typeName)
-getModuleItemIdentifier (ModuleExport a) = getModuleItemIdentifier a
-getModuleItemIdentifier (ModuleImport _) = Nothing
 getModuleItemIdentifier (ModuleExpressionType name _) = Just (DIName name)
-
--- getModuleItemIdentifier (ModuleTest testName _) = Just (DITest testName)
+getModuleItemIdentifier (ModuleTest testName _) = Just (DITest testName)
 
 filterNameDefs :: Map DefIdentifier a -> Map Identifier a
 filterNameDefs =

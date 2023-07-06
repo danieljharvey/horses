@@ -9,6 +9,7 @@ module Smol.Core.Parser.Primitives
     falsePrimParser,
     stringPrimParser,
     unitParser,
+    textPrim,
   )
 where
 

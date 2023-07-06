@@ -4,7 +4,6 @@
 
 module Smol.Core.Modules.Dependencies
   ( getDependencies,
-    getModuleDeps,
     filterExprs,
     filterDataTypes,
   )
@@ -26,7 +25,6 @@ import Smol.Core.Modules.Uses
 import Smol.Core.Types.Module.DefIdentifier
 import qualified Smol.Core.Types.Module.Entity as E
 import Smol.Core.Types.Module.Module
-import Smol.Core.Types.Module.ModuleHash
 import Smol.Core.Types.Module.TopLevelExpression
 
 filterExprs :: Map k (DepType dep ann) -> Map k (TopLevelExpression dep ann)
@@ -45,12 +43,12 @@ filterDataTypes =
         _ -> Nothing
     )
 
-filterDefs :: Set E.Entity -> Set DefIdentifier
+filterDefs :: Set E.Entity -> Set Identifier
 filterDefs =
   S.fromList
     . mapMaybe
       ( \case
-          E.EVar name -> Just (DIName name)
+          E.EVar name -> Just name
           _ -> Nothing
       )
     . S.toList
@@ -91,9 +89,10 @@ getDependencies ::
     )
 getDependencies getUses mod' = do
   exprDeps <-
-    traverse
-      (getExprDependencies getUses mod')
-      (moExpressions mod')
+    M.mapKeys DIName
+      <$> traverse
+        (getExprDependencies getUses mod')
+        (moExpressions mod')
   typeDeps <-
     M.mapKeys DIType
       <$> traverse
@@ -110,7 +109,7 @@ getTypeDependencies ::
 getTypeDependencies mod' dt = do
   let allUses = extractDataTypeUses dt
   typeDefIds <- getTypeUses mod' allUses
-  exprDefIds <- getExprDeps mod' allUses
+  exprDefIds <- S.map DIName <$> getExprDeps mod' allUses
   pure (DTData dt, typeDefIds <> exprDefIds, allUses)
 
 getTypeUses ::
@@ -124,7 +123,6 @@ getTypeUses mod' uses =
         S.filter
           ( \typeName ->
               S.notMember typeName (M.keysSet (moDataTypes mod'))
-                && S.notMember typeName (M.keysSet (moDataTypeImports mod'))
           )
           typeDeps
    in if S.null unknownTypeDeps
@@ -170,7 +168,6 @@ getConstructorUses mod' uses = do
         S.filter
           ( \typeName ->
               S.notMember typeName (M.keysSet (moDataTypes mod'))
-                && S.notMember typeName (M.keysSet (moDataTypeImports mod'))
           )
           typeDeps
    in if S.null unknownTypeDeps
@@ -192,7 +189,7 @@ getExprDependencies ::
   m (DepType dep ann, Set DefIdentifier, Set E.Entity)
 getExprDependencies getUses mod' expr = do
   let allUses = getUses (tleExpr expr)
-  exprDefIds <- getExprDeps mod' allUses
+  exprDefIds <- S.map DIName <$> getExprDeps mod' allUses
   consDefIds <- getConstructorUses mod' allUses
   typeDefIds <- getTypeUses mod' allUses
   pure (DTExpr expr, exprDefIds <> typeDefIds <> consDefIds, allUses)
@@ -201,14 +198,13 @@ getExprDeps ::
   (MonadError ModuleError m) =>
   Module dep ann ->
   Set E.Entity ->
-  m (Set DefIdentifier)
+  m (Set Identifier)
 getExprDeps mod' uses =
   let nameDeps = filterDefs uses
       unknownNameDeps =
         S.filter
           ( \dep ->
               S.notMember dep (M.keysSet (moExpressions mod'))
-                && S.notMember dep (M.keysSet (moExpressionImports mod'))
           )
           nameDeps
    in if S.null unknownNameDeps
@@ -221,37 +217,3 @@ getExprDeps mod' uses =
                   nameDeps
            in pure localNameDeps
         else throwError (CannotFindValues unknownNameDeps)
-
--- starting at a root module,
--- create a map of each expr hash along with the modules it needs
--- so that we can typecheck them all
-getModuleDeps ::
-  (MonadError ModuleError m) =>
-  Map ModuleHash (Module ResolvedDep ann) ->
-  Module ResolvedDep ann ->
-  m
-    ( Map
-        ModuleHash
-        ( Module ResolvedDep ann,
-          Set ModuleHash
-        )
-    )
-getModuleDeps _moduleDeps _inputModule = do
-  pure mempty
-
-{-
--- get this module's deps
-let deps =
-      S.fromList
-        ( M.elems (moExpressionImports inputModule)
-            <> M.elems (moNamedImports inputModule)
-            <> M.elems (moDataTypeImports inputModule)
-        )
-    mHash = snd $ serializeModule inputModule
-
--- recursively fetch sub-deps
-depModules <- traverse (lookupModule moduleDeps) (S.toList deps)
-subDeps <- traverse (getModuleDeps moduleDeps) depModules
-
-pure $ M.singleton mHash (inputModule, deps) <> mconcat subDeps
--}

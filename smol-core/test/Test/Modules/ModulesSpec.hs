@@ -41,7 +41,7 @@ getModuleInput moduleName = case find (\(filename, _) -> moduleName `isInfixOf` 
 findResult :: String -> Either ModuleError (Module dep ann) -> Expr dep ann
 findResult depName = \case
   Right (Module {moExpressions}) ->
-    case M.lookup (DIName (fromString depName)) moExpressions of
+    case M.lookup (fromString depName) moExpressions of
       Just a -> tleExpr a
       Nothing -> error "not found in result"
   _ -> error "typecheck failed"
@@ -50,10 +50,10 @@ testModuleTypecheck :: String -> Either ModuleError (Module ResolvedDep (Type Re
 testModuleTypecheck moduleName =
   case parseModuleAndFormatError (getModuleInput moduleName) of
     Right moduleParts -> do
-      case moduleFromModuleParts mempty moduleParts >>= resolveModuleDeps of
+      case moduleFromModuleParts moduleParts >>= resolveModuleDeps of
         Left e -> error (show e)
         Right (myModule, deps) -> do
-          case typecheckModule mempty (getModuleInput moduleName) myModule deps of
+          case typecheckModule (getModuleInput moduleName) myModule deps of
             Left e ->
               showModuleError e
                 >> Left e
@@ -80,7 +80,7 @@ spec = do
 
             expected =
               mempty
-                { moExpressions = M.singleton (DIName "main") (TopLevelExpression expr Nothing)
+                { moExpressions = M.singleton "main" (TopLevelExpression expr Nothing)
                 }
 
         fst <$> resolveModuleDeps mod' `shouldBe` Right expected
@@ -101,7 +101,7 @@ spec = do
 
             expected =
               mempty
-                { moExpressions = M.singleton (DIName "main") (TopLevelExpression expr Nothing)
+                { moExpressions = M.singleton "main" (TopLevelExpression expr Nothing)
                 }
 
         fst <$> resolveModuleDeps mod' `shouldBe` Right expected
@@ -112,7 +112,7 @@ spec = do
 
             expected =
               mempty
-                { moExpressions = M.singleton (DIName "main") (TopLevelExpression expr Nothing)
+                { moExpressions = M.singleton "main" (TopLevelExpression expr Nothing)
                 }
 
         fst <$> resolveModuleDeps mod' `shouldBe` Right expected
@@ -131,7 +131,7 @@ spec = do
                 )
             expected =
               mempty
-                { moExpressions = M.singleton (DIName "main") (TopLevelExpression expr Nothing)
+                { moExpressions = M.singleton "main" (TopLevelExpression expr Nothing)
                 }
 
         fst <$> resolveModuleDeps mod' `shouldBe` Right expected
@@ -155,8 +155,8 @@ spec = do
               mempty
                 { moExpressions =
                     M.fromList
-                      [ (DIName "main", TopLevelExpression mainExpr Nothing),
-                        (DIName "dep", TopLevelExpression depExpr Nothing)
+                      [ ("main", TopLevelExpression mainExpr Nothing),
+                        ("dep", TopLevelExpression depExpr Nothing)
                       ]
                 }
 
@@ -178,7 +178,7 @@ spec = do
             expected =
               mempty
                 { moExpressions =
-                    M.singleton (DIName "main") (TopLevelExpression mainExpr Nothing),
+                    M.singleton "main" (TopLevelExpression mainExpr Nothing),
                   moDataTypes =
                     M.singleton
                       "Moybe"

@@ -32,7 +32,9 @@ spec = do
               "def id : a -> a",
               "def id a = a",
               "def compose f g a = f (g a)",
-              "def compose : (c -> b) -> (a -> b) -> (a -> c)"
+              "def compose : (c -> b) -> (a -> b) -> (a -> c)",
+              "def onePlusOneEqualsTwo = 1 + 1 == 2",
+              "test \"one plus one equals two\" using onePlusOneEqualsTwo"
             ]
 
       it "All defs" $ do
