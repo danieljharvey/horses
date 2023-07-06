@@ -49,5 +49,5 @@ Test-suite test
     tasty-hspec          >= 1.1  && < 2.0,
     tasty-hunit          >= 0.1  && < 1.0,
     tasty-golden         >= 1.1  && < 3.0,
-    llvm-hs              >= 9.0  && < 10.0,
-    llvm-hs-pure         >= 9.0  && < 10.0
+    llvm-hs              >= 9.0,
+    llvm-hs-pure         >= 9.0
