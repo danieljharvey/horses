@@ -15,7 +15,6 @@ import qualified Data.Text as T
 import GHC.Generics
 import Language.Mimsa.Core.Printer
 import Prettyprinter
-import Servant (FromHttpApiData)
 
 renderName :: Name -> Doc ann
 renderName = pretty . getName
@@ -31,7 +30,6 @@ newtype Name = Name {getName' :: Text}
       JSON.FromJSONKey,
       JSON.ToJSONKey,
       JSON.ToJSON,
-      FromHttpApiData,
       Semigroup,
       Monoid
     )

@@ -86,8 +86,6 @@ library
     , openapi3
     , parser-combinators
     , prettyprinter
-    , servant
-    , servant-server
     , text
     , transformers
 
@@ -122,8 +120,6 @@ test-suite core-test
     , openapi3
     , parser-combinators
     , prettyprinter
-    , servant
-    , servant-server
     , text
     , transformers
 

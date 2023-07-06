@@ -1,4 +1,3 @@
-{-# LANGUAGE DataKinds #-}
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE DerivingStrategies #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
@@ -11,7 +10,6 @@ import Data.Text (Text)
 import qualified Data.Text as T
 import GHC.Generics
 import Language.Mimsa.Core
-import Servant.API
 
 -- because of the size of the ints
 -- and JS's limitations in the browser
@@ -23,8 +21,7 @@ newtype ProjectHash = ProjectHash Text
     ( JSON.FromJSON,
       JSON.FromJSONKey,
       JSON.ToJSON,
-      JSON.ToJSONKey,
-      FromHttpApiData
+      JSON.ToJSONKey
     )
 
 instance Show ProjectHash where

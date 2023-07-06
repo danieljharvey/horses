@@ -69,8 +69,6 @@ library
     , parser-combinators
     , prettyprinter
     , QuickCheck
-    , servant
-    , servant-server
     , text
     , transformers
 

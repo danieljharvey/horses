@@ -189,8 +189,6 @@ library
     , parser-combinators
     , prettyprinter
     , QuickCheck
-    , servant
-    , servant-server
     , text
     , transformers
     , wasm
@@ -273,8 +271,6 @@ test-suite mimsa-test
     , parser-combinators
     , prettyprinter
     , QuickCheck
-    , servant
-    , servant-server
     , text
     , transformers
     , typed-process
