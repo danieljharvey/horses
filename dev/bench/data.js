@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1688649645827,
+  "lastUpdate": 1688680300872,
   "repoUrl": "https://github.com/danieljharvey/mimsa",
   "entries": {
     "Store benchmarks in Github Pages": [
@@ -2547,6 +2547,50 @@ window.BENCHMARK_DATA = {
           {
             "name": "evaluate/evaluate parsing 2",
             "value": 0.21937439197142714,
+            "unit": "Time (ms)"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "danieljamesharvey@gmail.com",
+            "name": "Daniel Harvey",
+            "username": "danieljharvey"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "b9f17e51cdf504c23d3c5547f22715a4e10a2f0c",
+          "message": "Upgrade to GHC 9.6.2 (#989)\n\n* nixy noo\r\n\r\n* OK, there's a few broken things here\r\n\r\n* Servant fork\r\n\r\n* Well, well, well\r\n\r\n* There is no Dockerfile\r\n\r\n* Fix\r\n\r\n* What\r\n\r\n* Ormolu is breaking everything again\r\n\r\n* Remove hlint and ormolu for now\r\n\r\n* Blah\r\n\r\n* Use upstream Servant (it's broken)\r\n\r\n* Use most up to date servant commit\r\n\r\n* Whoa\r\n\r\n* Update github actions\r\n\r\n* Write freeze file\r\n\r\n* Well\r\n\r\n* Remove servant\r\n\r\n* Yes\r\n\r\n* Bust cache\r\n\r\n* Fix GHC version",
+          "timestamp": "2023-07-06T22:31:35+01:00",
+          "tree_id": "25aa8408ddcd26b75b8dec73a50dd1931d0a2ae2",
+          "url": "https://github.com/danieljharvey/mimsa/commit/b9f17e51cdf504c23d3c5547f22715a4e10a2f0c"
+        },
+        "date": 1688680299720,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "build stdlib/allFns",
+            "value": 0.14281667342855336,
+            "unit": "Time (ms)"
+          },
+          {
+            "name": "evaluate/evaluate big looping thing",
+            "value": 0.13551508161904857,
+            "unit": "Time (ms)"
+          },
+          {
+            "name": "evaluate/evaluate parsing",
+            "value": 0.04413145287031952,
+            "unit": "Time (ms)"
+          },
+          {
+            "name": "evaluate/evaluate parsing 2",
+            "value": 0.3107978194999759,
             "unit": "Time (ms)"
           }
         ]
