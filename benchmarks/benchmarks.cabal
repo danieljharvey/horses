@@ -54,8 +54,6 @@ benchmark benchmark
     , parser-combinators
     , prettyprinter
     , QuickCheck
-    , servant
-    , servant-server
     , text
     , transformers
     , wasm

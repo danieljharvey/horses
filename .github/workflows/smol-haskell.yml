@@ -42,22 +42,22 @@ jobs:
         uses: actions/cache@v3
         with:
           path: ~/.cabal
-          key: ${{ runner.os }}-1-smol-cabal-global-${{ matrix.plan.ghc }}-${{ hashFiles('**.freeze') }}
+          key: ${{ runner.os }}-2-smol-cabal-global-${{ matrix.plan.ghc }}-${{ hashFiles('**.freeze') }}
           restore-keys: |
-            ${{ runner.os }}-1-smol-cabal-global-${{ matrix.plan.ghc }}
+            ${{ runner.os }}-2-smol-cabal-global-${{ matrix.plan.ghc }}
 
       - name: Cache .cabal-work
         uses: actions/cache@v3
         with:
           path: dist-newstyle
-          key: ${{ runner.os }}-1-smol-cabal-work-${{ matrix.plan.ghc }}-${{ hashFiles('**.freeze') }}
+          key: ${{ runner.os }}-2-smol-cabal-work-${{ matrix.plan.ghc }}-${{ hashFiles('**.freeze') }}
           restore-keys: |
-            ${{ runner.os }}-1-smol-cabal-work-${{ matrix.plan.ghc }}
+            ${{ runner.os }}-2-smol-cabal-work-${{ matrix.plan.ghc }}
 
       - uses: haskell/actions/setup@v2
         with:
-          ghc-version: '9.4.4'
-          cabal-version: '3.8.1.0'
+          ghc-version: '9.6.2'
+          cabal-version: '3.10.1.0'
 
       - name: Test smol 
         run: make test-smol

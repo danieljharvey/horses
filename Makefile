@@ -67,6 +67,10 @@ smol-repl:
 run-server:
 	cabal run server:exe:mimsa-server
 
+.PHONY: docker-server
+docker-server:
+	docker build docker/Dockerfile.server
+
 .PHONY: test
 test:
 	cabal run mimsa:test:mimsa-test

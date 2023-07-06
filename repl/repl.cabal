@@ -74,8 +74,6 @@ executable mimsa-repl
     , parser-combinators
     , prettyprinter
     , QuickCheck
-    , servant
-    , servant-server
     , text
     , transformers
     , wasm

@@ -39,31 +39,31 @@ jobs:
         uses: actions/cache@v3
         with:
           path: ~/.cabal
-          key: ${{ runner.os }}-1-cabal-global-${{ matrix.plan.ghc }}-${{ hashFiles('**.freeze') }}
+          key: ${{ runner.os }}-2-cabal-global-${{ matrix.plan.ghc }}-${{ hashFiles('**.freeze') }}
           restore-keys: |
-            ${{ runner.os }}-1-cabal-global-${{ matrix.plan.ghc }}
+            ${{ runner.os }}-2-cabal-global-${{ matrix.plan.ghc }}
 
       - name: Cache cabal-installed programs in ~/.local/bin
         id: cabal-programs
         uses: actions/cache@v3
         with:
           path: ~/.cabal/bin
-          key: ${{ runner.os }}-1-cabal-programs-${{ matrix.plan.ghc }}-${{ hashFiles('**.freeze') }}
+          key: ${{ runner.os }}-2-cabal-programs-${{ matrix.plan.ghc }}-${{ hashFiles('**.freeze') }}
           restore-keys: |
-            ${{ runner.os }}-1-cabal-programs-${{ matrix.plan.ghc }}
+            ${{ runner.os }}-2-cabal-programs-${{ matrix.plan.ghc }}
 
       - name: Cache .cabal-work
         uses: actions/cache@v3
         with:
           path: dist-newstyle
-          key: ${{ runner.os }}-1-cabal-work-${{ matrix.plan.ghc }}-${{ hashFiles('**.freeze') }}
+          key: ${{ runner.os }}-2-cabal-work-${{ matrix.plan.ghc }}-${{ hashFiles('**.freeze') }}
           restore-keys: |
-            ${{ runner.os }}-1-cabal-work-${{ matrix.plan.ghc }}
+            ${{ runner.os }}-2-cabal-work-${{ matrix.plan.ghc }}
 
       - uses: haskell/actions/setup@v2
         with:
-          ghc-version: '9.4.4'
-          cabal-version: '3.8.1.0'
+          ghc-version: '9.6.2'
+          cabal-version: '3.10.1.0'
 
       - name: Build all things
         run: make build
@@ -80,34 +80,34 @@ jobs:
 
       - uses: haskell/actions/setup@v2
         with:
-          ghc-version: '9.4.4'
-          cabal-version: '3.8.1.0'
+          ghc-version: '9.6.2'
+          cabal-version: '3.10.1.0'
 
       - name: Cache cabal global package db
         id: cabal-global
         uses: actions/cache@v3
         with:
           path: ~/.cabal
-          key: ${{ runner.os }}-1-cabal-global-${{ matrix.plan.ghc }}-${{ hashFiles('**.freeze') }}
+          key: ${{ runner.os }}-2-cabal-global-${{ matrix.plan.ghc }}-${{ hashFiles('**.freeze') }}
           restore-keys: |
-            ${{ runner.os }}-1-cabal-global-${{ matrix.plan.ghc }}
+            ${{ runner.os }}-2-cabal-global-${{ matrix.plan.ghc }}
 
       - name: Cache .cabal-work
         uses: actions/cache@v3
         with:
           path: dist-newstyle
-          key: ${{ runner.os }}-1-cabal-work-${{ matrix.plan.ghc }}-${{ hashFiles('**.freeze') }}
+          key: ${{ runner.os }}-2-cabal-work-${{ matrix.plan.ghc }}-${{ hashFiles('**.freeze') }}
           restore-keys: |
-            ${{ runner.os }}-1-cabal-work-${{ matrix.plan.ghc }}
+            ${{ runner.os }}-2-cabal-work-${{ matrix.plan.ghc }}
 
       - name: Cache cabal-installed programs in ~/.local/bin
         id: cabal-programs
         uses: actions/cache@v3
         with:
           path: ~/.cabal/bin
-          key: ${{ runner.os }}-1-cabal-programs-${{ matrix.plan.ghc }}-${{ hashFiles('**.freeze') }}
+          key: ${{ runner.os }}-2-cabal-programs-${{ matrix.plan.ghc }}-${{ hashFiles('**.freeze') }}
           restore-keys: |
-            ${{ runner.os }}-1-cabal-programs-${{ matrix.plan.ghc }}
+            ${{ runner.os }}-2-cabal-programs-${{ matrix.plan.ghc }}
 
       - name: Cabal update
         run: cabal update
@@ -129,34 +129,34 @@ jobs:
 
       - uses: haskell/actions/setup@v2
         with:
-          ghc-version: '9.4.4'
-          cabal-version: '3.8.1.0'
+          ghc-version: '9.6.2'
+          cabal-version: '3.10.1.0'
 
       - name: Cache cabal global package db
         id: cabal-global
         uses: actions/cache@v3
         with:
           path: ~/.cabal
-          key: ${{ runner.os }}-1-cabal-global-${{ matrix.plan.ghc }}-${{ hashFiles('**.freeze') }}
+          key: ${{ runner.os }}-2-cabal-global-${{ matrix.plan.ghc }}-${{ hashFiles('**.freeze') }}
           restore-keys: |
-            ${{ runner.os }}-1-cabal-global-${{ matrix.plan.ghc }}
+            ${{ runner.os }}-2-cabal-global-${{ matrix.plan.ghc }}
 
       - name: Cache cabal-installed programs in ~/.local/bin
         id: cabal-programs
         uses: actions/cache@v3
         with:
           path: ~/.cabal/bin
-          key: ${{ runner.os }}-1-cabal-programs-${{ matrix.plan.ghc }}-${{ hashFiles('**.freeze') }}
+          key: ${{ runner.os }}-2-cabal-programs-${{ matrix.plan.ghc }}-${{ hashFiles('**.freeze') }}
           restore-keys: |
-            ${{ runner.os }}-1-cabal-programs-${{ matrix.plan.ghc }}
+            ${{ runner.os }}-2-cabal-programs-${{ matrix.plan.ghc }}
 
       - name: Cache .cabal-work
         uses: actions/cache@v3
         with:
           path: dist-newstyle
-          key: ${{ runner.os }}-1-cabal-work-${{ matrix.plan.ghc }}-${{ hashFiles('**.freeze') }}
+          key: ${{ runner.os }}-2-cabal-work-${{ matrix.plan.ghc }}-${{ hashFiles('**.freeze') }}
           restore-keys: |
-            ${{ runner.os }}-1-cabal-work-${{ matrix.plan.ghc }}
+            ${{ runner.os }}-2-cabal-work-${{ matrix.plan.ghc }}
 
       - name: Run benchmarks
         run: make bench

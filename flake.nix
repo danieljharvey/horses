@@ -10,8 +10,32 @@
     flake-utils.lib.eachDefaultSystem (system:
       let
         pkgs = nixpkgs.legacyPackages.${system};
-        
-        compilerVersion = "ghc944";
+
+        oldCompilerVersion = "ghc945";
+
+        # we are going to build ormolu and hlint with an old ghc that isn't
+        # broken
+        oldHaskell = pkgs.haskell // {
+          packages = pkgs.haskell.packages // {
+            "${oldCompilerVersion}" =
+              pkgs.haskell.packages."${oldCompilerVersion}".override {
+                overrides = self: super: {
+                  # On aarch64-darwin, this creates a cycle for some reason; didn't look too much into it.
+                  ghcid = pkgs.haskell.lib.dontCheck (pkgs.haskell.lib.overrideCabal super.ghcid (drv: { enableSeparateBinOutput = false; }));
+                  # has wrong version of unix-compat, so we ignore it
+                  shelly = pkgs.haskell.lib.doJailbreak super.shelly;
+                };
+
+              };
+          };
+        };
+
+        oldHaskellPackages = haskell.packages.${oldCompilerVersion};
+
+        # current compiler version, ideally, we'll put everything here
+        # eventually
+
+        compilerVersion = "ghc962";
 
         # fix things
         haskell = pkgs.haskell // {
@@ -21,6 +45,8 @@
                 overrides = self: super: {
                   # On aarch64-darwin, this creates a cycle for some reason; didn't look too much into it.
                   ghcid = pkgs.haskell.lib.dontCheck (pkgs.haskell.lib.overrideCabal super.ghcid (drv: { enableSeparateBinOutput = false; }));
+                  # has wrong version of unix-compat, so we ignore it
+                  shelly = pkgs.haskell.lib.doJailbreak super.shelly;
                 };
 
               };
@@ -41,13 +67,13 @@
 
         devShell = pkgs.mkShell {
           buildInputs = with haskellPackages; [
-            ghc
-            hlint
+            oldHaskellPackages.hlint
+            oldHaskellPackages.ormolu
             haskell-language-server
-            ormolu
             ghcid
             cabal-fmt
             cabal-install
+            ghc
             pkgs.zlib # used by `digest` package
             pkgs.nodejs-18_x
             pkgs.clang_14

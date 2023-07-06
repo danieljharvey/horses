@@ -11,7 +11,6 @@ import Data.Text (Text)
 import qualified Data.Text as T
 import GHC.Generics
 import Language.Mimsa.Core
-import Servant.API
 
 -- because of the size of the ints
 -- and JS's limitations in the browser
@@ -23,8 +22,7 @@ newtype ExprHash = ExprHash Text
     ( JSON.FromJSON,
       JSON.FromJSONKey,
       JSON.ToJSON,
-      JSON.ToJSONKey,
-      FromHttpApiData
+      JSON.ToJSONKey
     )
 
 instance Show ExprHash where
