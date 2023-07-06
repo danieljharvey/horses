@@ -26,11 +26,12 @@ getModuleDefIdentifiers ::
 getModuleDefIdentifiers depMap inputModule =
   let getDeps di = fromMaybe mempty (M.lookup di depMap)
       exprs =
-        M.mapWithKey
-          ( \name expr ->
-              (name, expr, getDeps name)
+        M.fromList $
+          ( \(name, expr) ->
+              let defId = DIName name
+               in (defId, (defId, DTExpr expr, getDeps (DIName name)))
           )
-          (DTExpr <$> moExpressions inputModule)
+            <$> M.toList (moExpressions inputModule)
       dataTypes =
         M.fromList $
           ( \dt ->
@@ -52,21 +53,28 @@ moduleFromDepTypes oldModule definitions =
         M.fromList . mapMaybe (firstMaybe f) . M.toList
       getTypeName (DIType tn) = Just tn
       getTypeName _ = Nothing
+      newExpressions =
+        M.fromList $
+          mapMaybe
+            ( \(k, a) -> case (k, a) of
+                (DIName name, expr) -> Just (name, expr)
+                _ -> Nothing
+            )
+            (M.toList $ filterExprs definitions)
    in -- replace input module with typechecked versions
       oldModule
-        { moExpressions = filterExprs definitions,
+        { moExpressions = newExpressions,
           moDataTypes = mapKeyMaybe getTypeName (filterDataTypes definitions)
         }
 
 --- typecheck a single module
 typecheckModule ::
   (MonadError ModuleError m) =>
-  Map ModuleHash (Module ResolvedDep (Type ResolvedDep Annotation)) ->
   Text ->
   Module ResolvedDep Annotation ->
   Map DefIdentifier (Set DefIdentifier) ->
   m (Module ResolvedDep (Type ResolvedDep Annotation))
-typecheckModule _typecheckedDeps input inputModule depMap = do
+typecheckModule input inputModule depMap = do
   let inputWithDepsAndName = getModuleDefIdentifiers depMap inputModule
 
   let stInputs =

@@ -13,24 +13,18 @@ import qualified Error.Diagnose as Diag
 import Smol.Core.Typecheck
 import Smol.Core.Types
 import Smol.Core.Types.Module.DefIdentifier
-import Smol.Core.Types.Module.ModuleHash
 import Smol.Core.Types.Module.ModuleName
 
 data ModuleError
-  = DuplicateDefinition DefIdentifier
+  = DuplicateDefinition Identifier
   | DuplicateTypeName TypeName
   | DuplicateConstructor Constructor
-  | DefinitionConflictsWithImport DefIdentifier ModuleHash
-  | TypeConflictsWithImport TypeName ModuleHash
-  | CannotFindValues (Set DefIdentifier)
+  | CannotFindValues (Set Identifier)
   | CannotFindTypes (Set TypeName)
   | CannotFindConstructors (Set Constructor)
   | VarNotFound Identifier
   | DefDoesNotTypeCheck Text DefIdentifier (TCError Annotation)
   | NamedImportNotFound (Set ModuleName) ModuleName
-  | MissingModule ModuleHash
-  | MissingModuleDep DefIdentifier ModuleHash
-  | MissingModuleTypeDep TypeName ModuleHash
   | DefMissingReturnType DefIdentifier
   | DefMissingTypeAnnotation DefIdentifier Identifier
   | EmptyTestName (Expr ParseDep ())

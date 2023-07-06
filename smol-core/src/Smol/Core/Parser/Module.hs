@@ -6,7 +6,6 @@ module Smol.Core.Parser.Module
   )
 where
 
-import Data.Char as Char
 import Data.Text (Text)
 import Data.Void
 import Smol.Core.Parser.DataType (dataTypeParser)
@@ -15,8 +14,7 @@ import Smol.Core.Parser.Identifiers
 import Smol.Core.Parser.Shared
 import Smol.Core.Parser.Type
 import Smol.Core.Types
-import Smol.Core.Types.Module.Module
-import Smol.Core.Types.Module.ModuleHash
+import Smol.Core.Types.Module.ModuleItem
 import Text.Megaparsec hiding (parseTest)
 
 type Parser = Parsec Void Text
@@ -39,10 +37,9 @@ parseModuleItem =
   try moduleTypeDefinitionParser
     <|> try moduleDefinitionParser
     <|> try moduleTypeDeclarationParser
-    <|> parseImport
+    <|> parseTest
 
 --    <|> parseInfix
---    <|> parseTest
 
 -------
 
@@ -80,31 +77,10 @@ moduleTypeDefinitionParser = do
   myString ":"
   ModuleExpressionType name <$> typeParser
 
-parseHash :: Parser ModuleHash
-parseHash =
-  ModuleHash
-    <$> myLexeme
-      ( takeWhile1P (Just "module hash") Char.isAlphaNum
-      )
-
--- TODO: maybe make these into one parser that handles both to avoid
--- backtracking
-parseImport :: Parser (ModuleItem Annotation)
-parseImport = try parseImportAll <|> parseImportNamed
-
--- `import Prelude from a123123bcbcbcb`
-parseImportNamed :: Parser (ModuleItem Annotation)
-parseImportNamed = do
-  myString "import"
-  modName <- moduleNameParser
-  myString "from"
-  hash <- parseHash
-  pure (ModuleImport (ImportNamedFromHash hash modName))
-
--- `import * from a123123bcbcbcb`
-parseImportAll :: Parser (ModuleItem Annotation)
-parseImportAll = do
-  myString "import"
-  myString "*"
-  myString "from"
-  ModuleImport . ImportAllFromHash <$> parseHash
+-- `test "everything is fine" with myFunctionName`
+parseTest :: Parser (ModuleItem Annotation)
+parseTest = do
+  myString "test"
+  testName <- testNameParser
+  myString "using"
+  ModuleTest testName <$> identifierParser
