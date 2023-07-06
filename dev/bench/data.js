@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1688452626913,
+  "lastUpdate": 1688649645827,
   "repoUrl": "https://github.com/danieljharvey/mimsa",
   "entries": {
     "Store benchmarks in Github Pages": [
@@ -2503,6 +2503,50 @@ window.BENCHMARK_DATA = {
           {
             "name": "evaluate/evaluate parsing 2",
             "value": 0.22885612917142287,
+            "unit": "Time (ms)"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "danieljamesharvey@gmail.com",
+            "name": "Daniel Harvey",
+            "username": "danieljharvey"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "81c345e0ebe6c17d65ea5b950c0a6962e346f308",
+          "message": "Parse \"test\" in module but don't do anything with it yet (#992)\n\n* Parse but ignore tests\r\n\r\n* Fix backend\r\n\r\n* Fixes\r\n\r\n* Whoa",
+          "timestamp": "2023-07-06T14:17:17+01:00",
+          "tree_id": "e49d4cc12e1d074640024e24fe4d9749b61dfb00",
+          "url": "https://github.com/danieljharvey/mimsa/commit/81c345e0ebe6c17d65ea5b950c0a6962e346f308"
+        },
+        "date": 1688649644846,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "build stdlib/allFns",
+            "value": 0.1092488649666662,
+            "unit": "Time (ms)"
+          },
+          {
+            "name": "evaluate/evaluate big looping thing",
+            "value": 0.09512663923333464,
+            "unit": "Time (ms)"
+          },
+          {
+            "name": "evaluate/evaluate parsing",
+            "value": 0.03372259549558893,
+            "unit": "Time (ms)"
+          },
+          {
+            "name": "evaluate/evaluate parsing 2",
+            "value": 0.21937439197142714,
             "unit": "Time (ms)"
           }
         ]
