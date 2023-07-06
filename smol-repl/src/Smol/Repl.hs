@@ -41,10 +41,10 @@ repl = do
             Left bundle -> do
               printDiagnostic (fromErrorBundle bundle (T.pack input)) >> loop
             Right moduleParts -> do
-              case moduleFromModuleParts mempty moduleParts >>= resolveModuleDeps of
+              case moduleFromModuleParts moduleParts >>= resolveModuleDeps of
                 Left e -> printDiagnostic (moduleErrorDiagnostic e) >> loop
                 Right (myModule, deps) -> do
-                  case typecheckModule mempty (T.pack input) myModule deps of
+                  case typecheckModule (T.pack input) myModule deps of
                     Left e -> printDiagnostic (moduleErrorDiagnostic e) >> loop
                     Right tcModule -> do
                       let llvmIR = irToLLVM (irFromModule tcModule)

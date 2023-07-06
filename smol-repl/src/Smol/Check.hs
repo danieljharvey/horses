@@ -28,12 +28,12 @@ checkFile filePath = liftIO $ do
       printDiagnostic (fromErrorBundle bundle input)
         >> pure (ExitFailure 1)
     Right moduleParts -> do
-      case moduleFromModuleParts mempty moduleParts >>= resolveModuleDeps of
+      case moduleFromModuleParts moduleParts >>= resolveModuleDeps of
         Left e ->
           printDiagnostic (moduleErrorDiagnostic e)
             >> pure (ExitFailure 1)
         Right (myModule, deps) -> do
-          case typecheckModule mempty input myModule deps of
+          case typecheckModule input myModule deps of
             Left e ->
               printDiagnostic (moduleErrorDiagnostic e)
                 >> pure (ExitFailure 1)
