@@ -107,6 +107,7 @@ library
     Smol.Core.Types.Module.Module
     Smol.Core.Types.Module.ModuleItem
     Smol.Core.Types.Module.ModuleName
+    Smol.Core.Types.Module.Test
     Smol.Core.Types.Module.TestName
     Smol.Core.Types.Module.TopLevelExpression
     Smol.Core.Types.Op
@@ -135,7 +136,9 @@ test-suite smol-core-tests
     Test.BuiltInTypes
     Test.Helpers
     Test.Interpreter.InterpreterSpec
-    Test.Modules.ModulesSpec
+    Test.Modules.ResolveDepsSpec
+    Test.Modules.TypecheckSpec
+    Test.Modules.FromPartsSpec
     Test.ParserSpec
     Test.Typecheck.ExhaustivenessSpec
     Test.Typecheck.NestingMonadSpec

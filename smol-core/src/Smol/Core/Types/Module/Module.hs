@@ -24,6 +24,7 @@ import Smol.Core.Printer
 import Smol.Core.Types.Constructor
 import Smol.Core.Types.DataType
 import Smol.Core.Types.Identifier
+import Smol.Core.Types.Module.Test
 import Smol.Core.Types.Module.TopLevelExpression
 import Smol.Core.Types.ParseDep
 import Smol.Core.Types.TypeName
@@ -37,7 +38,8 @@ import Smol.Core.Types.TypeName
 -- should we care about ordering? it would allow us to pretty print?
 data Module dep ann = Module
   { moExpressions :: Map Identifier (TopLevelExpression dep ann),
-    moDataTypes :: Map TypeName (DataType dep ann)
+    moDataTypes :: Map TypeName (DataType dep ann),
+    moTests :: [Test]
   }
   deriving stock (Functor, Generic)
 
@@ -128,11 +130,12 @@ printDefinition name (TopLevelExpression {tleType, tleExpr}) =
    in prettyType <> prettyExpr
 
 instance Semigroup (Module dep ann) where
-  (Module a b) <> (Module a' b') =
-    Module (a <> a') (b <> b')
+  (Module a b c) <> (Module a' b' c') =
+    Module (a <> a') (b <> b') (c <> c')
 
 instance Monoid (Module dep ann) where
   mempty =
     Module
+      mempty
       mempty
       mempty

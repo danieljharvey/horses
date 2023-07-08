@@ -27,7 +27,7 @@ data ModuleError
   | NamedImportNotFound (Set ModuleName) ModuleName
   | DefMissingReturnType DefIdentifier
   | DefMissingTypeAnnotation DefIdentifier Identifier
-  | EmptyTestName (Expr ParseDep ())
+  | EmptyTestName Identifier 
   deriving stock (Eq, Ord, Show)
 
 moduleErrorDiagnostic :: ModuleError -> Diag.Diagnostic Text

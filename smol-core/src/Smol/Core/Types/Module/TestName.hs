@@ -6,6 +6,7 @@ module Smol.Core.Types.Module.TestName
   )
 where
 
+import Data.String
 import Data.Aeson (FromJSON, ToJSON)
 import Data.Text (Text)
 import Smol.Core.Printer
@@ -15,3 +16,6 @@ newtype TestName = TestName Text
 
 instance Printer TestName where
   prettyDoc (TestName tn) = prettyDoc tn
+
+instance IsString TestName where
+  fromString = TestName . fromString

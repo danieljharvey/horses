@@ -21,6 +21,7 @@ module Test.Helpers
     patternMatch,
     unsafeParseExpr,
     unsafeParseModule,
+    unsafeParseModuleItems,
     unsafeParseType,
     unsafeParseTypedExpr,
   )
@@ -37,6 +38,7 @@ import Smol.Core
 import Smol.Core.Modules.FromParts
 import Smol.Core.Typecheck.FromParsedExpr
 import Smol.Core.Types.Module.Module
+import Smol.Core.Types.Module.ModuleItem
 
 tyBool :: (Monoid ann) => Type dep ann
 tyBool = TPrim mempty TPBool
@@ -132,10 +134,14 @@ unsafeParseType input = case parseTypeAndFormatError input of
   Left e -> error (show e)
 
 unsafeParseModule :: Text -> Module ParseDep ()
-unsafeParseModule input = case parseModuleAndFormatError input of
-  Right parts -> case moduleFromModuleParts parts of
+unsafeParseModule input =
+  case moduleFromModuleParts (unsafeParseModuleItems input) of
     Right a -> a $> ()
     Left e -> error (show e)
+
+unsafeParseModuleItems :: Text -> [ModuleItem ()]
+unsafeParseModuleItems input = case parseModuleAndFormatError input of
+  Right parts -> (fmap . fmap) (const ()) parts
   Left e -> error (show e)
 
 -- | parse a typed expr, ie parse it and fill the type with crap

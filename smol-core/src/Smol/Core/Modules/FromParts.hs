@@ -2,6 +2,7 @@
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE RecordWildCards #-}
+{-# LANGUAGE OverloadedStrings #-}
 
 module Smol.Core.Modules.FromParts (addModulePart, moduleFromModuleParts, exprAndTypeFromParts) where
 
@@ -9,11 +10,13 @@ import Control.Monad.Except
 import Data.Coerce
 import qualified Data.Map.Strict as M
 import Data.Maybe (mapMaybe)
+import Data.Monoid
 import Smol.Core
 import Smol.Core.Modules.ModuleError
 import Smol.Core.Modules.Monad
 import Smol.Core.Types.Module.Module
 import Smol.Core.Types.Module.ModuleItem
+import Smol.Core.Types.Module.Test
 import Smol.Core.Types.Module.TopLevelExpression
 
 moduleFromModuleParts ::
@@ -46,7 +49,16 @@ addModulePart allParts part mod' =
           }
     ModuleExpressionType _name _ty -> do
       pure mod' -- we sort these elsewhere
-    ModuleTest _ _ -> error "from parst module test"
+    ModuleTest testName ident | "" == testName ->
+      throwError (EmptyTestName ident)
+    ModuleTest testName ident ->
+      if expressionExists ident allParts
+        then
+          pure $
+            mod'
+              { moTests = UnitTest testName ident : moTests mod'
+              }
+        else throwError (VarNotFound ident)
     ModuleDataType dt@(DataType tyCon _ _) -> do
       let typeName = coerce tyCon
       checkDataType mod' dt
@@ -76,6 +88,16 @@ exprAndTypeFromParts moduleItems ident idents expr =
           idents
       tleType = findTypeExpression ident moduleItems
    in TopLevelExpression {..}
+
+expressionExists :: Identifier -> [ModuleItem ann] -> Bool
+expressionExists ident moduleItems =
+  getAny $
+    foldMap
+      ( \case
+          ModuleExpression name _ _ | name == ident -> Any True
+          _ -> Any False
+      )
+      moduleItems
 
 findTypeExpression :: Identifier -> [ModuleItem ann] -> Maybe (Type ParseDep ann)
 findTypeExpression ident moduleItems =
