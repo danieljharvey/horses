@@ -14,8 +14,8 @@ import Data.Foldable
 import qualified Data.Map.Strict as M
 import qualified Data.Set as S
 import Smol.Core
-import Smol.Core.Modules.ModuleError
-import Smol.Core.Types.Module.Module
+import Smol.Core.Modules.Types.ModuleError
+import Smol.Core.Modules.Types.Module
 
 errorIfExpressionAlreadyDefined ::
   (MonadError ModuleError m) =>

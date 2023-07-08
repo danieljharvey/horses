@@ -2,9 +2,9 @@
 {-# LANGUAGE DerivingStrategies #-}
   {-# LANGUAGE DeriveGeneric #-}
 
-module Smol.Core.Types.Module.Test where
+module Smol.Core.Modules.Types.Test where
 
-import Smol.Core.Types.Module.TestName
+import Smol.Core.Modules.Types.TestName
 import Smol.Core.Types.Identifier
 import Data.Aeson (FromJSON, ToJSON)
 import GHC.Generics

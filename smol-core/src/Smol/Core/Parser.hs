@@ -21,7 +21,7 @@ import Smol.Core.Parser.Expr
 import Smol.Core.Parser.Module
 import Smol.Core.Parser.Type
 import Smol.Core.Types
-import Smol.Core.Types.Module
+import Smol.Core.Modules.Types
 import Text.Megaparsec
 import Text.Megaparsec.Char
 

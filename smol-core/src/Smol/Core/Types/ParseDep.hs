@@ -14,7 +14,7 @@ import Data.Aeson (FromJSON, ToJSON)
 import Data.String
 import GHC.Generics (Generic)
 import Smol.Core.Printer
-import Smol.Core.Types.Module.ModuleName
+import Smol.Core.Modules.Types.ModuleName
 
 ---------------------------
 

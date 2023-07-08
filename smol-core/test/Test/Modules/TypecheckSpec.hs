@@ -6,7 +6,7 @@
 module Test.Modules.TypecheckSpec (spec) where
 
 import Data.Bifunctor (second)
-import Data.Either (isRight)
+import Data.Either (isRight, isLeft)
 import Data.FileEmbed
 import Data.Foldable (find)
 import Data.Functor (void)
@@ -18,10 +18,10 @@ import qualified Data.Text.Encoding as T
 import Error.Diagnose (defaultStyle, printDiagnostic, stdout)
 import Smol.Core
 import Smol.Core.Modules.FromParts
-import Smol.Core.Modules.ModuleError
+import Smol.Core.Modules.Types.ModuleError
 import Smol.Core.Modules.ResolveDeps
 import Smol.Core.Modules.Typecheck
-import Smol.Core.Types.Module hiding (Entity (..))
+import Smol.Core.Modules.Types hiding (Entity (..))
 import System.IO.Unsafe
 import Test.Helpers
 import Test.Hspec
@@ -44,19 +44,22 @@ findResult depName = \case
       Nothing -> error "not found in result"
   _ -> error "typecheck failed"
 
-testModuleTypecheck :: String -> Either ModuleError (Module ResolvedDep (Type ResolvedDep Annotation))
-testModuleTypecheck moduleName =
-  case parseModuleAndFormatError (getModuleInput moduleName) of
+testTypecheck :: Text -> Either ModuleError (Module ResolvedDep (Type ResolvedDep Annotation))
+testTypecheck input =
+  case parseModuleAndFormatError input of
     Right moduleParts -> do
       case moduleFromModuleParts moduleParts >>= resolveModuleDeps of
         Left e -> error (show e)
         Right (myModule, deps) -> do
-          case typecheckModule (getModuleInput moduleName) myModule deps of
+          case typecheckModule input myModule deps of
             Left e ->
               showModuleError e
                 >> Left e
             Right a -> pure a
     Left e -> error (show e)
+
+testModuleTypecheck :: String -> Either ModuleError (Module ResolvedDep (Type ResolvedDep Annotation))
+testModuleTypecheck = testTypecheck . getModuleInput
 
 showModuleError :: ModuleError -> a
 showModuleError modErr = unsafePerformIO $ do
@@ -68,10 +71,14 @@ spec = do
   describe "Modules" $ do
     describe "Tests" $ do
       it "Accepts a unit test with type `Boolean`" $ do
-        True `shouldBe` False
+        testTypecheck (joinText ["test \"it's fine\" using yes",
+            "def yes = True"])
+              `shouldSatisfy` isRight
 
       it "Does not accept a unit test with another type" $ do
-        True `shouldBe` False
+        testTypecheck (joinText ["test \"it's fine\" using yes",
+            "def yes = True"])
+              `shouldSatisfy` isLeft
 
     describe "Typecheck" $ do
       it "Typechecks Prelude successfully" $ do

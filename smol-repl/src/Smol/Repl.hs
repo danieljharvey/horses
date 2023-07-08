@@ -17,7 +17,7 @@ import qualified Smol.Backend.Compile.RunLLVM as Run
 import Smol.Backend.IR.FromExpr.Expr
 import Smol.Backend.IR.ToLLVM.ToLLVM
 import Smol.Core.Modules.FromParts
-import Smol.Core.Modules.ModuleError
+import Smol.Core.Modules.Types.ModuleError
 import Smol.Core.Modules.ResolveDeps
 import Smol.Core.Modules.Typecheck
 import Smol.Core.Parser (parseModule)

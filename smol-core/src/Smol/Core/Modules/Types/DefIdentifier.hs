@@ -3,7 +3,7 @@
 {-# LANGUAGE DerivingStrategies #-}
 {-# LANGUAGE OverloadedStrings #-}
 
-module Smol.Core.Types.Module.DefIdentifier
+module Smol.Core.Modules.Types.DefIdentifier
   ( DefIdentifier (..),
   )
 where
@@ -12,7 +12,7 @@ import qualified Data.Aeson as JSON
 import GHC.Generics
 import Smol.Core.Printer
 import Smol.Core.Types.Identifier
-import Smol.Core.Types.Module.TestName
+import Smol.Core.Modules.Types.TestName
 import Smol.Core.Types.TypeName
 
 -- | different kinds of top-level definitions

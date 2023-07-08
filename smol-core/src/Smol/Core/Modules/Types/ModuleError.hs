@@ -1,6 +1,6 @@
 {-# LANGUAGE DerivingStrategies #-}
 
-module Smol.Core.Modules.ModuleError
+module Smol.Core.Modules.Types.ModuleError
   ( ModuleError (..),
     moduleErrorDiagnostic,
   )
@@ -12,8 +12,8 @@ import qualified Data.Text as T
 import qualified Error.Diagnose as Diag
 import Smol.Core.Typecheck
 import Smol.Core.Types
-import Smol.Core.Types.Module.DefIdentifier
-import Smol.Core.Types.Module.ModuleName
+import Smol.Core.Modules.Types.DefIdentifier
+import Smol.Core.Modules.Types.ModuleName
 
 data ModuleError
   = DuplicateDefinition Identifier
@@ -24,6 +24,9 @@ data ModuleError
   | CannotFindConstructors (Set Constructor)
   | VarNotFound Identifier
   | DefDoesNotTypeCheck Text DefIdentifier (TCError Annotation)
+  | NamedImportNotFound (Set ModuleName) ModuleName
+  | DefMissingReturnType DefIdentifier
+  | DefMissingTypeAnnotation DefIdentifier Identifier
   | EmptyTestName Identifier 
   deriving stock (Eq, Ord, Show)
 

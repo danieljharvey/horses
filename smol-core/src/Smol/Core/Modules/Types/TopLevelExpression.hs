@@ -8,7 +8,7 @@
 {-# LANGUAGE StandaloneDeriving #-}
 {-# LANGUAGE UndecidableInstances #-}
 
-module Smol.Core.Types.Module.TopLevelExpression
+module Smol.Core.Modules.Types.TopLevelExpression
   ( TopLevelExpression (..),
   )
 where

@@ -1,7 +1,7 @@
 {-# LANGUAGE DerivingStrategies #-}
 {-# LANGUAGE GeneralisedNewtypeDeriving #-}
 
-module Smol.Core.Types.Module.TestName
+module Smol.Core.Modules.Types.TestName
   ( TestName (..),
   )
 where

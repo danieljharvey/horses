@@ -34,7 +34,7 @@ import Smol.Core.Types.Constructor
 import Smol.Core.Types.DataType
 import Smol.Core.Types.Expr
 import Smol.Core.Types.Identifier
-import Smol.Core.Types.Module (Module (..), TopLevelExpression (..))
+import Smol.Core.Modules.Types (Module (..), TopLevelExpression (..))
 import Smol.Core.Types.Op
 import Smol.Core.Types.Prim
 import Smol.Core.Types.ResolvedDep

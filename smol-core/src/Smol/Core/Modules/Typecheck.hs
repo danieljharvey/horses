@@ -15,9 +15,9 @@ import Smol.Core
 import Smol.Core.Helpers (mapKey)
 import Smol.Core.Modules.Check (filterNameDefs, filterTypeDefs)
 import Smol.Core.Modules.Dependencies
-import Smol.Core.Modules.ModuleError
+import Smol.Core.Modules.Types.ModuleError
 import Smol.Core.Modules.Types.DepType
-import Smol.Core.Types.Module
+import Smol.Core.Modules.Types
 
 getModuleDefIdentifiers ::
   Map DefIdentifier (Set DefIdentifier) ->

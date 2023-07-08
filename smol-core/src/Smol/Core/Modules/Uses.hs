@@ -12,7 +12,7 @@ import qualified Data.List.NonEmpty as NE
 import Data.Set (Set)
 import qualified Data.Set as S
 import Smol.Core
-import qualified Smol.Core.Types.Module.Entity as E
+import qualified Smol.Core.Modules.Types.Entity as E
 
 extractUses :: (Eq ann) => Expr ParseDep ann -> Set E.Entity
 extractUses expr =

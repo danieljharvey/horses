@@ -7,11 +7,7 @@ module Test.Modules.FromPartsSpec (spec) where
 import Smol.Core.Modules.FromParts
 import Test.Helpers
 import Test.Hspec
-import qualified Data.Text as T
-import Smol.Core.Modules.ModuleError
-
-joinText :: [T.Text] -> T.Text
-joinText = T.intercalate "\n"
+import Smol.Core.Modules.Types.ModuleError
 
 -- | tests for checking modules make sense
 

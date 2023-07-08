@@ -14,7 +14,7 @@ import Smol.Core.Parser.Identifiers
 import Smol.Core.Parser.Shared
 import Smol.Core.Parser.Type
 import Smol.Core.Types
-import Smol.Core.Types.Module.ModuleItem
+import Smol.Core.Modules.Types.ModuleItem
 import Text.Megaparsec hiding (parseTest)
 
 type Parser = Parsec Void Text

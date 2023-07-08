@@ -3,7 +3,7 @@
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE OverloadedStrings #-}
 
-module Smol.Core.Types.Module.ModuleName
+module Smol.Core.Modules.Types.ModuleName
   ( ModuleName (..),
     getModuleName,
     validModuleName,

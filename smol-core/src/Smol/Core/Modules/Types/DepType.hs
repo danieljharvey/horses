@@ -8,7 +8,7 @@ module Smol.Core.Modules.Types.DepType
 where
 
 import Smol.Core
-import Smol.Core.Types.Module.TopLevelExpression
+import Smol.Core.Modules.Types.TopLevelExpression
 
 data DepType dep ann
   = DTExpr (TopLevelExpression dep ann)

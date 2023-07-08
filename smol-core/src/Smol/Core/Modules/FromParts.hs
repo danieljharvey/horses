@@ -12,12 +12,12 @@ import qualified Data.Map.Strict as M
 import Data.Maybe (mapMaybe)
 import Data.Monoid
 import Smol.Core
-import Smol.Core.Modules.ModuleError
+import Smol.Core.Modules.Types.ModuleError
 import Smol.Core.Modules.Monad
-import Smol.Core.Types.Module.Module
-import Smol.Core.Types.Module.ModuleItem
-import Smol.Core.Types.Module.Test
-import Smol.Core.Types.Module.TopLevelExpression
+import Smol.Core.Modules.Types.Module
+import Smol.Core.Modules.Types.ModuleItem
+import Smol.Core.Modules.Types.Test
+import Smol.Core.Modules.Types.TopLevelExpression
 
 moduleFromModuleParts ::
   ( MonadError ModuleError m,

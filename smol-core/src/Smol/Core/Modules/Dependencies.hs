@@ -19,13 +19,13 @@ import Data.Monoid (First (..))
 import Data.Set (Set)
 import qualified Data.Set as S
 import Smol.Core
-import Smol.Core.Modules.ModuleError
+import Smol.Core.Modules.Types.ModuleError
 import Smol.Core.Modules.Types.DepType
 import Smol.Core.Modules.Uses
-import Smol.Core.Types.Module.DefIdentifier
-import qualified Smol.Core.Types.Module.Entity as E
-import Smol.Core.Types.Module.Module
-import Smol.Core.Types.Module.TopLevelExpression
+import Smol.Core.Modules.Types.DefIdentifier
+import qualified Smol.Core.Modules.Types.Entity as E
+import Smol.Core.Modules.Types.Module
+import Smol.Core.Modules.Types.TopLevelExpression
 
 filterExprs :: Map k (DepType dep ann) -> Map k (TopLevelExpression dep ann)
 filterExprs =

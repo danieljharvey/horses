@@ -9,7 +9,7 @@ import qualified Data.Map.Strict as M
 import qualified Data.Set as S
 import Smol.Core
 import Smol.Core.Modules.ResolveDeps
-import Smol.Core.Types.Module hiding (Entity (..))
+import Smol.Core.Modules.Types hiding (Entity (..))
 import Test.Helpers
 import Test.Hspec
 

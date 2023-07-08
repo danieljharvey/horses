@@ -3,7 +3,7 @@
 {-# LANGUAGE DerivingStrategies #-}
 {-# LANGUAGE OverloadedStrings #-}
 
-module Smol.Core.Types.Module.Entity where
+module Smol.Core.Modules.Types.Entity where
 
 -- a thing
 -- terrible, pls improve
@@ -12,7 +12,7 @@ import GHC.Generics (Generic)
 import Smol.Core.Printer
 import Smol.Core.Types.Constructor
 import Smol.Core.Types.Identifier
-import Smol.Core.Types.Module.ModuleName
+import Smol.Core.Modules.Types.ModuleName
 import Smol.Core.Types.TypeName
 
 data Entity
