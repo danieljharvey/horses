@@ -6,7 +6,7 @@
 module Test.Modules.TypecheckSpec (spec) where
 
 import Data.Bifunctor (second)
-import Data.Either (isRight, isLeft)
+import Data.Either (isRight)
 import Data.FileEmbed
 import Data.Foldable (find)
 import Data.Functor (void)
@@ -18,10 +18,10 @@ import qualified Data.Text.Encoding as T
 import Error.Diagnose (defaultStyle, printDiagnostic, stdout)
 import Smol.Core
 import Smol.Core.Modules.FromParts
-import Smol.Core.Modules.Types.ModuleError
 import Smol.Core.Modules.ResolveDeps
 import Smol.Core.Modules.Typecheck
 import Smol.Core.Modules.Types hiding (Entity (..))
+import Smol.Core.Modules.Types.ModuleError
 import System.IO.Unsafe
 import Test.Helpers
 import Test.Hspec
@@ -36,7 +36,7 @@ getModuleInput moduleName = case find (\(filename, _) -> moduleName `isInfixOf` 
   Just (_, code) -> code
   Nothing -> error $ "could not find " <> moduleName <> " code"
 
-findResult :: String -> Either ModuleError (Module dep ann) -> Expr dep ann
+findResult :: String -> Either (ModuleError ann) (Module dep (Type dep ann)) -> Expr dep (Type dep ann)
 findResult depName = \case
   Right (Module {moExpressions}) ->
     case M.lookup (fromString depName) moExpressions of
@@ -44,41 +44,66 @@ findResult depName = \case
       Nothing -> error "not found in result"
   _ -> error "typecheck failed"
 
-testTypecheck :: Text -> Either ModuleError (Module ResolvedDep (Type ResolvedDep Annotation))
+testTypecheck ::
+  Text ->
+  Either
+    (ModuleError Annotation)
+    (Module ResolvedDep (Type ResolvedDep Annotation))
 testTypecheck input =
   case parseModuleAndFormatError input of
     Right moduleParts -> do
       case moduleFromModuleParts moduleParts >>= resolveModuleDeps of
         Left e -> error (show e)
         Right (myModule, deps) -> do
-          case typecheckModule input myModule deps of
-            Left e ->
-              showModuleError e
-                >> Left e
-            Right a -> pure a
+          typecheckModule input myModule deps
     Left e -> error (show e)
 
-testModuleTypecheck :: String -> Either ModuleError (Module ResolvedDep (Type ResolvedDep Annotation))
-testModuleTypecheck = testTypecheck . getModuleInput
+testModuleTypecheck ::
+  String ->
+  Either
+    (ModuleError Annotation)
+    (Module ResolvedDep (Type ResolvedDep Annotation))
+testModuleTypecheck moduleName =
+  case testTypecheck (getModuleInput moduleName) of
+    Left e -> Left (showModuleError e)
+    Right a -> pure a
 
-showModuleError :: ModuleError -> a
+showModuleError :: ModuleError Annotation -> ModuleError Annotation
 showModuleError modErr = unsafePerformIO $ do
   printDiagnostic stdout True True 2 defaultStyle (moduleErrorDiagnostic modErr)
-  error "oh no"
+  pure modErr
 
 spec :: Spec
 spec = do
   describe "Modules" $ do
     describe "Tests" $ do
       it "Accepts a unit test with type `Boolean`" $ do
-        testTypecheck (joinText ["test \"it's fine\" using yes",
-            "def yes = True"])
-              `shouldSatisfy` isRight
+        testTypecheck
+          ( joinText
+              [ "test \"it's fine\" using yes",
+                "def yes = True"
+              ]
+          )
+          `shouldSatisfy` isRight
 
       it "Does not accept a unit test with another type" $ do
-        testTypecheck (joinText ["test \"it's fine\" using yes",
-            "def yes = True"])
-              `shouldSatisfy` isLeft
+        let input =
+              joinText
+                [ "test \"it's fine\" using yes",
+                  "def yes = 100"
+                ]
+        testTypecheck input
+          `shouldSatisfy` \case
+            Left
+              ( ErrorInTest
+                  "it's fine"
+                  ( TestDoesNotTypecheck
+                      _
+                      "yes"
+                      (TCTypeMismatch _ _)
+                    )
+                ) -> True
+            _ -> False
 
     describe "Typecheck" $ do
       it "Typechecks Prelude successfully" $ do

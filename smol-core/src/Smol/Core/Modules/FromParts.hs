@@ -1,8 +1,8 @@
 {-# LANGUAGE DerivingStrategies #-}
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE LambdaCase #-}
-{-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE RecordWildCards #-}
 
 module Smol.Core.Modules.FromParts (addModulePart, moduleFromModuleParts, exprAndTypeFromParts) where
 
@@ -12,15 +12,15 @@ import qualified Data.Map.Strict as M
 import Data.Maybe (mapMaybe)
 import Data.Monoid
 import Smol.Core
-import Smol.Core.Modules.Types.ModuleError
 import Smol.Core.Modules.Monad
 import Smol.Core.Modules.Types.Module
+import Smol.Core.Modules.Types.ModuleError
 import Smol.Core.Modules.Types.ModuleItem
 import Smol.Core.Modules.Types.Test
 import Smol.Core.Modules.Types.TopLevelExpression
 
 moduleFromModuleParts ::
-  ( MonadError ModuleError m,
+  ( MonadError (ModuleError ann) m,
     Monoid ann
   ) =>
   [ModuleItem ann] ->
@@ -32,7 +32,7 @@ moduleFromModuleParts parts =
    in foldr addPart (pure mempty) parts
 
 addModulePart ::
-  (MonadError ModuleError m, Monoid ann) =>
+  (MonadError (ModuleError ann) m, Monoid ann) =>
   [ModuleItem ann] ->
   ModuleItem ann ->
   Module ParseDep ann ->
@@ -49,8 +49,9 @@ addModulePart allParts part mod' =
           }
     ModuleExpressionType _name _ty -> do
       pure mod' -- we sort these elsewhere
-    ModuleTest testName ident | "" == testName ->
-      throwError (EmptyTestName ident)
+    ModuleTest testName ident
+      | "" == testName ->
+          throwError (EmptyTestName ident)
     ModuleTest testName ident ->
       if expressionExists ident allParts
         then

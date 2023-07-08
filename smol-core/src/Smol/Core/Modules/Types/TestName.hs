@@ -6,8 +6,8 @@ module Smol.Core.Modules.Types.TestName
   )
 where
 
-import Data.String
 import Data.Aeson (FromJSON, ToJSON)
+import Data.String
 import Data.Text (Text)
 import Smol.Core.Printer
 

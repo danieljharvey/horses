@@ -1,4 +1,5 @@
 {-# LANGUAGE OverloadedStrings #-}
+
 module Test.Helpers
   ( tyBool,
     tyBoolLit,
@@ -25,23 +26,23 @@ module Test.Helpers
     unsafeParseModuleItems,
     unsafeParseType,
     unsafeParseTypedExpr,
-    joinText
+    joinText,
   )
 where
 
-import qualified Data.Text as T
 import Data.Foldable (foldl')
 import Data.Functor
 import qualified Data.List.NonEmpty as NE
 import qualified Data.Sequence as Seq
 import qualified Data.Set.NonEmpty as NES
 import Data.Text (Text)
+import qualified Data.Text as T
 import GHC.Natural
 import Smol.Core
 import Smol.Core.Modules.FromParts
-import Smol.Core.Typecheck.FromParsedExpr
 import Smol.Core.Modules.Types.Module
 import Smol.Core.Modules.Types.ModuleItem
+import Smol.Core.Typecheck.FromParsedExpr
 
 tyBool :: (Monoid ann) => Type dep ann
 tyBool = TPrim mempty TPBool
@@ -155,4 +156,3 @@ unsafeParseTypedExpr input = case parseExprAndFormatError input of
 
 joinText :: [T.Text] -> T.Text
 joinText = T.intercalate "\n"
-

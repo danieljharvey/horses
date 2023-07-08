@@ -8,13 +8,13 @@ where
 
 import Data.Text (Text)
 import Data.Void
+import Smol.Core.Modules.Types.ModuleItem
 import Smol.Core.Parser.DataType (dataTypeParser)
 import Smol.Core.Parser.Expr
 import Smol.Core.Parser.Identifiers
 import Smol.Core.Parser.Shared
 import Smol.Core.Parser.Type
 import Smol.Core.Types
-import Smol.Core.Modules.Types.ModuleItem
 import Text.Megaparsec hiding (parseTest)
 
 type Parser = Parsec Void Text

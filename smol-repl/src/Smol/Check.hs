@@ -10,9 +10,9 @@ import Data.Text (Text)
 import qualified Data.Text as T
 import qualified Data.Text.IO as T
 import Smol.Core.Modules.FromParts
-import Smol.Core.Modules.Types.ModuleError
 import Smol.Core.Modules.ResolveDeps
 import Smol.Core.Modules.Typecheck
+import Smol.Core.Modules.Types.ModuleError
 import Smol.Core.Parser (parseModule)
 import Smol.Repl.Helpers.Diagnostics
 import System.Exit

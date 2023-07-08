@@ -20,12 +20,12 @@ import Data.Map.Strict (Map)
 import qualified Data.Map.Strict as M
 import GHC.Generics (Generic)
 import Prettyprinter
+import Smol.Core.Modules.Types.Test
+import Smol.Core.Modules.Types.TopLevelExpression
 import Smol.Core.Printer
 import Smol.Core.Types.Constructor
 import Smol.Core.Types.DataType
 import Smol.Core.Types.Identifier
-import Smol.Core.Modules.Types.Test
-import Smol.Core.Modules.Types.TopLevelExpression
 import Smol.Core.Types.ParseDep
 import Smol.Core.Types.TypeName
 

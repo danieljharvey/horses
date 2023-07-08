@@ -14,11 +14,11 @@ import Data.Foldable
 import qualified Data.Map.Strict as M
 import qualified Data.Set as S
 import Smol.Core
-import Smol.Core.Modules.Types.ModuleError
 import Smol.Core.Modules.Types.Module
+import Smol.Core.Modules.Types.ModuleError
 
 errorIfExpressionAlreadyDefined ::
-  (MonadError ModuleError m) =>
+  (MonadError (ModuleError ann) m) =>
   Module dep ann ->
   Identifier ->
   m ()
@@ -29,7 +29,7 @@ errorIfExpressionAlreadyDefined mod' def =
     (throwError (DuplicateDefinition def))
 
 checkDataType ::
-  (MonadError ModuleError m) =>
+  (MonadError (ModuleError ann) m) =>
   Module dep ann ->
   DataType dep ann ->
   m ()
@@ -38,7 +38,7 @@ checkDataType mod' (DataType typeName _ constructors) = do
   traverse_ (errorIfConstructorAlreadyDefined mod') (M.keys constructors)
 
 errorIfTypeAlreadyDefined ::
-  (MonadError ModuleError m) =>
+  (MonadError (ModuleError ann) m) =>
   Module dep ann ->
   TypeName ->
   m ()
@@ -49,7 +49,7 @@ errorIfTypeAlreadyDefined mod' typeName =
     (throwError (DuplicateTypeName typeName))
 
 errorIfConstructorAlreadyDefined ::
-  (MonadError ModuleError m) =>
+  (MonadError (ModuleError ann) m) =>
   Module dep ann ->
   Constructor ->
   m ()

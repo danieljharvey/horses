@@ -149,5 +149,3 @@ spec = do
                 ]
 
         resolveModuleDeps mod' `shouldBe` Right (expected, depMap)
-
-
