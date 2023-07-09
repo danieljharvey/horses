@@ -1,5 +1,3 @@
-{-# LANGUAGE LambdaCase #-}
-{-# LANGUAGE NamedFieldPuns #-}
 {-# LANGUAGE OverloadedStrings #-}
 
 module Test.Modules.ResolveDepsSpec (spec) where

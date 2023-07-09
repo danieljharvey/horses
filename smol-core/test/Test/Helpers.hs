@@ -145,7 +145,7 @@ unsafeParseModule input =
 
 unsafeParseModuleItems :: Text -> [ModuleItem ()]
 unsafeParseModuleItems input = case parseModuleAndFormatError input of
-  Right parts -> (fmap . fmap) (const ()) parts
+  Right parts -> fmap void parts
   Left e -> error (show e)
 
 -- | parse a typed expr, ie parse it and fill the type with crap

@@ -11,12 +11,12 @@ import qualified Smol.Backend.Compile.RunLLVM as Run
 import Smol.Backend.IR.FromExpr.Expr
 import Smol.Backend.IR.ToLLVM.ToLLVM
 import Smol.Core.Modules.FromParts
-import Smol.Core.Modules.ModuleError
 import Smol.Core.Modules.ResolveDeps
 import Smol.Core.Modules.Typecheck
+import Smol.Core.Modules.Types
+import Smol.Core.Modules.Types.ModuleError
 import Smol.Core.Parser (parseModuleAndFormatError)
 import Smol.Core.Types
-import Smol.Core.Types.Module
 import Test.BuiltInTypes
 import Test.Hspec
 import Test.IR.Samples
@@ -47,7 +47,7 @@ addTestDataTypesToModule :: (Monoid ann) => Module ParseDep ann -> Module ParseD
 addTestDataTypesToModule myModule =
   myModule {moDataTypes = moDataTypes myModule <> M.mapKeys pdIdentifier (builtInTypes emptyParseDep)}
 
-resolveModule :: Text -> Either ModuleError (Module ResolvedDep (Type ResolvedDep Annotation))
+resolveModule :: Text -> Either (ModuleError Annotation) (Module ResolvedDep (Type ResolvedDep Annotation))
 resolveModule input =
   case parseModuleAndFormatError input of
     Right moduleParts -> do

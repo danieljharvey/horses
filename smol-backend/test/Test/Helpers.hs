@@ -34,8 +34,8 @@ import Data.Text (Text)
 import GHC.Natural
 import Smol.Core
 import Smol.Core.Modules.FromParts
+import Smol.Core.Modules.Types.Module
 import Smol.Core.Typecheck.FromParsedExpr
-import Smol.Core.Types.Module.Module
 
 tyBool :: (Monoid ann) => Type dep ann
 tyBool = TPrim mempty TPBool
