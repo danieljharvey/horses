@@ -15,10 +15,10 @@ import Data.Map.Strict (Map)
 import qualified Data.Map.Strict as M
 import Smol.Core
 import Smol.Core.Helpers (filterMapKeys)
-import Smol.Core.Types.Module.DefIdentifier
-import Smol.Core.Types.Module.Module
-import Smol.Core.Types.Module.ModuleItem
-import Smol.Core.Types.Module.TopLevelExpression
+import Smol.Core.Modules.Types.DefIdentifier
+import Smol.Core.Modules.Types.Module
+import Smol.Core.Modules.Types.ModuleItem
+import Smol.Core.Modules.Types.TopLevelExpression
 
 lookupModuleDef ::
   Module dep (Type dep ann) ->

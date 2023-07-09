@@ -19,13 +19,13 @@ import Data.Monoid (First (..))
 import Data.Set (Set)
 import qualified Data.Set as S
 import Smol.Core
-import Smol.Core.Modules.ModuleError
+import Smol.Core.Modules.Types.DefIdentifier
 import Smol.Core.Modules.Types.DepType
+import qualified Smol.Core.Modules.Types.Entity as E
+import Smol.Core.Modules.Types.Module
+import Smol.Core.Modules.Types.ModuleError
+import Smol.Core.Modules.Types.TopLevelExpression
 import Smol.Core.Modules.Uses
-import Smol.Core.Types.Module.DefIdentifier
-import qualified Smol.Core.Types.Module.Entity as E
-import Smol.Core.Types.Module.Module
-import Smol.Core.Types.Module.TopLevelExpression
 
 filterExprs :: Map k (DepType dep ann) -> Map k (TopLevelExpression dep ann)
 filterExprs =
@@ -76,7 +76,7 @@ filterTypes =
 -- get the vars used by each def
 -- explode if there's not available
 getDependencies ::
-  (MonadError ModuleError m) =>
+  (MonadError (ModuleError ann) m) =>
   (Expr ParseDep ann -> Set E.Entity) ->
   Module ParseDep ann ->
   m
@@ -102,7 +102,7 @@ getDependencies getUses mod' = do
 
 -- get all dependencies of a type definition
 getTypeDependencies ::
-  (MonadError ModuleError m) =>
+  (MonadError (ModuleError ann) m) =>
   Module ParseDep ann ->
   DataType ParseDep ann ->
   m (DepType ParseDep ann, Set DefIdentifier, Set E.Entity)
@@ -113,7 +113,7 @@ getTypeDependencies mod' dt = do
   pure (DTData dt, typeDefIds <> exprDefIds, allUses)
 
 getTypeUses ::
-  (MonadError ModuleError m) =>
+  (MonadError (ModuleError ann) m) =>
   Module dep ann ->
   Set E.Entity ->
   m (Set DefIdentifier)
@@ -158,7 +158,7 @@ findTypesForConstructors mod' =
   S.fromList . mapMaybe (findTypenameInModule mod') . S.toList
 
 getConstructorUses ::
-  (MonadError ModuleError m) =>
+  (MonadError (ModuleError ann) m) =>
   Module dep ann ->
   Set E.Entity ->
   m (Set DefIdentifier)
@@ -182,7 +182,7 @@ getConstructorUses mod' uses = do
         else throwError (CannotFindTypes unknownTypeDeps)
 
 getExprDependencies ::
-  (MonadError ModuleError m) =>
+  (MonadError (ModuleError ann) m) =>
   (Expr dep ann -> Set E.Entity) ->
   Module dep ann ->
   TopLevelExpression dep ann ->
@@ -195,7 +195,7 @@ getExprDependencies getUses mod' expr = do
   pure (DTExpr expr, exprDefIds <> typeDefIds <> consDefIds, allUses)
 
 getExprDeps ::
-  (MonadError ModuleError m) =>
+  (MonadError (ModuleError ann) m) =>
   Module dep ann ->
   Set E.Entity ->
   m (Set Identifier)

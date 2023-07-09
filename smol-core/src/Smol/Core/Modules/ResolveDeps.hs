@@ -21,21 +21,21 @@ import Data.Set (Set)
 import qualified Data.Set as S
 import Smol.Core
 import Smol.Core.Modules.Dependencies
-import Smol.Core.Modules.ModuleError
+import Smol.Core.Modules.Types.DefIdentifier
 import Smol.Core.Modules.Types.DepType
+import Smol.Core.Modules.Types.Module
+import Smol.Core.Modules.Types.ModuleError
+import Smol.Core.Modules.Types.TopLevelExpression
 import Smol.Core.Modules.Uses
-import Smol.Core.Types.Module.DefIdentifier
-import Smol.Core.Types.Module.Module
-import Smol.Core.Types.Module.TopLevelExpression
 
 resolveExprDeps ::
-  (Show ann, MonadError ModuleError m) =>
+  (Show ann, MonadError (ModuleError ann) m) =>
   Expr ParseDep ann ->
   m (Expr ResolvedDep ann)
 resolveExprDeps expr = evalStateT (resolveExpr expr mempty mempty) (ResolveState 0)
 
 resolveModuleDeps ::
-  (Show ann, Eq ann, MonadError ModuleError m) =>
+  (Show ann, Eq ann, MonadError (ModuleError ann) m) =>
   Module ParseDep ann ->
   m (Module ResolvedDep ann, Map DefIdentifier (Set DefIdentifier))
 resolveModuleDeps parsedModule = do
@@ -103,7 +103,7 @@ resolveType (TApp ann fn arg) = TApp ann (resolveType fn) (resolveType arg)
 
 -- resolve Expr (s) and Type pls
 resolveTopLevelExpression ::
-  (Show ann, MonadState ResolveState m, MonadError ModuleError m) =>
+  (Show ann, MonadState ResolveState m, MonadError (ModuleError ann) m) =>
   TopLevelExpression ParseDep ann ->
   Set DefIdentifier ->
   Set Constructor ->
@@ -116,7 +116,7 @@ resolveTopLevelExpression tle localDefs localTypes = flip runReaderT initialEnv 
     initialEnv = ResolveEnv mempty localDefs localTypes
 
 resolveExpr ::
-  (Show ann, MonadError ModuleError m, MonadState ResolveState m) =>
+  (Show ann, MonadError (ModuleError ann) m, MonadState ResolveState m) =>
   Expr ParseDep ann ->
   Set DefIdentifier ->
   Set Constructor ->
@@ -130,7 +130,7 @@ resolveExpr expr localDefs localTypes =
 
 resolveIdentifier ::
   ( MonadReader ResolveEnv m,
-    MonadError ModuleError m
+    MonadError (ModuleError ann) m
   ) =>
   ParseDep Identifier ->
   m (ResolvedDep Identifier)
@@ -210,7 +210,7 @@ data ResolveEnv = ResolveEnv
 newtype ResolveState = ResolveState {rsUnique :: Int}
 
 resolveM ::
-  (Show ann, MonadReader ResolveEnv m, MonadState ResolveState m, MonadError ModuleError m) =>
+  (Show ann, MonadReader ResolveEnv m, MonadState ResolveState m, MonadError (ModuleError ann) m) =>
   Expr ParseDep ann ->
   m (Expr ResolvedDep ann)
 resolveM (EVar ann ident) = EVar ann <$> resolveIdentifier ident
@@ -260,7 +260,7 @@ resolveM (EPatternMatch ann expr pats) = do
 resolvePattern ::
   forall m ann.
   ( MonadReader ResolveEnv m,
-    MonadError ModuleError m,
+    MonadError (ModuleError ann) m,
     MonadState ResolveState m
   ) =>
   Pattern ParseDep ann ->
@@ -268,7 +268,7 @@ resolvePattern ::
 resolvePattern = runWriterT . resolvePatternInner
   where
     resolvePatternInner ::
-      ( MonadError ModuleError m,
+      ( MonadError (ModuleError ann) m,
         MonadReader ResolveEnv m,
         MonadWriter (Map Identifier Int) m,
         MonadState ResolveState m

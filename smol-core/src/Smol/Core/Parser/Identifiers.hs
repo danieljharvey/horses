@@ -20,11 +20,11 @@ import Data.Set (Set)
 import qualified Data.Set as S
 import Data.Text (Text)
 import Data.Void
+import Smol.Core.Modules.Types.ModuleName
+import Smol.Core.Modules.Types.TestName
 import Smol.Core.Parser.Primitives (textPrim)
 import Smol.Core.Parser.Shared
 import Smol.Core.Types
-import Smol.Core.Types.Module.ModuleName
-import Smol.Core.Types.Module.TestName
 import Text.Megaparsec
 
 type Parser = Parsec Void Text

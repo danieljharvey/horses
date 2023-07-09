@@ -6,6 +6,7 @@ module Smol.Core.Modules.Typecheck (typecheckModule) where
 import qualified Builder as Build
 import Control.Monad.Except
 import Data.Bifunctor (first)
+import Data.Foldable (traverse_)
 import Data.Map.Strict (Map)
 import qualified Data.Map.Strict as M
 import Data.Maybe (fromMaybe, mapMaybe)
@@ -15,9 +16,9 @@ import Smol.Core
 import Smol.Core.Helpers (mapKey)
 import Smol.Core.Modules.Check (filterNameDefs, filterTypeDefs)
 import Smol.Core.Modules.Dependencies
-import Smol.Core.Modules.ModuleError
+import Smol.Core.Modules.Types
 import Smol.Core.Modules.Types.DepType
-import Smol.Core.Types.Module
+import Smol.Core.Modules.Types.ModuleError
 
 getModuleDefIdentifiers ::
   Map DefIdentifier (Set DefIdentifier) ->
@@ -69,7 +70,7 @@ moduleFromDepTypes oldModule definitions =
 
 --- typecheck a single module
 typecheckModule ::
-  (MonadError ModuleError m) =>
+  (MonadError (ModuleError Annotation) m) =>
   Text ->
   Module ResolvedDep Annotation ->
   Map DefIdentifier (Set DefIdentifier) ->
@@ -97,12 +98,40 @@ typecheckModule input inputModule depMap = do
     Build.stOutputs
       <$> Build.doJobs (typecheckOneDef input inputModule) state
 
+  -- check all tests make sense
+  traverse_ (typecheckTest typecheckedDefs) (moTests inputModule)
+
   -- replace input module with typechecked versions
   pure $ moduleFromDepTypes inputModule typecheckedDefs
 
+-- our "typecheck" is "get the expression, typecheck it against `Boolean`"
+typecheckTest ::
+  (MonadError (ModuleError Annotation) m) =>
+  Map DefIdentifier (DepType ResolvedDep (Type ResolvedDep Annotation)) ->
+  Test ->
+  m ()
+typecheckTest defs (UnitTest testName ident) = do
+  case M.lookup (DIName ident) defs of
+    Just (DTExpr tle) -> do
+      let ty = getExprAnnotation (tleExpr tle)
+      case ty of
+        TPrim _ TPBool -> pure ()
+        TLiteral _ (TLBool _) -> pure ()
+        other ->
+          throwError
+            ( ErrorInTest
+                testName
+                ( TestDoesNotTypecheck
+                    mempty
+                    ident
+                    (TCTypeMismatch other (TPrim (getTypeAnnotation other) TPBool))
+                )
+            )
+    _ -> throwError (VarNotFound ident)
+
 -- given types for other required definition, typecheck a definition
 typecheckOneDef ::
-  (MonadError ModuleError m) =>
+  (MonadError (ModuleError Annotation) m) =>
   Text ->
   Module ResolvedDep Annotation ->
   Map DefIdentifier (DepType ResolvedDep (Type ResolvedDep Annotation)) ->
@@ -128,7 +157,7 @@ typecheckOneDef input inputModule deps (def, dep) =
 -- typechecking in this context means "does this data type make sense"
 -- and "do we know about all external datatypes it mentions"
 typecheckOneTypeDef ::
-  (MonadError ModuleError m) =>
+  (MonadError (ModuleError Annotation) m) =>
   Text ->
   Module ResolvedDep Annotation ->
   Map DefIdentifier (DataType ResolvedDep (Type ResolvedDep Annotation)) ->
@@ -167,7 +196,7 @@ getDataTypeMap =
 
 -- given types for other required definition, typecheck a definition
 typecheckOneExprDef ::
-  (MonadError ModuleError m) =>
+  (MonadError (ModuleError Annotation) m) =>
   Text ->
   Module ResolvedDep Annotation ->
   Map DefIdentifier (DepType ResolvedDep (Type ResolvedDep Annotation)) ->

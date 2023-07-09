@@ -16,12 +16,12 @@ import Data.Bifunctor (first)
 import Data.Text (Text)
 import qualified Data.Text as T
 import Data.Void
+import Smol.Core.Modules.Types
 import Smol.Core.Parser.DataType (dataTypeParser)
 import Smol.Core.Parser.Expr
 import Smol.Core.Parser.Module
 import Smol.Core.Parser.Type
 import Smol.Core.Types
-import Smol.Core.Types.Module
 import Text.Megaparsec
 import Text.Megaparsec.Char
 

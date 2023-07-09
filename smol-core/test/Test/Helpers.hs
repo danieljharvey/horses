@@ -1,3 +1,5 @@
+{-# LANGUAGE OverloadedStrings #-}
+
 module Test.Helpers
   ( tyBool,
     tyBoolLit,
@@ -21,8 +23,10 @@ module Test.Helpers
     patternMatch,
     unsafeParseExpr,
     unsafeParseModule,
+    unsafeParseModuleItems,
     unsafeParseType,
     unsafeParseTypedExpr,
+    joinText,
   )
 where
 
@@ -32,11 +36,13 @@ import qualified Data.List.NonEmpty as NE
 import qualified Data.Sequence as Seq
 import qualified Data.Set.NonEmpty as NES
 import Data.Text (Text)
+import qualified Data.Text as T
 import GHC.Natural
 import Smol.Core
 import Smol.Core.Modules.FromParts
+import Smol.Core.Modules.Types.Module
+import Smol.Core.Modules.Types.ModuleItem
 import Smol.Core.Typecheck.FromParsedExpr
-import Smol.Core.Types.Module.Module
 
 tyBool :: (Monoid ann) => Type dep ann
 tyBool = TPrim mempty TPBool
@@ -132,10 +138,14 @@ unsafeParseType input = case parseTypeAndFormatError input of
   Left e -> error (show e)
 
 unsafeParseModule :: Text -> Module ParseDep ()
-unsafeParseModule input = case parseModuleAndFormatError input of
-  Right parts -> case moduleFromModuleParts parts of
+unsafeParseModule input =
+  case moduleFromModuleParts (unsafeParseModuleItems input) of
     Right a -> a $> ()
     Left e -> error (show e)
+
+unsafeParseModuleItems :: Text -> [ModuleItem ()]
+unsafeParseModuleItems input = case parseModuleAndFormatError input of
+  Right parts -> fmap void parts
   Left e -> error (show e)
 
 -- | parse a typed expr, ie parse it and fill the type with crap
@@ -143,3 +153,6 @@ unsafeParseTypedExpr :: Text -> ResolvedExpr (Type ResolvedDep Annotation)
 unsafeParseTypedExpr input = case parseExprAndFormatError input of
   Right expr -> fromParsedExpr expr $> TPrim mempty TPBool
   Left e -> error (show e)
+
+joinText :: [T.Text] -> T.Text
+joinText = T.intercalate "\n"

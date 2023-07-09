@@ -1,8 +1,9 @@
 {-# LANGUAGE DerivingStrategies #-}
 
-module Smol.Core.Modules.ModuleError
+module Smol.Core.Modules.Types.ModuleError
   ( ModuleError (..),
     moduleErrorDiagnostic,
+    TestError (..),
   )
 where
 
@@ -10,12 +11,21 @@ import Data.Set (Set)
 import Data.Text (Text)
 import qualified Data.Text as T
 import qualified Error.Diagnose as Diag
+import Smol.Core.Modules.Types.DefIdentifier
+import Smol.Core.Modules.Types.ModuleName
+import Smol.Core.Modules.Types.TestName
 import Smol.Core.Typecheck
 import Smol.Core.Types
-import Smol.Core.Types.Module.DefIdentifier
-import Smol.Core.Types.Module.ModuleName
 
-data ModuleError
+data TestError ann
+  = TestDoesNotTypecheck Text Identifier (TCError ann)
+  deriving stock (Eq, Ord, Show)
+
+testErrorDiagnostic :: TestError Annotation -> Diag.Diagnostic Text
+testErrorDiagnostic (TestDoesNotTypecheck input _ typeErr) =
+  typeErrorDiagnostic input typeErr
+
+data ModuleError ann
   = DuplicateDefinition Identifier
   | DuplicateTypeName TypeName
   | DuplicateConstructor Constructor
@@ -23,15 +33,19 @@ data ModuleError
   | CannotFindTypes (Set TypeName)
   | CannotFindConstructors (Set Constructor)
   | VarNotFound Identifier
-  | DefDoesNotTypeCheck Text DefIdentifier (TCError Annotation)
+  | DefDoesNotTypeCheck Text DefIdentifier (TCError ann)
   | NamedImportNotFound (Set ModuleName) ModuleName
   | DefMissingReturnType DefIdentifier
   | DefMissingTypeAnnotation DefIdentifier Identifier
-  | EmptyTestName (Expr ParseDep ())
+  | EmptyTestName Identifier
+  | ErrorInTest TestName (TestError ann)
   deriving stock (Eq, Ord, Show)
 
-moduleErrorDiagnostic :: ModuleError -> Diag.Diagnostic Text
-moduleErrorDiagnostic (DefDoesNotTypeCheck input _ typeErr) = typeErrorDiagnostic input typeErr
+moduleErrorDiagnostic :: ModuleError Annotation -> Diag.Diagnostic Text
+moduleErrorDiagnostic (DefDoesNotTypeCheck input _ typeErr) =
+  typeErrorDiagnostic input typeErr
+moduleErrorDiagnostic (ErrorInTest _ testErr) =
+  testErrorDiagnostic testErr
 moduleErrorDiagnostic other =
   let report =
         Diag.Err

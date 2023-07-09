@@ -64,11 +64,20 @@ library
     Smol.Core.Modules.Check
     Smol.Core.Modules.Dependencies
     Smol.Core.Modules.FromParts
-    Smol.Core.Modules.ModuleError
+    Smol.Core.Modules.Types.ModuleError
     Smol.Core.Modules.Monad
     Smol.Core.Modules.ResolveDeps
     Smol.Core.Modules.Typecheck
     Smol.Core.Modules.Types.DepType
+    Smol.Core.Modules.Types.Module
+    Smol.Core.Modules.Types.DefIdentifier
+    Smol.Core.Modules.Types.Entity
+    Smol.Core.Modules.Types
+    Smol.Core.Modules.Types.ModuleItem
+    Smol.Core.Modules.Types.ModuleName
+    Smol.Core.Modules.Types.Test
+    Smol.Core.Modules.Types.TestName
+    Smol.Core.Modules.Types.TopLevelExpression
     Smol.Core.Modules.Uses
     Smol.Core.Parser
     Smol.Core.Parser.DataType
@@ -101,14 +110,6 @@ library
     Smol.Core.Types.DataType
     Smol.Core.Types.Expr
     Smol.Core.Types.Identifier
-    Smol.Core.Types.Module
-    Smol.Core.Types.Module.DefIdentifier
-    Smol.Core.Types.Module.Entity
-    Smol.Core.Types.Module.Module
-    Smol.Core.Types.Module.ModuleItem
-    Smol.Core.Types.Module.ModuleName
-    Smol.Core.Types.Module.TestName
-    Smol.Core.Types.Module.TopLevelExpression
     Smol.Core.Types.Op
     Smol.Core.Types.ParseDep
     Smol.Core.Types.Pattern
@@ -135,7 +136,9 @@ test-suite smol-core-tests
     Test.BuiltInTypes
     Test.Helpers
     Test.Interpreter.InterpreterSpec
-    Test.Modules.ModulesSpec
+    Test.Modules.ResolveDepsSpec
+    Test.Modules.TypecheckSpec
+    Test.Modules.FromPartsSpec
     Test.ParserSpec
     Test.Typecheck.ExhaustivenessSpec
     Test.Typecheck.NestingMonadSpec
