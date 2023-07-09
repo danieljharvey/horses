@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1688680300872,
+  "lastUpdate": 1688910151185,
   "repoUrl": "https://github.com/danieljharvey/mimsa",
   "entries": {
     "Store benchmarks in Github Pages": [
@@ -2591,6 +2591,50 @@ window.BENCHMARK_DATA = {
           {
             "name": "evaluate/evaluate parsing 2",
             "value": 0.3107978194999759,
+            "unit": "Time (ms)"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "danieljamesharvey@gmail.com",
+            "name": "Daniel Harvey",
+            "username": "danieljharvey"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "7e6bd4571965795c63e72a626649e49aae6b80ed",
+          "message": "Add tests to module, empty tests for typechecking they are not silly (#993)\n\n* Add tests to module, empty tests for typechecking they are not silly\r\n\r\n* Shuffle shit around\r\n\r\n* Typecheck tests\r\n\r\n* Fix things",
+          "timestamp": "2023-07-09T14:38:20+01:00",
+          "tree_id": "079d5d034277f42cb725930214590b1c4cda0367",
+          "url": "https://github.com/danieljharvey/mimsa/commit/7e6bd4571965795c63e72a626649e49aae6b80ed"
+        },
+        "date": 1688910150202,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "build stdlib/allFns",
+            "value": 0.11315124677381377,
+            "unit": "Time (ms)"
+          },
+          {
+            "name": "evaluate/evaluate big looping thing",
+            "value": 0.08830811979999866,
+            "unit": "Time (ms)"
+          },
+          {
+            "name": "evaluate/evaluate parsing",
+            "value": 0.0340606165205904,
+            "unit": "Time (ms)"
+          },
+          {
+            "name": "evaluate/evaluate parsing 2",
+            "value": 0.2641369034999968,
             "unit": "Time (ms)"
           }
         ]
