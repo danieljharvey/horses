@@ -14,8 +14,8 @@ import Data.Set (Set)
 import Data.Text (Text)
 import Smol.Core
 import Smol.Core.Helpers (mapKey)
-import Smol.Core.Modules.Check (filterNameDefs, filterTypeDefs)
 import Smol.Core.Modules.Dependencies
+import Smol.Core.Modules.Helpers (filterNameDefs, filterTypeDefs)
 import Smol.Core.Modules.Types
 import Smol.Core.Modules.Types.DepType
 import Smol.Core.Modules.Types.ModuleError

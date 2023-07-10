@@ -1,10 +1,11 @@
 {-# LANGUAGE NamedFieldPuns #-}
+
 module Smol.Core.Modules.RunTests (runTests) where
 
-import Data.Functor (void)
 import Control.Monad.Identity
-import Smol.Core
+import Data.Functor (void)
 import qualified Data.Map.Strict as M
+import Smol.Core
 import Smol.Core.Modules.Types
 
 -- | We have a ResolvedDep with lots of info, but when it comes to compiling
@@ -30,11 +31,11 @@ resolve (UniqueDefinition a _) = pure a
 runTests :: Module ResolvedDep ann -> [(TestName, Bool)]
 runTests (Module {moTests, moExpressions}) =
   fmap runTest moTests
-    where
-      runTest (UnitTest testName ident) =
-        case M.lookup ident moExpressions of
-          Just tle ->
-            case doInterpret (void $ tleExpr tle) of
-              EPrim _ (PBool b) -> (testName, b)
-              _ -> error "Expected a boolean result"
-          Nothing ->  (testName, False)
+  where
+    runTest (UnitTest testName ident) =
+      case M.lookup ident moExpressions of
+        Just tle ->
+          case doInterpret (void $ tleExpr tle) of
+            EPrim _ (PBool b) -> (testName, b)
+            _ -> error "Expected a boolean result"
+        Nothing -> (testName, False)
