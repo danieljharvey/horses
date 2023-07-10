@@ -36,6 +36,7 @@ common shared
     Smol.Check
     Smol.Repl
     Smol.Repl.Helpers.Diagnostics
+    Smol.Repl.Helpers.ShowTestResults
 
 library
   import:           shared

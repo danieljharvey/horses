@@ -17,9 +17,7 @@ import Data.Text (Text)
 import qualified Data.Text.Encoding as T
 import Error.Diagnose (defaultStyle, printDiagnostic, stdout)
 import Smol.Core
-import Smol.Core.Modules.FromParts
-import Smol.Core.Modules.ResolveDeps
-import Smol.Core.Modules.Typecheck
+import Smol.Core.Modules.Check
 import Smol.Core.Modules.Types hiding (Entity (..))
 import Smol.Core.Modules.Types.ModuleError
 import System.IO.Unsafe
@@ -51,11 +49,7 @@ testTypecheck ::
     (Module ResolvedDep (Type ResolvedDep Annotation))
 testTypecheck input =
   case parseModuleAndFormatError input of
-    Right moduleParts -> do
-      case moduleFromModuleParts moduleParts >>= resolveModuleDeps of
-        Left e -> error (show e)
-        Right (myModule, deps) -> do
-          typecheckModule input myModule deps
+    Right moduleParts -> checkModule input moduleParts
     Left e -> error (show e)
 
 testModuleTypecheck ::

@@ -1,5 +1,3 @@
-{-# LANGUAGE OverloadedStrings #-}
-
 module Smol.Check
   ( check,
   )
@@ -9,12 +7,12 @@ import Control.Monad.IO.Class (MonadIO, liftIO)
 import Data.Text (Text)
 import qualified Data.Text as T
 import qualified Data.Text.IO as T
-import Smol.Core.Modules.FromParts
-import Smol.Core.Modules.ResolveDeps
-import Smol.Core.Modules.Typecheck
+import Smol.Core.Modules.Check
+import Smol.Core.Modules.RunTests
 import Smol.Core.Modules.Types.ModuleError
 import Smol.Core.Parser (parseModule)
 import Smol.Repl.Helpers.Diagnostics
+import Smol.Repl.Helpers.ShowTestResults
 import System.Exit
 import Prelude hiding (init)
 
@@ -28,18 +26,16 @@ checkFile filePath = liftIO $ do
       printDiagnostic (fromErrorBundle bundle input)
         >> pure (ExitFailure 1)
     Right moduleParts -> do
-      case moduleFromModuleParts moduleParts >>= resolveModuleDeps of
+      case checkModule input moduleParts of
         Left e ->
           printDiagnostic (moduleErrorDiagnostic e)
             >> pure (ExitFailure 1)
-        Right (myModule, deps) -> do
-          case typecheckModule input myModule deps of
-            Left e ->
-              printDiagnostic (moduleErrorDiagnostic e)
-                >> pure (ExitFailure 1)
-            Right _tcModule -> do
-              putStrLn "Great job!"
-              pure ExitSuccess
+        Right tcModule -> do
+          let testResults = runTests tcModule
+          liftIO $ printTestResults testResults
+          if testsAllPass testResults
+            then putStrLn "Great job!" >> pure ExitSuccess
+            else pure (ExitFailure 1)
 
 check :: Text -> IO ()
 check filePath = do

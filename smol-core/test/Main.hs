@@ -4,6 +4,7 @@ import Test.Hspec
 import qualified Test.Interpreter.InterpreterSpec
 import qualified Test.Modules.FromPartsSpec
 import qualified Test.Modules.ResolveDepsSpec
+import qualified Test.Modules.RunTestsSpec
 import qualified Test.Modules.TypecheckSpec
 import qualified Test.ParserSpec
 import qualified Test.Typecheck.ExhaustivenessSpec
@@ -24,3 +25,4 @@ main = hspec $ do
   Test.Modules.ResolveDepsSpec.spec
   Test.Modules.TypecheckSpec.spec
   Test.Modules.FromPartsSpec.spec
+  Test.Modules.RunTestsSpec.spec

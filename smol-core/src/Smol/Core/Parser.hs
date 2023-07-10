@@ -9,6 +9,7 @@ module Smol.Core.Parser
     parseModule,
     parseModuleAndFormatError,
     parseDataTypeAndFormatError,
+    ParseErrorType,
   )
 where
 
