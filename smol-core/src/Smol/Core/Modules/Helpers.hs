@@ -3,10 +3,7 @@
 {-# LANGUAGE LambdaCase #-}
 
 module Smol.Core.Modules.Helpers
-  (
-
-
-    filterNameDefs,
+  ( filterNameDefs,
     filterTypeDefs,
   )
 where
