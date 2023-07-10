@@ -1,3 +1,5 @@
+{-# LANGUAGE FlexibleContexts #-}
+
 module Smol.Core.Modules.Check
   ( checkModule,
   )
