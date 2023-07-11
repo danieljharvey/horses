@@ -7,11 +7,13 @@ module Smol.Core.Typecheck.Types
     TCEnv (..),
     TCError (..),
     GlobalMap (..),
+    Typeclass (..),
     filterIdent,
     globalMapIsNull,
   )
 where
 
+import Control.Monad.Identity
 import Data.Map.Strict (Map)
 import qualified Data.Map.Strict as M
 import Data.Set (Set)
@@ -48,10 +50,26 @@ data TCError ann
   | TCPatternMatchError (PatternMatchError (ResolvedType ann))
   deriving stock (Eq, Ord, Show, Foldable)
 
+data Typeclass ann = Typeclass
+  { tcArgs :: [Identifier],
+    tcFuncName :: String,
+    tcFuncType :: Type Identity ann
+  }
+
+data TypeclassHead ann =
+    TypeclassHead String [Type Identity ann]
+  deriving stock (Eq,Ord,Show)
+
+data Instance ann = Instance
+  { inExpr :: Expr Identity ann }
+  deriving stock (Eq, Ord, Show)
+
 data TCEnv ann = TCEnv
   { tceVars :: Map (ResolvedDep Identifier) (ResolvedType ann),
     tceGlobals :: Map Identifier (ResolvedType ann),
-    tceDataTypes :: Map (ResolvedDep TypeName) (DataType ResolvedDep ann)
+    tceDataTypes :: Map (ResolvedDep TypeName) (DataType ResolvedDep ann),
+    tceClasses :: Map String (Typeclass ann),
+    tceInstances :: Map (TypeclassHead ann) (Instance ann)
   }
 
 data TCState ann = TCState

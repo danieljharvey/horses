@@ -14,8 +14,8 @@ import Test.BuiltInTypes
 import Test.Helpers
 import Test.Hspec
 
-env :: (Monoid ann) => TCEnv ann
-env = TCEnv mempty mempty (builtInTypes emptyResolvedDep)
+env :: (Monoid ann, Ord ann) => TCEnv ann
+env = TCEnv mempty mempty (builtInTypes emptyResolvedDep) mempty mempty
 
 type PatternM = ExceptT (TCError Annotation) (Reader (TCEnv Annotation))
 

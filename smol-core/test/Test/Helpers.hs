@@ -10,6 +10,8 @@ module Test.Helpers
     tyUnknown,
     tyTuple,
     tyCons,
+    tyFunc,
+    tyString,
     bool,
     int,
     var,
@@ -54,6 +56,9 @@ tyBoolLit = TLiteral mempty . TLBool
 tyInt :: (Monoid ann) => Type dep ann
 tyInt = TPrim mempty TPInt
 
+tyString :: (Monoid ann) => Type dep ann
+tyString = TPrim mempty TPString
+
 tyIntLit :: (Monoid ann) => [Integer] -> Type dep ann
 tyIntLit = TLiteral mempty . TLInt . NES.fromList . NE.fromList
 
@@ -80,6 +85,9 @@ tyCons ::
   Type ParseDep ann
 tyCons typeName =
   foldl' (TApp mempty) (TConstructor mempty (emptyParseDep typeName))
+
+tyFunc :: (Monoid ann, Ord (dep Identifier)) => Type dep ann -> Type dep ann -> Type dep ann
+tyFunc = TFunc mempty mempty
 
 unit :: (Monoid ann) => Expr dep ann
 unit = EPrim mempty PUnit

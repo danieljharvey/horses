@@ -210,7 +210,9 @@ typecheckOneExprDef input _inputModule deps (def, tle) = do
         TCEnv
           { tceVars = exprTypeMap,
             tceDataTypes = getDataTypeMap deps,
-            tceGlobals = mempty
+            tceGlobals = mempty,
+            tceClasses = mempty,
+            tceInstances = mempty
           }
 
   -- if we have a type, add an annotation

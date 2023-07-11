@@ -3,6 +3,8 @@
 
 module Test.TypecheckSpec (spec) where
 
+import Control.Monad.Identity
+import Control.Monad.Reader
 import Control.Monad.State
 import Data.Bifunctor
 import Data.Either
@@ -42,19 +44,42 @@ testElaborate ::
   (Ord ann, Show ann, Monoid ann) =>
   Expr ParseDep ann ->
   Either (TCError ann) (Expr ResolvedDep (Type ResolvedDep ann))
-testElaborate expr = do
-  let env =
-        TCEnv
-          { tceDataTypes = builtInTypes emptyResolvedDep,
-            tceVars = mempty,
-            tceGlobals = mempty
-          }
-  case elaborate env (fromParsedExpr expr) of
+testElaborate expr =
+  case elaborate typecheckEnv (fromParsedExpr expr) of
     Right typedExpr -> pure typedExpr
     Left e -> Left e
 
-typecheckEnv :: TCEnv ()
-typecheckEnv = TCEnv mempty mempty (builtInTypes LocalDefinition)
+tcVar :: (Monoid ann) => Identifier -> Type Identity ann
+tcVar = TVar mempty . Identity
+
+
+
+classes :: (Monoid ann) => M.Map String (Typeclass ann)
+classes =
+  M.fromList
+    [ ( "Eq",
+        ( Typeclass
+            { tcArgs = ["a"],
+              tcFuncName = "equals",
+              tcFuncType = tyFunc (tcVar "a") (tyFunc (tcVar "a") tyBool)
+            }
+        )
+      ),
+      ( "Show",
+        ( Typeclass
+            { tcArgs = ["a"],
+              tcFuncName = "show",
+              tcFuncType = tyFunc (tcVar "a") tyString
+            }
+        )
+      )
+    ]
+
+instances :: M.Map (TypeclassHead ann) (Instance ann)
+instances = M.singleton (TypeclassHead _ _) (Instance _)
+
+typecheckEnv :: (Monoid ann,Ord ann) => TCEnv ann
+typecheckEnv = TCEnv mempty mempty (builtInTypes emptyResolvedDep) classes mempty
 
 spec :: Spec
 spec = do
