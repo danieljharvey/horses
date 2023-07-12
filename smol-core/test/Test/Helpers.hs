@@ -1,7 +1,8 @@
 {-# LANGUAGE OverloadedStrings #-}
 
 module Test.Helpers
-  ( tyBool,
+  ( tyUnit,
+    tyBool,
     tyBoolLit,
     tyInt,
     tyIntLit,
@@ -43,6 +44,9 @@ import Smol.Core.Modules.FromParts
 import Smol.Core.Modules.Types.Module
 import Smol.Core.Modules.Types.ModuleItem
 import Smol.Core.Typecheck.FromParsedExpr
+
+tyUnit :: (Monoid ann) => Type dep ann
+tyUnit = TLiteral mempty TLUnit
 
 tyBool :: (Monoid ann) => Type dep ann
 tyBool = TPrim mempty TPBool

@@ -12,6 +12,7 @@ import qualified Test.Typecheck.NestingMonadSpec
 import qualified Test.Typecheck.PatternSpec
 import qualified Test.Typecheck.SubtypeSpec
 import qualified Test.TypecheckSpec
+import qualified Test.TypeclassSpec
 
 main :: IO ()
 main = hspec $ do
@@ -26,3 +27,4 @@ main = hspec $ do
   Test.Modules.TypecheckSpec.spec
   Test.Modules.FromPartsSpec.spec
   Test.Modules.RunTestsSpec.spec
+  Test.TypeclassSpec.spec

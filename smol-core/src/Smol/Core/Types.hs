@@ -13,6 +13,7 @@ module Smol.Core.Types
     module Smol.Core.Types.Spread,
     module Smol.Core.Types.Type,
     module Smol.Core.Types.TypeName,
+    module Smol.Core.Types.Typeclass,
   )
 where
 
@@ -30,3 +31,4 @@ import Smol.Core.Types.ResolvedDep
 import Smol.Core.Types.Spread
 import Smol.Core.Types.Type
 import Smol.Core.Types.TypeName
+import Smol.Core.Types.Typeclass
