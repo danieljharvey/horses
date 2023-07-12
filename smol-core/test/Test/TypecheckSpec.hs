@@ -105,7 +105,7 @@ typecheckEnv =
 spec :: Spec
 spec = do
   describe "TypecheckSpec" $ do
-    fdescribe "Check instances" $ do
+    describe "Check instances" $ do
       it "Good Show instance" $ do
         checkInstance @()
           showTypeclass

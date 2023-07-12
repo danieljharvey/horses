@@ -23,7 +23,7 @@ checkInstance ::
   TypeclassHead ann ->
   Instance ann ->
   m (String, Expr ResolvedDep (Type ResolvedDep ann))
-checkInstance (Typeclass args name ty) (TypeclassHead _ tys) (Instance expr) =
+checkInstance (Typeclass args funcName ty) (TypeclassHead _ tys) (Instance expr) =
   do
     let subs =
           ( \(ident, tySub) ->
@@ -46,4 +46,4 @@ checkInstance (Typeclass args name ty) (TypeclassHead _ tys) (Instance expr) =
 
     typedExpr <- elaborate tcEnv (resolveExpr annotatedExpr)
 
-    pure (name,typedExpr)
+    pure (funcName,typedExpr)
