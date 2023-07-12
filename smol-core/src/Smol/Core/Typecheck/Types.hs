@@ -8,6 +8,8 @@ module Smol.Core.Typecheck.Types
     TCError (..),
     GlobalMap (..),
     Typeclass (..),
+    TypeclassHead (..),
+    Instance (..),
     filterIdent,
     globalMapIsNull,
   )
@@ -56,12 +58,12 @@ data Typeclass ann = Typeclass
     tcFuncType :: Type Identity ann
   }
 
-data TypeclassHead ann =
-    TypeclassHead String [Type Identity ann]
-  deriving stock (Eq,Ord,Show)
+data TypeclassHead ann
+  = TypeclassHead String [Type Identity ann]
+  deriving stock (Eq, Ord, Show)
 
 data Instance ann = Instance
-  { inExpr :: Expr Identity ann }
+  {inExpr :: Expr Identity ann}
   deriving stock (Eq, Ord, Show)
 
 data TCEnv ann = TCEnv

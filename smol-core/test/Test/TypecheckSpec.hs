@@ -1,5 +1,6 @@
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE TypeApplications #-}
 
 module Test.TypecheckSpec (spec) where
 
@@ -17,6 +18,7 @@ import qualified Data.Text as T
 import Error.Diagnose (defaultStyle, printDiagnostic, stdout)
 import Smol.Core
 import Smol.Core.Typecheck.FromParsedExpr
+import Smol.Core.Typecheck.Typeclass
 import Test.BuiltInTypes (builtInTypes)
 import Test.Helpers
 import Test.Hspec
@@ -52,38 +54,86 @@ testElaborate expr =
 tcVar :: (Monoid ann) => Identifier -> Type Identity ann
 tcVar = TVar mempty . Identity
 
+identityFromParsedExpr :: Expr ParseDep ann -> Expr Identity ann
+identityFromParsedExpr = mapExprDep resolve
+  where
+    resolve (ParseDep a _) = Identity a
+
+showTypeclass :: (Monoid ann) => Typeclass ann
+showTypeclass =
+  Typeclass
+    { tcArgs = ["a"],
+      tcFuncName = "show",
+      tcFuncType = tyFunc (tcVar "a") tyString
+    }
+
+eqTypeclass :: (Monoid ann) => Typeclass ann
+eqTypeclass
+ = Typeclass
+            { tcArgs = ["a"],
+              tcFuncName = "equals",
+              tcFuncType = tyFunc (tcVar "a") (tyFunc (tcVar "a") tyBool)
+            }
 
 
 classes :: (Monoid ann) => M.Map String (Typeclass ann)
 classes =
   M.fromList
-    [ ( "Eq",
-        ( Typeclass
-            { tcArgs = ["a"],
-              tcFuncName = "equals",
-              tcFuncType = tyFunc (tcVar "a") (tyFunc (tcVar "a") tyBool)
-            }
-        )
-      ),
-      ( "Show",
-        ( Typeclass
-            { tcArgs = ["a"],
-              tcFuncName = "show",
-              tcFuncType = tyFunc (tcVar "a") tyString
-            }
-        )
-      )
+    [ ( "Eq", eqTypeclass ),
+      ("Show", showTypeclass)
     ]
 
-instances :: M.Map (TypeclassHead ann) (Instance ann)
-instances = M.singleton (TypeclassHead _ _) (Instance _)
+unsafeParseInstanceExpr :: (Monoid ann) => Text -> Expr Identity ann
+unsafeParseInstanceExpr =
+  fmap (const mempty) . identityFromParsedExpr . unsafeParseExpr
 
-typecheckEnv :: (Monoid ann,Ord ann) => TCEnv ann
-typecheckEnv = TCEnv mempty mempty (builtInTypes emptyResolvedDep) classes mempty
+instances :: (Monoid ann) => M.Map (TypeclassHead ann) (Instance ann)
+instances =
+  M.singleton
+    (TypeclassHead "Eq" [tyInt])
+    (Instance (unsafeParseInstanceExpr "\\a -> \\b -> a == b"))
+
+typecheckEnv :: (Monoid ann) => TCEnv ann
+typecheckEnv =
+  TCEnv
+    mempty
+    mempty
+    (builtInTypes emptyResolvedDep)
+    classes
+    instances
 
 spec :: Spec
 spec = do
   describe "TypecheckSpec" $ do
+    fdescribe "Check instances" $ do
+      it "Good Show instance" $ do
+        checkInstance @()
+          showTypeclass
+          (TypeclassHead "Show" [tyUnit])
+          (Instance (unsafeParseInstanceExpr "\\a -> \"Unit\""))
+          `shouldSatisfy` isRight
+
+      it "Bad Show instance" $ do
+        checkInstance @()
+          showTypeclass
+          (TypeclassHead "Show" [tyUnit])
+          (Instance (unsafeParseInstanceExpr "\\a -> 123"))
+          `shouldSatisfy` isLeft
+
+      it "Good Eq instance" $ do
+        checkInstance @()
+          eqTypeclass
+          (TypeclassHead "Eq" [tyInt])
+          (Instance (unsafeParseInstanceExpr "\\a -> \\b -> a == b"))
+          `shouldSatisfy` isRight
+
+      it "Bad Eq instance" $ do
+        checkInstance @()
+          eqTypeclass
+          (TypeclassHead "Show" [tyUnit])
+          (Instance (unsafeParseInstanceExpr "\\a -> \\b -> 123"))
+          `shouldSatisfy` isLeft
+
     describe "Parse and typecheck" $ do
       let inputs =
             [ ("True", "True"),

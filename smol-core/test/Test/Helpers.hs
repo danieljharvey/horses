@@ -6,6 +6,7 @@ module Test.Helpers
     tyInt,
     tyIntLit,
     tyStrLit,
+    tyUnit,
     tyVar,
     tyUnknown,
     tyTuple,
@@ -55,6 +56,9 @@ tyBoolLit = TLiteral mempty . TLBool
 
 tyInt :: (Monoid ann) => Type dep ann
 tyInt = TPrim mempty TPInt
+
+tyUnit :: (Monoid ann) => Type dep ann
+tyUnit = TLiteral mempty TLUnit
 
 tyString :: (Monoid ann) => Type dep ann
 tyString = TPrim mempty TPString

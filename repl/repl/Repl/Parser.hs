@@ -65,9 +65,11 @@ bindModuleParser = do
 
 backendParser :: Parser (Maybe Backend)
 backendParser =
-  myString "javascript" $> Just ESModulesJS
-    <|> myString "typescript" $> Just Typescript
-    <|> pure Nothing
+  myString "javascript"
+    $> Just ESModulesJS
+      <|> myString "typescript"
+    $> Just Typescript
+      <|> pure Nothing
 
 outputJSModuleParser :: Parser ReplActionAnn
 outputJSModuleParser = do
