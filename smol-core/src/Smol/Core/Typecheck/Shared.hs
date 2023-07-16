@@ -32,6 +32,7 @@ module Smol.Core.Typecheck.Shared
   )
 where
 
+import Control.Monad.Identity
 import Control.Monad.Except
 import Control.Monad.Reader
 import Control.Monad.State
@@ -221,7 +222,14 @@ lookupVar ann ident = do
   maybeVar <- asks (M.lookup ident . tceVars)
   case maybeVar of
     Just expr -> pure expr
-    Nothing -> throwError (TCCouldNotFindVar ann ident)
+    Nothing -> do
+      classes <- asks tceClasses
+      -- if name matches typeclass instance, return freshened type
+      -- we'll need to emit a constraint too, haven't gotten that far though
+      case listToMaybe $ M.elems $ M.filter (\tc -> LocalDefinition (tcFuncName tc) == ident) classes of
+        -- need to turn Type Identity ann into Type ResolvedDep ann
+        Just tc -> fst <$> freshen (tcFuncType tc)
+        Nothing -> throwError (TCCouldNotFindVar ann ident)
 
 withVar ::
   (MonadReader (TCEnv ann) m) =>

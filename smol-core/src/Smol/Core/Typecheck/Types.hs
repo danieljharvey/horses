@@ -53,8 +53,9 @@ data TCError ann
   deriving stock (Eq, Ord, Show, Foldable)
 
 data Typeclass ann = Typeclass
-  { tcArgs :: [Identifier],
-    tcFuncName :: String,
+  { tcName :: String,
+    tcArgs :: [Identifier],
+    tcFuncName :: Identifier,
     tcFuncType :: Type Identity ann
   }
 
