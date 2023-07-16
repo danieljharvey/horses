@@ -64,7 +64,6 @@ data Expr dep ann
   | EConstructor ann (dep Constructor)
   | ETuple ann (Expr dep ann) (NE.NonEmpty (Expr dep ann))
   | EArray ann (Seq (Expr dep ann))
-  | EGlobal ann Identifier
   | ERecord ann (Map Identifier (Expr dep ann))
   | ERecordAccess ann (Expr dep ann) Identifier
   | EPatternMatch
@@ -373,8 +372,6 @@ prettyExpr (EConstructor _ name) =
   prettyDoc name
 prettyExpr (EPatternMatch _ expr matches) =
   prettyPatternMatch expr matches
-prettyExpr (EGlobal _ global) =
-  prettyDoc global <> "!"
 prettyExpr (EArray _ as) =
   prettyArray as
 

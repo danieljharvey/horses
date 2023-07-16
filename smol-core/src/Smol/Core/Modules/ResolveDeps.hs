@@ -96,8 +96,6 @@ resolveType (TTuple ann a as) =
   TTuple ann (resolveType a) (resolveType <$> as)
 resolveType (TArray ann size a) = TArray ann size (resolveType a)
 resolveType (TUnknown ann i) = TUnknown ann i
-resolveType (TGlobals ann bits inner) =
-  TGlobals ann (resolveType <$> bits) (resolveType inner)
 resolveType (TRecord ann as) = TRecord ann (resolveType <$> as)
 resolveType (TApp ann fn arg) = TApp ann (resolveType fn) (resolveType arg)
 
@@ -244,8 +242,6 @@ resolveM (ETuple ann a as) =
   ETuple ann <$> resolveM a <*> traverse resolveM as
 resolveM (EArray ann as) =
   EArray ann <$> traverse resolveM as
-resolveM (EGlobal ann g) =
-  pure $ EGlobal ann g
 resolveM (ERecord ann as) =
   ERecord ann <$> traverse resolveM as
 resolveM (ERecordAccess ann expr name) =

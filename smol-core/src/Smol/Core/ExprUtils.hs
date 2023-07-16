@@ -43,7 +43,6 @@ mapOuterExprAnnotation f expr' =
     EIf ann a b c -> EIf (f ann) a b c
     ETuple ann a b -> ETuple (f ann) a b
     EArray ann a -> EArray (f ann) a
-    EGlobal ann a -> EGlobal (f ann) a
     ERecord ann a -> ERecord (f ann) a
     ERecordAccess ann b c -> ERecordAccess (f ann) b c
     EPatternMatch ann a b -> EPatternMatch (f ann) a b
@@ -61,7 +60,6 @@ mapExpr f (EIf ann predExp thenExp elseExp) =
   EIf ann (f predExp) (f thenExp) (f elseExp)
 mapExpr f (ETuple ann a as) = ETuple ann (f a) (f <$> as)
 mapExpr f (EArray ann as) = EArray ann (f <$> as)
-mapExpr _ (EGlobal ann ident) = EGlobal ann ident
 mapExpr f (ERecord ann as) = ERecord ann (f <$> as)
 mapExpr f (ERecordAccess ann expr ident) =
   ERecordAccess ann (f expr) ident
@@ -81,7 +79,6 @@ bindExpr f (EIf ann predExp thenExp elseExp) =
   EIf ann <$> f predExp <*> f thenExp <*> f elseExp
 bindExpr f (ETuple ann a as) = ETuple ann <$> f a <*> traverse f as
 bindExpr f (EArray ann as) = EArray ann <$> traverse f as
-bindExpr _ (EGlobal ann ident) = pure $ EGlobal ann ident
 bindExpr f (ERecord ann as) = ERecord ann <$> traverse f as
 bindExpr f (ERecordAccess ann expr ident) =
   ERecordAccess ann <$> f expr <*> pure ident
@@ -133,7 +130,6 @@ mapExprDep resolve = go
       EIf ann (go predExp) (go thenExp) (go elseExp)
     go (ETuple ann a as) = ETuple ann (go a) (go <$> as)
     go (EArray ann as) = EArray ann (go <$> as)
-    go (EGlobal ann ident) = EGlobal ann ident
     go (ERecord ann as) = ERecord ann (go <$> as)
     go (ERecordAccess ann expr ident) =
       ERecordAccess ann (go expr) ident
@@ -169,7 +165,6 @@ mapTypeDep resolve = go
     go (TPrim ann p) = TPrim ann p
     go (TFunc ann env a b) = TFunc ann (M.mapKeys resolve $ go <$> env) (go a) (go b)
     go (TUnknown ann i) = TUnknown ann i
-    go (TGlobals ann env inner) = TGlobals ann (go <$> env) (go inner)
     go (TRecord ann as) = TRecord ann (go <$> as)
     go (TApp ann a b) = TApp ann (go a) (go b)
     go (TConstructor ann constructor) = TConstructor ann (resolve constructor)

@@ -24,8 +24,6 @@ module Smol.Core.Typecheck.Shared
     lookupConstructor,
     lookupTypeName,
     typeForConstructor,
-    tellGlobal,
-    listenGlobals,
     freshen,
     primsFromTypeLiteral,
     typeLiteralFromPrim,
@@ -72,7 +70,6 @@ getExprAnnotation (EAnn ann _ _) = ann
 getExprAnnotation (EVar ann _) = ann
 getExprAnnotation (ETuple ann _ _) = ann
 getExprAnnotation (EArray ann _) = ann
-getExprAnnotation (EGlobal ann _) = ann
 getExprAnnotation (ERecord ann _) = ann
 getExprAnnotation (ERecordAccess ann _ _) = ann
 getExprAnnotation (EPatternMatch ann _ _) = ann
@@ -100,7 +97,6 @@ getTypeAnnotation (TFunc ann _ _ _) = ann
 getTypeAnnotation (TTuple ann _ _) = ann
 getTypeAnnotation (TArray ann _ _) = ann
 getTypeAnnotation (TVar ann _) = ann
-getTypeAnnotation (TGlobals ann _ _) = ann
 getTypeAnnotation (TLiteral ann _) = ann
 getTypeAnnotation (TRecord ann _) = ann
 
@@ -156,7 +152,6 @@ getApplyReturnType ::
   m (Maybe (ResolvedType ann))
 getApplyReturnType (TFunc _ _ _ typ) = pure (Just typ)
 getApplyReturnType tApp@TApp {} = pure (Just tApp)
-getApplyReturnType (TGlobals _ _ inner) = getApplyReturnType inner
 getApplyReturnType (TUnknown {}) =
   pure Nothing
 getApplyReturnType other =
@@ -348,35 +343,6 @@ withNewVars ::
   m a
 withNewVars vars =
   local (\env -> env {tceVars = vars <> tceVars env})
-
-tellGlobal ::
-  (MonadState (TCState ann) m) =>
-  GlobalMap ann ->
-  m ()
-tellGlobal globs =
-  modify (\s -> s {tcsGlobals = tcsGlobals s <> [globs]})
-
-listenGlobals ::
-  ( Eq ann,
-    MonadState (TCState ann) m
-  ) =>
-  m a ->
-  m (a, [GlobalMap ann])
-listenGlobals action = do
-  stateBefore <- gets tcsGlobals
-  a <- action
-  stateAfter <- gets tcsGlobals
-  let newState = filter (`notElem` stateBefore) stateAfter
-  modify
-    ( \s ->
-        s
-          { tcsGlobals =
-              filter
-                (`notElem` newState)
-                (tcsGlobals s)
-          }
-    )
-  pure (a, newState)
 
 typeLiteralFromPrim :: Prim -> TypeLiteral
 typeLiteralFromPrim (PBool b) = TLBool b

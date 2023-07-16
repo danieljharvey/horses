@@ -6,7 +6,6 @@ module Smol.Core.Parser.Identifiers
     constructorParser,
     constructorParserInternal,
     innerConstructorParser,
-    globalParser,
     moduleNameParser,
     typeNameParser,
     plainTypeNameParser,
@@ -83,11 +82,6 @@ namespacedVarParser =
         (var, mName) <- withNamespace identifierParser
         pure $ EVar mempty (ParseDep var (Just mName))
    in myLexeme (addLocation inner)
-
--- `dog!`, `log!`, `a!`
-globalParser :: Parser ParserExpr
-globalParser =
-  myLexeme (withLocation EGlobal $ identifierParser <* myString "!")
 
 ---------------------
 

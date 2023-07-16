@@ -184,14 +184,6 @@ isSubtypeInner ::
   ResolvedType ann ->
   m (ResolvedType ann)
 isSubtypeInner a b | isLiteralSubtypeOf a b = pure b -- choose the more general of the two types
-isSubtypeInner (TGlobals annA globsA restA) (TGlobals _annB globsB restB) = do
-  tyRest <- isSubtypeInner restA restB
-  (GlobalMap allGlobs) <- combineTypeMaps (GlobalMap globsA) (GlobalMap globsB)
-  pure (TGlobals annA allGlobs tyRest)
-isSubtypeInner (TGlobals annA globsA restA) b =
-  isSubtypeInner (TGlobals annA globsA restA) (TGlobals annA globsA b)
-isSubtypeInner a (TGlobals annB globsB restB) =
-  isSubtypeInner (TGlobals annB globsB a) (TGlobals annB globsB restB)
 isSubtypeInner (TRecord annA itemsA) (TRecord _annB itemsB) =
   let missing = M.difference itemsB itemsA
    in if M.null missing
