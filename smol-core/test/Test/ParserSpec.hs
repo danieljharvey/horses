@@ -81,7 +81,6 @@ spec = do
               ( "(\\a -> a : a -> a)",
                 EAnn () (TFunc () mempty (tyVar "a") (tyVar "a")) (ELambda () "a" (var "a"))
               ),
-              ("dog!", EGlobal () "dog"),
               ("{ a: 1, b: True }", ERecord () (M.fromList [("a", nat 1), ("b", bool True)])),
               ("Just", constructor "Just"),
               ("Maybe.Just", EConstructor () (ParseDep "Just" (Just "Maybe"))),
@@ -129,7 +128,6 @@ spec = do
               ("1 | 2 | 3", tyIntLit [1, 2, 3]),
               ("\"horse\"", tyStrLit ["horse"]),
               ("1 + 2", TInfix () OpAdd (tyIntLit [1]) (tyIntLit [2])),
-              ("{ egg: 42 } => 42", TGlobals () (M.singleton "egg" (tyIntLit [42])) (tyIntLit [42])),
               ( "(a -> b) -> Maybe a -> Maybe b",
                 TFunc
                   ()

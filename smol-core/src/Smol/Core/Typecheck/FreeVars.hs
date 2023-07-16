@@ -35,7 +35,6 @@ freeVars (EAnn _ _ a) = freeVars a
 freeVars (ETuple _ a as) =
   freeVars a <> mconcat (NE.toList $ freeVars <$> as)
 freeVars (EArray _ as) = mconcat (freeVars <$> toList as)
-freeVars (EGlobal _ _) = mempty
 freeVars (ERecord _ as) = mconcat (M.elems $ freeVars <$> as)
 freeVars (ERecordAccess _ a _) = freeVars a
 freeVars (EPatternMatch _ expr pats) =

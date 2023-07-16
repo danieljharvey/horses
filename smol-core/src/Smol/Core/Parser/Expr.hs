@@ -28,7 +28,6 @@ expressionParser =
             <|> try literalParser
             <|> try complexParser
             <|> annotationParser
-            <|> try globalParser
             <|> try varParser
             <|> constructorParser
      in orInBrackets parsers
@@ -66,7 +65,6 @@ lambdaParser =
 appFunc :: Parser ParserExpr
 appFunc =
   try recordAccessParser
-    <|> try globalParser
     <|> try varParser
     <|> constructorParser
     <|> try annotationParser
@@ -89,7 +87,6 @@ argParser =
           <|> lambdaParser
           --       <|> typeParser
           --     <|> typedHoleParser
-          <|> try globalParser
           <|> try varParser
           <|> constructorParser
    in try (inBrackets infixParser)
@@ -266,7 +263,6 @@ infixExpr =
   let parsers =
         try literalParser
           <|> try complexParser
-          <|> try globalParser
           <|> try varParser
           <|> try annotationParser
    in --          <|> try constructorParser

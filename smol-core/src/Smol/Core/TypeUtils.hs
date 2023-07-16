@@ -18,8 +18,6 @@ mapType _ (TUnknown ann i) = TUnknown ann i
 mapType f (TRecord ann parts) = TRecord ann (mapType f <$> parts)
 mapType f (TApp ann fn arg) =
   TApp ann (f fn) (f arg)
-mapType f (TGlobals ann globMap expr) =
-  TGlobals ann (mapType f <$> globMap) (f expr)
 mapType _ (TConstructor ann c) = TConstructor ann c
 
 monoidType :: (Monoid a) => (Type dep ann -> a) -> Type dep ann -> a
@@ -35,8 +33,6 @@ monoidType f (TArray _ _ as) =
   f as
 monoidType f (TTuple _ a as) =
   f a <> foldMap f as
-monoidType f (TGlobals _ as expr) =
-  foldMap f as <> f expr
 monoidType f (TRecord _ as) =
   foldMap f as
 monoidType f (TApp _ fn arg) = f fn <> f arg

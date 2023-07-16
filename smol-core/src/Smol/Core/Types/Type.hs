@@ -74,7 +74,6 @@ data Type dep ann
   | TArray ann Word64 (Type dep ann)
   | TVar ann (dep Identifier)
   | TUnknown ann Integer
-  | TGlobals ann (Map Identifier (Type dep ann)) (Type dep ann)
   | TRecord ann (Map Identifier (Type dep ann))
   | TApp ann (Type dep ann) (Type dep ann)
   | TConstructor ann (dep TypeName)
@@ -161,8 +160,6 @@ renderType mt@(TApp _ func arg) =
        in PP.align $ PP.sep ([typeName] <> (withParens <$> vars))
     Nothing ->
       PP.align $ PP.sep [renderType func, renderType arg]
-renderType (TGlobals _ parts expr) =
-  renderRecord parts <> " => " <> renderType expr
 
 renderRecord ::
   (Printer (dep Identifier), Printer (dep TypeName)) =>

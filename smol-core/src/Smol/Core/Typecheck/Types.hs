@@ -6,7 +6,6 @@ module Smol.Core.Typecheck.Types
   ( TCState (..),
     TCEnv (..),
     TCError (..),
-    VarType (..),
     GlobalMap (..),
     filterIdent,
     globalMapIsNull,
@@ -29,9 +28,6 @@ filterIdent :: Identifier -> GlobalMap ann -> GlobalMap ann
 filterIdent ident (GlobalMap m) =
   GlobalMap $
     M.delete ident m
-
-data VarType = Variable | Global
-  deriving stock (Eq, Ord, Show)
 
 data TCError ann
   = TCUnknownError

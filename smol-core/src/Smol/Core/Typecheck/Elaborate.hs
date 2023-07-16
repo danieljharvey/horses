@@ -10,7 +10,7 @@ module Smol.Core.Typecheck.Elaborate
   )
 where
 
-import Control.Monad (foldM, when)
+import Control.Monad (when)
 import Control.Monad.Except
 import Control.Monad.Reader
 import Control.Monad.State
@@ -44,47 +44,11 @@ elaborate env expr =
     <$> runReaderT
       ( runWriterT
           ( evalStateT
-              (collectGlobals (infer expr))
+              (infer expr)
               (TCState mempty 0 mempty)
           )
       )
       env
-
-listenToGlobals ::
-  ( MonadState (TCState ann) m,
-    MonadError (TCError ann) m,
-    MonadWriter [Substitution ResolvedDep ann] m,
-    Eq ann,
-    Show ann
-  ) =>
-  m a ->
-  m (a, GlobalMap ann)
-listenToGlobals f = do
-  (a, globs) <- listenGlobals f
-  combinedGlobs <- foldM combineTypeMaps mempty globs
-  pure (a, combinedGlobs)
-
-collectGlobals ::
-  ( MonadState (TCState ann) m,
-    MonadWriter [Substitution ResolvedDep ann] m,
-    MonadError (TCError ann) m,
-    Eq ann,
-    Show ann
-  ) =>
-  m (ResolvedExpr (ResolvedType ann)) ->
-  m (ResolvedExpr (ResolvedType ann))
-collectGlobals f = do
-  (expr, combinedGlobs) <- listenToGlobals f
-  let ty = getExprAnnotation expr
-      newTy =
-        if globalMapIsNull combinedGlobs
-          then ty
-          else
-            TGlobals
-              (getTypeAnnotation ty)
-              (getGlobalMap combinedGlobs)
-              ty
-  pure (mapOuterExprAnnotation (const newTy) expr)
 
 inferInfix ::
   ( Ord ann,
@@ -201,10 +165,6 @@ infer inferExpr = do
         Nothing -> error "what type is empty list"
         Just tyAs -> combineMany (getExprAnnotation <$> tyAs)
       pure (EArray (TArray ann size ty) typedAs)
-    (EGlobal _ ident) -> do
-      globType <- lookupGlobal ident
-      tellGlobal (GlobalMap (M.singleton ident globType)) -- 'raise' constraint
-      pure $ EGlobal globType ident
     (ERecord ann items) -> do
       tyItems <- traverse infer items
       pure $ ERecord (TRecord ann (getExprAnnotation <$> tyItems)) tyItems
@@ -336,7 +296,6 @@ checkLambda (TFunc tAnn _ tFrom tTo) ident body = do
               (getExprAnnotation typedBody)
           )
   pure (ELambda lambdaType ident typedBody)
-checkLambda (TGlobals _ _ inner) ident body = checkLambda inner ident body -- ignore global, check with inner type
 checkLambda other@(TUnknown {}) ident body = do
   -- unknown type - make a new unknown and keep smashing
   let tAnn = getTypeAnnotation other
@@ -424,9 +383,6 @@ check typ expr = do
       elabA <- check typ a
       elabB <- check typ b
       pure (EInfix typ OpAdd elabA elabB)
-    EGlobal _ ident -> do
-      tellGlobal (GlobalMap (M.singleton ident typ)) -- 'raise' constraint
-      pure (EGlobal typ ident)
     EPatternMatch _ matchExpr pats -> do
       elabExpr <- infer matchExpr
       let withPair (pat, patExpr) = do

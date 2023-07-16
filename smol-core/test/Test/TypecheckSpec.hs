@@ -191,8 +191,6 @@ spec = do
               ("case ([1,2,3] : [Nat]) of [a] -> [a] | [_,...b] -> b", "[Nat]"),
               ("case ([1,2]: [Nat]) of [a,...] -> a | _ -> 0", "Nat"),
               ("let a = if True then 1 else 2; let b = if True then 7 else 9; a + b", "8 | 9 | 10 | 11"),
-              ("(egg! : 42)", "{ egg: 42 } => 42"),
-              ("let val = (\\a -> a + egg! : { egg : Int } => Int -> Int); val", "{ egg: Int } => Int -> Int"),
               ("\\a -> a == True", "Bool -> Bool"),
               ("(\\x -> (x 1, x (False,True))) (\\a -> a)", "(1, (False, True))"), -- look! higher rank types
               ("let f = (\\x -> (x 1, x False) : (a -> a) -> (1, False)); let id = \\a -> a; f id", "(1, False)") -- they need annotation, but that's ok
@@ -630,83 +628,6 @@ spec = do
                 (bool False)
 
         testElaborate input `shouldSatisfy` isLeft
-
-      it "Context-less global fails" $ do
-        let input = EGlobal () "numberOfDogs"
-
-        testElaborate input `shouldSatisfy` isLeft
-
-      it "Global with annotation is OK" $ do
-        let input = EAnn () tyInt (EGlobal () "numberOfDogs")
-
-            expected :: Type dep ()
-            expected = TGlobals () (M.singleton "numberOfDogs" tyInt) tyInt
-
-        getExprAnnotation <$> testElaborate input `shouldBe` Right expected
-
-      it "Global type floats upwards from tuple" $ do
-        let input =
-              EAnn
-                ()
-                (tyTuple tyInt [tyBool])
-                (tuple (EGlobal () "numberOfDogs") [bool True])
-
-            expected :: Type dep ()
-            expected =
-              TGlobals
-                ()
-                (M.singleton "numberOfDogs" tyInt)
-                ( tyTuple tyInt [tyBool]
-                )
-
-        getExprAnnotation <$> testElaborate input `shouldBe` Right expected
-
-      it "Global type floats upwards from lambda" $ do
-        let input =
-              EApp
-                ()
-                ( EAnn
-                    ()
-                    (TFunc () mempty tyInt tyInt)
-                    ( ELambda () "a" (EGlobal () "numberOfDogs")
-                    )
-                )
-                (int 1)
-
-            expected :: Type dep ()
-            expected =
-              TGlobals
-                ()
-                (M.singleton "numberOfDogs" tyInt)
-                tyInt
-
-        getExprAnnotation <$> testElaborate input `shouldBe` Right expected
-
-      -- we are losing globals, need an elegant way to collect them
-      -- maybe Writer like the Substitutions
-      it "Global type floats up from deep" $ do
-        let input = unsafeParseExpr "(\\b -> if b then one! + 1 else two! : Bool -> Nat)"
-        getExprAnnotation <$> testElaborate input
-          `shouldBe` Right
-            ( TGlobals
-                ()
-                (M.fromList [("one", tyNat), ("two", tyNat)])
-                (TFunc () mempty tyBool tyNat)
-            )
-
-      it "Fails when two global types contradict one another" $ do
-        let input = tuple (EAnn () tyInt (EGlobal () "dogs")) [EAnn () tyBool (EGlobal () "dogs")]
-
-        testElaborate input `shouldSatisfy` isLeft
-
-      it "Empty record" $ do
-        let input = ERecord () mempty
-
-            expected :: Type dep ()
-            expected = TRecord () mempty
-
-        getExprAnnotation <$> testElaborate input
-          `shouldBe` Right expected
 
       it "Record with literals in" $ do
         let input = ERecord () (M.fromList [("a", bool True), ("b", int 1)])

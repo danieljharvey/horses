@@ -68,15 +68,7 @@ parseTypeAndFormatError = parseAndFormat (space *> typeParser <* eof)
 -- | currently lets assume we only want globals at the start
 typeParser :: Parser (ParsedType Annotation)
 typeParser =
-  try typeWithGlobalParser <|> typeInnerParser
-
-typeWithGlobalParser :: Parser (ParsedType Annotation)
-typeWithGlobalParser = withLocation (\ann (items, expr) -> TGlobals ann items expr) $ do
-  args <- tyRecordArgs
-  myString "}"
-  myString "=>"
-  rest <- typeInnerParser
-  pure (args, rest)
+  typeInnerParser
 
 -- | top-level parser for type signatures
 typeInnerParser :: Parser (ParsedType Annotation)

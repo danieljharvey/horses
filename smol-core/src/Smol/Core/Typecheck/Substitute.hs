@@ -92,8 +92,6 @@ substitute sub@(Substitution i ty) = \case
     TArray ann size (substitute sub as)
   TTuple ann tFst tRest ->
     TTuple ann (substitute sub tFst) (substitute sub <$> tRest)
-  TGlobals ann tGlobs tBody ->
-    TGlobals ann (fmap (substitute sub) tGlobs) (substitute sub tBody)
   TRecord ann items ->
     TRecord ann (fmap (substitute sub) items)
   prim@TPrim {} -> prim
