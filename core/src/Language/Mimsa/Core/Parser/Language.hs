@@ -367,7 +367,7 @@ patternMatchParser = addLocation $ do
   patterns <-
     try patternMatchesParser
       <|> pure
-      <$> patternCaseParser
+        <$> patternCaseParser
   pure $ MyPatternMatch mempty matchExpr patterns
 
 matchExprWithParser :: Parser ParserExpr

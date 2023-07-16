@@ -62,25 +62,25 @@ identityFromParsedExpr = mapExprDep resolve
 showTypeclass :: (Monoid ann) => Typeclass ann
 showTypeclass =
   Typeclass
-    { tcName = "Show",tcArgs = ["a"],
+    { tcName = "Show",
+      tcArgs = ["a"],
       tcFuncName = "show",
       tcFuncType = tyFunc (tcVar "a") tyString
     }
 
 eqTypeclass :: (Monoid ann) => Typeclass ann
-eqTypeclass
- = Typeclass
-   { tcName = "Eq",
-   tcArgs = ["a"],
-              tcFuncName = "equals",
-              tcFuncType = tyFunc (tcVar "a") (tyFunc (tcVar "a") tyBool)
-            }
-
+eqTypeclass =
+  Typeclass
+    { tcName = "Eq",
+      tcArgs = ["a"],
+      tcFuncName = "equals",
+      tcFuncType = tyFunc (tcVar "a") (tyFunc (tcVar "a") tyBool)
+    }
 
 classes :: (Monoid ann) => M.Map String (Typeclass ann)
 classes =
   M.fromList
-    [ ( "Eq", eqTypeclass ),
+    [ ("Eq", eqTypeclass),
       ("Show", showTypeclass)
     ]
 
@@ -281,6 +281,17 @@ spec = do
                     expected = fromParsedType (simplifyType typ $> ())
                  in result `shouldBe` expected
               other -> error (show other)
+        )
+        inputs
+
+    describe "Expected failures" $ do
+      let inputs =
+            [ "equals (10 : Int) True", -- using Eq Int typeclass instance
+              "equals (True : Bool) (False : Bool)" -- there is no Eq Bool instance atm
+            ]
+      traverse_
+        ( \(inputExpr) -> it (T.unpack inputExpr <> " fails typechecking") $ do
+            first (T.pack . show) (evalExpr inputExpr) `shouldSatisfy` isLeft
         )
         inputs
 

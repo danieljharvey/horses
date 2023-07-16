@@ -9,6 +9,7 @@ import Smol.Core.Typecheck.Elaborate (elaborate, getExprAnnotation)
 import Smol.Core.Typecheck.Substitute
 import Smol.Core.Typecheck.Types
 import Smol.Core.Types.Expr
+import Smol.Core.Types.Identifier
 import Smol.Core.Types.ResolvedDep
 import Smol.Core.Types.Type
 
@@ -22,8 +23,8 @@ checkInstance ::
   Typeclass ann ->
   TypeclassHead ann ->
   Instance ann ->
-  m (String, Expr ResolvedDep (Type ResolvedDep ann))
-checkInstance (Typeclass args funcName ty) (TypeclassHead _ tys) (Instance expr) =
+  m (Identifier, Expr ResolvedDep (Type ResolvedDep ann))
+checkInstance (Typeclass _ args funcName ty) (TypeclassHead _ tys) (Instance expr) =
   do
     let subs =
           ( \(ident, tySub) ->
@@ -46,4 +47,4 @@ checkInstance (Typeclass args funcName ty) (TypeclassHead _ tys) (Instance expr)
 
     typedExpr <- elaborate tcEnv (resolveExpr annotatedExpr)
 
-    pure (funcName,typedExpr)
+    pure (funcName, typedExpr)

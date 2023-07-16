@@ -180,12 +180,12 @@ prettyLet var expr1 expr2 =
    in group
         ( "let"
             <+> prettyVar
-            <> prettyArgs args
+              <> prettyArgs args
             <+> "="
-            <> line
-            <> indentMulti 2 (prettyDoc letExpr)
-            <> newlineOrIn
-            <> prettyDoc expr2
+              <> line
+              <> indentMulti 2 (prettyDoc letExpr)
+              <> newlineOrIn
+              <> prettyDoc expr2
         )
   where
     prettyArgs [] = ""
@@ -211,10 +211,10 @@ prettyLetPattern pat expr body =
     ( "let"
         <+> printSubPattern pat
         <+> "="
-        <> line
-        <> indentMulti 2 (printSubExpr expr)
-        <> newlineOrIn
-        <> printSubExpr body
+          <> line
+          <> indentMulti 2 (printSubExpr expr)
+          <> newlineOrIn
+          <> printSubExpr body
     )
 
 newlineOrIn :: Doc style
@@ -321,22 +321,22 @@ prettyPatternMatch sumExpr matches =
     <+> printSubExpr sumExpr
     <+> "with"
     <+> line
-    <> indent
-      2
-      ( align $
-          vsep
-            ( zipWith
-                (<+>)
-                (" " : repeat "|")
-                (printMatch <$> matches)
-            )
-      )
+      <> indent
+        2
+        ( align $
+            vsep
+              ( zipWith
+                  (<+>)
+                  (" " : repeat "|")
+                  (printMatch <$> matches)
+              )
+        )
   where
     printMatch (construct, expr') =
       printSubPattern construct
         <+> "->"
         <+> line
-        <> indentMulti 4 (printSubExpr expr')
+          <> indentMulti 4 (printSubExpr expr')
 
 -- just for debugging
 instance (Printer var) => Printer (Expr (var, a) ann) where

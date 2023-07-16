@@ -32,8 +32,8 @@ module Smol.Core.Typecheck.Shared
   )
 where
 
-import Control.Monad.Identity
 import Control.Monad.Except
+import Control.Monad.Identity
 import Control.Monad.Reader
 import Control.Monad.State
 import Data.Foldable (foldl')
@@ -42,6 +42,7 @@ import qualified Data.Map.Strict as M
 import Data.Maybe (listToMaybe, mapMaybe)
 import qualified Data.Set as S
 import qualified Data.Set.NonEmpty as NES
+import Smol.Core.ExprUtils (mapTypeDep)
 import Smol.Core.Helpers
 import Smol.Core.Typecheck.FreeVars
 import Smol.Core.Typecheck.Substitute
@@ -214,7 +215,10 @@ typeForConstructor ann typeName vars args = do
         args
 
 lookupVar ::
-  (MonadReader (TCEnv ann) m, MonadError (TCError ann) m) =>
+  ( MonadState (TCState ann) m,
+    MonadReader (TCEnv ann) m,
+    MonadError (TCError ann) m
+  ) =>
   ann ->
   ResolvedDep Identifier ->
   m (ResolvedType ann)
@@ -228,8 +232,13 @@ lookupVar ann ident = do
       -- we'll need to emit a constraint too, haven't gotten that far though
       case listToMaybe $ M.elems $ M.filter (\tc -> LocalDefinition (tcFuncName tc) == ident) classes of
         -- need to turn Type Identity ann into Type ResolvedDep ann
-        Just tc -> fst <$> freshen (tcFuncType tc)
+        Just tc -> fst <$> freshen (resolve $ tcFuncType tc)
         Nothing -> throwError (TCCouldNotFindVar ann ident)
+
+resolve :: Type Identity ann -> Type ResolvedDep ann
+resolve = mapTypeDep r
+  where
+    r (Identity a) = LocalDefinition a
 
 withVar ::
   (MonadReader (TCEnv ann) m) =>

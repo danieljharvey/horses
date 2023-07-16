@@ -115,6 +115,8 @@ library
     Smol.Core.Typecheck.Substitute
     Smol.Core.Typecheck.Subtype
     Smol.Core.Typecheck.Types
+    Smol.Core.Typecheck.Types.TCError
+    Smol.Core.Typecheck.Types.TCState
     Smol.Core.Types
     Smol.Core.Types.Annotated
     Smol.Core.Types.Annotation
