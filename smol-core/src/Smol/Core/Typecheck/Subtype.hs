@@ -72,7 +72,6 @@ combineMany types =
 -- | when calculating type for addition, we try and do the actual sum,
 -- otherwise treat literals as their more generic types (int, nat, etc) and
 -- then subtype as usual to check for errors
--- TODO: make this function part of `Type` so we can defer calculating it
 typeAddition ::
   ( Eq ann,
     Show ann,
