@@ -17,6 +17,7 @@ import qualified Data.Set.NonEmpty as NES
 import Data.Text (Text)
 import Prettyprinter
 import Prettyprinter.Render.Text
+import GHC.Natural
 
 renderWithWidth :: Int -> Doc ann -> Text
 renderWithWidth w doc = renderStrict (layoutPretty layoutOptions (unAnnotate doc))
@@ -44,6 +45,9 @@ instance Printer Bool where
   prettyDoc = pretty
 
 instance Printer Int where
+  prettyDoc = pretty
+
+instance Printer Natural where
   prettyDoc = pretty
 
 instance (Printer a) => Printer [a] where
