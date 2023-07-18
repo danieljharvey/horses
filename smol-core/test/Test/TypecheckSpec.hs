@@ -106,7 +106,7 @@ typecheckEnv =
 spec :: Spec
 spec = do
   describe "TypecheckSpec" $ do
-    fdescribe "recover instance uses" $ do
+    describe "recover instance uses" $ do
       it "No classes, nothing to find" $ do
         recoverTypeclassUses @() [] `shouldBe` []
       it "Uses Eq Int" $ do
@@ -116,7 +116,7 @@ spec = do
           ]
           `shouldBe` [TypeclassHead "Eq" [tyInt]]
 
-    fdescribe "lookupTypeclassHead" $ do
+    describe "lookupTypeclassHead" $ do
       it "Is not there" $ do
         lookupTypeclassHead @() typecheckEnv (TypeclassHead "Eq" [tyBool])
           `shouldSatisfy` isLeft
@@ -303,10 +303,11 @@ spec = do
         )
         inputs
 
-    fdescribe "Expected failures" $ do
+    describe "Expected failures" $ do
       let inputs =
             [ "equals (10 : Int) True", -- using Eq Int typeclass instance
-              "equals (True : Bool) (False : Bool)" -- there is no Eq Bool instance atm
+              "equals (True : Bool) (False : Bool)", -- there is no Eq Bool instance atm
+              "(\\a -> \\b -> equals a b : a -> a -> Bool)" -- this is missing an `Eq a` constraint
             ]
       traverse_
         ( \(inputExpr) -> it (T.unpack inputExpr <> " fails typechecking") $ do

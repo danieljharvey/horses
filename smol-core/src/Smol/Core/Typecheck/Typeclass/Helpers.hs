@@ -1,11 +1,10 @@
-
 {-# LANGUAGE FlexibleContexts #-}
 
-module Smol.Core.Typecheck.Typeclass.Helpers ( recoverTypeclassUses, lookupTypeclassHead) where
+module Smol.Core.Typecheck.Typeclass.Helpers (recoverTypeclassUses, lookupTypeclassHead) where
 
 import Control.Monad.Except
-import qualified Data.Map.Strict as M
 import Control.Monad.Identity
+import qualified Data.Map.Strict as M
 import Smol.Core.ExprUtils
 import Smol.Core.Typecheck.Substitute
 import Smol.Core.Typecheck.Types
@@ -31,7 +30,7 @@ recoverTypeclassUses events =
 
 -- | do we have a matching instance? explode if not
 lookupTypeclassHead :: (MonadError (TCError ann) m, Ord ann) => TCEnv ann -> TypeclassHead ann -> m ()
-lookupTypeclassHead env tch@(TypeclassHead name tys)
-  = case M.lookup tch (tceInstances env) of
-      Just _ -> pure ()
-      Nothing -> throwError (TCTypeclassInstanceNotFound name tys)
+lookupTypeclassHead env tch@(TypeclassHead name tys) =
+  case M.lookup tch (tceInstances env) of
+    Just _ -> pure ()
+    Nothing -> throwError (TCTypeclassInstanceNotFound name tys)
