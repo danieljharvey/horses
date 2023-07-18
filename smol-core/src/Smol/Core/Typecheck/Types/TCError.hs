@@ -2,10 +2,11 @@
 {-# LANGUAGE DerivingStrategies #-}
 
 module Smol.Core.Typecheck.Types.TCError
-  ( TCError(..),
+  ( TCError (..),
   )
 where
 
+import Control.Monad.Identity
 import Data.Set (Set)
 import Smol.Core.Types
 import Smol.Core.Types.PatternMatchError (PatternMatchError)
@@ -13,7 +14,6 @@ import Smol.Core.Types.PatternMatchError (PatternMatchError)
 data TCError ann
   = TCUnknownError
   | TCCouldNotFindVar ann (ResolvedDep Identifier)
-  | TCCouldNotFindGlobal Identifier (Set Identifier)
   | TCTypeMismatch (ResolvedType ann) (ResolvedType ann)
   | TCTupleSizeMismatch Int (ResolvedType ann)
   | TCExpectedTuple (ResolvedType ann)
@@ -27,5 +27,5 @@ data TCError ann
   | TCExpectedConstructorType (ResolvedType ann)
   | TCCompoundTypeInEquality (ResolvedType ann) -- for now we only do primitive equality
   | TCPatternMatchError (PatternMatchError (ResolvedType ann))
+  | TCTypeclassInstanceNotFound String [Type Identity ann]
   deriving stock (Eq, Ord, Show, Foldable)
-

@@ -106,6 +106,25 @@ typecheckEnv =
 spec :: Spec
 spec = do
   describe "TypecheckSpec" $ do
+    fdescribe "recover instance uses" $ do
+      it "No classes, nothing to find" $ do
+        recoverTypeclassUses @() [] `shouldBe` []
+      it "Uses Eq Int" $ do
+        recoverTypeclassUses @()
+          [ TCWTypeclassUse "Eq" [("a", 10)],
+            TCWSubstitution (Substitution (SubUnknown 10) tyInt)
+          ]
+          `shouldBe` [TypeclassHead "Eq" [tyInt]]
+
+    fdescribe "lookupTypeclassHead" $ do
+      it "Is not there" $ do
+        lookupTypeclassHead @() typecheckEnv (TypeclassHead "Eq" [tyBool])
+          `shouldSatisfy` isLeft
+
+      it "Is there" $ do
+        lookupTypeclassHead @() typecheckEnv (TypeclassHead "Eq" [tyInt])
+          `shouldSatisfy` isRight
+
     describe "Check instances" $ do
       it "Good Show instance" $ do
         checkInstance @()
@@ -284,7 +303,7 @@ spec = do
         )
         inputs
 
-    describe "Expected failures" $ do
+    fdescribe "Expected failures" $ do
       let inputs =
             [ "equals (10 : Int) True", -- using Eq Int typeclass instance
               "equals (True : Bool) (False : Bool)" -- there is no Eq Bool instance atm

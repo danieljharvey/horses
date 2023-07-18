@@ -9,6 +9,7 @@ module Smol.Core.Typecheck.Types
     Instance (..),
     module Smol.Core.Typecheck.Types.TCError,
     module Smol.Core.Typecheck.Types.TCState,
+    module Smol.Core.Typecheck.Types.TCWrite,
   )
 where
 
@@ -16,6 +17,7 @@ import Control.Monad.Identity
 import Data.Map.Strict (Map)
 import Smol.Core.Typecheck.Types.TCError
 import Smol.Core.Typecheck.Types.TCState
+import Smol.Core.Typecheck.Types.TCWrite
 import Smol.Core.Types
 
 data Typeclass ann = Typeclass

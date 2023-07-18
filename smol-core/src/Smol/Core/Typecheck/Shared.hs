@@ -1,5 +1,6 @@
 {-# LANGUAGE DerivingStrategies #-}
 {-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE OverloadedStrings #-}
 
 module Smol.Core.Typecheck.Shared
@@ -20,7 +21,6 @@ module Smol.Core.Typecheck.Shared
     pushArg,
     getApplyReturnType,
     withGlobal,
-    lookupGlobal,
     lookupConstructor,
     lookupTypeName,
     typeForConstructor,
@@ -36,6 +36,7 @@ import Control.Monad.Except
 import Control.Monad.Identity
 import Control.Monad.Reader
 import Control.Monad.State
+import Control.Monad.Writer
 import Data.Foldable (foldl')
 import Data.Map.Strict (Map)
 import qualified Data.Map.Strict as M
@@ -121,6 +122,7 @@ getClosureType ::
   ( MonadState (TCState ann) m,
     MonadReader (TCEnv ann) m,
     MonadError (TCError ann) m,
+    MonadWriter [TCWrite ann] m,
     Ord ann
   ) =>
   ann ->
@@ -217,7 +219,10 @@ typeForConstructor ann typeName vars args = do
 lookupVar ::
   ( MonadState (TCState ann) m,
     MonadReader (TCEnv ann) m,
-    MonadError (TCError ann) m
+    MonadError (TCError ann) m,
+    MonadWriter
+      [TCWrite ann]
+      m
   ) =>
   ann ->
   ResolvedDep Identifier ->
@@ -232,8 +237,19 @@ lookupVar ann ident = do
       -- we'll need to emit a constraint too, haven't gotten that far though
       case listToMaybe $ M.elems $ M.filter (\tc -> LocalDefinition (tcFuncName tc) == ident) classes of
         -- need to turn Type Identity ann into Type ResolvedDep ann
-        Just tc -> fst <$> freshen (resolve $ tcFuncType tc)
+        Just tc -> do
+          (newType, undoSubs) <- freshen (resolve $ tcFuncType tc)
+          tell [TCWTypeclassUse (tcName tc) (pairFromSubs undoSubs)]
+          pure newType
         Nothing -> throwError (TCCouldNotFindVar ann ident)
+
+pairFromSubs :: [Substitution ResolvedDep ann] -> [(Identifier, Integer)]
+pairFromSubs =
+  mapMaybe
+    ( \case
+        (Substitution (SubUnknown i) (TVar _ (LocalDefinition var))) -> Just (var, i)
+        _ -> Nothing
+    )
 
 resolve :: Type Identity ann -> Type ResolvedDep ann
 resolve = mapTypeDep r
@@ -263,18 +279,6 @@ withGlobal ident expr =
     ( \env ->
         env {tceGlobals = M.singleton ident expr <> tceGlobals env}
     )
-
-lookupGlobal ::
-  (MonadReader (TCEnv ann) m, MonadError (TCError ann) m) =>
-  Identifier ->
-  m (ResolvedType ann)
-lookupGlobal ident = do
-  maybeVar <- asks (M.lookup ident . tceGlobals)
-  case maybeVar of
-    Just expr -> pure expr
-    Nothing -> do
-      allGlobals <- asks (M.keysSet . tceGlobals)
-      throwError (TCCouldNotFindGlobal ident allGlobals)
 
 pushArg ::
   (MonadState (TCState ann) m) =>

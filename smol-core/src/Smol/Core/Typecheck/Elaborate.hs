@@ -16,7 +16,7 @@ import Control.Monad.Reader
 import Control.Monad.State
 import Control.Monad.Trans.Writer.CPS (runWriterT)
 import Control.Monad.Writer.CPS
-import Data.Foldable (toList)
+import Data.Foldable (toList, traverse_)
 import Data.Functor
 import qualified Data.List.NonEmpty as NE
 import qualified Data.Map.Strict as M
@@ -28,28 +28,34 @@ import Smol.Core.Typecheck.Shared
 import Smol.Core.Typecheck.Simplify
 import Smol.Core.Typecheck.Substitute
 import Smol.Core.Typecheck.Subtype
+import Smol.Core.Typecheck.Typeclass.Helpers
 import Smol.Core.Typecheck.Types
 import Smol.Core.Types
 
 elaborate ::
   ( Ord ann,
     Show ann,
+    Monoid ann,
     MonadError (TCError ann) m
   ) =>
   TCEnv ann ->
   ResolvedExpr ann ->
   m (ResolvedExpr (ResolvedType ann))
-elaborate env expr = do
-  (typedExpr, subs) <-
-    runReaderT
-      ( runWriterT
-          ( evalStateT
-              (infer expr)
-              (TCState mempty 0 mempty)
-          )
-      )
-      env
-  pure (simplifyType . substituteMany subs <$> typedExpr)
+elaborate env expr =
+  runReaderT
+    ( runWriterT
+        ( evalStateT
+            (infer expr)
+            (TCState mempty 0 mempty)
+        )
+    )
+    env
+    >>= \(typedExpr, events) -> do
+      -- lookup typeclasses we need, explode if they're missing
+      traverse_ (lookupTypeclassHead env) (recoverTypeclassUses events)
+      -- we may want to think of a way of raising a legitimate polymorphic
+      -- constraint, ie `Eq a`
+      pure (simplifyType . substituteMany (filterSubstitutions events) <$> typedExpr)
 
 inferInfix ::
   ( Ord ann,
@@ -57,7 +63,7 @@ inferInfix ::
     MonadState (TCState ann) m,
     MonadReader (TCEnv ann) m,
     MonadError (TCError ann) m,
-    MonadWriter [Substitution ResolvedDep ann] m
+    MonadWriter [TCWrite ann] m
   ) =>
   ann ->
   Op ->
@@ -108,7 +114,7 @@ infer ::
     MonadError (TCError ann) m,
     MonadReader (TCEnv ann) m,
     MonadState (TCState ann) m,
-    MonadWriter [Substitution ResolvedDep ann] m
+    MonadWriter [TCWrite ann] m
   ) =>
   ResolvedExpr ann ->
   m (ResolvedExpr (ResolvedType ann))
@@ -200,7 +206,7 @@ inferApplication ::
     MonadError (TCError ann) m,
     MonadReader (TCEnv ann) m,
     MonadState (TCState ann) m,
-    MonadWriter [Substitution ResolvedDep ann] m
+    MonadWriter [TCWrite ann] m
   ) =>
   ann ->
   Maybe (ResolvedType ann) ->
@@ -231,7 +237,7 @@ inferApplication ann maybeCheckType fn arg = withRecursiveFn fn arg $ do
                 -- unknowns unnecessarily
                 let realType =
                       substituteMany
-                        (subs <> undoSubs)
+                        (filterSubstitutions subs <> undoSubs)
                         (TFunc tAnn tClosure tyArg tBody)
 
                 pure (mapOuterExprAnnotation (const realType) typedFn) -- replace type with clever one
@@ -268,7 +274,7 @@ withRecursiveFn _ _ = id
 
 checkLambda ::
   ( MonadState (TCState ann) m,
-    MonadWriter [Substitution ResolvedDep ann] m,
+    MonadWriter [TCWrite ann] m,
     MonadError (TCError ann) m,
     MonadReader (TCEnv ann) m,
     Show ann,
@@ -289,7 +295,7 @@ checkLambda (TFunc tAnn _ tFrom tTo) ident body = do
     pure (tBody, tClosure, subs)
   let lambdaType =
         substituteMany
-          subs
+          (filterSubstitutions subs)
           ( TFunc
               tAnn
               typedClosure
@@ -307,7 +313,7 @@ checkLambda other@(TUnknown {}) ident body = do
     pure (tBody, tClosure, subs)
   let lambdaType =
         substituteMany
-          subs
+          (filterSubstitutions subs)
           ( TFunc
               tAnn
               typedClosure
@@ -323,7 +329,7 @@ inferLambda ::
     MonadError (TCError ann) m,
     MonadReader (TCEnv ann) m,
     MonadState (TCState ann) m,
-    MonadWriter [Substitution ResolvedDep ann] m
+    MonadWriter [TCWrite ann] m
   ) =>
   ann ->
   ResolvedDep Identifier ->
@@ -340,7 +346,7 @@ inferLambda ann ident body = do
     pure (tBody, tClosure, subs)
   let lambdaType =
         substituteMany
-          subs
+          (filterSubstitutions subs)
           (TFunc ann typedClosure tyArg (getExprAnnotation typedBody))
   pure (ELambda lambdaType ident typedBody)
 
@@ -352,7 +358,7 @@ check ::
     MonadError (TCError ann) m,
     MonadReader (TCEnv ann) m,
     MonadState (TCState ann) m,
-    MonadWriter [Substitution ResolvedDep ann] m
+    MonadWriter [TCWrite ann] m
   ) =>
   ResolvedType ann ->
   ResolvedExpr ann ->
@@ -395,4 +401,4 @@ check typ expr = do
     other -> do
       inferredExpr <- infer other
       (realType, subs) <- listen (getExprAnnotation inferredExpr `isSubtypeOf` typ)
-      pure $ inferredExpr $> substituteMany subs realType
+      pure $ inferredExpr $> substituteMany (filterSubstitutions subs) realType
