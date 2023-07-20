@@ -27,8 +27,7 @@ spec = do
   describe "InterpreterSpec" $ do
     fdescribe "interpret" $ do
       let cases =
-            [ 
-              ("1 + 1", "2"),
+            [ ("1 + 1", "2"),
               ("-11 + 1", "-10"),
               ("(\\a -> a + 1) 41", "42"),
               ("(\\a -> if a then 1 else 2) False", "2"),

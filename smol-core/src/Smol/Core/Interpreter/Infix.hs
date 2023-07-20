@@ -37,5 +37,5 @@ interpretInfix interpretFn operator a b = do
       case (,) <$> getInt plainA <*> getInt plainB of
         Right (a', b') -> withInt (a' + b')
         Left _ -> case (,) <$> getNat plainA <*> getNat plainB of
-                    Right (a', b') -> withNat (a' + b')
-                    Left e -> throwError e
+          Right (a', b') -> withNat (a' + b')
+          Left e -> throwError e
