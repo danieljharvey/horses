@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1689543080976,
+  "lastUpdate": 1689888451632,
   "repoUrl": "https://github.com/danieljharvey/mimsa",
   "entries": {
     "Store benchmarks in Github Pages": [
@@ -2723,6 +2723,50 @@ window.BENCHMARK_DATA = {
           {
             "name": "evaluate/evaluate parsing 2",
             "value": 0.21770473817143254,
+            "unit": "Time (ms)"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "danieljamesharvey@gmail.com",
+            "name": "Daniel Harvey",
+            "username": "danieljharvey"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "419589d733547976a3cc0b5610e18f2936b72148",
+          "message": "Remove Nat (#1002)",
+          "timestamp": "2023-07-20T22:22:40+01:00",
+          "tree_id": "ebdbc2366d10c61267460aae59b67bae2fc11f76",
+          "url": "https://github.com/danieljharvey/mimsa/commit/419589d733547976a3cc0b5610e18f2936b72148"
+        },
+        "date": 1689888450832,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "build stdlib/allFns",
+            "value": 0.1297842817976232,
+            "unit": "Time (ms)"
+          },
+          {
+            "name": "evaluate/evaluate big looping thing",
+            "value": 0.11462033529762519,
+            "unit": "Time (ms)"
+          },
+          {
+            "name": "evaluate/evaluate parsing",
+            "value": 0.03837161783928594,
+            "unit": "Time (ms)"
+          },
+          {
+            "name": "evaluate/evaluate parsing 2",
+            "value": 0.26738346610000013,
             "unit": "Time (ms)"
           }
         ]
