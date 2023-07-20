@@ -58,23 +58,32 @@ library
     Smol.Core.ExprUtils
     Smol.Core.Helpers
     Smol.Core.Interpreter
-    Smol.Core.Interpreter.Convert
+    Smol.Core.Interpreter.App
+    Smol.Core.Interpreter.FindUses
+    Smol.Core.Interpreter.If
+    Smol.Core.Interpreter.Infix
     Smol.Core.Interpreter.Interpret
+    Smol.Core.Interpreter.Let
+    Smol.Core.Interpreter.Monad
+    Smol.Core.Interpreter.PatternMatch
+    Smol.Core.Interpreter.RecordAccess
     Smol.Core.Interpreter.Types
+    Smol.Core.Interpreter.Types.InterpreterError
+    Smol.Core.Interpreter.Types.Stack
     Smol.Core.Modules.Check
     Smol.Core.Modules.Dependencies
     Smol.Core.Modules.FromParts
     Smol.Core.Modules.Helpers
-    Smol.Core.Modules.Types.ModuleError
     Smol.Core.Modules.Monad
     Smol.Core.Modules.ResolveDeps
     Smol.Core.Modules.RunTests
     Smol.Core.Modules.Typecheck
-    Smol.Core.Modules.Types.DepType
-    Smol.Core.Modules.Types.Module
-    Smol.Core.Modules.Types.DefIdentifier
-    Smol.Core.Modules.Types.Entity
     Smol.Core.Modules.Types
+    Smol.Core.Modules.Types.DefIdentifier
+    Smol.Core.Modules.Types.DepType
+    Smol.Core.Modules.Types.Entity
+    Smol.Core.Modules.Types.Module
+    Smol.Core.Modules.Types.ModuleError
     Smol.Core.Modules.Types.ModuleItem
     Smol.Core.Modules.Types.ModuleName
     Smol.Core.Modules.Types.Test
@@ -138,10 +147,10 @@ test-suite smol-core-tests
     Test.BuiltInTypes
     Test.Helpers
     Test.Interpreter.InterpreterSpec
-    Test.Modules.ResolveDepsSpec
-    Test.Modules.TypecheckSpec
     Test.Modules.FromPartsSpec
+    Test.Modules.ResolveDepsSpec
     Test.Modules.RunTestsSpec
+    Test.Modules.TypecheckSpec
     Test.ParserSpec
     Test.Typecheck.ExhaustivenessSpec
     Test.Typecheck.NestingMonadSpec

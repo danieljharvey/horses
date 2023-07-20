@@ -15,6 +15,7 @@ import Data.Set (Set)
 import qualified Data.Set as S
 import qualified Data.Set.NonEmpty as NES
 import Data.Text (Text)
+import GHC.Natural
 import Prettyprinter
 import Prettyprinter.Render.Text
 
@@ -44,6 +45,9 @@ instance Printer Bool where
   prettyDoc = pretty
 
 instance Printer Int where
+  prettyDoc = pretty
+
+instance Printer Natural where
   prettyDoc = pretty
 
 instance (Printer a) => Printer [a] where

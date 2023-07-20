@@ -11,10 +11,12 @@ module Smol.Core.ExprUtils
     mapExprDep,
     mapTypeDep,
     mapDataTypeDep,
+    withMonoid,
   )
 where
 
 import Data.Bifunctor
+import Data.Foldable (toList)
 import qualified Data.List.NonEmpty as NE
 import qualified Data.Map.Strict as M
 import Smol.Core.Types
@@ -177,3 +179,96 @@ mapDataTypeDep ::
 mapDataTypeDep resolve (DataType {dtName, dtVars, dtConstructors}) =
   let newConstructors = (fmap . fmap) (mapTypeDep resolve) dtConstructors
    in DataType {dtName, dtVars, dtConstructors = newConstructors}
+
+-- | Given a function `f` that turns any piece of the expression in a Monoid
+-- `m`, flatten the entire expression into `m`
+withMonoid ::
+  (Monoid m) =>
+  (Expr var ann -> (Bool, m)) ->
+  Expr var ann ->
+  m
+withMonoid f whole@(EPrim _ _) = snd (f whole)
+withMonoid f whole@EVar {} = snd (f whole)
+withMonoid f whole@(EAnn _ _ expr) =
+  let (go, m) = f whole
+   in if not go
+        then m
+        else m <> withMonoid f expr
+withMonoid f whole@(ELet _ _ bindExpr' inExpr) =
+  let (go, m) = f whole
+   in if not go
+        then m
+        else
+          m
+            <> withMonoid f bindExpr'
+            <> withMonoid f inExpr
+withMonoid f whole@(EInfix _ _ a b) =
+  let (go, m) = f whole
+   in if not go
+        then m
+        else
+          m
+            <> withMonoid f a
+            <> withMonoid f b
+withMonoid f whole@(ELambda _ _binder expr) =
+  let (go, m) = f whole
+   in if not go
+        then m
+        else
+          m
+            <> withMonoid f expr
+withMonoid f whole@(EApp _ func arg) =
+  let (go, m) = f whole
+   in if not go
+        then m
+        else
+          m
+            <> withMonoid f func
+            <> withMonoid f arg
+withMonoid f whole@(EIf _ matchExpr thenExpr elseExpr) =
+  let (go, m) = f whole
+   in if not go
+        then m
+        else
+          m
+            <> withMonoid f matchExpr
+            <> withMonoid f thenExpr
+            <> withMonoid f elseExpr
+withMonoid f whole@(ETuple _ a as) =
+  let (go, m) = f whole
+   in if not go
+        then m
+        else
+          m
+            <> withMonoid f a
+            <> mconcat (withMonoid f <$> NE.toList as)
+withMonoid f whole@(ERecord _ items) =
+  let (go, m) = f whole
+   in if not go
+        then m
+        else
+          m
+            <> mconcat
+              ( snd <$> M.toList (withMonoid f <$> items)
+              )
+withMonoid f whole@(EArray _ items) =
+  let (go, m) = f whole
+   in if not go
+        then m
+        else
+          m
+            <> mconcat
+              (withMonoid f <$> toList items)
+withMonoid f whole@(ERecordAccess _ expr _name) =
+  let (go, m) = f whole
+   in if not go then m else m <> withMonoid f expr
+withMonoid f whole@EConstructor {} = snd (f whole)
+withMonoid f whole@(EPatternMatch _ matchExpr matches) =
+  let (go, m) = f whole
+   in if not go
+        then m
+        else
+          m
+            <> withMonoid f matchExpr
+            <> mconcat
+              (withMonoid f <$> (snd <$> NE.toList matches))
