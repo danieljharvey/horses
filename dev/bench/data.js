@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1689888451632,
+  "lastUpdate": 1689889989545,
   "repoUrl": "https://github.com/danieljharvey/mimsa",
   "entries": {
     "Store benchmarks in Github Pages": [
@@ -2767,6 +2767,50 @@ window.BENCHMARK_DATA = {
           {
             "name": "evaluate/evaluate parsing 2",
             "value": 0.26738346610000013,
+            "unit": "Time (ms)"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "danieljamesharvey@gmail.com",
+            "name": "Daniel Harvey",
+            "username": "danieljharvey"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "3b759ca03fe1b89eb1b965bf13dbddbcb856865b",
+          "message": "Interpreter can't do fix points, let's kill HOAS (#991)\n\n* Interpreter can't do fix points, let's kill HOAS\r\n\r\n* Nearly copy pasta mimsa interpreter\r\n\r\n* More fiddling about\r\n\r\n* It typechecks\r\n\r\n* Yerp\r\n\r\n* Yerp\r\n\r\n* YASSD\r\n\r\n* Linty",
+          "timestamp": "2023-07-20T22:48:33+01:00",
+          "tree_id": "83abcc9af6b66ccbe5cdaacdfe7f54ce18d60770",
+          "url": "https://github.com/danieljharvey/mimsa/commit/3b759ca03fe1b89eb1b965bf13dbddbcb856865b"
+        },
+        "date": 1689889988661,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "build stdlib/allFns",
+            "value": 0.12826413254761268,
+            "unit": "Time (ms)"
+          },
+          {
+            "name": "evaluate/evaluate big looping thing",
+            "value": 0.11328609233333005,
+            "unit": "Time (ms)"
+          },
+          {
+            "name": "evaluate/evaluate parsing",
+            "value": 0.03731254951785559,
+            "unit": "Time (ms)"
+          },
+          {
+            "name": "evaluate/evaluate parsing 2",
+            "value": 0.282793460299996,
             "unit": "Time (ms)"
           }
         ]
