@@ -1,12 +1,12 @@
-module Smol.Core.Interpreter.RecordAccess (interpretRecordAccess ) where
+module Smol.Core.Interpreter.RecordAccess (interpretRecordAccess) where
 
 import Control.Monad.Except
 import qualified Data.Map.Strict as M
 import Smol.Core.Interpreter.Types
 import Smol.Core.Interpreter.Types.InterpreterError
 import Smol.Core.Interpreter.Types.Stack
-import Smol.Core.Types.Identifier
 import Smol.Core.Types.Expr
+import Smol.Core.Types.Identifier
 
 interpretRecordAccess ::
   InterpretFn ann ->

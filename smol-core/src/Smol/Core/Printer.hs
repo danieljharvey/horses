@@ -15,9 +15,9 @@ import Data.Set (Set)
 import qualified Data.Set as S
 import qualified Data.Set.NonEmpty as NES
 import Data.Text (Text)
+import GHC.Natural
 import Prettyprinter
 import Prettyprinter.Render.Text
-import GHC.Natural
 
 renderWithWidth :: Int -> Doc ann -> Text
 renderWithWidth w doc = renderStrict (layoutPretty layoutOptions (unAnnotate doc))

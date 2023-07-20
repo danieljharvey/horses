@@ -1,19 +1,19 @@
 module Smol.Core.Interpreter.Let (interpretLet) where
 
+import Smol.Core.Interpreter.FindUses
 import Smol.Core.Interpreter.Monad
 import Smol.Core.Interpreter.Types
 import Smol.Core.Interpreter.Types.Stack
+import Smol.Core.Types.Expr
 import Smol.Core.Types.Identifier
 import Smol.Core.Types.ResolvedDep
-import Smol.Core.Types.Expr
-import Smol.Core.Interpreter.FindUses
 
 -- need to interpret the expr in the let binding
 -- BUT it needs to refer to itself
 -- this is NOT the one, we need some form of indirection so the closure can say
 -- "and look up whatever 'var' is pls"
 interpretLetExpr ::
-  ( Monoid ann) =>
+  (Monoid ann) =>
   InterpretFn ann ->
   ResolvedDep Identifier ->
   InterpretExpr ann ->
@@ -32,7 +32,7 @@ interpretLetExpr interpretFn var expr = do
 interpretLet ::
   (Monoid ann) =>
   InterpretFn ann ->
-    (ResolvedDep Identifier, ExprData ann) ->
+  (ResolvedDep Identifier, ExprData ann) ->
   InterpretExpr ann ->
   InterpretExpr ann ->
   InterpreterM ann (InterpretExpr ann)

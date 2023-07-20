@@ -3,20 +3,20 @@ module Smol.Core.Interpreter.PatternMatch
   )
 where
 
-import qualified Data.Sequence as Seq
-import Data.Foldable (toList)
-import Smol.Core.Types.Constructor
-import Smol.Core.Types.Spread
-import Smol.Core.Types.Expr
-import Smol.Core.Types.Pattern
-import Smol.Core.Types.Identifier
-import Smol.Core.Types.ResolvedDep
 import Control.Monad.Except
+import Data.Foldable (toList)
 import qualified Data.List.NonEmpty as NE
 import Data.Monoid
+import qualified Data.Sequence as Seq
 import Smol.Core.Interpreter.Monad
 import Smol.Core.Interpreter.Types
 import Smol.Core.Interpreter.Types.InterpreterError
+import Smol.Core.Types.Constructor
+import Smol.Core.Types.Expr
+import Smol.Core.Types.Identifier
+import Smol.Core.Types.Pattern
+import Smol.Core.Types.ResolvedDep
+import Smol.Core.Types.Spread
 
 interpretPatternMatch ::
   InterpretFn ann ->
@@ -54,9 +54,9 @@ patternMatches (PTuple _ pA pAs) (ETuple _ a as) = do
   pure $ matchA <> mconcat matchAs
 patternMatches (PLiteral _ pB) (EPrim _ b)
   | pB == b = pure mempty
-patternMatches (PConstructor _  _pTyCon []) (EConstructor _  _tyCon) =
+patternMatches (PConstructor _ _pTyCon []) (EConstructor _ _tyCon) =
   pure mempty
-patternMatches (PConstructor _  pTyCon pArgs) (EApp ann fn val) = do
+patternMatches (PConstructor _ pTyCon pArgs) (EApp ann fn val) = do
   (tyCon, args) <- consAppToPattern (EApp ann fn val)
   if tyCon /= pTyCon
     then Nothing
@@ -86,5 +86,5 @@ consAppToPattern :: InterpretExpr ann -> Maybe (ResolvedDep Constructor, [Interp
 consAppToPattern (EApp _ fn val) = do
   (tyCon, more) <- consAppToPattern fn
   pure (tyCon, more <> [val])
-consAppToPattern (EConstructor _  tyCon) = pure (tyCon, mempty)
+consAppToPattern (EConstructor _ tyCon) = pure (tyCon, mempty)
 consAppToPattern _ = Nothing

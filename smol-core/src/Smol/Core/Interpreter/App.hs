@@ -1,9 +1,9 @@
 module Smol.Core.Interpreter.App (interpretApp) where
 
-import Smol.Core.Types.Expr
 import Smol.Core.Interpreter.Monad
 import Smol.Core.Interpreter.Types
 import Smol.Core.Interpreter.Types.Stack
+import Smol.Core.Types.Expr
 
 interpretApp ::
   (Eq ann) =>

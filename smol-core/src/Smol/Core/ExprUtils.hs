@@ -11,12 +11,12 @@ module Smol.Core.ExprUtils
     mapExprDep,
     mapTypeDep,
     mapDataTypeDep,
-    withMonoid
+    withMonoid,
   )
 where
 
-import Data.Foldable (toList)
 import Data.Bifunctor
+import Data.Foldable (toList)
 import qualified Data.List.NonEmpty as NE
 import qualified Data.Map.Strict as M
 import Smol.Core.Types
@@ -272,4 +272,3 @@ withMonoid f whole@(EPatternMatch _ matchExpr matches) =
             <> withMonoid f matchExpr
             <> mconcat
               (withMonoid f <$> (snd <$> NE.toList matches))
-

@@ -2,6 +2,7 @@ module Smol.Core.Interpreter.Interpret (interpret, addEmptyStackFrames) where
 
 import Control.Monad.Reader
 import Data.Functor
+import qualified Data.List.NonEmpty as NE
 import Data.Map.Strict (Map)
 import Smol.Core.Interpreter.App
 import Smol.Core.Interpreter.If
@@ -14,46 +15,48 @@ import Smol.Core.Interpreter.Types
 import Smol.Core.Types
 import Smol.Core.Interpreter.Types.InterpreterError
 import Smol.Core.Interpreter.Types.Stack
+import Smol.Core.Types.Expr
+import Smol.Core.Types.Identifier
+import Smol.Core.Types.ResolvedDep
 
-initialStack :: (Ord var) => StackFrame var ann
-initialStack = StackFrame mempty mempty
+initialStack :: StackFrame ann
+initialStack = StackFrame mempty
 
 addEmptyStackFrames ::
-  (Ord var, Monoid ann) =>
-  Expr (var, Unique) ann ->
-  Expr (var, Unique) (ExprData var ann)
+  (Monoid ann) =>
+  Expr dep ann ->
+  Expr dep (ExprData ann)
 addEmptyStackFrames expr =
   expr $> mempty
 
 interpret ::
-  (Eq ann, Ord var, Show var, Printer var, Monoid ann, Show ann) =>
-  Map ExprHash (InterpretExpr var ann) ->
-  Map InfixOp ExprHash ->
-  InterpretExpr var ann ->
-  Either (InterpreterError var ann) (InterpretExpr var ann)
-interpret deps infixes expr =
-  runReaderT (interpretExpr expr) (InterpretReaderEnv initialStack deps infixes)
+  (Eq ann, Monoid ann, Show ann) =>
+  Map (ResolvedDep Identifier) (InterpretExpr ann) ->
+  InterpretExpr ann ->
+  Either (InterpreterError ann) (InterpretExpr ann)
+interpret deps expr =
+  runReaderT (interpretExpr expr) (InterpretReaderEnv initialStack deps)
 
 -- somewhat pointless separate function to make debug logging each value out
 -- easier
 interpretExpr ::
-  (Eq ann, Ord var, Show var, Printer var, Monoid ann, Show ann) =>
-  InterpretExpr var ann ->
-  InterpreterM var ann (InterpretExpr var ann)
+  (Eq ann, Monoid ann, Show ann) =>
+  InterpretExpr ann ->
+  InterpreterM ann (InterpretExpr ann)
 interpretExpr =
   interpretExpr'
 
 interpretExpr' ::
-  (Eq ann, Ord var, Show var, Printer var, Monoid ann, Show ann) =>
-  InterpretExpr var ann ->
-  InterpreterM var ann (InterpretExpr var ann)
-interpretExpr' (MyLiteral _ val) = pure (MyLiteral mempty val)
-interpretExpr' (MyAnnotation _ _ expr) = interpretExpr' expr
-interpretExpr' (MyLet _ ident expr body) =
-  interpretLet interpretExpr ident expr body
-interpretExpr' (MyVar _ _ var) =
+  (Eq ann, Monoid ann, Show ann) =>
+  InterpretExpr ann ->
+  InterpreterM ann (InterpretExpr ann)
+interpretExpr' (EPrim _ val) = pure (EPrim mempty val)
+interpretExpr' (EAnn _ _ expr) = interpretExpr' expr
+interpretExpr' (ELet exprData ident expr body) =
+  interpretLet interpretExpr (ident, exprData) expr body
+interpretExpr' (EVar _ var) =
   lookupVar var >>= interpretExpr
-interpretExpr' (MyLambda (ExprData current isRec ann) ident body) = do
+interpretExpr' (ELambda (ExprData current isRec ann) ident body) = do
   -- capture current environment
   stackFrame <-
     getCurrentStackFrame
@@ -65,28 +68,22 @@ interpretExpr' (MyLambda (ExprData current isRec ann) ident body) = do
           ann
   -- return it
   pure
-    (MyLambda newExprData ident body)
-interpretExpr' (MyTuple ann a as) =
-  MyTuple ann <$> interpretExpr a <*> traverse interpretExpr as
-interpretExpr' (MyInfix _ op a b) =
+    (ELambda newExprData ident body)
+interpretExpr' (ETuple ann a as) =
+  ETuple ann <$> interpretExpr a <*> traverse interpretExpr as
+interpretExpr' (EInfix _ op a b) =
   interpretInfix interpretExpr op a b
-interpretExpr' (MyIf ann predExpr thenExpr elseExpr) =
+interpretExpr' (EIf ann predExpr thenExpr elseExpr) =
   interpretIf interpretExpr ann predExpr thenExpr elseExpr
-interpretExpr' (MyApp ann fn a) =
+interpretExpr' (EApp ann fn a) =
   interpretApp interpretExpr ann fn a
-interpretExpr' (MyRecordAccess ann expr name) =
+interpretExpr' (ERecordAccess ann expr name) =
   interpretRecordAccess interpretExpr ann expr name
-interpretExpr' (MyTupleAccess ann expr index) =
-  interpretTupleAccess interpretExpr ann expr index
-interpretExpr' (MyPatternMatch _ matchExpr patterns) = do
-  interpretPatternMatch interpretExpr matchExpr patterns
-interpretExpr' (MyLetPattern _ pat patExpr body) =
-  interpretLetPattern interpretExpr pat patExpr body
-interpretExpr' (MyRecord ann as) =
-  MyRecord ann <$> traverse interpretExpr as
-interpretExpr' (MyArray ann as) =
-  MyArray ann <$> traverse interpretExpr as
-interpretExpr' (MyConstructor as modName const') =
-  pure (MyConstructor as modName const')
-interpretExpr' (MyTypedHole ann name) =
-  pure (MyTypedHole ann name)
+interpretExpr' (EPatternMatch _ matchExpr patterns) = do
+  interpretPatternMatch interpretExpr matchExpr (NE.toList patterns)
+interpretExpr' (ERecord ann as) =
+  ERecord ann <$> traverse interpretExpr as
+interpretExpr' (EArray ann as) =
+  EArray ann <$> traverse interpretExpr as
+interpretExpr' (EConstructor as const') =
+  pure (EConstructor as const')

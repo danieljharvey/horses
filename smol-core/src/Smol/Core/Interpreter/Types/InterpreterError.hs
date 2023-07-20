@@ -3,16 +3,16 @@
 
 module Smol.Core.Interpreter.Types.InterpreterError (InterpreterError (..)) where
 
-import qualified Prettyprinter as PP
 import Data.Map.Strict (Map)
 import qualified Data.Map.Strict as M
 import GHC.Natural
+import qualified Prettyprinter as PP
 import Smol.Core.Interpreter.Types.Stack
-import Smol.Core.Types.ResolvedDep
+import Smol.Core.Printer
 import Smol.Core.Types.Expr
 import Smol.Core.Types.Identifier
 import Smol.Core.Types.Op
-import Smol.Core.Printer
+import Smol.Core.Types.ResolvedDep
 
 type InterpretExpr ann = Expr ResolvedDep (ExprData ann)
 
@@ -39,8 +39,8 @@ instance Monoid (InterpreterError ann) where
   mempty = UnknownInterpreterError
 
 commaSep :: (Printer a) => [a] -> PP.Doc ann
-commaSep
-  = foldMap (\a -> prettyDoc a <> ", ")
+commaSep =
+  foldMap (\a -> prettyDoc a <> ", ")
 
 instance Printer (InterpreterError ann) where
   prettyDoc (CouldNotFindVar items name) =

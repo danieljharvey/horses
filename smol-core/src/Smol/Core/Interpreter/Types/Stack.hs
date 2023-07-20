@@ -4,10 +4,10 @@
 module Smol.Core.Interpreter.Types.Stack (StackFrame (..), ExprData (..)) where
 
 import Data.Map.Strict (Map)
-import Smol.Core.Types.Expr
-import Smol.Core.Types.ResolvedDep
 import Smol.Core.Printer
+import Smol.Core.Types.Expr
 import Smol.Core.Types.Identifier
+import Smol.Core.Types.ResolvedDep
 
 data StackFrame ann = StackFrame
   { sfVariables :: Map (ResolvedDep Identifier) (Expr ResolvedDep (ExprData ann))
@@ -15,14 +15,14 @@ data StackFrame ann = StackFrame
   deriving stock (Eq, Ord, Show)
 
 instance Semigroup (StackFrame ann) where
-  (StackFrame varA ) <> (StackFrame varB ) =
+  (StackFrame varA) <> (StackFrame varB) =
     StackFrame (varA <> varB)
 
 instance Monoid (StackFrame ann) where
   mempty = StackFrame mempty
 
 instance Printer (StackFrame ann) where
-  prettyDoc (StackFrame sfVars ) = prettyDoc sfVars
+  prettyDoc (StackFrame sfVars) = prettyDoc sfVars
 
 -- carried around in each node when interpreting
 data ExprData ann = ExprData

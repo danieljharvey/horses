@@ -13,10 +13,10 @@ import Control.Monad.Reader
 import Data.Map.Strict (Map)
 import Smol.Core.Interpreter.Types.InterpreterError
 import Smol.Core.Interpreter.Types.Stack
-import Smol.Core.Types.ResolvedDep
-import Smol.Core.Types.Identifier
 import Smol.Core.Types.Expr
+import Smol.Core.Types.Identifier
 import Smol.Core.Types.Pattern
+import Smol.Core.Types.ResolvedDep
 
 type InterpreterM ann a =
   ReaderT
