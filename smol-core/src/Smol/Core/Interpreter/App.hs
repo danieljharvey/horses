@@ -1,30 +1,28 @@
 module Smol.Core.Interpreter.App (interpretApp) where
 
+import Smol.Core.Types.Expr
 import Smol.Core.Interpreter.Monad
 import Smol.Core.Interpreter.Types
 import Smol.Core.Interpreter.Types.Stack
 
-varFromIdent :: Identifier var ann -> var
-varFromIdent (Identifier _ var) = var
-
 interpretApp ::
-  (Ord var, Eq ann) =>
-  InterpretFn var ann ->
-  ExprData var ann ->
-  InterpretExpr var ann ->
-  InterpretExpr var ann ->
-  InterpreterM var ann (InterpretExpr var ann)
+  (Eq ann) =>
+  InterpretFn ann ->
+  ExprData ann ->
+  InterpretExpr ann ->
+  InterpretExpr ann ->
+  InterpreterM ann (InterpretExpr ann)
 interpretApp interpretFn ann myFn value =
   case myFn of
-    (MyLambda (ExprData closure _ _) ident body) -> do
+    (ELambda (ExprData closure _ _) ident body) -> do
       -- interpret arg first
       intValue <- interpretFn value
       -- add arg to context
-      let newStackFrame = addVarToFrame (varFromIdent ident) intValue closure
+      let newStackFrame = addVarToFrame ident intValue closure
       -- run body with closure + new arg
       withNewStackFrame newStackFrame (interpretFn body)
-    (MyConstructor ann' modName const') ->
-      MyApp ann (MyConstructor ann' modName const')
+    (EConstructor ann' const') ->
+      EApp ann (EConstructor ann' const')
         <$> interpretFn value
     fn -> do
       -- try and resolve it into something we recognise
@@ -33,5 +31,5 @@ interpretApp interpretFn ann myFn value =
         then do
           intValue <- interpretFn value
           -- at least change the value
-          pure (MyApp ann intFn intValue)
-        else interpretFn (MyApp ann intFn value)
+          pure (EApp ann intFn intValue)
+        else interpretFn (EApp ann intFn value)

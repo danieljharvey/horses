@@ -1,10 +1,7 @@
 module Smol.Core.Interpreter.RecordAccess (interpretRecordAccess ) where
 
 import Control.Monad.Except
-import qualified Data.List.NonEmpty as NE
 import qualified Data.Map.Strict as M
-import Data.Maybe (listToMaybe)
-import GHC.Natural
 import Smol.Core.Interpreter.Types
 import Smol.Core.Interpreter.Types.InterpreterError
 import Smol.Core.Interpreter.Types.Stack

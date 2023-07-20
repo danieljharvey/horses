@@ -2,51 +2,43 @@ module Smol.Core.Interpreter.SimpleExpr (simpleExpr) where
 
 import Data.Bifunctor
 import Data.Functor
-import Smol.Core
+import Smol.Core.Types.Expr
+import Smol.Core.Types.Pattern
+import Smol.Core.Types.Spread
 
 -- | simpleExpr
-simpleExpr :: Expr var ann -> Expr var ()
-simpleExpr (MyConstructor _ _ tyCon) =
-  MyConstructor mempty Nothing tyCon
-simpleExpr (MyVar _ _ var) =
-  MyVar mempty Nothing var
-simpleExpr (MyLetPattern _ pat expr body) =
-  MyLetPattern mempty (simplePattern pat) (simpleExpr expr) (simpleExpr body)
-simpleExpr (MyLiteral _ lit) = MyLiteral mempty lit
-simpleExpr (MyAnnotation _ mt expr) =
-  MyAnnotation mempty (mt $> mempty) (simpleExpr expr)
-simpleExpr (MyLet _ ident expr body) =
-  MyLet mempty (ident $> mempty) (simpleExpr expr) (simpleExpr body)
-simpleExpr (MyInfix _ op a b) = MyInfix mempty op (simpleExpr a) (simpleExpr b)
-simpleExpr (MyLambda _ ident body) = MyLambda mempty (ident $> mempty) (simpleExpr body)
-simpleExpr (MyApp _ fn val) = MyApp mempty (simpleExpr fn) (simpleExpr val)
-simpleExpr (MyIf _ predExpr thenExpr elseExpr) =
-  MyIf mempty (simpleExpr predExpr) (simpleExpr thenExpr) (simpleExpr elseExpr)
-simpleExpr (MyTuple _ a as) = MyTuple mempty (simpleExpr a) (simpleExpr <$> as)
-simpleExpr (MyRecord _ as) = MyRecord mempty (simpleExpr <$> as)
-simpleExpr (MyRecordAccess _ expr name) = MyRecordAccess mempty (simpleExpr expr) name
-simpleExpr (MyTupleAccess _ expr index) = MyTupleAccess mempty (simpleExpr expr) index
-simpleExpr (MyArray _ as) = MyArray mempty (simpleExpr <$> as)
-simpleExpr (MyPatternMatch _ expr pats) =
-  MyPatternMatch mempty (simpleExpr expr) (bimap simplePattern simpleExpr <$> pats)
-simpleExpr (MyTypedHole _ var) = MyTypedHole mempty var
+simpleExpr :: Expr dep ann -> Expr dep ()
+simpleExpr (EConstructor _ tyCon) =
+  EConstructor mempty tyCon
+simpleExpr (EVar _ var) =
+  EVar mempty var
+simpleExpr (EPrim _ lit) = EPrim mempty lit
+simpleExpr (EAnn _ mt expr) =
+  EAnn mempty (mt $> mempty) (simpleExpr expr)
+simpleExpr (ELet _ ident expr body) =
+  ELet mempty ident (simpleExpr expr) (simpleExpr body)
+simpleExpr (EInfix _ op a b) = EInfix mempty op (simpleExpr a) (simpleExpr b)
+simpleExpr (ELambda _ ident body) = ELambda mempty ident  (simpleExpr body)
+simpleExpr (EApp _ fn val) = EApp mempty (simpleExpr fn) (simpleExpr val)
+simpleExpr (EIf _ predExpr thenExpr elseExpr) =
+  EIf mempty (simpleExpr predExpr) (simpleExpr thenExpr) (simpleExpr elseExpr)
+simpleExpr (ETuple _ a as) = ETuple mempty (simpleExpr a) (simpleExpr <$> as)
+simpleExpr (ERecord _ as) = ERecord mempty (simpleExpr <$> as)
+simpleExpr (ERecordAccess _ expr name) = ERecordAccess mempty (simpleExpr expr) name
+simpleExpr (EArray _ as) = EArray mempty (simpleExpr <$> as)
+simpleExpr (EPatternMatch _ expr pats) =
+  EPatternMatch mempty (simpleExpr expr) (bimap simplePattern simpleExpr <$> pats)
 
-simplePattern :: Pattern var ann -> Pattern var ()
+simplePattern :: Pattern dep ann -> Pattern dep ()
 simplePattern (PVar _ var) = PVar mempty var
-simplePattern (PConstructor _ _ tyCon args) =
-  PConstructor mempty Nothing tyCon (simplePattern <$> args)
+simplePattern (PConstructor _ tyCon args) =
+  PConstructor mempty tyCon (simplePattern <$> args)
 simplePattern (PWildcard _) = PWildcard mempty
 simplePattern (PTuple _ a as) = PTuple mempty (simplePattern a) (simplePattern <$> as)
-simplePattern (PRecord _ as) = PRecord mempty (simplePattern <$> as)
-simplePattern (PLit _ lit) = PLit mempty lit
+simplePattern (PLiteral _ lit) = PLiteral mempty lit
 simplePattern (PArray _ vals spread) =
   let simpleSpread = case spread of
         SpreadValue _ a -> SpreadValue mempty a
         SpreadWildcard _ -> SpreadWildcard mempty
         NoSpread -> NoSpread
    in PArray mempty (simplePattern <$> vals) simpleSpread
-simplePattern (PString _ pHead pTail) =
-  let simplePart s = case s of
-        StrValue _ a -> StrValue mempty a
-        StrWildcard _ -> StrWildcard mempty
-   in PString mempty (simplePart pHead) (simplePart pTail)
