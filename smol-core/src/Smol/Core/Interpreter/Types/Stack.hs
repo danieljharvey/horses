@@ -1,5 +1,4 @@
 {-# LANGUAGE DerivingStrategies #-}
-{-# LANGUAGE OverloadedStrings #-}
 
 module Smol.Core.Interpreter.Types.Stack (StackFrame (..), ExprData (..)) where
 
@@ -9,7 +8,7 @@ import Smol.Core.Types.Expr
 import Smol.Core.Types.Identifier
 import Smol.Core.Types.ResolvedDep
 
-data StackFrame ann = StackFrame
+newtype StackFrame ann = StackFrame
   { sfVariables :: Map (ResolvedDep Identifier) (Expr ResolvedDep (ExprData ann))
   }
   deriving stock (Eq, Ord, Show)
