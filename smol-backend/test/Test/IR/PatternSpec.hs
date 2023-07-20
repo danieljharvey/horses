@@ -17,7 +17,7 @@ import Smol.Core.Types.ParseDep
 import qualified Smol.Core.Types.Pattern as Smol
   ( Pattern (PConstructor, PLiteral, PTuple, PWildcard),
   )
-import Smol.Core.Types.Prim (Prim (PBool, PInt, PNat))
+import Smol.Core.Types.Prim (Prim (PBool, PInt))
 import Smol.Core.Types.ResolvedDep
 import Smol.Core.Types.Type (Type (TPrim), TypePrim (TPInt))
 import Test.BuiltInTypes (builtInTypes)
@@ -50,10 +50,10 @@ spec = do
                       ty
                       (Smol.PLiteral ty (PBool True))
                       ( NE.fromList
-                          [Smol.PLiteral ty (PNat 1)]
+                          [Smol.PLiteral ty (PInt 1)]
                       ),
                     [ PathEquals (GetPath [0] GetValue) (PBool True),
-                      PathEquals (GetPath [1] GetValue) (PNat 1)
+                      PathEquals (GetPath [1] GetValue) (PInt 1)
                     ]
                   ),
                   ( Smol.PConstructor

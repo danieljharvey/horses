@@ -150,7 +150,6 @@ annotationParser =
 literalParser :: Parser ParserExpr
 literalParser =
   boolParser
-    <|> try natParser
     <|> intParser
     <|> stringParser
     <|> unitExprParser
@@ -159,11 +158,6 @@ literalParser =
 
 unitExprParser :: Parser ParserExpr
 unitExprParser = label "unit" $ myLexeme (withLocation EPrim $ PUnit <$ unitParser)
-
-----
-
-natParser :: Parser ParserExpr
-natParser = label "natural" $ myLexeme (withLocation EPrim natPrimParser)
 
 ----
 

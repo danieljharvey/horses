@@ -74,26 +74,26 @@ spec = do
               ("(\\rec -> rec.bool) { bool: True }", "True"),
               ("(\\a -> True : (1 | 2) -> True) 1", "True"),
               ("(\\a -> True : (1 | 2 | 3 | 4 | 5 | 6) -> True) 5", "True"),
-              ("(1 : Nat) + (2 : Nat)", "Nat"),
+              ("(1 : Int) + (2 : Int)", "Int"),
               ("1 + 2", "3"),
               ("-1 + 200", "199"),
               ("200 + -100", "100"),
               ("let f = \\a -> a + 41; let g = f 1 == 42; case g of True -> 1", "1"),
               ("1 == 1", "True"),
               ("6 == 7", "False"),
-              ("(1 + 2 + 3 : Nat)", "Nat"),
+              ("(1 + 2 + 3 : Int)", "Int"),
               ("(1 + 2 + 3 : Int)", "Int"),
               ("(\"horse\" : String)", "String"),
               ("\"hor\" + \"se\"", "\"horse\""),
               ("let a = if True then \"eg\" else \"og\"; a + \"g\"", "\"egg\" | \"ogg\""),
-              ( "(\\pair -> case pair of (a,_) -> a : (Bool, Nat) -> Bool) (True, 1)",
+              ( "(\\pair -> case pair of (a,_) -> a : (Bool, Int) -> Bool) (True, 1)",
                 "Bool"
               ),
-              ( "(\\pair -> case pair of (True, a) -> a | (False,_) -> 0 : (Bool, Nat) -> Nat) (True,1)",
-                "Nat"
+              ( "(\\pair -> case pair of (True, a) -> a | (False,_) -> 0 : (Bool, Int) -> Int) (True,1)",
+                "Int"
               ),
-              ( "(case (True, 1) of (True, a) -> a: Nat)",
-                "Nat" -- this should remain total as we know it's always True
+              ( "(case (True, 1) of (True, a) -> a: Int)",
+                "Int" -- this should remain total as we know it's always True
               ),
               ( "Just True",
                 "Maybe True"
@@ -116,17 +116,17 @@ spec = do
               ( "(Right True : Either e True)",
                 "Either e True"
               ),
-              ( "(case Just 1 of Just a -> a | _ -> 0 : Nat)",
-                "Nat"
+              ( "(case Just 1 of Just a -> a | _ -> 0 : Int)",
+                "Int"
               ),
-              ( "(\\a -> case a of 1 -> 10 | 2 -> 20 : (1 | 2) -> Nat) 1",
-                "Nat"
+              ( "(\\a -> case a of 1 -> 10 | 2 -> 20 : (1 | 2) -> Int) 1",
+                "Int"
               ),
-              ( "(\\a -> case a of (1,_) -> 10 | (2,_) -> 20 : (1 | 2,Bool) -> Nat) (1,False)",
-                "Nat"
+              ( "(\\a -> case a of (1,_) -> 10 | (2,_) -> 20 : (1 | 2,Bool) -> Int) (1,False)",
+                "Int"
               ),
-              ( "(\\a -> a : Maybe a -> Maybe a) (Nothing : Maybe Nat)",
-                "Maybe Nat"
+              ( "(\\a -> a : Maybe a -> Maybe a) (Nothing : Maybe Int)",
+                "Maybe Int"
               ),
               ( "(\\a -> a : Maybe a -> Maybe a) (Just 1)",
                 "Maybe 1"
@@ -140,14 +140,14 @@ spec = do
               ( "(\\f -> \\maybe -> case maybe of Just a -> Just (f a) | Nothing -> Nothing : (b -> a) -> Maybe b -> Maybe a)",
                 "(b -> a) -> Maybe b -> Maybe a"
               ),
-              ( "(case (This 42 : These Nat Nat) of This a -> a : Nat)",
-                "Nat"
+              ( "(case (This 42 : These Int Int) of This a -> a : Int)",
+                "Int"
               ),
-              ( "let fmap = (\\f -> \\maybe -> case maybe of Just a -> Just (f a) | Nothing -> Nothing : (a -> b) -> Maybe a -> Maybe b); let inc = (\\a -> True : Nat -> Bool); fmap inc",
-                "Maybe Nat -> Maybe Bool"
+              ( "let fmap = (\\f -> \\maybe -> case maybe of Just a -> Just (f a) | Nothing -> Nothing : (a -> b) -> Maybe a -> Maybe b); let inc = (\\a -> True : Int -> Bool); fmap inc",
+                "Maybe Int -> Maybe Bool"
               ),
-              ( "let fmap = (\\f -> \\either -> case either of Right a -> Right (f a) | Left e -> Left e : (a -> b) -> Either e a -> Either e b); let inc = (\\a -> True : Nat -> Bool); fmap inc",
-                "Either e Nat -> Either e Bool"
+              ( "let fmap = (\\f -> \\either -> case either of Right a -> Right (f a) | Left e -> Left e : (a -> b) -> Either e a -> Either e b); let inc = (\\a -> True : Int -> Bool); fmap inc",
+                "Either e Int -> Either e Bool"
               ),
               ( "let fmap = (\\f -> \\either -> case either of Right a -> Right (f a) | Left e -> Left e : (a -> b) -> Either e a -> Either e b); fmap",
                 "(a -> b) -> Either e a -> Either e b"
@@ -173,23 +173,23 @@ spec = do
               ( "(\\value -> \\default -> case value of Right a -> a | Left _ -> default : Either e a -> a -> a)",
                 "Either e a -> a -> a"
               ),
-              --              ( "let liftA2 = (\\ap -> \\fmap -> \\f -> \\ma -> \\mb -> ap (fmap f ma) mb : (m (a -> b) -> m a -> m b) -> ((a -> b) -> m a -> m b) -> (a -> b -> c) -> m a -> m b -> m c); let add2 = (\\a -> \\b -> a + b : Nat -> Nat -> Nat); liftA2 add2 (Just 1) (Just 2)",
-              --              "Maybe Nat"
+              --              ( "let liftA2 = (\\ap -> \\fmap -> \\f -> \\ma -> \\mb -> ap (fmap f ma) mb : (m (a -> b) -> m a -> m b) -> ((a -> b) -> m a -> m b) -> (a -> b -> c) -> m a -> m b -> m c); let add2 = (\\a -> \\b -> a + b : Int -> Int -> Int); liftA2 add2 (Just 1) (Just 2)",
+              --              "Maybe Int"
               --          ),
               ("(\\a -> a + 1) 1", "2"),
               ("0 + 0", "0"),
               ("0 + 1", "1"),
               ("1 + 1", "2"),
               ("let f = \\a -> a + 1; let g = 100; f 1", "2"),
-              ("(\\pair -> case pair of (a,b) -> a + b : (Nat,Nat) -> Nat)", "(Nat,Nat) -> Nat"),
+              ("(\\pair -> case pair of (a,b) -> a + b : (Int,Int) -> Int)", "(Int,Int) -> Int"),
               ("let id = (\\i -> i : i -> i); case (Just 1) of Just a -> Just (id a) | Nothing -> Nothing", "Maybe 1"),
               ("[1,2]", "[ 1 | 2 ]"),
               ("[1,2,3,4]", "[1 | 4 | 2 | 3]"),
               ("[True]", "[True]"),
-              ("([1,2,3,4] : [Nat])", "[Nat]"),
+              ("([1,2,3,4] : [Int])", "[Int]"),
               ("case (\"dog\" : String) of \"log\" -> True | _ -> False", "Bool"),
-              ("case ([1,2,3] : [Nat]) of [a] -> [a] | [_,...b] -> b", "[Nat]"),
-              ("case ([1,2]: [Nat]) of [a,...] -> a | _ -> 0", "Nat"),
+              ("case ([1,2,3] : [Int]) of [a] -> [a] | [_,...b] -> b", "[Int]"),
+              ("case ([1,2]: [Int]) of [a,...] -> a | _ -> 0", "Int"),
               ("let a = if True then 1 else 2; let b = if True then 7 else 9; a + b", "8 | 9 | 10 | 11"),
               ("\\a -> a == True", "Bool -> Bool"),
               ("(\\x -> (x 1, x (False,True))) (\\a -> a)", "(1, (False, True))"), -- look! higher rank types
@@ -214,12 +214,12 @@ spec = do
         let ty = unsafeParseType "Maybe 1"
         reduceType ty `shouldBe` ty
       it "Types applied to happy datatypes are resolved" $ do
-        let ty = TApp () (TFunc () mempty (TVar () "a") (tyCons "Maybe" [tyVar "a"])) (TPrim () TPNat)
-            expected = unsafeParseType "Maybe Nat"
+        let ty = TApp () (TFunc () mempty (TVar () "a") (tyCons "Maybe" [tyVar "a"])) (TPrim () TPInt)
+            expected = unsafeParseType "Maybe Int"
         reduceType ty `shouldBe` expected
       it "Types applied to happy datatypes are resolved" $ do
-        let ty = TApp () (TFunc () mempty (TUnknown () 1) (tyCons "Maybe" [tyUnknown 1])) (TPrim () TPNat)
-            expected = unsafeParseType "Maybe Nat"
+        let ty = TApp () (TFunc () mempty (TUnknown () 1) (tyCons "Maybe" [tyUnknown 1])) (TPrim () TPInt)
+            expected = unsafeParseType "Maybe Int"
         reduceType ty `shouldBe` expected
 
     describe "freshen" $ do
@@ -236,19 +236,19 @@ spec = do
 
     describe "getApplyReturnType" $ do
       it "Simple function" $ do
-        let input = fromParsedType $ unsafeParseType "Nat -> Int"
+        let input = fromParsedType $ unsafeParseType "Int -> Int"
             expected = fromParsedType $ unsafeParseType "Int"
         getApplyReturnType input
           `shouldBe` Right (Just expected)
 
       it "Nested function" $ do
-        let input = fromParsedType $ unsafeParseType "Nat -> Int -> Bool"
+        let input = fromParsedType $ unsafeParseType "Int -> Int -> Bool"
             expected = fromParsedType $ unsafeParseType "Int -> Bool"
         getApplyReturnType input
           `shouldBe` Right (Just expected)
 
       it "Nested function with constructors" $ do
-        let input = fromParsedType $ unsafeParseType "Nat -> Maybe Int -> Maybe Bool"
+        let input = fromParsedType $ unsafeParseType "Int -> Maybe Int -> Maybe Bool"
             expected = fromParsedType $ unsafeParseType "Maybe Int -> Maybe Bool"
         getApplyReturnType input
           `shouldBe` Right (Just expected)
@@ -329,13 +329,13 @@ spec = do
       let inputs =
             [ "(\\a -> if a then 1 else True) True",
               "(\\a -> True : (1 | 2) -> True) 3",
-              "(\\pair -> case pair of (a,b,c) -> a + b + c : (Nat,Nat) -> Nat) (1,2)",
+              "(\\pair -> case pair of (a,b,c) -> a + b + c : (Int,Int) -> Int) (1,2)",
               "1 + \"dog\"",
-              "(case (False, 1) of (True, a) -> a: Nat)",
-              "(case Just 1 of These a -> a | _ -> 0 : Nat)", -- need to lookup constructor
-              "(case Just 1 of Just _ a -> a | _ -> 0 : Nat)", -- too many args in pattern
-              "(case Just 1 of Just -> 1 | _ -> 0 : Nat)", -- not enough args in pattern
-              "(\\a -> case a of 1 -> 10 | 2 -> 20 | 3 -> 30 : (1 | 2) -> Nat) 1" -- pattern contains something not found in union
+              "(case (False, 1) of (True, a) -> a: Int)",
+              "(case Just 1 of These a -> a | _ -> 0 : Int)", -- need to lookup constructor
+              "(case Just 1 of Just _ a -> a | _ -> 0 : Int)", -- too many args in pattern
+              "(case Just 1 of Just -> 1 | _ -> 0 : Int)", -- not enough args in pattern
+              "(\\a -> case a of 1 -> 10 | 2 -> 20 | 3 -> 30 : (1 | 2) -> Int) 1" -- pattern contains something not found in union
               -- "Nothing", -- don't know what 'a' is
               -- "This 1" -- don't know what 'b' is
             ]
@@ -349,19 +349,19 @@ spec = do
 
     describe "Typecheck" $ do
       it "Infers nat" $ do
-        let input = EPrim () (PNat 1)
+        let input = EPrim () (PInt 1)
             expected = tyIntLit [1]
         getExprAnnotation <$> testElaborate input `shouldBe` Right expected
 
-      it "Nat literal becomes Nat under annotation" $ do
-        let input = EAnn () tyNat (EPrim () (PNat 1))
-            expected = tyNat
+      it "Int literal becomes Int under annotation" $ do
+        let input = EAnn () tyInt (EPrim () (PInt 1))
+            expected = tyInt
 
         getExprAnnotation <$> testElaborate input
           `shouldBe` Right expected
 
-      it "Nat literal becomes Int under annotation" $ do
-        let input = EAnn () tyInt (EPrim () (PNat 1))
+      it "Int literal becomes Int under annotation" $ do
+        let input = EAnn () tyInt (EPrim () (PInt 1))
             expected = tyInt
 
         getExprAnnotation <$> testElaborate input
@@ -372,8 +372,8 @@ spec = do
             expected = tyIntLit [-1]
         getExprAnnotation <$> testElaborate input `shouldBe` Right expected
 
-      it "Nat becomes int under annotation" $ do
-        let input = EAnn () tyInt (EPrim () (PNat 1))
+      it "Int becomes int under annotation" $ do
+        let input = EAnn () tyInt (EPrim () (PInt 1))
             expected = tyInt
 
         getExprAnnotation <$> testElaborate input
@@ -697,8 +697,8 @@ spec = do
         testElaborate input `shouldSatisfy` isLeft
 
       it "Patterns have type of input type" $ do
-        let input = unsafeParseExpr "(\\maybe -> case maybe of Just b -> 1 | Nothing -> 0 : Maybe Bool -> Nat)"
-            expected = TFunc () mempty (TApp () (TConstructor () "Maybe") tyBool) tyNat
+        let input = unsafeParseExpr "(\\maybe -> case maybe of Just b -> 1 | Nothing -> 0 : Maybe Bool -> Int)"
+            expected = TFunc () mempty (TApp () (TConstructor () "Maybe") tyBool) tyInt
 
         getExprAnnotation <$> testElaborate input `shouldBe` Right expected
 
@@ -725,31 +725,31 @@ spec = do
 
       it "Basic let binding" $ do
         let input = unsafeParseExpr "let a = 1; a"
-            expected = ELet (tyIntLit [1]) "a" (EPrim (tyIntLit [1]) (PNat 1)) (EVar (tyIntLit [1]) "a")
+            expected = ELet (tyIntLit [1]) "a" (EPrim (tyIntLit [1]) (PInt 1)) (EVar (tyIntLit [1]) "a")
         testElaborate input `shouldBe` Right expected
 
       it "Function knows about it's external deps" $ do
-        let input = unsafeParseExpr "(\\a -> a : Nat -> Nat)"
-            tyBA = TFunc () mempty tyNat tyNat
+        let input = unsafeParseExpr "(\\a -> a : Int -> Int)"
+            tyBA = TFunc () mempty tyInt tyInt
             expected =
               ELambda
                 tyBA
                 "a"
-                (EVar tyNat "a")
+                (EVar tyInt "a")
         let result = case testElaborate input of
               Right (EAnn _ _ body) -> body
               other -> error (show other)
         result `shouldBe` expected
 
       it "Function knows about it's external deps" $ do
-        let input = unsafeParseExpr "(\\a -> \\b -> a : Nat -> Nat -> Nat)"
-            tyBA = TFunc () (M.singleton "a" tyNat) tyNat tyNat
-            tyABA = TFunc () mempty tyNat tyBA
+        let input = unsafeParseExpr "(\\a -> \\b -> a : Int -> Int -> Int)"
+            tyBA = TFunc () (M.singleton "a" tyInt) tyInt tyInt
+            tyABA = TFunc () mempty tyInt tyBA
             expected =
               ELambda
                 tyABA
                 "a"
-                (ELambda tyBA "b" (EVar tyNat "a"))
+                (ELambda tyBA "b" (EVar tyInt "a"))
         let result = case testElaborate input of
               Right (EAnn _ _ body) -> body
               other -> error (show other)
@@ -777,15 +777,15 @@ spec = do
           `shouldBe` Right expected
 
       it "Weird boys 0" $ do
-        let input = unsafeParseExpr "let fmap = (\\f -> case (Just (1 : Nat)) of Just a -> Just (f a) : (Nat -> b) -> Maybe b); let id = (\\i -> i : Nat -> Nat); fmap id"
-            expected = fromParsedType $ unsafeParseType "Maybe Nat"
+        let input = unsafeParseExpr "let fmap = (\\f -> case (Just (1 : Int)) of Just a -> Just (f a) : (Int -> b) -> Maybe b); let id = (\\i -> i : Int -> Int); fmap id"
+            expected = fromParsedType $ unsafeParseType "Maybe Int"
         getExprAnnotation <$> testElaborate input `shouldBe` Right expected
 
       it "Weird boys 4" $ do
         let input =
               unsafeParseExpr
-                "let fmap = (\\f -> \\val -> case val of Just aa -> Just (f aa) | Nothing -> Nothing : (a -> b) -> Maybe a -> Maybe b); let id = (\\i -> i : Nat -> Nat); fmap id (Just 1000)"
-            expected = fromParsedType $ unsafeParseType "Maybe Nat"
+                "let fmap = (\\f -> \\val -> case val of Just aa -> Just (f aa) | Nothing -> Nothing : (a -> b) -> Maybe a -> Maybe b); let id = (\\i -> i : Int -> Int); fmap id (Just 1000)"
+            expected = fromParsedType $ unsafeParseType "Maybe Int"
         getExprAnnotation <$> testElaborate input `shouldBe` Right expected
 
       it "Weird boys 5" $ do

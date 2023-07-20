@@ -27,7 +27,6 @@ fromType ::
   Smol.Type Smol.ResolvedDep ann ->
   m IRType
 fromType (Smol.TPrim _ Smol.TPBool) = pure IRInt2
-fromType (Smol.TPrim _ Smol.TPNat) = pure IRInt32
 fromType (Smol.TPrim _ Smol.TPInt) = pure IRInt32
 fromType (Smol.TPrim _ Smol.TPString) = pure (IRPointer IRInt8)
 fromType (Smol.TLiteral _ lit) = pure $ fromLit lit
@@ -84,6 +83,5 @@ fromDataTypeInMemory = \case
 
 fromTypePrim :: Smol.TypePrim -> IRType
 fromTypePrim Smol.TPBool = IRInt2
-fromTypePrim Smol.TPNat = IRInt32
 fromTypePrim Smol.TPInt = IRInt32
 fromTypePrim Smol.TPString = IRPointer IRInt8

@@ -86,7 +86,6 @@ getPrinter ::
   Type dep ann ->
   IRExtern
 getPrinter (TPrim _ TPInt) = irPrintInt
-getPrinter (TPrim _ TPNat) = irPrintInt
 getPrinter (TPrim _ TPBool) = irPrintBool
 getPrinter (TLiteral _ (TLBool _)) = irPrintBool
 getPrinter (TLiteral _ (TLInt _)) = irPrintInt
@@ -158,7 +157,6 @@ irFromModule myModule =
 
 fromPrim :: (Monad m) => Prim -> m IRExpr
 fromPrim (PInt i) = pure $ IRPrim (IRPrimInt32 i)
-fromPrim (PNat i) = pure $ IRPrim (IRPrimInt32 (fromIntegral i))
 fromPrim (PBool b) = pure $ IRPrim (IRPrimInt2 b)
 fromPrim PUnit = pure $ IRPrim (IRPrimInt2 False) -- Unit is represented the same as False
 fromPrim (PString txt) = pure $ IRString txt

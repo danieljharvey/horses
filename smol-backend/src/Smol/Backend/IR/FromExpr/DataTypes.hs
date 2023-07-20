@@ -119,7 +119,6 @@ howManyInts :: DataTypeInMemory -> Word64
 howManyInts DTEnum = 1
 howManyInts (DTPrim Smol.TPInt) = 1
 howManyInts (DTPrim Smol.TPBool) = 1
-howManyInts (DTPrim Smol.TPNat) = 1
 howManyInts (DTPrim Smol.TPString) = 1
 howManyInts (DTTuple as) = getSum $ foldMap (Sum . howManyInts) as
 howManyInts (DTArray size a) = size * howManyInts a

@@ -20,14 +20,8 @@ interpretInfix ::
   IExpr ann ->
   IExpr ann ->
   m (IExpr ann)
-interpretInfix ann OpAdd (IPrim _ (PNat a)) (IPrim _ (PNat b)) =
-  pure $ IPrim ann (PNat $ a + b)
 interpretInfix ann OpAdd (IPrim _ (PInt a)) (IPrim _ (PInt b)) =
   pure $ IPrim ann (PInt $ a + b)
-interpretInfix ann OpAdd (IPrim _ (PNat a)) (IPrim _ (PInt b)) =
-  pure $ IPrim ann (PInt (fromIntegral a + b))
-interpretInfix ann OpAdd (IPrim _ (PInt a)) (IPrim _ (PNat b)) =
-  pure $ IPrim ann (PInt (a + fromIntegral b))
 interpretInfix _ _ _ _ = error "haven't implemented other infixes"
 
 -- | just keep reducing the thing until the smallest thing

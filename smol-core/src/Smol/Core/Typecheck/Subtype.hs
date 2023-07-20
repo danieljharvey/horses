@@ -101,12 +101,6 @@ typeAddition (TLiteral ann (TLString _)) b =
 typeAddition a (TLiteral ann (TLString _)) =
   isSubtypeOf a (TPrim ann TPString)
 typeAddition a b
-  | isNatLiteral a =
-      isSubtypeOf (TPrim (getTypeAnnotation a) TPNat) b
-typeAddition a b
-  | isNatLiteral b =
-      isSubtypeOf a (TPrim (getTypeAnnotation b) TPNat)
-typeAddition a b
   | isIntLiteral a =
       isSubtypeOf (TPrim (getTypeAnnotation a) TPInt) b
 typeAddition a b
@@ -150,11 +144,8 @@ isLiteralSubtypeOf :: ResolvedType ann -> ResolvedType ann -> Bool
 isLiteralSubtypeOf a b | a `typeEquals` b = True
 isLiteralSubtypeOf (TLiteral _ (TLBool _)) (TPrim _ TPBool) = True -- a Bool literal is a Bool
 isLiteralSubtypeOf (TLiteral _ (TLInt as)) (TLiteral _ (TLInt bs)) | NES.isSubsetOf as bs = True
-isLiteralSubtypeOf (TLiteral _ (TLInt a)) (TPrim _ TPNat) = all (>= 0) a -- a Int literal is a Nat if its non-negative
 isLiteralSubtypeOf (TLiteral _ (TLInt _)) (TPrim _ TPInt) = True -- a Nat literal is also an Int
 isLiteralSubtypeOf (TLiteral _ (TLString _)) (TPrim _ TPString) = True -- any string literal is a String
-isLiteralSubtypeOf (TPrim _ TPNat) (TPrim _ TPInt) = True -- a Nat is also an Int
-isLiteralSubtypeOf union (TPrim _ TPNat) | isNatLiteral union = True
 isLiteralSubtypeOf union (TPrim _ TPInt) | isIntLiteral union = True
 isLiteralSubtypeOf _ _ = False
 
