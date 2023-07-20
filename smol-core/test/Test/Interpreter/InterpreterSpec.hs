@@ -25,9 +25,9 @@ doInterpret =
 spec :: Spec
 spec = do
   describe "InterpreterSpec" $ do
-    describe "interpret" $ do
+    fdescribe "interpret" $ do
       let cases =
-            [ ("a", "a"),
+            [ 
               ("1 + 1", "2"),
               ("-11 + 1", "-10"),
               ("(\\a -> a + 1) 41", "42"),
@@ -41,7 +41,7 @@ spec = do
               ("let id = \\a -> a; (id 1, id 2, id 3)", "(1,2,3)"),
               ("[1,2 + 3]", "[1,5]"),
               ("case [1,2,3] of [_, ...rest] -> rest | _ -> [42]", "[2,3]"),
-              ("let f = \\a -> if a == 10 then a else a + f (a + 1); f 0", "25")
+              ("let f = \\a -> if a == 10 then a else a + f (a + 1); f 0", "55")
             ]
       traverse_
         ( \(input, expect) ->

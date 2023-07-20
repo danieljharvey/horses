@@ -27,9 +27,15 @@ interpretInfix interpretFn operator a b = do
         else withBool False
     OpAdd -> do
       let withInt = pure . EPrim mempty . PInt
-      let getNum exp' = case exp' of
+          getInt exp' = case exp' of
             (EPrim _ (PInt i)) -> Right i
             _ -> Left $ AdditionWithNonNumber a
-      case (,) <$> getNum plainA <*> getNum plainB of
+          withNat = pure . EPrim mempty . PNat
+          getNat exp' = case exp' of
+            (EPrim _ (PNat i)) -> Right i
+            _ -> Left $ AdditionWithNonNumber a
+      case (,) <$> getInt plainA <*> getInt plainB of
         Right (a', b') -> withInt (a' + b')
-        Left e -> throwError e
+        Left _ -> case (,) <$> getNat plainA <*> getNat plainB of
+                    Right (a', b') -> withNat (a' + b')
+                    Left e -> throwError e
