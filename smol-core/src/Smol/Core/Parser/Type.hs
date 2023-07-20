@@ -137,7 +137,6 @@ tyPrimitiveParser = TPrim mempty <$> tyPrimParser
       try (myString "String" $> TPString)
         <|> try (myString "Bool" $> TPBool)
         <|> try (myString "Int" $> TPInt)
-        <|> try (myString "Nat" $> TPNat)
 
 tyAppParser :: Parser (ParsedType Annotation)
 tyAppParser = label "type app" $ do

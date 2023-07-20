@@ -113,10 +113,6 @@ spec = do
           exhaustiveCheck [PLiteral tyInt (PInt 100)]
             `shouldBe` Right [PWildcard tyInt]
 
-        it "Nat needs wildcard" $ do
-          exhaustiveCheck [PLiteral tyNat (PInt 100)]
-            `shouldBe` Right [PWildcard tyNat]
-
         it "Union of int literals" $ do
           let ty = tyIntLit [1, 2]
           exhaustiveCheck [PLiteral ty (PInt 1)]

@@ -40,12 +40,11 @@ type ParsedType ann = Type ParseDep ann
 
 type ResolvedType ann = Type ResolvedDep ann
 
-data TypePrim = TPNat | TPInt | TPBool | TPString
+data TypePrim = TPInt | TPBool | TPString
   deriving stock (Eq, Ord, Show, Generic)
   deriving anyclass (FromJSON, ToJSON)
 
 instance Printer TypePrim where
-  prettyDoc TPNat = "Nat"
   prettyDoc TPInt = "Int"
   prettyDoc TPBool = "Bool"
   prettyDoc TPString = "String"

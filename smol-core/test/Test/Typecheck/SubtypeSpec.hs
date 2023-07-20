@@ -16,10 +16,8 @@ import Test.Hspec
 -- so Duck <: Bird
 -- 1 is a subtype of 1 | 2
 -- so 1 <: 1 | 2
--- 1 | 2 is a subtype of Nat
--- so 1 | 2 <: Nat
--- Nat is a subtype of Int
--- so Nat <: Int
+-- 1 | 2 is a subtype of Int
+-- so 1 | 2 <: Int
 --
 spec :: Spec
 spec = do
@@ -40,15 +38,15 @@ spec = do
 
       describe "Combine two datatypes" $ do
         it "Maybe Nat <: Maybe i1" $ do
-          let one = fromParsedType $ tyCons "Maybe" [tyNat]
+          let one = fromParsedType $ tyCons "Maybe" [tyInt]
               two = fromParsedType $ tyCons "Maybe" [tyUnknown 1]
-              expected = (one, [Substitution (SubUnknown 1) (TPrim () TPNat)])
+              expected = (one, [Substitution (SubUnknown 1) (TPrim () TPInt)])
 
           runWriterT (one `isSubtypeOf` two)
             `shouldBe` Right expected
 
         it "Maybe Nat <: i1" $ do
-          let one = fromParsedType $ tyCons "Maybe" [tyNat]
+          let one = fromParsedType $ tyCons "Maybe" [tyInt]
               two = fromParsedType $ TUnknown () 1
               expected = (one, [Substitution (SubUnknown 1) one])
 
@@ -56,12 +54,12 @@ spec = do
             `shouldBe` Right expected
 
         it "Maybe Nat <: a b" $ do
-          let one = fromParsedType $ tyCons "Maybe" [tyNat]
+          let one = fromParsedType $ tyCons "Maybe" [tyInt]
               two = fromParsedType $ TApp () (TVar () "a") (TVar () "b")
               expected =
                 ( one,
                   [ Substitution (SubId "a") (TConstructor () "Maybe"),
-                    Substitution (SubId "b") (TPrim () TPNat)
+                    Substitution (SubId "b") (TPrim () TPInt)
                   ]
                 )
 
@@ -69,12 +67,12 @@ spec = do
             `shouldBe` Right expected
 
         it "Maybe Nat <: i1 i2" $ do
-          let one = fromParsedType $ tyCons "Maybe" [tyNat]
+          let one = fromParsedType $ tyCons "Maybe" [tyInt]
               two = fromParsedType $ TApp () (TUnknown () 1) (TUnknown () 2)
               expected =
                 ( one,
                   [ Substitution (SubUnknown 1) (TConstructor () "Maybe"),
-                    Substitution (SubUnknown 2) (TPrim () TPNat)
+                    Substitution (SubUnknown 2) (TPrim () TPInt)
                   ]
                 )
 
@@ -82,7 +80,7 @@ spec = do
             `shouldBe` Right expected
 
         it "(a -> Maybe Nat) <: (a -> i1)" $ do
-          let maybeNat = tyCons "Maybe" [tyNat]
+          let maybeNat = tyCons "Maybe" [tyInt]
               one = fromParsedType $ TFunc () mempty (tyVar "a") maybeNat
               two = fromParsedType $ TFunc () mempty (tyVar "a") (TUnknown () 1)
               expected = (one, [Substitution (SubUnknown 1) (fromParsedType maybeNat)])
@@ -113,10 +111,6 @@ spec = do
                 ("1", "2", "3"),
                 ("1 | 2", "2", "3 | 4"),
                 ("1 | 2", "3 | 4", "4 | 5 | 6"),
-                ("1", "Nat", "Nat"),
-                ("Nat", "1", "Nat"),
-                ("Nat", "-100", "Int"),
-                ("Int", "Nat", "Int"),
                 ("Int", "Int", "Int"),
                 ("String", "String", "String"),
                 ("\"a\"", "String", "String"),
@@ -157,7 +151,7 @@ spec = do
                 ("Maybe", "Maybe"),
                 ("Maybe 1", "Maybe a"),
                 ("{ item: 1 }", "{}"),
-                ("[1 | 2]", "[Nat]"),
+                ("[1 | 2]", "[Int]"),
                 ("1", "1 | 2")
               ]
         traverse_

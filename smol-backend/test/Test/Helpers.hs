@@ -3,14 +3,12 @@ module Test.Helpers
     tyBoolLit,
     tyInt,
     tyIntLit,
-    tyNat,
     tyVar,
     tyUnknown,
     tyTuple,
     tyCons,
     bool,
     int,
-    nat,
     var,
     tuple,
     array,
@@ -31,7 +29,6 @@ import qualified Data.List.NonEmpty as NE
 import qualified Data.Sequence as Seq
 import qualified Data.Set.NonEmpty as NES
 import Data.Text (Text)
-import GHC.Natural
 import Smol.Core
 import Smol.Core.Modules.FromParts
 import Smol.Core.Modules.Types.Module
@@ -48,9 +45,6 @@ tyInt = TPrim mempty TPInt
 
 tyIntLit :: (Monoid ann) => [Integer] -> Type dep ann
 tyIntLit = TLiteral mempty . TLInt . NES.fromList . NE.fromList
-
-tyNat :: (Monoid ann) => Type dep ann
-tyNat = TPrim mempty TPNat
 
 tyVar :: (Monoid ann) => Text -> Type ParseDep ann
 tyVar = TVar mempty . emptyParseDep . Identifier
@@ -81,9 +75,6 @@ bool = EPrim mempty . PBool
 
 int :: (Monoid ann) => Integer -> Expr dep ann
 int = EPrim mempty . PInt
-
-nat :: (Monoid ann) => Natural -> Expr dep ann
-nat = EPrim mempty . PNat
 
 var :: (Monoid ann) => Text -> Expr ParseDep ann
 var = EVar mempty . emptyParseDep . Identifier

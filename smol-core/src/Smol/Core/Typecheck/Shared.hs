@@ -347,7 +347,6 @@ withNewVars vars =
 typeLiteralFromPrim :: Prim -> TypeLiteral
 typeLiteralFromPrim (PBool b) = TLBool b
 typeLiteralFromPrim (PInt a) = TLInt (NES.singleton a)
-typeLiteralFromPrim (PNat a) = TLInt (NES.singleton $ fromIntegral a)
 typeLiteralFromPrim (PString str) = TLString (NES.singleton str)
 typeLiteralFromPrim PUnit = TLUnit
 

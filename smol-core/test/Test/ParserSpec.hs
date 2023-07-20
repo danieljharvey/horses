@@ -63,15 +63,15 @@ spec = do
               ("False", bool False),
               ("Unit", unit),
               ("-1", int (-1)),
-              ("100", nat 100),
-              ("if True then 1 else 2", EIf () (bool True) (nat 1) (nat 2)),
-              ("1 + 2", EInfix () OpAdd (nat 1) (nat 2)),
-              ("1 + 2 + 3", EInfix () OpAdd (EInfix () OpAdd (nat 1) (nat 2)) (nat 3)),
+              ("100", int 100),
+              ("if True then 1 else 2", EIf () (bool True) (int 1) (int 2)),
+              ("1 + 2", EInfix () OpAdd (int 1) (int 2)),
+              ("1 + 2 + 3", EInfix () OpAdd (EInfix () OpAdd (int 1) (int 2)) (int 3)),
               ("\"\"", EPrim () (PString mempty)),
               ("\"horses\"", EPrim () (PString "horses")),
               ("(True)", bool True),
               ("(True,True)", tuple (bool True) [bool True]),
-              ("(100, 200, 300)", tuple (nat 100) [nat 200, nat 300]),
+              ("(100, 200, 300)", tuple (int 100) [int 200, int 300]),
               ("log", var "log"),
               ("Prelude.log", EVar () (ParseDep "log" (Just "Prelude"))),
               ("\\a -> True", ELambda () "a" (bool True)),
@@ -81,37 +81,37 @@ spec = do
               ( "(\\a -> a : a -> a)",
                 EAnn () (TFunc () mempty (tyVar "a") (tyVar "a")) (ELambda () "a" (var "a"))
               ),
-              ("{ a: 1, b: True }", ERecord () (M.fromList [("a", nat 1), ("b", bool True)])),
+              ("{ a: 1, b: True }", ERecord () (M.fromList [("a", int 1), ("b", bool True)])),
               ("Just", constructor "Just"),
               ("Maybe.Just", EConstructor () (ParseDep "Just" (Just "Maybe"))),
               ("Just True", EApp () (constructor "Just") (bool True)),
-              ("These 1 False", EApp () (EApp () (constructor "These") (nat 1)) (bool False)),
+              ("These 1 False", EApp () (EApp () (constructor "These") (int 1)) (bool False)),
               ( "case a of (b, c) -> b + c",
                 patternMatch (var "a") [(PTuple () (PVar () "b") (NE.fromList [PVar () "c"]), EInfix () OpAdd (var "b") (var "c"))]
               ),
               ( "case (1,2) of (a,_) -> a",
-                patternMatch (tuple (nat 1) [nat 2]) [(PTuple () (PVar () "a") (NE.fromList [PWildcard ()]), var "a")]
+                patternMatch (tuple (int 1) [int 2]) [(PTuple () (PVar () "a") (NE.fromList [PWildcard ()]), var "a")]
               ),
               ( "case (True, 1) of (True, a) -> a | (False,_) -> 0",
                 patternMatch
-                  (tuple (bool True) [nat 1])
+                  (tuple (bool True) [int 1])
                   [ (PTuple () (PLiteral () (PBool True)) (NE.fromList [PVar () "a"]), var "a"),
-                    (PTuple () (PLiteral () (PBool False)) (NE.fromList [PWildcard ()]), nat 0)
+                    (PTuple () (PLiteral () (PBool False)) (NE.fromList [PWildcard ()]), int 0)
                   ]
               ),
               ( "case [1,2,3] of [_, ...b] -> b | other -> other",
                 patternMatch
-                  (array [nat 1, nat 2, nat 3])
+                  (array [int 1, int 2, int 3])
                   [ (PArray () [PWildcard ()] (SpreadValue () "b"), var "b"),
                     (PVar () "other", var "other")
                   ]
               ),
-              ("let a = 1 in a", ELet () "a" (nat 1) (var "a")),
+              ("let a = 1 in a", ELet () "a" (int 1) (var "a")),
               ("f (a b)", EApp () (var "f") (EApp () (var "a") (var "b"))),
-              ("fmap inc (Just 1)", EApp () (EApp () (var "fmap") (var "inc")) (EApp () (constructor "Just") (nat 1))),
-              ("Just (1 + 1)", EApp () (constructor "Just") (EInfix () OpAdd (nat 1) (nat 1))),
+              ("fmap inc (Just 1)", EApp () (EApp () (var "fmap") (var "inc")) (EApp () (constructor "Just") (int 1))),
+              ("Just (1 + 1)", EApp () (constructor "Just") (EInfix () OpAdd (int 1) (int 1))),
               ("[]", EArray () mempty),
-              ("[1,2,3,4]", EArray () (Seq.fromList [nat 1, nat 2, nat 3, nat 4]))
+              ("[1,2,3,4]", EArray () (Seq.fromList [int 1, int 2, int 3, int 4]))
             ]
       traverse_
         ( \(str, expr) -> it (T.unpack str) $ do

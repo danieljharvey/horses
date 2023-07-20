@@ -118,7 +118,7 @@ spec = do
               [ IRPointer functionPointerType,
                 IRStruct []
               ]
-      getMainExpr "(\\a -> 1 : Nat -> Nat)"
+      getMainExpr "(\\a -> 1 : Int -> Int)"
         `shouldBe` IRInitialiseDataType
           (IRAlloc closureType)
           closureType
@@ -141,7 +141,7 @@ spec = do
             IRStruct
               [IRPointer (IRFunctionType [IRInt32, IRStruct []] IRInt32), IRStruct []]
 
-      getMainExpr "(\\a -> 1 : Nat -> Nat) 2"
+      getMainExpr "(\\a -> 1 : Int -> Int) 2"
         `shouldBe` IRLet
           "closure2"
           ( IRInitialiseDataType
@@ -178,7 +178,7 @@ spec = do
                 func2Env
               ]
 
-      getMainExpr "(\\a -> \\b -> a + b : Nat -> Nat -> Nat) 1 2"
+      getMainExpr "(\\a -> \\b -> a + b : Int -> Int -> Int) 1 2"
         `shouldBe` IRLet
           "emptyenv"
           (IRAlloc (IRStruct []))
@@ -199,7 +199,7 @@ spec = do
           )
 
     it "Creates function that returns a lambda closure" $ do
-      let (_expr, fns) = createIR "(\\a -> \\b -> a + b : Nat -> Nat -> Nat) 1 2"
+      let (_expr, fns) = createIR "(\\a -> \\b -> a + b : Int -> Int -> Int) 1 2"
       let func2Env = IRStruct [IRInt32]
           func2Type =
             IRFunctionType
@@ -241,7 +241,7 @@ spec = do
           }
 
     it "Creates lambda closure that returns a plain value" $ do
-      let (_expr, fns) = createIR "(\\a -> \\b -> a + b : Nat -> Nat -> Nat) 1 2"
+      let (_expr, fns) = createIR "(\\a -> \\b -> a + b : Int -> Int -> Int) 1 2"
       findFunction "function2" fns
         `shouldBe` IRFunction
           { irfName = "function2",
@@ -270,7 +270,7 @@ spec = do
           ]
 
     it "Pattern matches enum" $ do
-      getMainExpr "(case LT of GT -> 21 | EQ -> 23 | LT -> 42 : Nat)"
+      getMainExpr "(case LT of GT -> 21 | EQ -> 23 | LT -> 42 : Int)"
         `shouldBe` IRMatch
           (IRPrim (IRPrimInt32 2))
           IRInt32
@@ -297,16 +297,16 @@ spec = do
           )
 
     it "Pattern matches 2-arg type" $ do
-      let typeTheseNatNat = IRStruct [IRInt32, IRArray 2 IRInt32]
-          thisNatNat = IRStruct [IRInt32, IRInt32]
-          thatNatNat = IRStruct [IRInt32, IRInt32]
-          theseNatNat = IRStruct [IRInt32, IRInt32, IRInt32]
-      getMainExpr "(case (This 42 : These Nat Nat) of This a -> a | That b -> 0 | These tA tB -> tA + tB : Nat)"
+      let typeTheseIntInt = IRStruct [IRInt32, IRArray 2 IRInt32]
+          thisIntInt = IRStruct [IRInt32, IRInt32]
+          thatIntInt = IRStruct [IRInt32, IRInt32]
+          theseIntInt = IRStruct [IRInt32, IRInt32, IRInt32]
+      getMainExpr "(case (This 42 : These Int Int) of This a -> a | That b -> 0 | These tA tB -> tA + tB : Int)"
         `shouldBe` IRMatch
           ( IRInitialiseDataType
-              (IRAlloc typeTheseNatNat)
-              thisNatNat
-              typeTheseNatNat
+              (IRAlloc typeTheseIntInt)
+              thisIntInt
+              typeTheseIntInt
               [ IRSetTo [0] IRInt32 (IRPrim (IRPrimInt32 2)),
                 IRSetTo [1] IRInt32 (IRPrim (IRPrimInt32 42))
               ]
@@ -314,7 +314,7 @@ spec = do
           IRInt32
           ( NE.fromList
               [ IRMatchCase
-                  { irmcType = thisNatNat,
+                  { irmcType = thisIntInt,
                     irmcPatternPredicate =
                       [ PathEquals
                           (GetPath [0] GetValue)
@@ -324,7 +324,7 @@ spec = do
                     irmcExpr = IRVar "a"
                   },
                 IRMatchCase
-                  { irmcType = thatNatNat,
+                  { irmcType = thatIntInt,
                     irmcPatternPredicate =
                       [ PathEquals
                           (GetPath [0] GetValue)
@@ -334,7 +334,7 @@ spec = do
                     irmcExpr = IRPrim (IRPrimInt32 0)
                   },
                 IRMatchCase
-                  { irmcType = theseNatNat,
+                  { irmcType = theseIntInt,
                     irmcPatternPredicate =
                       [ PathEquals
                           (GetPath [0] GetValue)

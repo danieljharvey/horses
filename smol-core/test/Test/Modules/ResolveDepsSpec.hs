@@ -21,7 +21,7 @@ spec = do
               ELet
                 ()
                 (UniqueDefinition "a" 1)
-                (nat 123)
+                (int 123)
                 (EVar () (UniqueDefinition "a" 1))
 
             expected =
@@ -37,11 +37,11 @@ spec = do
               ELet
                 ()
                 (UniqueDefinition "a" 1)
-                (nat 123)
+                (int 123)
                 ( ELet
                     ()
                     (UniqueDefinition "a" 2)
-                    (nat 456)
+                    (int 456)
                     (EVar () (UniqueDefinition "a" 2))
                 )
 
@@ -84,7 +84,7 @@ spec = do
 
       it "'main' uses a dep from 'dep'" $ do
         let mod' = unsafeParseModule "def main = let a = dep in let a = 456 in a\ndef dep = 1"
-            depExpr = nat 1
+            depExpr = int 1
             mainExpr =
               ELet
                 ()
@@ -93,7 +93,7 @@ spec = do
                 ( ELet
                     ()
                     (UniqueDefinition "a" 2)
-                    (nat 456)
+                    (int 456)
                     (EVar () (UniqueDefinition "a" 2))
                 )
 
@@ -114,7 +114,7 @@ spec = do
               ELet
                 ()
                 (UniqueDefinition "a" 1)
-                (nat 456)
+                (int 456)
                 ( EApp
                     ()
                     (EConstructor () (LocalDefinition "Jost"))

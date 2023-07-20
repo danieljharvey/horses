@@ -3,7 +3,6 @@
 module Smol.Core.Parser.Primitives
   ( primParser,
     typeLiteralParser,
-    natPrimParser,
     intPrimParser,
     truePrimParser,
     falsePrimParser,
@@ -19,7 +18,6 @@ import qualified Data.Set.NonEmpty as NES
 import Data.Text (Text)
 import qualified Data.Text as T
 import Data.Void
-import GHC.Num.Natural
 import Smol.Core.Parser.Shared
 import Smol.Core.Types
 import Text.Megaparsec
@@ -31,8 +29,7 @@ type Parser = Parsec Void Text
 primParser :: Parser Prim
 primParser =
   myLexeme
-    ( natPrimParser
-        <|> intPrimParser
+    ( intPrimParser
         <|> truePrimParser
         <|> falsePrimParser
         <|> PUnit <$ unitParser
@@ -48,16 +45,6 @@ typeLiteralParser =
         <|> TLUnit <$ unitParser
         <|> TLString <$> multiStringParser
     )
-
--- 0, 1, 2
-natPrimParser :: Parser Prim
-natPrimParser = PNat <$> natParser
-
-natParser :: Parser Natural
-natParser =
-  L.decimal
-
-----
 
 -- 2, -2, +2
 intPrimParser :: Parser Prim

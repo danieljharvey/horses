@@ -168,8 +168,6 @@ generateFromType ty@(TPrim _ TPBool) =
     ]
 generateFromType ty@(TPrim _ TPInt) =
   pure [PWildcard ty]
-generateFromType ty@(TPrim _ TPNat) =
-  pure [PWildcard ty]
 generateFromType _ = pure mempty
 
 generateAlways ::

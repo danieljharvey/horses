@@ -105,7 +105,7 @@ spec = do
                 ],
                 "42"
               ),
-              ( [ "def add : Nat -> Nat -> Nat",
+              ( [ "def add : Int -> Int -> Int",
                   "def add a b = a + b",
                   "def main = add 20 22"
                 ],
@@ -145,8 +145,8 @@ spec = do
                 ("False", "False"),
                 ("(1 + 1 : Int)", "2"),
                 ("(1 + 2 + 3 + 4 + 5 + 6 : Int)", "21"),
-                ("(if True then 1 else 2 : Nat)", "1"),
-                ("(if False then 1 else 2 : Nat)", "2"),
+                ("(if True then 1 else 2 : Int)", "1"),
+                ("(if False then 1 else 2 : Int)", "2"),
                 ("\"horse\"", "horse"),
                 ("if True then \"horse\" else \"no-horse\"", "horse"),
                 ("\"hor\" + \"se\"", "horse"),
@@ -163,20 +163,20 @@ spec = do
 
       describe "Functions" $ do
         let testVals =
-              [ ("(\\a -> a + 1 : Nat -> Nat) 2", "3"),
-                ("(\\b -> if b then 42 else 41 : Bool -> Nat) True", "42"),
-                ("(\\b -> if b then 1 else 42 : Bool -> Nat) False", "42"),
-                ("(\\a -> a + 1: Nat -> Nat) 41", "42"),
-                ("(\\a -> 42 : Nat -> Nat) 21", "42"),
-                ("(\\a -> \\b -> a + b : Nat -> Nat -> Nat) 20 22", "42"),
-                ("let a = (1 : Nat); let useA = (\\b -> b + a : Nat -> Nat); useA (41 : Nat)", "42"),
-                ("let add = (\\a -> \\b -> a + b : Nat -> Nat -> Nat); add (1 : Nat) (2 : Nat)", "3"),
-                ("let f = (\\i -> i + 1 : Nat -> Nat) in f (1 : Nat)", "2"), -- single arity function that return prim
-                ("let f = (\\i -> (i,i) : Nat -> (Nat,Nat)); let b = f (1 : Nat); 42", "42"), -- single arity function that returns struct
-                ("let f = (\\i -> (i,10) : Nat -> (Nat,Nat)) in (case f (100 : Nat) of (a,b) -> a + b : Nat)", "110"), -- single arity function that returns struct
-                ("let flipConst = (\\a -> \\b -> b : Nat -> Nat -> Nat); flipConst (1 : Nat) (2 : Nat)", "2") -- oh fuck
-                -- ("let sum = (\\a -> if a == 10 then 0 else let a2 = a + 1 in a + sum a2 : Nat -> Nat); sum (0 : Nat)", "1783293664"),
-                -- ("let add3 = (\\a -> \\b -> \\c -> a + b + c : Nat -> Nat -> Nat -> Nat); add3 (1 : Nat) (2 : Nat) (3 : Nat)", "6"),
+              [ ("(\\a -> a + 1 : Int -> Int) 2", "3"),
+                ("(\\b -> if b then 42 else 41 : Bool -> Int) True", "42"),
+                ("(\\b -> if b then 1 else 42 : Bool -> Int) False", "42"),
+                ("(\\a -> a + 1: Int -> Int) 41", "42"),
+                ("(\\a -> 42 : Int -> Int) 21", "42"),
+                ("(\\a -> \\b -> a + b : Int -> Int -> Int) 20 22", "42"),
+                ("let a = (1 : Int); let useA = (\\b -> b + a : Int -> Int); useA (41 : Int)", "42"),
+                ("let add = (\\a -> \\b -> a + b : Int -> Int -> Int); add (1 : Int) (2 : Int)", "3"),
+                ("let f = (\\i -> i + 1 : Int -> Int) in f (1 : Int)", "2"), -- single arity function that return prim
+                ("let f = (\\i -> (i,i) : Int -> (Int,Int)); let b = f (1 : Int); 42", "42"), -- single arity function that returns struct
+                ("let f = (\\i -> (i,10) : Int -> (Int,Int)) in (case f (100 : Int) of (a,b) -> a + b : Int)", "110"), -- single arity function that returns struct
+                ("let flipConst = (\\a -> \\b -> b : Int -> Int -> Int); flipConst (1 : Int) (2 : Int)", "2") -- oh fuck
+                -- ("let sum = (\\a -> if a == 10 then 0 else let a2 = a + 1 in a + sum a2 : Int -> Int); sum (0 : Int)", "1783293664"),
+                -- ("let add3 = (\\a -> \\b -> \\c -> a + b + c : Int -> Int -> Int -> Int); add3 (1 : Int) (2 : Int) (3 : Int)", "6"),
               ]
 
         describe "IR compile" $ do
@@ -184,11 +184,11 @@ spec = do
 
       describe "Tuples and matching" $ do
         let testVals =
-              [ ("let pair = (20,22); (case pair of (a,b) -> a + b : Nat)", "42"),
-                ("(\\pair -> case pair of (a,b) -> a + b : (Nat,Nat) -> Nat) (20,22)", "42"),
-                ("(\\triple -> case triple of (a,b,c) -> a + b + c : (Nat,Nat,Nat) -> Nat) (20,11,11)", "42"),
-                ("(\\bool -> case bool of True -> 0 | False -> 1 : Bool -> Nat) False", "1"),
-                ("(\\bools -> case bools of (True,_) -> 0 | (False,_) -> 1 : (Bool,Bool) -> Nat) (False,False)", "1")
+              [ ("let pair = (20,22); (case pair of (a,b) -> a + b : Int)", "42"),
+                ("(\\pair -> case pair of (a,b) -> a + b : (Int,Int) -> Int) (20,22)", "42"),
+                ("(\\triple -> case triple of (a,b,c) -> a + b + c : (Int,Int,Int) -> Int) (20,11,11)", "42"),
+                ("(\\bool -> case bool of True -> 0 | False -> 1 : Bool -> Int) False", "1"),
+                ("(\\bools -> case bools of (True,_) -> 0 | (False,_) -> 1 : (Bool,Bool) -> Int) (False,False)", "1")
               ]
 
         describe "IR compile" $ do
@@ -208,15 +208,15 @@ spec = do
 
       describe "Datatypes" $ do
         let testVals =
-              [ ("(\\ord -> case ord of GT -> 21 | EQ -> 23 | LT -> 42 : Ord -> Nat) LT", "42"), -- constructor with no args
-                ("(\\maybe -> case maybe of _ -> 42 : Maybe Nat -> Nat) (Just 41)", "42"),
-                ("(\\maybe -> case maybe of Just a -> a + 1 | Nothing -> 0 : Maybe Nat -> Nat) (Just 41)", "42"),
-                ("(\\maybe -> case maybe of Just 40 -> 100 | Just a -> a + 1 | Nothing -> 0 : Maybe Nat -> Nat) (Just 41)", "42"), -- predicates in constructor
-                ("(\\maybe -> case maybe of Just 40 -> 100 | Just a -> a + 1 | Nothing -> 0 : Maybe Nat -> Nat) (Nothing : Maybe Nat)", "0"), -- predicates in constructor
-                ("(\\these -> case these of This aa -> aa | That 27 -> 0 | These a b -> a + b : These Nat Nat -> Nat) (This 42 : These Nat Nat)", "42"), -- data shapes are wrong
-                ("(\\these -> case these of This aa -> aa | That 60 -> 0 | These a b -> a + b : These Nat Nat -> Nat) (These 20 22 : These Nat Nat)", "42"),
-                -- ("(\\these -> case these of This a -> a | That _ -> 1000 | These a b -> a + b : These Nat Nat -> Nat) (That 42 : These Nat Nat)", "1000"),--wildcards fuck it up for some reason
-                ("(case (This 42 : These Nat Nat) of This a -> a : Nat)", "42")
+              [ ("(\\ord -> case ord of GT -> 21 | EQ -> 23 | LT -> 42 : Ord -> Int) LT", "42"), -- constructor with no args
+                ("(\\maybe -> case maybe of _ -> 42 : Maybe Int -> Int) (Just 41)", "42"),
+                ("(\\maybe -> case maybe of Just a -> a + 1 | Nothing -> 0 : Maybe Int -> Int) (Just 41)", "42"),
+                ("(\\maybe -> case maybe of Just 40 -> 100 | Just a -> a + 1 | Nothing -> 0 : Maybe Int -> Int) (Just 41)", "42"), -- predicates in constructor
+                ("(\\maybe -> case maybe of Just 40 -> 100 | Just a -> a + 1 | Nothing -> 0 : Maybe Int -> Int) (Nothing : Maybe Int)", "0"), -- predicates in constructor
+                ("(\\these -> case these of This aa -> aa | That 27 -> 0 | These a b -> a + b : These Int Int -> Int) (This 42 : These Int Int)", "42"), -- data shapes are wrong
+                ("(\\these -> case these of This aa -> aa | That 60 -> 0 | These a b -> a + b : These Int Int -> Int) (These 20 22 : These Int Int)", "42"),
+                -- ("(\\these -> case these of This a -> a | That _ -> 1000 | These a b -> a + b : These Int Int -> Int) (That 42 : These Int Int)", "1000"),--wildcards fuck it up for some reason
+                ("(case (This 42 : These Int Int) of This a -> a : Int)", "42")
               ]
 
         describe "IR compile" $ do
@@ -227,10 +227,10 @@ spec = do
               [ ("let maybe = Just (Just 41) in 42", "42"),
                 ("let oneList = Cons 1 Nil in 42", "42"),
                 ("let twoList = Cons 1 (Cons 2 Nil) in 42", "42"),
-                ("(\\maybe -> case maybe of Just a -> (case a of Just aa -> aa + 1 | _ -> 0) | _ -> 0 : Maybe (Maybe Nat) -> Nat) (Just (Just 41))", "42") -- ,
+                ("(\\maybe -> case maybe of Just a -> (case a of Just aa -> aa + 1 | _ -> 0) | _ -> 0 : Maybe (Maybe Int) -> Int) (Just (Just 41))", "42") -- ,
                 -- ("let nested = (20, (11,11)) in 42", "42"),
-                -- ("(\\nested -> case nested of (a,(b,c)) -> a + b + c : (Nat, (Nat, Nat)) -> Nat) (20,(11,11))", "42"),
-                -- ("(\\maybe -> case maybe of Just (a,b,c) -> a + b + c | Nothing -> 0 : Maybe (Nat,Nat,Nat) -> Nat) (Just (1,2,3))", "6")
+                -- ("(\\nested -> case nested of (a,(b,c)) -> a + b + c : (Int, (Int, Int)) -> Int) (20,(11,11))", "42"),
+                -- ("(\\maybe -> case maybe of Just (a,b,c) -> a + b + c | Nothing -> 0 : Maybe (Int,Int,Int) -> Int) (Just (1,2,3))", "6")
               ]
 
         describe "IR compile" $ do
@@ -238,10 +238,10 @@ spec = do
       xdescribe "Nested datatypes (currently broken)" $ do
         let testVals =
               [ ("let maybe = Just (Just 41) in 42", "42"),
-                ("(\\maybe -> case maybe of Just (Just a) -> a + 1 | _ -> 0 : Maybe (Maybe Nat) -> Nat) (Just (Just 41))", "42"),
+                ("(\\maybe -> case maybe of Just (Just a) -> a + 1 | _ -> 0 : Maybe (Maybe Int) -> Int) (Just (Just 41))", "42"),
                 ("let nested = (20, (11,11)) in 42", "42"),
-                ("(\\nested -> case nested of (a,(b,c)) -> a + b + c : (Nat, (Nat, Nat)) -> Nat) (20,(11,11))", "42"),
-                ("(\\maybe -> case maybe of Just (a,b,c) -> a + b + c | Nothing -> 0 : Maybe (Nat,Nat,Nat) -> Nat) (Just (1,2,3))", "6")
+                ("(\\nested -> case nested of (a,(b,c)) -> a + b + c : (Int, (Int, Int)) -> Int) (20,(11,11))", "42"),
+                ("(\\maybe -> case maybe of Just (a,b,c) -> a + b + c | Nothing -> 0 : Maybe (Int,Int,Int) -> Int) (Just (1,2,3))", "6")
               ]
 
         describe "IR compile" $ do

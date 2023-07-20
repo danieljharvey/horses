@@ -49,16 +49,11 @@ checkPattern checkTy checkPat =
     (ty@(TLiteral _ (TLInt as)), PLiteral _ (PInt i))
       | NES.member i as ->
           pure (PLiteral ty (PInt i), mempty)
-    (ty@(TLiteral _ (TLInt as)), PLiteral _ (PNat i))
-      | NES.member (fromIntegral i) as ->
-          pure (PLiteral ty (PNat i), mempty)
     (ty@(TLiteral _ tPrim), PLiteral _ pPrim)
       | tPrim == typeLiteralFromPrim pPrim ->
           pure (PLiteral ty pPrim, mempty)
     (ty@(TPrim _ TPBool), PLiteral _ (PBool b)) ->
       pure (PLiteral ty (PBool b), mempty)
-    (ty@(TPrim _ TPNat), PLiteral _ (PNat b)) ->
-      pure (PLiteral ty (PNat b), mempty)
     (ty@(TPrim _ TPInt), PLiteral _ (PInt b)) ->
       pure (PLiteral ty (PInt b), mempty)
     (ty@(TPrim _ TPString), PLiteral _ (PString s)) ->
