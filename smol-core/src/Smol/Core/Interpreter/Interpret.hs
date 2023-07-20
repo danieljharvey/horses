@@ -12,12 +12,9 @@ import Smol.Core.Interpreter.Monad
 import Smol.Core.Interpreter.PatternMatch
 import Smol.Core.Interpreter.RecordAccess
 import Smol.Core.Interpreter.Types
-import Smol.Core.Types
 import Smol.Core.Interpreter.Types.InterpreterError
 import Smol.Core.Interpreter.Types.Stack
-import Smol.Core.Types.Expr
-import Smol.Core.Types.Identifier
-import Smol.Core.Types.ResolvedDep
+import Smol.Core.Types
 
 initialStack :: StackFrame ann
 initialStack = StackFrame mempty

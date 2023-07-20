@@ -30,12 +30,6 @@ interpretInfix interpretFn operator a b = do
           getInt exp' = case exp' of
             (EPrim _ (PInt i)) -> Right i
             _ -> Left $ AdditionWithNonNumber a
-          withNat = pure . EPrim mempty . PNat
-          getNat exp' = case exp' of
-            (EPrim _ (PNat i)) -> Right i
-            _ -> Left $ AdditionWithNonNumber a
       case (,) <$> getInt plainA <*> getInt plainB of
         Right (a', b') -> withInt (a' + b')
-        Left _ -> case (,) <$> getNat plainA <*> getNat plainB of
-          Right (a', b') -> withNat (a' + b')
-          Left e -> throwError e
+        Left e -> throwError e
