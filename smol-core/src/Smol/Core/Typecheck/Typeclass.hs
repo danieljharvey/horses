@@ -12,7 +12,6 @@ where
 import Control.Monad.Except
 import Control.Monad.Identity
 import Data.Foldable (foldrM)
-import Data.Functor (($>))
 import qualified Data.Map.Strict as M
 import Smol.Core.ExprUtils
 import Smol.Core.Typecheck.Elaborate (elaborate)
@@ -74,7 +73,7 @@ checkInstance (Typeclass _ args funcName ty) (TypeclassHead _ tys) (Instance exp
 -- bindings
 -- `let equals_1 = \a -> \b -> a == b in equals_1 10 11`
 inlineTypeclassFunctions ::
-  (MonadError (TCError ann) m, Ord ann, Monoid ann) =>
+  (MonadError (TCError ann) m, Ord ann, Show ann, Monoid ann) =>
   TCEnv ann ->
   M.Map (ResolvedDep Identifier) (TypeclassHead ann) ->
   Expr ResolvedDep (Type ResolvedDep ann) ->
@@ -82,10 +81,7 @@ inlineTypeclassFunctions ::
 inlineTypeclassFunctions env tcs expr =
   foldrM tcHeadToLet expr (M.toList tcs)
   where
-    resolve (Identity a) = LocalDefinition a
-
     tcHeadToLet (ident, typeclassHead) rest = do
-      (Instance instanceExpr) <- lookupTypeclassHead env typeclassHead
-      let ty = TVar mempty "dog"
-          instanceExprNew = mapExprDep resolve instanceExpr
-       in pure $ ELet ty ident (instanceExprNew $> ty) rest
+      (_, instanceExpr) <- lookupInstanceAndCheck env typeclassHead
+      let ty = getExprAnnotation rest
+       in pure $ ELet ty ident instanceExpr rest
