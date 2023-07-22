@@ -2,11 +2,13 @@
 
 module Test.Interpreter.InterpreterSpec (spec) where
 
+import Control.Monad (void)
 import Data.Foldable (traverse_)
 import Data.Text (Text)
 import Smol.Core
 import Smol.Core.Interpreter.Types.Stack
 import Smol.Core.Typecheck.FromParsedExpr
+import Smol.Core.Typecheck.Typeclass
 import Test.Helpers
 import Test.Hspec
 
@@ -19,9 +21,25 @@ doBasicInterpret =
     . addEmptyStackFrames
     . fromParsedExpr
     . unsafeParseExpr
-  where
-    discardLeft (Left e) = error (show e)
-    discardLeft (Right a) = a
+
+discardLeft :: (Show e) => Either e a -> a
+discardLeft (Left e) = error (show e)
+discardLeft (Right a) = a
+
+-- | typecheck, resolve typeclasses, interpret, profit
+doInterpret :: Text -> Expr ResolvedDep ()
+doInterpret input =
+  case elaborate typecheckEnv (fromParsedExpr (unsafeParseExpr input)) of
+    Right (typedExpr, typeclassUses) ->
+      fmap edAnnotation
+        . discardLeft
+        . interpret mempty
+        . addEmptyStackFrames
+        . void
+        . discardLeft
+        . inlineTypeclassFunctions typecheckEnv typeclassUses
+        $ typedExpr
+    Left e -> error (show e)
 
 spec :: Spec
 spec = do
@@ -51,15 +69,16 @@ spec = do
         )
         cases
 
-    describe "interpret with typeclasses" $ do
+    fdescribe "interpret with typeclasses" $ do
       let cases =
-            [ ("equals 1 1", "True"), -- use Eq Int
-              ("equals (1,1) (1,2)", "False") -- use Eq (a,b) and Eq Int (advanced, not ready for this yet)
+            [ ("equals (1 : Int) (1 : Int)", "True"), -- use Eq Int
+              ("equals (2 : Int) (1 : Int)", "False"), -- use Eq Int
+              ("equals ((1 : Int),(1 : Int)) ((1 : Int), (2 : Int))", "False") -- use Eq (a,b) and Eq Int (advanced, not ready for this yet)
             ]
       traverse_
         ( \(input, expect) ->
             it (show input <> " = " <> show expect) $ do
-              doBasicInterpret input
+              doInterpret input
                 `shouldBe` fromParsedExpr (unsafeParseExpr expect)
         )
         cases

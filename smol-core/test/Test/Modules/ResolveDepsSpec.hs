@@ -14,7 +14,7 @@ import Test.Hspec
 spec :: Spec
 spec = do
   describe "Modules" $ do
-    fdescribe "ResolvedDeps" $ do
+    describe "ResolvedDeps" $ do
       it "No deps, marks var as unique" $ do
         let mod' = unsafeParseModule "def main = let a = 123 in a"
             expr =

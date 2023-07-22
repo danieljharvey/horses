@@ -1,14 +1,24 @@
 {-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE OverloadedStrings #-}
 
-module Smol.Core.Typecheck.Typeclass (checkInstance, recoverTypeclassUses, lookupTypeclassHead) where
+module Smol.Core.Typecheck.Typeclass
+  ( checkInstance,
+    lookupInstanceAndCheck,
+    inlineTypeclassFunctions,
+    module Smol.Core.Typecheck.Typeclass.Helpers,
+  )
+where
 
 import Control.Monad.Except
 import Control.Monad.Identity
+import Data.Foldable (foldrM)
+import Data.Functor (($>))
 import qualified Data.Map.Strict as M
 import Smol.Core.ExprUtils
 import Smol.Core.Typecheck.Elaborate (elaborate)
 import Smol.Core.Typecheck.Shared
 import Smol.Core.Typecheck.Substitute
+import Smol.Core.Typecheck.Typeclass.Helpers
 import Smol.Core.Typecheck.Types
 import Smol.Core.Types
 
@@ -17,12 +27,17 @@ resolveExpr = mapExprDep resolve
   where
     resolve (Identity a) = emptyResolvedDep a
 
-unresolveType :: Type ResolvedDep ann -> Type Identity ann
-unresolveType = mapTypeDep resolve
-  where
-    resolve (LocalDefinition a) = Identity a
-    resolve (UniqueDefinition a _) = Identity a
-    resolve (TypeclassCall a _) = Identity a
+lookupInstanceAndCheck ::
+  (Ord ann, Monoid ann, Show ann, MonadError (TCError ann) m) =>
+  TCEnv ann ->
+  TypeclassHead ann ->
+  m (Identifier, Expr ResolvedDep (Type ResolvedDep ann))
+lookupInstanceAndCheck env tch@(TypeclassHead typeclassName _) = do
+  tcInstance <- lookupTypeclassHead env tch
+  typeclass <- case M.lookup typeclassName (tceClasses env) of
+    Just tc -> pure tc
+    Nothing -> error "fuck"
+  checkInstance typeclass tch tcInstance
 
 checkInstance ::
   (MonadError (TCError ann) m, Ord ann, Show ann, Monoid ann) =>
@@ -55,21 +70,22 @@ checkInstance (Typeclass _ args funcName ty) (TypeclassHead _ tys) (Instance exp
 
     pure (funcName, typedExpr)
 
--- this just chucks types in any order and will break on multi-parameter type
--- classes
-recoverTypeclassUses :: (Monoid ann) => [TCWrite ann] -> [(ResolvedDep Identifier, TypeclassHead ann)]
-recoverTypeclassUses events =
-  let allSubs = filterSubstitutions events
-      allTCs = filterTypeclassUses events
-      substituteMatch (ident, unknownId) = (ident, unresolveType $ substituteMany allSubs (TUnknown mempty unknownId))
-      fixTC (identifier, name, matches) = (identifier, name, substituteMatch <$> matches)
-      toTypeclassHead (identifier, name, fixedMatches) =
-        (identifier, TypeclassHead name (snd <$> fixedMatches))
-   in toTypeclassHead . fixTC <$> allTCs
+-- | 10x typeclasses implementation - we inline all the instances as Let
+-- bindings
+-- `let equals_1 = \a -> \b -> a == b in equals_1 10 11`
+inlineTypeclassFunctions ::
+  (MonadError (TCError ann) m, Ord ann, Monoid ann) =>
+  TCEnv ann ->
+  M.Map (ResolvedDep Identifier) (TypeclassHead ann) ->
+  Expr ResolvedDep (Type ResolvedDep ann) ->
+  m (Expr ResolvedDep (Type ResolvedDep ann))
+inlineTypeclassFunctions env tcs expr =
+  foldrM tcHeadToLet expr (M.toList tcs)
+  where
+    resolve (Identity a) = LocalDefinition a
 
--- | do we have a matching instance? explode if not
-lookupTypeclassHead :: (Ord ann) => TCEnv ann -> TypeclassHead ann -> Either (TCError ann) ()
-lookupTypeclassHead env tch@(TypeclassHead name tys) =
-  case M.lookup tch (tceInstances env) of
-    Just _ -> pure ()
-    Nothing -> Left (TCTypeclassInstanceNotFound name tys)
+    tcHeadToLet (ident, typeclassHead) rest = do
+      (Instance instanceExpr) <- lookupTypeclassHead env typeclassHead
+      let ty = TVar mempty "dog"
+          instanceExprNew = mapExprDep resolve instanceExpr
+       in pure $ ELet ty ident (instanceExprNew $> ty) rest

@@ -29,15 +29,21 @@ module Test.Helpers
     unsafeParseTypedExpr,
     joinText,
     runTypecheckM,
+    typecheckEnv,
+    showTypeclass,
+    eqTypeclass,
+    unsafeParseInstanceExpr,
   )
 where
 
 import Control.Monad.Reader
 import Control.Monad.State
 import Control.Monad.Writer
+import Control.Monad.Identity
 import Data.Foldable (foldl')
 import Data.Functor
 import qualified Data.List.NonEmpty as NE
+import qualified Data.Map.Strict as M
 import qualified Data.Sequence as Seq
 import qualified Data.Set.NonEmpty as NES
 import Data.Text (Text)
@@ -47,6 +53,7 @@ import Smol.Core.Modules.FromParts
 import Smol.Core.Modules.Types.Module
 import Smol.Core.Modules.Types.ModuleItem
 import Smol.Core.Typecheck.FromParsedExpr
+import Test.BuiltInTypes (builtInTypes)
 
 tyBool :: (Monoid ann) => Type dep ann
 tyBool = TPrim mempty TPBool
@@ -181,3 +188,57 @@ runTypecheckM env action =
           )
       )
       env
+
+------
+
+tcVar :: (Monoid ann) => Identifier -> Type Identity ann
+tcVar = TVar mempty . Identity
+
+identityFromParsedExpr :: Expr ParseDep ann -> Expr Identity ann
+identityFromParsedExpr = mapExprDep resolve
+  where
+    resolve (ParseDep a _) = Identity a
+
+showTypeclass :: (Monoid ann) => Typeclass ann
+showTypeclass =
+  Typeclass
+    { tcName = "Show",
+      tcArgs = ["a"],
+      tcFuncName = "show",
+      tcFuncType = tyFunc (tcVar "a") tyString
+    }
+
+eqTypeclass :: (Monoid ann) => Typeclass ann
+eqTypeclass =
+  Typeclass
+    { tcName = "Eq",
+      tcArgs = ["a"],
+      tcFuncName = "equals",
+      tcFuncType = tyFunc (tcVar "a") (tyFunc (tcVar "a") tyBool)
+    }
+
+classes :: (Monoid ann) => M.Map String (Typeclass ann)
+classes =
+  M.fromList
+    [ ("Eq", eqTypeclass),
+      ("Show", showTypeclass)
+    ]
+
+unsafeParseInstanceExpr :: (Monoid ann) => Text -> Expr Identity ann
+unsafeParseInstanceExpr =
+  fmap (const mempty) . identityFromParsedExpr . unsafeParseExpr
+
+instances :: (Monoid ann) => M.Map (TypeclassHead ann) (Instance ann)
+instances =
+  M.singleton
+    (TypeclassHead "Eq" [tyInt])
+    (Instance (unsafeParseInstanceExpr "\\a -> \\b -> a == b"))
+
+typecheckEnv :: (Monoid ann) => TCEnv ann
+typecheckEnv =
+  TCEnv
+    mempty
+    mempty
+    (builtInTypes emptyResolvedDep)
+    classes
+    instances

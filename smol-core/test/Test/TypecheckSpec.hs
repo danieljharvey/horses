@@ -4,7 +4,6 @@
 
 module Test.TypecheckSpec (spec) where
 
-import Control.Monad.Identity
 import Control.Monad.Reader
 import Control.Monad.State
 import Data.Bifunctor
@@ -19,7 +18,6 @@ import Error.Diagnose (defaultStyle, printDiagnostic, stdout)
 import Smol.Core
 import Smol.Core.Typecheck.FromParsedExpr
 import Smol.Core.Typecheck.Typeclass
-import Test.BuiltInTypes (builtInTypes)
 import Test.Helpers
 import Test.Hspec
 
@@ -33,6 +31,10 @@ evalExpr input = case parseExprAndFormatError input of
 getLeft :: (Show a) => Either e a -> e
 getLeft (Left e) = e
 getLeft (Right a) = error (show a)
+
+getRight :: (Show e) => Either e a -> a
+getRight (Right a) = a
+getRight (Left e) = error (show e)
 
 -- simplify type for equality check
 -- remove anything that can't be described in a type signature
@@ -51,70 +53,18 @@ testElaborate expr =
     Right (typedExpr, _typeclassUses) -> pure typedExpr
     Left e -> Left e
 
-tcVar :: (Monoid ann) => Identifier -> Type Identity ann
-tcVar = TVar mempty . Identity
-
-identityFromParsedExpr :: Expr ParseDep ann -> Expr Identity ann
-identityFromParsedExpr = mapExprDep resolve
-  where
-    resolve (ParseDep a _) = Identity a
-
-showTypeclass :: (Monoid ann) => Typeclass ann
-showTypeclass =
-  Typeclass
-    { tcName = "Show",
-      tcArgs = ["a"],
-      tcFuncName = "show",
-      tcFuncType = tyFunc (tcVar "a") tyString
-    }
-
-eqTypeclass :: (Monoid ann) => Typeclass ann
-eqTypeclass =
-  Typeclass
-    { tcName = "Eq",
-      tcArgs = ["a"],
-      tcFuncName = "equals",
-      tcFuncType = tyFunc (tcVar "a") (tyFunc (tcVar "a") tyBool)
-    }
-
-classes :: (Monoid ann) => M.Map String (Typeclass ann)
-classes =
-  M.fromList
-    [ ("Eq", eqTypeclass),
-      ("Show", showTypeclass)
-    ]
-
-unsafeParseInstanceExpr :: (Monoid ann) => Text -> Expr Identity ann
-unsafeParseInstanceExpr =
-  fmap (const mempty) . identityFromParsedExpr . unsafeParseExpr
-
-instances :: (Monoid ann) => M.Map (TypeclassHead ann) (Instance ann)
-instances =
-  M.singleton
-    (TypeclassHead "Eq" [tyInt])
-    (Instance (unsafeParseInstanceExpr "\\a -> \\b -> a == b"))
-
-typecheckEnv :: (Monoid ann) => TCEnv ann
-typecheckEnv =
-  TCEnv
-    mempty
-    mempty
-    (builtInTypes emptyResolvedDep)
-    classes
-    instances
-
 spec :: Spec
 spec = do
   describe "TypecheckSpec" $ do
     describe "recover instance uses" $ do
       it "No classes, nothing to find" $ do
-        recoverTypeclassUses @() [] `shouldBe` []
+        recoverTypeclassUses @() [] `shouldBe` mempty
       it "Uses Eq Int" $ do
         recoverTypeclassUses @()
           [ TCWTypeclassUse (UniqueDefinition "a" 123) "Eq" [("a", 10)],
             TCWSubstitution (Substitution (SubUnknown 10) tyInt)
           ]
-          `shouldBe` [(UniqueDefinition "a" 123, TypeclassHead "Eq" [tyInt])]
+          `shouldBe` M.singleton (UniqueDefinition "a" 123) (TypeclassHead "Eq" [tyInt])
 
     describe "lookupTypeclassHead" $ do
       it "Is not there" $ do
@@ -153,6 +103,22 @@ spec = do
           (TypeclassHead "Show" [tyUnit])
           (Instance (unsafeParseInstanceExpr "\\a -> \\b -> 123"))
           `shouldSatisfy` isLeft
+
+    describe "Inline typeclass functions" $ do
+      it "No functions, no change" $ do
+        let expr = getRight $ evalExpr "1 + 2"
+            expected = getRight $ evalExpr "1 + 2"
+
+        inlineTypeclassFunctions typecheckEnv mempty expr
+          `shouldBe` Right expected
+
+      it "Eq Int functions inlined" $ do
+        let expr = getRight $ evalExpr "equals (1: Int) (2: Int)"
+            expected = void $ getRight $ evalExpr "let equals = \\a -> \\b -> a == b; equals (1 : Int) (2 : Int)"
+            typeclasses = M.singleton "equals" (TypeclassHead "Eq" [tyInt])
+
+        fmap void (inlineTypeclassFunctions typecheckEnv typeclasses expr)
+          `shouldBe` Right expected
 
     describe "Parse and typecheck" $ do
       let inputs =
