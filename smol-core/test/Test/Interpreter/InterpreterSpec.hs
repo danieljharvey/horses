@@ -10,8 +10,9 @@ import Smol.Core.Typecheck.FromParsedExpr
 import Test.Helpers
 import Test.Hspec
 
-doInterpret :: Text -> Expr ResolvedDep ()
-doInterpret =
+-- | interpret without typechecking etc
+doBasicInterpret :: Text -> Expr ResolvedDep ()
+doBasicInterpret =
   fmap edAnnotation
     . discardLeft
     . interpret mempty
@@ -45,7 +46,20 @@ spec = do
       traverse_
         ( \(input, expect) ->
             it (show input <> " = " <> show expect) $ do
-              doInterpret input
+              doBasicInterpret input
+                `shouldBe` fromParsedExpr (unsafeParseExpr expect)
+        )
+        cases
+
+    describe "interpret with typeclasses" $ do
+      let cases =
+            [ ("equals 1 1", "True"), -- use Eq Int
+              ("equals (1,1) (1,2)", "False") -- use Eq (a,b) and Eq Int (advanced, not ready for this yet)
+            ]
+      traverse_
+        ( \(input, expect) ->
+            it (show input <> " = " <> show expect) $ do
+              doBasicInterpret input
                 `shouldBe` fromParsedExpr (unsafeParseExpr expect)
         )
         cases

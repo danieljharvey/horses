@@ -20,6 +20,8 @@ import Smol.Core.Typecheck.Types.TCState
 import Smol.Core.Typecheck.Types.TCWrite
 import Smol.Core.Types
 
+-- | the typeclass described in it's most general form, ie
+-- class Show a where show :: a -> String
 data Typeclass ann = Typeclass
   { tcName :: String,
     tcArgs :: [Identifier],

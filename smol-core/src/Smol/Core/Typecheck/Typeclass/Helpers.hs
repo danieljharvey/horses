@@ -15,18 +15,19 @@ unresolveType = mapTypeDep resolve
   where
     resolve (LocalDefinition a) = Identity a
     resolve (UniqueDefinition a _) = Identity a
+    resolve (TypeclassCall a _) = Identity a
 
 -- this just chucks types in any order and will break on multi-parameter type
 -- classes
-recoverTypeclassUses :: (Monoid ann) => [TCWrite ann] -> [TypeclassHead ann]
+recoverTypeclassUses :: (Monoid ann) => [TCWrite ann] -> M.Map (ResolvedDep Identifier) (TypeclassHead ann)
 recoverTypeclassUses events =
   let allSubs = filterSubstitutions events
       allTCs = filterTypeclassUses events
       substituteMatch (ident, unknownId) = (ident, unresolveType $ substituteMany allSubs (TUnknown mempty unknownId))
-      fixTC (name, matches) = (name, substituteMatch <$> matches)
-      toTypeclassHead (name, fixedMatches) =
-        TypeclassHead name (snd <$> fixedMatches)
-   in toTypeclassHead . fixTC <$> allTCs
+      fixTC (identifier, name, matches) = (identifier, name, substituteMatch <$> matches)
+      toTypeclassHead (identifier, name, fixedMatches) =
+        M.singleton identifier (TypeclassHead name (snd <$> fixedMatches))
+   in mconcat $ toTypeclassHead . fixTC <$> allTCs
 
 -- | do we have a matching instance? explode if not
 lookupTypeclassHead :: (MonadError (TCError ann) m, Ord ann) => TCEnv ann -> TypeclassHead ann -> m ()

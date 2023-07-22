@@ -22,5 +22,5 @@ checkModule ::
   [ModuleItem Annotation] ->
   m (Module ResolvedDep (Type ResolvedDep Annotation))
 checkModule input moduleItems = do
-  (myModule, deps) <- moduleFromModuleParts moduleItems >>= resolveModuleDeps
+  (myModule, deps) <- moduleFromModuleParts moduleItems >>= resolveModuleDeps mempty
   typecheckModule input myModule deps

@@ -239,7 +239,7 @@ lookupVar ann ident = do
         -- need to turn Type Identity ann into Type ResolvedDep ann
         Just tc -> do
           (newType, undoSubs) <- freshen (resolve $ tcFuncType tc)
-          tell [TCWTypeclassUse (tcName tc) (pairFromSubs undoSubs)]
+          tell [TCWTypeclassUse ident (tcName tc) (pairFromSubs undoSubs)]
           pure newType
         Nothing -> throwError (TCCouldNotFindVar ann ident)
 

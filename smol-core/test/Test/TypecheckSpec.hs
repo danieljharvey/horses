@@ -48,7 +48,7 @@ testElaborate ::
   Either (TCError ann) (Expr ResolvedDep (Type ResolvedDep ann))
 testElaborate expr =
   case elaborate typecheckEnv (fromParsedExpr expr) of
-    Right typedExpr -> pure typedExpr
+    Right (typedExpr, _typeclassUses) -> pure typedExpr
     Left e -> Left e
 
 tcVar :: (Monoid ann) => Identifier -> Type Identity ann
@@ -111,10 +111,10 @@ spec = do
         recoverTypeclassUses @() [] `shouldBe` []
       it "Uses Eq Int" $ do
         recoverTypeclassUses @()
-          [ TCWTypeclassUse "Eq" [("a", 10)],
+          [ TCWTypeclassUse (UniqueDefinition "a" 123) "Eq" [("a", 10)],
             TCWSubstitution (Substitution (SubUnknown 10) tyInt)
           ]
-          `shouldBe` [TypeclassHead "Eq" [tyInt]]
+          `shouldBe` [(UniqueDefinition "a" 123, TypeclassHead "Eq" [tyInt])]
 
     describe "lookupTypeclassHead" $ do
       it "Is not there" $ do

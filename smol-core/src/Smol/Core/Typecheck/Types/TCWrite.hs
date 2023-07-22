@@ -14,11 +14,11 @@ import Smol.Core.Types.ResolvedDep
 -- stuff emitted during typechecking
 data TCWrite ann
   = TCWSubstitution (Substitution ResolvedDep ann)
-  | TCWTypeclassUse String [(Identifier, Integer)]
+  | TCWTypeclassUse (ResolvedDep Identifier) String [(Identifier, Integer)]
   deriving stock (Eq, Ord, Show)
 
 instance (Show ann) => Printer (TCWrite ann) where
-  prettyDoc (TCWTypeclassUse tcName matches) = fromString tcName <> " : " <> fromString (show matches)
+  prettyDoc (TCWTypeclassUse _ tcName matches) = fromString tcName <> " : " <> fromString (show matches)
   prettyDoc (TCWSubstitution sub) = prettyDoc sub
 
 filterSubstitutions :: [TCWrite ann] -> [Substitution ResolvedDep ann]
@@ -29,10 +29,10 @@ filterSubstitutions =
         _ -> Nothing
     )
 
-filterTypeclassUses :: [TCWrite ann] -> [(String, [(Identifier, Integer)])]
+filterTypeclassUses :: [TCWrite ann] -> [(ResolvedDep Identifier, String, [(Identifier, Integer)])]
 filterTypeclassUses =
   mapMaybe
     ( \case
-        TCWTypeclassUse s matches -> Just (s, matches)
+        TCWTypeclassUse ident s matches -> Just (ident, s, matches)
         _ -> Nothing
     )

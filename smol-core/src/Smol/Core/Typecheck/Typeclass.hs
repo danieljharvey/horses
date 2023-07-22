@@ -22,6 +22,7 @@ unresolveType = mapTypeDep resolve
   where
     resolve (LocalDefinition a) = Identity a
     resolve (UniqueDefinition a _) = Identity a
+    resolve (TypeclassCall a _) = Identity a
 
 checkInstance ::
   (MonadError (TCError ann) m, Ord ann, Show ann, Monoid ann) =>
@@ -50,20 +51,20 @@ checkInstance (Typeclass _ args funcName ty) (TypeclassHead _ tys) (Instance exp
 
     let annotatedExpr = EAnn (getExprAnnotation expr) subbedType expr
 
-    typedExpr <- elaborate tcEnv (resolveExpr annotatedExpr)
+    (typedExpr, _typeclassUses) <- elaborate tcEnv (resolveExpr annotatedExpr)
 
     pure (funcName, typedExpr)
 
 -- this just chucks types in any order and will break on multi-parameter type
 -- classes
-recoverTypeclassUses :: (Monoid ann) => [TCWrite ann] -> [TypeclassHead ann]
+recoverTypeclassUses :: (Monoid ann) => [TCWrite ann] -> [(ResolvedDep Identifier, TypeclassHead ann)]
 recoverTypeclassUses events =
   let allSubs = filterSubstitutions events
       allTCs = filterTypeclassUses events
       substituteMatch (ident, unknownId) = (ident, unresolveType $ substituteMany allSubs (TUnknown mempty unknownId))
-      fixTC (name, matches) = (name, substituteMatch <$> matches)
-      toTypeclassHead (name, fixedMatches) =
-        TypeclassHead name (snd <$> fixedMatches)
+      fixTC (identifier, name, matches) = (identifier, name, substituteMatch <$> matches)
+      toTypeclassHead (identifier, name, fixedMatches) =
+        (identifier, TypeclassHead name (snd <$> fixedMatches))
    in toTypeclassHead . fixTC <$> allTCs
 
 -- | do we have a matching instance? explode if not

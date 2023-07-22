@@ -6,7 +6,6 @@
 
 module Smol.Core.Modules.ResolveDeps
   ( resolveModuleDeps,
-    resolveExprDeps,
   )
 where
 
@@ -28,22 +27,17 @@ import Smol.Core.Modules.Types.ModuleError
 import Smol.Core.Modules.Types.TopLevelExpression
 import Smol.Core.Modules.Uses
 
-resolveExprDeps ::
-  (Show ann, MonadError (ModuleError ann) m) =>
-  Expr ParseDep ann ->
-  m (Expr ResolvedDep ann)
-resolveExprDeps expr = evalStateT (resolveExpr expr mempty mempty) (ResolveState 0)
-
 resolveModuleDeps ::
   (Show ann, Eq ann, MonadError (ModuleError ann) m) =>
+  Set Identifier ->
   Module ParseDep ann ->
   m (Module ResolvedDep ann, Map DefIdentifier (Set DefIdentifier))
-resolveModuleDeps parsedModule = do
+resolveModuleDeps typeclassMethods parsedModule = do
   map' <- getDependencies extractUses parsedModule
   let resolveIt (DTData dt, _, _) =
         pure (Left (resolveDataType dt))
       resolveIt (DTExpr expr, defIds, _entities) =
-        Right <$> resolveTopLevelExpression expr defIds (allConstructors parsedModule)
+        Right <$> resolveTopLevelExpression expr typeclassMethods defIds (allConstructors parsedModule)
   resolvedMap <- evalStateT (traverse resolveIt map') (ResolveState 0)
   let newExpressions =
         mapMaybeWithKey
@@ -103,31 +97,20 @@ resolveType (TApp ann fn arg) = TApp ann (resolveType fn) (resolveType arg)
 resolveTopLevelExpression ::
   (Show ann, MonadState ResolveState m, MonadError (ModuleError ann) m) =>
   TopLevelExpression ParseDep ann ->
+  Set Identifier ->
   Set DefIdentifier ->
   Set Constructor ->
   m (TopLevelExpression ResolvedDep ann)
-resolveTopLevelExpression tle localDefs localTypes = flip runReaderT initialEnv $ do
+resolveTopLevelExpression tle typeclassMethods localDefs localTypes = flip runReaderT initialEnv $ do
   resolvedExpr <- resolveM (tleExpr tle)
   let resolvedType = fmap resolveType (tleType tle)
   pure (TopLevelExpression {tleExpr = resolvedExpr, tleType = resolvedType})
   where
-    initialEnv = ResolveEnv mempty localDefs localTypes
-
-resolveExpr ::
-  (Show ann, MonadError (ModuleError ann) m, MonadState ResolveState m) =>
-  Expr ParseDep ann ->
-  Set DefIdentifier ->
-  Set Constructor ->
-  m (Expr ResolvedDep ann)
-resolveExpr expr localDefs localTypes =
-  runReaderT
-    (resolveM expr)
-    initialEnv
-  where
-    initialEnv = ResolveEnv mempty localDefs localTypes
+    initialEnv = ResolveEnv mempty localDefs localTypes typeclassMethods
 
 resolveIdentifier ::
   ( MonadReader ResolveEnv m,
+    MonadState ResolveState m,
     MonadError (ModuleError ann) m
   ) =>
   ParseDep Identifier ->
@@ -142,7 +125,11 @@ resolveIdentifier (ParseDep ident Nothing) = do
       isLocal <- asks (S.member (DIName ident) . reLocal)
       if isLocal
         then pure (LocalDefinition ident)
-        else throwError $ VarNotFound ident
+        else do
+          isTypeclassMethod <- asks (S.member ident . reTypeclassMethods)
+          if isTypeclassMethod
+            then typeclassIdentifier ident
+            else throwError $ VarNotFound ident
 
 resolveConstructor ::
   ( MonadReader ResolveEnv m
@@ -181,6 +168,14 @@ newIdentifier (ParseDep ident _) = do
   i <- freshInt
   pure (i, ident, UniqueDefinition ident i)
 
+typeclassIdentifier ::
+  (MonadState ResolveState m) =>
+  Identifier ->
+  m (ResolvedDep Identifier)
+typeclassIdentifier ident = do
+  i <- freshInt
+  pure (TypeclassCall ident i)
+
 withNewIdentifier ::
   (MonadReader ResolveEnv m) =>
   Int ->
@@ -201,7 +196,8 @@ withNewIdentifiers resolvedIdentifiers =
 data ResolveEnv = ResolveEnv
   { reExisting :: Map Identifier Int,
     reLocal :: Set DefIdentifier,
-    reLocalConstructor :: Set Constructor
+    reLocalConstructor :: Set Constructor,
+    reTypeclassMethods :: Set Identifier
   }
   deriving stock (Eq, Ord, Show)
 

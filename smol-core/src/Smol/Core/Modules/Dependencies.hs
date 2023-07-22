@@ -195,25 +195,14 @@ getExprDependencies getUses mod' expr = do
   pure (DTExpr expr, exprDefIds <> typeDefIds <> consDefIds, allUses)
 
 getExprDeps ::
-  (MonadError (ModuleError ann) m) =>
+  (Monad m) =>
   Module dep ann ->
   Set E.Entity ->
   m (Set Identifier)
 getExprDeps mod' uses =
-  let nameDeps = filterDefs uses
-      unknownNameDeps =
-        S.filter
-          ( \dep ->
-              S.notMember dep (M.keysSet (moExpressions mod'))
-          )
-          nameDeps
-   in if S.null unknownNameDeps
-        then
-          let localNameDeps =
-                S.filter
-                  ( `S.member`
-                      M.keysSet (moExpressions mod')
-                  )
-                  nameDeps
-           in pure localNameDeps
-        else throwError (CannotFindValues unknownNameDeps)
+  pure $
+    S.filter
+      ( `S.member`
+          M.keysSet (moExpressions mod')
+      )
+      (filterDefs uses)

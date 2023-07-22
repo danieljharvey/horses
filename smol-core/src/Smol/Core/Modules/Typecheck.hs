@@ -221,7 +221,7 @@ typecheckOneExprDef input _inputModule deps (def, tle) = do
         Just ty -> EAnn (getTypeAnnotation ty) ty (tleExpr tle)
 
   -- typecheck it
-  newExpr <-
+  (newExpr, _typeclassUses) <-
     liftEither $
       first
         (DefDoesNotTypeCheck input def)
