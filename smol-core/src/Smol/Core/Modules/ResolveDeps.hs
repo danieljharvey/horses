@@ -172,9 +172,8 @@ typeclassIdentifier ::
   (MonadState ResolveState m) =>
   Identifier ->
   m (ResolvedDep Identifier)
-typeclassIdentifier ident = do
-  i <- freshInt
-  pure (TypeclassCall ident i)
+typeclassIdentifier ident =
+  TypeclassCall ident <$> freshInt
 
 withNewIdentifier ::
   (MonadReader ResolveEnv m) =>

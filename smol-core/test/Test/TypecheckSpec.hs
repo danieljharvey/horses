@@ -276,7 +276,7 @@ spec = do
               "(\\a -> \\b -> equals a b : a -> a -> Bool)" -- this is missing an `Eq a` constraint
             ]
       traverse_
-        ( \(inputExpr) -> it (T.unpack inputExpr <> " fails typechecking") $ do
+        ( \inputExpr -> it (T.unpack inputExpr <> " fails typechecking") $ do
             first (T.pack . show) (evalExpr inputExpr) `shouldSatisfy` isLeft
         )
         inputs

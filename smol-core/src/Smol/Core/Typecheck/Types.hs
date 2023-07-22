@@ -1,6 +1,4 @@
-{-# LANGUAGE DeriveFoldable #-}
 {-# LANGUAGE DerivingStrategies #-}
-{-# LANGUAGE GeneralisedNewtypeDeriving #-}
 
 module Smol.Core.Typecheck.Types
   ( TCEnv (..),
@@ -33,7 +31,7 @@ data TypeclassHead ann
   = TypeclassHead String [Type Identity ann]
   deriving stock (Eq, Ord, Show)
 
-data Instance ann = Instance
+newtype Instance ann = Instance
   {inExpr :: Expr Identity ann}
   deriving stock (Eq, Ord, Show)
 

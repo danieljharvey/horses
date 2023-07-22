@@ -1,5 +1,4 @@
 {-# LANGUAGE FlexibleContexts #-}
-{-# LANGUAGE OverloadedStrings #-}
 
 module Smol.Core.Typecheck.Typeclass.Helpers
   ( recoverTypeclassUses,
