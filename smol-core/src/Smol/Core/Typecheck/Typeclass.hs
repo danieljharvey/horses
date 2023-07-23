@@ -44,7 +44,7 @@ checkInstance ::
   TypeclassHead ann ->
   Instance ann ->
   m (Identifier, Expr ResolvedDep (Type ResolvedDep ann))
-checkInstance (Typeclass _ args funcName ty) (TypeclassHead _ tys) (Instance expr) =
+checkInstance (Typeclass _ args funcName ty) (TypeclassHead _ tys) (Instance _ expr) =
   do
     let subs =
           ( \(ident, tySub) ->

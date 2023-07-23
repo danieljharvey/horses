@@ -31,8 +31,10 @@ data TypeclassHead ann
   = TypeclassHead String [Type Identity ann]
   deriving stock (Eq, Ord, Show)
 
-newtype Instance ann = Instance
-  {inExpr :: Expr Identity ann}
+data Instance ann = Instance
+  { inConstraints :: [TypeclassHead ann],
+    inExpr :: Expr Identity ann
+  }
   deriving stock (Eq, Ord, Show)
 
 data TCEnv ann = TCEnv

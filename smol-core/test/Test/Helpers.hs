@@ -33,6 +33,7 @@ module Test.Helpers
     showTypeclass,
     eqTypeclass,
     unsafeParseInstanceExpr,
+    tcVar,
   )
 where
 
@@ -228,13 +229,25 @@ unsafeParseInstanceExpr :: (Monoid ann) => Text -> Expr Identity ann
 unsafeParseInstanceExpr =
   fmap (const mempty) . identityFromParsedExpr . unsafeParseExpr
 
-instances :: (Monoid ann) => M.Map (TypeclassHead ann) (Instance ann)
+instances :: (Ord ann, Monoid ann) => M.Map (TypeclassHead ann) (Instance ann)
 instances =
-  M.singleton
-    (TypeclassHead "Eq" [tyInt])
-    (Instance (unsafeParseInstanceExpr "\\a -> \\b -> a == b"))
+  M.fromList
+    [ ( TypeclassHead "Eq" [tyInt],
+        Instance {inExpr = unsafeParseInstanceExpr "\\a -> \\b -> a == b", inConstraints = []}
+      ),
+      ( TypeclassHead "Eq" [tyTuple (tcVar "a") [tcVar "b"]],
+        Instance
+          { inExpr =
+              unsafeParseInstanceExpr "\\a -> \\b -> case (a,b) of ((a1, a2), (b1, b2)) -> if equals a1 b1 then equals a2 b2 else False",
+            inConstraints =
+              [ TypeclassHead "Eq" [tcVar "a"],
+                TypeclassHead "Eq" [tcVar "b"]
+              ]
+          }
+      )
+    ]
 
-typecheckEnv :: (Monoid ann) => TCEnv ann
+typecheckEnv :: (Monoid ann, Ord ann) => TCEnv ann
 typecheckEnv =
   TCEnv
     mempty

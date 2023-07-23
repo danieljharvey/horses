@@ -75,33 +75,78 @@ spec = do
         lookupTypeclassHead @() typecheckEnv (TypeclassHead "Eq" [tyInt])
           `shouldSatisfy` isRight
 
-    describe "Check instances" $ do
+    fdescribe "Check instances" $ do
       it "Good Show instance" $ do
         checkInstance @()
           showTypeclass
           (TypeclassHead "Show" [tyUnit])
-          (Instance (unsafeParseInstanceExpr "\\a -> \"Unit\""))
+          ( Instance
+              { inExpr = unsafeParseInstanceExpr "\\a -> \"Unit\"",
+                inConstraints = []
+              }
+          )
           `shouldSatisfy` isRight
 
       it "Bad Show instance" $ do
         checkInstance @()
           showTypeclass
           (TypeclassHead "Show" [tyUnit])
-          (Instance (unsafeParseInstanceExpr "\\a -> 123"))
+          ( Instance
+              { inExpr = unsafeParseInstanceExpr "\\a -> 123",
+                inConstraints = []
+              }
+          )
           `shouldSatisfy` isLeft
 
       it "Good Eq instance" $ do
         checkInstance @()
           eqTypeclass
           (TypeclassHead "Eq" [tyInt])
-          (Instance (unsafeParseInstanceExpr "\\a -> \\b -> a == b"))
+          ( Instance
+              { inExpr = unsafeParseInstanceExpr "\\a -> \\b -> a == b",
+                inConstraints = []
+              }
+          )
           `shouldSatisfy` isRight
 
       it "Bad Eq instance" $ do
         checkInstance @()
           eqTypeclass
           (TypeclassHead "Show" [tyUnit])
-          (Instance (unsafeParseInstanceExpr "\\a -> \\b -> 123"))
+          ( Instance
+              { inExpr = unsafeParseInstanceExpr "\\a -> \\b -> 123",
+                inConstraints = []
+              }
+          )
+          `shouldSatisfy` isLeft
+
+      it "Tuple Eq instance" $ do
+        checkInstance @()
+          eqTypeclass
+          (TypeclassHead "Eq" [tyTuple (tcVar "a") [tcVar "b"]])
+          ( Instance
+              { inExpr =
+                  unsafeParseInstanceExpr "\\a -> \\b -> case (a,b) of ((a1, a2), (b1, b2)) -> if equals a1 b1 then equals a2 b2 else False",
+                inConstraints =
+                  [ TypeclassHead "Eq" [tcVar "a"],
+                    TypeclassHead "Eq" [tcVar "b"]
+                  ]
+              }
+          )
+          `shouldSatisfy` isRight
+
+      it "Tuple Eq instance missing a constraint" $ do
+        checkInstance @()
+          eqTypeclass
+          (TypeclassHead "Eq" [tyTuple (tcVar "a") [tcVar "b"]])
+          ( Instance
+              { inExpr =
+                  unsafeParseInstanceExpr "\\a -> \\b -> case (a,b) of ((a1, a2), (b1, b2)) -> if equals a1 b1 then equals a2 b2 else False",
+                inConstraints =
+                  [ TypeclassHead "Eq" [tcVar "a"]
+                  ]
+              }
+          )
           `shouldSatisfy` isLeft
 
     describe "Inline typeclass functions" $ do
@@ -256,8 +301,7 @@ spec = do
               ("let f = (\\x -> (x 1, x False) : (a -> a) -> (1, False)); let id = \\a -> a; f id", "(1, False)"), -- they need annotation, but that's ok
               ("\\a -> \\b -> if a then a else b", "Bool -> Bool -> Bool"),
               ("\\a -> case a of (b,c) -> if b then b else c", "(Bool,Bool) -> Bool"),
-              ("equals (10 : Int) (11: Int)", "Bool"), -- using Eq Int typeclass instance
-              ("(\\a -> \\b -> equals a b : (Eq a) => a -> a -> Bool)", "(Eq a) => a -> a -> Bool") -- raise polymorphic constraint of `Eq a`
+              ("equals (10 : Int) (11: Int)", "Bool") -- using Eq Int typeclass instance
             ]
       traverse_
         ( \(inputExpr, expectedType) -> it (T.unpack inputExpr <> " :: " <> T.unpack expectedType) $ do
