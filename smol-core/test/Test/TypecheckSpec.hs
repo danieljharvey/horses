@@ -56,7 +56,7 @@ testElaborate expr =
 spec :: Spec
 spec = do
   describe "TypecheckSpec" $ do
-    describe "recover instance uses" $ do
+    describe "recoverTypeclassUses" $ do
       it "No classes, nothing to find" $ do
         recoverTypeclassUses @() [] `shouldBe` mempty
       it "Uses Eq Int" $ do
@@ -114,7 +114,7 @@ spec = do
 
       it "Eq Int functions inlined" $ do
         let expr = getRight $ evalExpr "equals (1: Int) (2: Int)"
-            expected = void $ getRight $ evalExpr "let equals = \\a -> \\b -> a == b; equals (1 : Int) (2 : Int)"
+            expected = void $ getRight $ evalExpr "let equals = (\\a -> \\b -> a == b : Int -> Int -> Bool); equals (1 : Int) (2 : Int)"
             typeclasses = M.singleton "equals" (TypeclassHead "Eq" [tyInt])
 
         fmap void (inlineTypeclassFunctions typecheckEnv typeclasses expr)
@@ -256,7 +256,8 @@ spec = do
               ("let f = (\\x -> (x 1, x False) : (a -> a) -> (1, False)); let id = \\a -> a; f id", "(1, False)"), -- they need annotation, but that's ok
               ("\\a -> \\b -> if a then a else b", "Bool -> Bool -> Bool"),
               ("\\a -> case a of (b,c) -> if b then b else c", "(Bool,Bool) -> Bool"),
-              ("equals (10 : Int) (11: Int)", "Bool") -- using Eq Int typeclass instance
+              ("equals (10 : Int) (11: Int)", "Bool"), -- using Eq Int typeclass instance
+              ("(\\a -> \\b -> equals a b : (Eq a) => a -> a -> Bool)", "(Eq a) => a -> a -> Bool") -- raise polymorphic constraint of `Eq a`
             ]
       traverse_
         ( \(inputExpr, expectedType) -> it (T.unpack inputExpr <> " :: " <> T.unpack expectedType) $ do

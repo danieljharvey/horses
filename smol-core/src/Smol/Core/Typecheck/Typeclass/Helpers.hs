@@ -33,7 +33,9 @@ recoverTypeclassUses events =
         M.singleton identifier (TypeclassHead name (snd <$> fixedMatches))
    in mconcat $ toTypeclassHead . fixTC <$> allTCs
 
--- | do we have a matching instance? explode if not
+-- | do we have a matching instance? if we're looking for a concrete type and
+-- it's not there, explode (ie, there is no `Eq Bool`)
+-- if we're looking up `Eq a` though, raise a constraint.
 lookupTypeclassHead ::
   (MonadError (TCError ann) m, Ord ann) =>
   TCEnv ann ->
