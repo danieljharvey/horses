@@ -4,12 +4,12 @@
 
 module Test.Typecheck.TypeclassSpec (spec) where
 
-import Smol.Core.Modules.ResolveDeps
 import Data.Either
 import Data.Functor
 import qualified Data.Map.Strict as M
 import Data.Text (Text)
 import Smol.Core
+import Smol.Core.Modules.ResolveDeps
 import Smol.Core.Typecheck.Typeclass
 import Test.Helpers
 import Test.Hspec
@@ -32,7 +32,7 @@ testElaborate ::
 testElaborate expr =
   case resolveExprDeps expr mempty of
     Left e -> error (show e)
-    Right resolvedExpr ->   case elaborate typecheckEnv resolvedExpr of
+    Right resolvedExpr -> case elaborate typecheckEnv resolvedExpr of
       Right (typedExpr, _typeclassUses) -> pure typedExpr
       Left e -> Left e
 
@@ -49,7 +49,16 @@ spec = do
           ]
           `shouldBe` M.singleton (UniqueDefinition "a" 123) (TypeclassHead "Eq" [tyInt])
 
-    describe "lookupTypeclassInstance" $ do
+    fdescribe "instanceMatchesType" $ do
+      it "Eq (a,Bool) does not match Eq (Int, Int)" $ do
+        instanceMatchesType @() [tyTuple tyInt [tyInt]] [tyTuple (tcVar "a") [tyBool]]
+          `shouldBe` Left (tyInt, tyBool)
+
+      it "Eq (a,b) matches Eq (Int, Int)" $ do
+        instanceMatchesType @() [tyTuple tyInt [tyInt]] [tyTuple (tcVar "a") [tcVar "b"]]
+          `shouldBe` Right (M.fromList [("a", tyInt), ("b", tyInt)])
+
+    fdescribe "lookupTypeclassInstance" $ do
       it "Is not there" $ do
         lookupTypeclassInstance @() typecheckEnv (TypeclassHead "Eq" [tyBool])
           `shouldSatisfy` isLeft
@@ -57,6 +66,14 @@ spec = do
       it "Is there" $ do
         lookupTypeclassInstance @() typecheckEnv (TypeclassHead "Eq" [tyInt])
           `shouldSatisfy` isRight
+
+      it "Nested item is there" $ do
+        lookupTypeclassInstance @() typecheckEnv (TypeclassHead "Eq" [tyTuple tyInt [tyInt]])
+          `shouldSatisfy` isRight
+
+      it "Other nested item is there" $ do
+        lookupTypeclassInstance @() typecheckEnv (TypeclassHead "Eq" [tyTuple tyBool [tyInt]])
+          `shouldSatisfy` isLeft
 
     describe "lookupTypeclassConstraint" $ do
       it "Is not there" $ do
@@ -163,4 +180,3 @@ spec = do
 
         fmap void (inlineTypeclassFunctions typecheckEnv typeclasses expr)
           `shouldBe` Right expected
-

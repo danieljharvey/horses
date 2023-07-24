@@ -152,7 +152,8 @@ spec = do
                 ("Maybe 1", "Maybe a"),
                 ("{ item: 1 }", "{}"),
                 ("[1 | 2]", "[Int]"),
-                ("1", "1 | 2")
+                ("1", "1 | 2"),
+                ("(Int,Int)", "(a,b)")
               ]
         traverse_
           ( \(lhs, rhs) -> it (show lhs <> " <: " <> show rhs) $ do
