@@ -53,7 +53,7 @@ elaborate env expr =
     >>= \(typedExpr, events) -> do
       let typeclassUses = recoverTypeclassUses events
       -- lookup typeclasses we need, explode if they're missing
-      traverse_ (lookupTypeclassHead env) (M.elems typeclassUses)
+      traverse_ (lookupTypeclassConstraint env) (M.elems typeclassUses)
       -- we may want to think of a way of raising a legitimate polymorphic
       -- constraint, ie `Eq a`
       pure (simplifyType . substituteMany (filterSubstitutions events) <$> typedExpr, typeclassUses)

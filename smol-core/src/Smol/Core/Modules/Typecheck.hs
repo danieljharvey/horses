@@ -127,7 +127,7 @@ typecheckTest defs (UnitTest testName ident) = do
                     (TCTypeMismatch other (TPrim (getTypeAnnotation other) TPBool))
                 )
             )
-    _ -> throwError (VarNotFound ident)
+    _ -> throwError (ErrorInResolveDeps $ VarNotFound ident)
 
 -- given types for other required definition, typecheck a definition
 typecheckOneDef ::
@@ -212,7 +212,8 @@ typecheckOneExprDef input _inputModule deps (def, tle) = do
             tceDataTypes = getDataTypeMap deps,
             tceGlobals = mempty,
             tceClasses = mempty,
-            tceInstances = mempty
+            tceInstances = mempty,
+            tceConstraints = mempty -- we'll get these from the type
           }
 
   -- if we have a type, add an annotation

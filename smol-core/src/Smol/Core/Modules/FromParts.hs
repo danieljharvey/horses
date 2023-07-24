@@ -59,7 +59,7 @@ addModulePart allParts part mod' =
             mod'
               { moTests = UnitTest testName ident : moTests mod'
               }
-        else throwError (VarNotFound ident)
+        else throwError (ErrorInResolveDeps $ VarNotFound ident)
     ModuleDataType dt@(DataType tyCon _ _) -> do
       let typeName = coerce tyCon
       checkDataType mod' dt

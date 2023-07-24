@@ -14,7 +14,7 @@ spec = do
     describe "FromParts" $ do
       it "Test that refers to non-existent identifier" $ do
         let modParts = unsafeParseModuleItems (joinText ["test \"horses\" using missing"])
-            expected = VarNotFound "missing"
+            expected = ErrorInResolveDeps $ VarNotFound "missing"
 
         moduleFromModuleParts modParts `shouldBe` Left expected
 

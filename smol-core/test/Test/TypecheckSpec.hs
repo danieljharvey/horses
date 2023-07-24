@@ -17,7 +17,6 @@ import qualified Data.Text as T
 import Error.Diagnose (defaultStyle, printDiagnostic, stdout)
 import Smol.Core
 import Smol.Core.Typecheck.FromParsedExpr
-import Smol.Core.Typecheck.Typeclass
 import Test.Helpers
 import Test.Hspec
 
@@ -31,10 +30,6 @@ evalExpr input = case parseExprAndFormatError input of
 getLeft :: (Show a) => Either e a -> e
 getLeft (Left e) = e
 getLeft (Right a) = error (show a)
-
-getRight :: (Show e) => Either e a -> a
-getRight (Right a) = a
-getRight (Left e) = error (show e)
 
 -- simplify type for equality check
 -- remove anything that can't be described in a type signature
@@ -56,115 +51,6 @@ testElaborate expr =
 spec :: Spec
 spec = do
   describe "TypecheckSpec" $ do
-    describe "recoverTypeclassUses" $ do
-      it "No classes, nothing to find" $ do
-        recoverTypeclassUses @() [] `shouldBe` mempty
-      it "Uses Eq Int" $ do
-        recoverTypeclassUses @()
-          [ TCWTypeclassUse (UniqueDefinition "a" 123) "Eq" [("a", 10)],
-            TCWSubstitution (Substitution (SubUnknown 10) tyInt)
-          ]
-          `shouldBe` M.singleton (UniqueDefinition "a" 123) (TypeclassHead "Eq" [tyInt])
-
-    describe "lookupTypeclassHead" $ do
-      it "Is not there" $ do
-        lookupTypeclassHead @() typecheckEnv (TypeclassHead "Eq" [tyBool])
-          `shouldSatisfy` isLeft
-
-      it "Is there" $ do
-        lookupTypeclassHead @() typecheckEnv (TypeclassHead "Eq" [tyInt])
-          `shouldSatisfy` isRight
-
-    fdescribe "Check instances" $ do
-      it "Good Show instance" $ do
-        checkInstance @()
-          showTypeclass
-          (TypeclassHead "Show" [tyUnit])
-          ( Instance
-              { inExpr = unsafeParseInstanceExpr "\\a -> \"Unit\"",
-                inConstraints = []
-              }
-          )
-          `shouldSatisfy` isRight
-
-      it "Bad Show instance" $ do
-        checkInstance @()
-          showTypeclass
-          (TypeclassHead "Show" [tyUnit])
-          ( Instance
-              { inExpr = unsafeParseInstanceExpr "\\a -> 123",
-                inConstraints = []
-              }
-          )
-          `shouldSatisfy` isLeft
-
-      it "Good Eq instance" $ do
-        checkInstance @()
-          eqTypeclass
-          (TypeclassHead "Eq" [tyInt])
-          ( Instance
-              { inExpr = unsafeParseInstanceExpr "\\a -> \\b -> a == b",
-                inConstraints = []
-              }
-          )
-          `shouldSatisfy` isRight
-
-      it "Bad Eq instance" $ do
-        checkInstance @()
-          eqTypeclass
-          (TypeclassHead "Show" [tyUnit])
-          ( Instance
-              { inExpr = unsafeParseInstanceExpr "\\a -> \\b -> 123",
-                inConstraints = []
-              }
-          )
-          `shouldSatisfy` isLeft
-
-      it "Tuple Eq instance" $ do
-        checkInstance @()
-          eqTypeclass
-          (TypeclassHead "Eq" [tyTuple (tcVar "a") [tcVar "b"]])
-          ( Instance
-              { inExpr =
-                  unsafeParseInstanceExpr "\\a -> \\b -> case (a,b) of ((a1, a2), (b1, b2)) -> if equals a1 b1 then equals a2 b2 else False",
-                inConstraints =
-                  [ TypeclassHead "Eq" [tcVar "a"],
-                    TypeclassHead "Eq" [tcVar "b"]
-                  ]
-              }
-          )
-          `shouldSatisfy` isRight
-
-      it "Tuple Eq instance missing a constraint" $ do
-        checkInstance @()
-          eqTypeclass
-          (TypeclassHead "Eq" [tyTuple (tcVar "a") [tcVar "b"]])
-          ( Instance
-              { inExpr =
-                  unsafeParseInstanceExpr "\\a -> \\b -> case (a,b) of ((a1, a2), (b1, b2)) -> if equals a1 b1 then equals a2 b2 else False",
-                inConstraints =
-                  [ TypeclassHead "Eq" [tcVar "a"]
-                  ]
-              }
-          )
-          `shouldSatisfy` isLeft
-
-    describe "Inline typeclass functions" $ do
-      it "No functions, no change" $ do
-        let expr = getRight $ evalExpr "1 + 2"
-            expected = getRight $ evalExpr "1 + 2"
-
-        inlineTypeclassFunctions typecheckEnv mempty expr
-          `shouldBe` Right expected
-
-      it "Eq Int functions inlined" $ do
-        let expr = getRight $ evalExpr "equals (1: Int) (2: Int)"
-            expected = void $ getRight $ evalExpr "let equals = (\\a -> \\b -> a == b : Int -> Int -> Bool); equals (1 : Int) (2 : Int)"
-            typeclasses = M.singleton "equals" (TypeclassHead "Eq" [tyInt])
-
-        fmap void (inlineTypeclassFunctions typecheckEnv typeclasses expr)
-          `shouldBe` Right expected
-
     describe "Parse and typecheck" $ do
       let inputs =
             [ ("True", "True"),

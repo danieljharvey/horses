@@ -1,4 +1,5 @@
 {-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE NamedFieldPuns #-}
 {-# LANGUAGE OverloadedStrings #-}
 
 module Smol.Core.Typecheck.Typeclass
@@ -13,7 +14,10 @@ import Control.Monad.Except
 import Control.Monad.Identity
 import Data.Foldable (foldrM)
 import qualified Data.Map.Strict as M
+import Data.Maybe (mapMaybe)
+import qualified Data.Set as S
 import Smol.Core.ExprUtils
+import Smol.Core.Modules.ResolveDeps
 import Smol.Core.Typecheck.Elaborate (elaborate)
 import Smol.Core.Typecheck.Shared
 import Smol.Core.Typecheck.Substitute
@@ -21,10 +25,10 @@ import Smol.Core.Typecheck.Typeclass.Helpers
 import Smol.Core.Typecheck.Types
 import Smol.Core.Types
 
-resolveExpr :: Expr Identity ann -> Expr ResolvedDep ann
+resolveExpr :: Expr Identity ann -> Expr ParseDep ann
 resolveExpr = mapExprDep resolve
   where
-    resolve (Identity a) = emptyResolvedDep a
+    resolve (Identity a) = emptyParseDep a
 
 lookupInstanceAndCheck ::
   (Ord ann, Monoid ann, Show ann, MonadError (TCError ann) m) =>
@@ -32,19 +36,20 @@ lookupInstanceAndCheck ::
   TypeclassHead ann ->
   m (Identifier, Expr ResolvedDep (Type ResolvedDep ann))
 lookupInstanceAndCheck env tch@(TypeclassHead typeclassName _) = do
-  tcInstance <- lookupTypeclassHead env tch
+  tcInstance <- lookupTypeclassInstance env tch
   typeclass <- case M.lookup typeclassName (tceClasses env) of
     Just tc -> pure tc
     Nothing -> error "fuck"
-  checkInstance typeclass tch tcInstance
+  checkInstance env typeclass tch tcInstance
 
 checkInstance ::
   (MonadError (TCError ann) m, Ord ann, Show ann, Monoid ann) =>
+  TCEnv ann ->
   Typeclass ann ->
   TypeclassHead ann ->
   Instance ann ->
   m (Identifier, Expr ResolvedDep (Type ResolvedDep ann))
-checkInstance (Typeclass _ args funcName ty) (TypeclassHead _ tys) (Instance _ expr) =
+checkInstance tcEnv (Typeclass _ args funcName ty) (TypeclassHead _ tys) (Instance constraints expr) =
   do
     let subs =
           ( \(ident, tySub) ->
@@ -54,20 +59,28 @@ checkInstance (Typeclass _ args funcName ty) (TypeclassHead _ tys) (Instance _ e
 
     let subbedType = substituteMany subs ty
 
-    let tcEnv =
-          TCEnv
-            { tceVars = mempty,
-              tceGlobals = mempty,
-              tceDataTypes = mempty,
-              tceClasses = mempty,
-              tceInstances = mempty
-            }
+    let -- we add the instance's constraints (so typechecker forgives a missing `Eq a` etc)
+        typecheckEnv = tcEnv {tceConstraints = constraints}
 
-    let annotatedExpr = EAnn (getExprAnnotation expr) subbedType expr
+        annotatedExpr = EAnn (getExprAnnotation expr) subbedType expr
 
-    (typedExpr, _typeclassUses) <- elaborate tcEnv (resolveExpr annotatedExpr)
+        -- let's get all the method names from the Typeclasses
+        -- mentioned in the instance constraints
+        typeclassMethodNames =
+          S.fromList $
+            mapMaybe
+              ( \(TypeclassHead tcn _) -> case M.lookup tcn (tceClasses tcEnv) of
+                  Just (Typeclass {tcFuncName}) -> Just tcFuncName
+                  _ -> Nothing
+              )
+              constraints
 
-    pure (funcName, typedExpr)
+    case resolveExprDeps (resolveExpr annotatedExpr) typeclassMethodNames of
+      Left resolveErr -> error (show resolveErr)
+      Right resolvedExpr -> do
+        (typedExpr, _typeclassUses) <- elaborate typecheckEnv resolvedExpr
+
+        pure (funcName, typedExpr)
 
 -- | 10x typeclasses implementation - we inline all the instances as Let
 -- bindings

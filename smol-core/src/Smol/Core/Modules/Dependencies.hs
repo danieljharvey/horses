@@ -76,7 +76,7 @@ filterTypes =
 -- get the vars used by each def
 -- explode if there's not available
 getDependencies ::
-  (MonadError (ModuleError ann) m) =>
+  (MonadError ResolveDepsError m) =>
   (Expr ParseDep ann -> Set E.Entity) ->
   Module ParseDep ann ->
   m
@@ -102,7 +102,7 @@ getDependencies getUses mod' = do
 
 -- get all dependencies of a type definition
 getTypeDependencies ::
-  (MonadError (ModuleError ann) m) =>
+  (MonadError ResolveDepsError m) =>
   Module ParseDep ann ->
   DataType ParseDep ann ->
   m (DepType ParseDep ann, Set DefIdentifier, Set E.Entity)
@@ -113,7 +113,7 @@ getTypeDependencies mod' dt = do
   pure (DTData dt, typeDefIds <> exprDefIds, allUses)
 
 getTypeUses ::
-  (MonadError (ModuleError ann) m) =>
+  (MonadError ResolveDepsError m) =>
   Module dep ann ->
   Set E.Entity ->
   m (Set DefIdentifier)
@@ -158,7 +158,7 @@ findTypesForConstructors mod' =
   S.fromList . mapMaybe (findTypenameInModule mod') . S.toList
 
 getConstructorUses ::
-  (MonadError (ModuleError ann) m) =>
+  (MonadError ResolveDepsError m) =>
   Module dep ann ->
   Set E.Entity ->
   m (Set DefIdentifier)
@@ -182,7 +182,7 @@ getConstructorUses mod' uses = do
         else throwError (CannotFindTypes unknownTypeDeps)
 
 getExprDependencies ::
-  (MonadError (ModuleError ann) m) =>
+  (MonadError ResolveDepsError m) =>
   (Expr dep ann -> Set E.Entity) ->
   Module dep ann ->
   TopLevelExpression dep ann ->

@@ -255,3 +255,4 @@ typecheckEnv =
     (builtInTypes emptyResolvedDep)
     classes
     instances
+    mempty

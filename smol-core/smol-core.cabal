@@ -164,6 +164,7 @@ test-suite smol-core-tests
     Test.Typecheck.NestingMonadSpec
     Test.Typecheck.PatternSpec
     Test.Typecheck.SubtypeSpec
+    Test.Typecheck.TypeclassSpec
     Test.TypecheckSpec
 
   main-is:          Main.hs

@@ -2,10 +2,12 @@
 
 module Smol.Core.Typecheck.Typeclass.Helpers
   ( recoverTypeclassUses,
-    lookupTypeclassHead,
+    lookupTypeclassConstraint,
+    lookupTypeclassInstance,
   )
 where
 
+import Control.Monad (unless, void)
 import Control.Monad.Except
 import Control.Monad.Identity
 import qualified Data.Map.Strict as M
@@ -35,13 +37,31 @@ recoverTypeclassUses events =
 
 -- | do we have a matching instance? if we're looking for a concrete type and
 -- it's not there, explode (ie, there is no `Eq Bool`)
--- if we're looking up `Eq a` though, raise a constraint.
-lookupTypeclassHead ::
+-- or return it
+lookupTypeclassInstance ::
   (MonadError (TCError ann) m, Ord ann) =>
   TCEnv ann ->
   TypeclassHead ann ->
   m (Instance ann)
-lookupTypeclassHead env tch@(TypeclassHead name tys) =
+lookupTypeclassInstance env tch@(TypeclassHead name tys) =
   case M.lookup tch (tceInstances env) of
     Just tcInstance -> pure tcInstance
     Nothing -> throwError (TCTypeclassInstanceNotFound name tys)
+
+-- | do we have a matching instance? if we're looking for a concrete type and
+-- it's not there, explode (ie, there is no `Eq Bool`)
+-- if we're looking up `Eq a` though, raise a constraint.
+lookupTypeclassConstraint ::
+  (MonadError (TCError ann) m, Ord ann) =>
+  TCEnv ann ->
+  TypeclassHead ann ->
+  m ()
+lookupTypeclassConstraint env tch@(TypeclassHead name tys) = do
+  -- see if this is a valid instance first?
+  _ <-
+    void (lookupTypeclassInstance env tch) `catchError` \_ -> do
+      -- maybe it's a constraint, look there
+      unless
+        (elem tch (tceConstraints env))
+        (throwError (TCTypeclassInstanceNotFound name tys))
+  pure ()

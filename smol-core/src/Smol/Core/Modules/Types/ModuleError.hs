@@ -3,6 +3,7 @@
 module Smol.Core.Modules.Types.ModuleError
   ( ModuleError (..),
     moduleErrorDiagnostic,
+    ResolveDepsError (..),
     TestError (..),
   )
 where
@@ -26,14 +27,36 @@ testErrorDiagnostic :: TestError Annotation -> Diag.Diagnostic Text
 testErrorDiagnostic (TestDoesNotTypecheck input _ typeErr) =
   typeErrorDiagnostic input typeErr
 
+data ResolveDepsError
+  = VarNotFound Identifier
+  | CannotFindTypes (Set TypeName)
+  deriving stock (Eq, Ord, Show)
+
+resolveDepsErrorDiagnostic :: ResolveDepsError -> Diag.Diagnostic Text
+resolveDepsErrorDiagnostic (VarNotFound ident) =
+  let report =
+        Diag.Err
+          Nothing
+          (T.pack $ "Variable not found: " <> show ident)
+          []
+          []
+   in Diag.addReport Diag.def report
+resolveDepsErrorDiagnostic (CannotFindTypes tys) =
+  let report =
+        Diag.Err
+          Nothing
+          (T.pack $ "Types not found: " <> show tys)
+          []
+          []
+   in Diag.addReport Diag.def report
+
 data ModuleError ann
   = DuplicateDefinition Identifier
   | DuplicateTypeName TypeName
   | DuplicateConstructor Constructor
   | CannotFindValues (Set Identifier)
-  | CannotFindTypes (Set TypeName)
   | CannotFindConstructors (Set Constructor)
-  | VarNotFound Identifier
+  | ErrorInResolveDeps ResolveDepsError
   | DefDoesNotTypeCheck Text DefIdentifier (TCError ann)
   | NamedImportNotFound (Set ModuleName) ModuleName
   | DefMissingReturnType DefIdentifier
@@ -48,6 +71,8 @@ moduleErrorDiagnostic (DefDoesNotTypeCheck input _ typeErr) =
   typeErrorDiagnostic input typeErr
 moduleErrorDiagnostic (ErrorInTest _ testErr) =
   testErrorDiagnostic testErr
+moduleErrorDiagnostic (ErrorInResolveDeps resolveErr) =
+  resolveDepsErrorDiagnostic resolveErr
 moduleErrorDiagnostic other =
   let report =
         Diag.Err

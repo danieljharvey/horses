@@ -12,6 +12,7 @@ import qualified Test.Typecheck.ExhaustivenessSpec
 import qualified Test.Typecheck.NestingMonadSpec
 import qualified Test.Typecheck.PatternSpec
 import qualified Test.Typecheck.SubtypeSpec
+import qualified Test.Typecheck.TypeclassSpec
 import qualified Test.TypecheckSpec
 
 main :: IO ()
@@ -21,6 +22,7 @@ main = hspec $ do
   Test.Typecheck.NestingMonadSpec.spec
   Test.Typecheck.ExhaustivenessSpec.spec
   Test.Typecheck.PatternSpec.spec
+  Test.Typecheck.TypeclassSpec.spec
   Test.ParserSpec.spec
   Test.Interpreter.InterpreterSpec.spec
   Test.Modules.FromPartsSpec.spec

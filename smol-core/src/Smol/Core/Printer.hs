@@ -1,3 +1,4 @@
+{-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE OverloadedStrings #-}
 
 module Smol.Core.Printer
@@ -41,6 +42,9 @@ instance Printer () where
 instance (Printer a) => Printer (Maybe a) where
   prettyDoc (Just a) = prettyDoc a
   prettyDoc _ = mempty
+
+instance {-# OVERLAPPING #-} Printer [Char] where
+  prettyDoc = pretty
 
 instance Printer Text where
   prettyDoc = pretty

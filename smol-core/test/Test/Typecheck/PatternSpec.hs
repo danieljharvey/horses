@@ -11,7 +11,7 @@ import Test.Hspec
 spec :: Spec
 spec = do
   describe "checkPattern" $ do
-    let emptyEnv = TCEnv mempty mempty (builtInTypes emptyResolvedDep) mempty mempty
+    let emptyEnv = TCEnv mempty mempty (builtInTypes emptyResolvedDep) mempty mempty mempty
     it "PVar" $ do
       snd <$> runTypecheckM emptyEnv (checkPattern tyInt (PVar () "a"))
         `shouldBe` Right

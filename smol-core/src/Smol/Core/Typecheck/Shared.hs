@@ -220,9 +220,7 @@ lookupVar ::
   ( MonadState (TCState ann) m,
     MonadReader (TCEnv ann) m,
     MonadError (TCError ann) m,
-    MonadWriter
-      [TCWrite ann]
-      m
+    MonadWriter [TCWrite ann] m
   ) =>
   ann ->
   ResolvedDep Identifier ->
@@ -233,9 +231,13 @@ lookupVar ann ident = do
     Just expr -> pure expr
     Nothing -> do
       classes <- asks tceClasses
+
+      let getInnerIdent (TypeclassCall i _) = Just i
+          getInnerIdent (LocalDefinition i) = Just i -- not sure if this should happen but it makes testing waaaay easier
+          getInnerIdent _ = Nothing
+
       -- if name matches typeclass instance, return freshened type
-      -- we'll need to emit a constraint too, haven't gotten that far though
-      case listToMaybe $ M.elems $ M.filter (\tc -> LocalDefinition (tcFuncName tc) == ident) classes of
+      case listToMaybe $ M.elems $ M.filter (\tc -> Just (tcFuncName tc) == getInnerIdent ident) classes of
         -- need to turn Type Identity ann into Type ResolvedDep ann
         Just tc -> do
           (newType, undoSubs) <- freshen (resolve $ tcFuncType tc)
