@@ -1,4 +1,5 @@
 {-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE NamedFieldPuns #-}
 
 module Smol.Core.Typecheck.Typeclass.Helpers
   ( recoverTypeclassUses,
@@ -11,11 +12,11 @@ where
 import Control.Monad (unless, void, zipWithM)
 import Control.Monad.Except
 import Control.Monad.Identity
+import Data.Foldable (traverse_)
 import qualified Data.List.NonEmpty as NE
 import qualified Data.Map.Strict as M
-import Data.Maybe (listToMaybe, mapMaybe)
+import Data.Maybe (mapMaybe)
 import Smol.Core.ExprUtils
-import Smol.Core.Helpers
 import Smol.Core.Typecheck.Substitute
 import Smol.Core.Typecheck.Types
 import Smol.Core.Types
@@ -47,9 +48,9 @@ matchType ::
   Type Identity ann ->
   Either
     (Type Identity ann, Type Identity ann)
-    (M.Map Identifier (Type Identity ann))
-matchType a (TVar _ (Identity b)) =
-  Right (M.singleton b a)
+    [Substitution Identity ann]
+matchType ty (TVar _ ident) =
+  Right [Substitution (SubId ident) ty]
 matchType (TTuple _ a as) (TTuple _ b bs) = do
   match <- matchType a b
   matches <- zipWithM matchType (NE.toList as) (NE.toList bs)
@@ -61,7 +62,7 @@ instanceMatchesType ::
   [Type Identity ann] ->
   Either
     (Type Identity ann, Type Identity ann)
-    (M.Map Identifier (Type Identity ann))
+    [Substitution Identity ann]
 instanceMatchesType needleTys haystackTys =
   fmap mconcat $ zipWithM matchType needleTys haystackTys
 
@@ -78,25 +79,37 @@ lookupTypeclassInstance env tch@(TypeclassHead name tys) =
   case M.lookup tch (tceInstances env) of
     Just tcInstance -> pure tcInstance
     Nothing -> do
-      case listToMaybe $
-        mapMaybe
-          ( \(TypeclassHead innerName innerTys) ->
-              case (innerName == name, instanceMatchesType tys innerTys) of
-                (True, Right matches) -> Just (TypeclassHead innerName innerTys, matches)
-                _ -> Nothing
-          )
-          (M.keys (tceInstances env)) of
-        Just (TypeclassHead innerName innerTys, matches) -> do
+      case mapMaybe
+        ( \(TypeclassHead innerName innerTys) ->
+            case (innerName == name, instanceMatchesType tys innerTys) of
+              (True, Right matches) -> Just (TypeclassHead innerName innerTys, matches)
+              _ -> Nothing
+        )
+        (M.keys (tceInstances env)) of
+        -- we deliberately fail if we find more than one matching instance
+        [(foundConstraint, subs)] -> do
           -- a) look up main instance
-          -- b) look up sub instances using `matches`
-          tracePrettyM "matching heads" (innerName, innerTys, matches)
-          error "poo"
-        Nothing ->
+          case M.lookup foundConstraint (tceInstances env) of
+            Just (Instance {inConstraints, inExpr}) -> do
+              -- specialise contraints to found types
+              let subbedConstraints = substituteTypeclassHead subs <$> inConstraints
+              -- see if found types exist
+              traverse_ (lookupTypeclassInstance env) subbedConstraints
+              -- return new instance
+              pure (Instance {inConstraints = subbedConstraints, inExpr})
+            Nothing ->
+              throwError (TCTypeclassInstanceNotFound name tys)
+        _ ->
           throwError (TCTypeclassInstanceNotFound name tys)
 
--- | do we have a matching instance? if we're looking for a concrete type and
--- it's not there, explode (ie, there is no `Eq Bool`)
--- if we're looking up `Eq a` though, raise a constraint.
+substituteTypeclassHead :: [Substitution Identity ann] -> TypeclassHead ann -> TypeclassHead ann
+substituteTypeclassHead subs (TypeclassHead name tys) =
+  TypeclassHead name (substituteMany subs <$> tys)
+
+-- | do we have a matching constraint?
+-- first look for a concrete instance
+-- if one is not there, see if we already have a matching constraint
+-- in TCEnv (ie, the function has declared `Eq a`)
 lookupTypeclassConstraint ::
   (MonadError (TCError ann) m, Ord ann) =>
   TCEnv ann ->

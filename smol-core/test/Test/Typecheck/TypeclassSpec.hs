@@ -4,6 +4,7 @@
 
 module Test.Typecheck.TypeclassSpec (spec) where
 
+import Control.Monad.Identity
 import Data.Either
 import Data.Functor
 import qualified Data.Map.Strict as M
@@ -49,27 +50,34 @@ spec = do
           ]
           `shouldBe` M.singleton (UniqueDefinition "a" 123) (TypeclassHead "Eq" [tyInt])
 
-    fdescribe "instanceMatchesType" $ do
+    describe "instanceMatchesType" $ do
       it "Eq (a,Bool) does not match Eq (Int, Int)" $ do
         instanceMatchesType @() [tyTuple tyInt [tyInt]] [tyTuple (tcVar "a") [tyBool]]
           `shouldBe` Left (tyInt, tyBool)
 
       it "Eq (a,b) matches Eq (Int, Int)" $ do
         instanceMatchesType @() [tyTuple tyInt [tyInt]] [tyTuple (tcVar "a") [tcVar "b"]]
-          `shouldBe` Right (M.fromList [("a", tyInt), ("b", tyInt)])
+          `shouldBe` Right
+            [ Substitution (SubId (Identity "a")) tyInt,
+              Substitution (SubId (Identity "b")) tyInt
+            ]
 
-    fdescribe "lookupTypeclassInstance" $ do
+    describe "lookupTypeclassInstance" $ do
       it "Is not there" $ do
         lookupTypeclassInstance @() typecheckEnv (TypeclassHead "Eq" [tyBool])
           `shouldSatisfy` isLeft
 
       it "Is there" $ do
-        lookupTypeclassInstance @() typecheckEnv (TypeclassHead "Eq" [tyInt])
-          `shouldSatisfy` isRight
+        let result = lookupTypeclassInstance @() typecheckEnv (TypeclassHead "Eq" [tyInt])
+        inConstraints <$> result `shouldBe` Right []
 
       it "Nested item is there" $ do
-        lookupTypeclassInstance @() typecheckEnv (TypeclassHead "Eq" [tyTuple tyInt [tyInt]])
-          `shouldSatisfy` isRight
+        let result = lookupTypeclassInstance @() typecheckEnv (TypeclassHead "Eq" [tyTuple tyInt [tyInt]])
+        inConstraints <$> result `shouldBe` Right [TypeclassHead "Eq" [tyInt], TypeclassHead "Eq" [tyInt]]
+
+      it "Doubly nested item is there" $ do
+        let result = lookupTypeclassInstance @() typecheckEnv (TypeclassHead "Eq" [tyTuple tyInt [tyTuple tyInt [tyInt]]])
+        result `shouldSatisfy` isRight
 
       it "Other nested item is there" $ do
         lookupTypeclassInstance @() typecheckEnv (TypeclassHead "Eq" [tyTuple tyBool [tyInt]])
