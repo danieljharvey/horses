@@ -4,7 +4,7 @@
 module Smol.Core.Typecheck.Types
   ( TCEnv (..),
     Typeclass (..),
-    TypeclassHead (..),
+    Constraint (..),
     Instance (..),
     module Smol.Core.Typecheck.Types.TCError,
     module Smol.Core.Typecheck.Types.TCState,
@@ -31,19 +31,19 @@ data Typeclass ann = Typeclass
   }
   deriving stock (Eq, Ord, Show)
 
-data TypeclassHead ann
-  = TypeclassHead String [Type Identity ann]
+data Constraint ann
+  = Constraint String [Type Identity ann]
   deriving stock (Eq, Ord, Show)
 
-instance Printer (TypeclassHead ann) where
-  prettyDoc (TypeclassHead tcn tys) =
+instance Printer (Constraint ann) where
+  prettyDoc (Constraint tcn tys) =
     PP.pretty tcn
       PP.<+> PP.concatWith
         (\a b -> a <> " " <> b)
         (prettyDoc <$> tys)
 
 data Instance ann = Instance
-  { inConstraints :: [TypeclassHead ann],
+  { inConstraints :: [Constraint ann],
     inExpr :: Expr Identity ann
   }
   deriving stock (Eq, Ord, Show)
@@ -58,6 +58,6 @@ data TCEnv ann = TCEnv
     tceGlobals :: Map Identifier (ResolvedType ann),
     tceDataTypes :: Map (ResolvedDep TypeName) (DataType ResolvedDep ann),
     tceClasses :: Map String (Typeclass ann),
-    tceInstances :: Map (TypeclassHead ann) (Instance ann),
-    tceConstraints :: [TypeclassHead ann]
+    tceInstances :: Map (Constraint ann) (Instance ann),
+    tceConstraints :: [Constraint ann]
   }

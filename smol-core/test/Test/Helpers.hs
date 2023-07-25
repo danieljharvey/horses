@@ -229,19 +229,19 @@ unsafeParseInstanceExpr :: (Monoid ann) => Text -> Expr Identity ann
 unsafeParseInstanceExpr =
   fmap (const mempty) . identityFromParsedExpr . unsafeParseExpr
 
-instances :: (Ord ann, Monoid ann) => M.Map (TypeclassHead ann) (Instance ann)
+instances :: (Ord ann, Monoid ann) => M.Map (Constraint ann) (Instance ann)
 instances =
   M.fromList
-    [ ( TypeclassHead "Eq" [tyInt],
+    [ ( Constraint "Eq" [tyInt],
         Instance {inExpr = unsafeParseInstanceExpr "\\a -> \\b -> a == b", inConstraints = []}
       ),
-      ( TypeclassHead "Eq" [tyTuple (tcVar "a") [tcVar "b"]],
+      ( Constraint "Eq" [tyTuple (tcVar "a") [tcVar "b"]],
         Instance
           { inExpr =
               unsafeParseInstanceExpr "\\a -> \\b -> case (a,b) of ((a1, a2), (b1, b2)) -> if equals a1 b1 then equals a2 b2 else False",
             inConstraints =
-              [ TypeclassHead "Eq" [tcVar "a"],
-                TypeclassHead "Eq" [tcVar "b"]
+              [ Constraint "Eq" [tcVar "a"],
+                Constraint "Eq" [tcVar "b"]
               ]
           }
       )

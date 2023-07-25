@@ -33,9 +33,9 @@ resolveExpr = mapExprDep resolve
 lookupInstanceAndCheck ::
   (Ord ann, Monoid ann, Show ann, MonadError (TCError ann) m) =>
   TCEnv ann ->
-  TypeclassHead ann ->
+  Constraint ann ->
   m (Identifier, Expr ResolvedDep (Type ResolvedDep ann))
-lookupInstanceAndCheck env tch@(TypeclassHead typeclassName _) = do
+lookupInstanceAndCheck env tch@(Constraint typeclassName _) = do
   tcInstance <- lookupTypeclassInstance env tch
   typeclass <- case M.lookup typeclassName (tceClasses env) of
     Just tc -> pure tc
@@ -46,10 +46,10 @@ checkInstance ::
   (MonadError (TCError ann) m, Ord ann, Show ann, Monoid ann) =>
   TCEnv ann ->
   Typeclass ann ->
-  TypeclassHead ann ->
+  Constraint ann ->
   Instance ann ->
   m (Identifier, Expr ResolvedDep (Type ResolvedDep ann))
-checkInstance tcEnv (Typeclass _ args funcName ty) (TypeclassHead _ tys) (Instance constraints expr) =
+checkInstance tcEnv (Typeclass _ args funcName ty) (Constraint _ tys) (Instance constraints expr) =
   do
     let subs =
           ( \(ident, tySub) ->
@@ -69,7 +69,7 @@ checkInstance tcEnv (Typeclass _ args funcName ty) (TypeclassHead _ tys) (Instan
         typeclassMethodNames =
           S.fromList $
             mapMaybe
-              ( \(TypeclassHead tcn _) -> case M.lookup tcn (tceClasses tcEnv) of
+              ( \(Constraint tcn _) -> case M.lookup tcn (tceClasses tcEnv) of
                   Just (Typeclass {tcFuncName}) -> Just tcFuncName
                   _ -> Nothing
               )
@@ -88,7 +88,7 @@ checkInstance tcEnv (Typeclass _ args funcName ty) (TypeclassHead _ tys) (Instan
 inlineTypeclassFunctions ::
   (MonadError (TCError ann) m, Ord ann, Show ann, Monoid ann) =>
   TCEnv ann ->
-  M.Map (ResolvedDep Identifier) (TypeclassHead ann) ->
+  M.Map (ResolvedDep Identifier) (Constraint ann) ->
   Expr ResolvedDep (Type ResolvedDep ann) ->
   m (Expr ResolvedDep (Type ResolvedDep ann))
 inlineTypeclassFunctions env tcs expr =

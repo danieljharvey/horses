@@ -30,7 +30,7 @@ unresolveType = mapTypeDep resolve
 
 -- this just chucks types in any order and will break on multi-parameter type
 -- classes
-recoverTypeclassUses :: (Monoid ann) => [TCWrite ann] -> M.Map (ResolvedDep Identifier) (TypeclassHead ann)
+recoverTypeclassUses :: (Monoid ann) => [TCWrite ann] -> M.Map (ResolvedDep Identifier) (Constraint ann)
 recoverTypeclassUses events =
   let allSubs = filterSubstitutions events
       allTCs = filterTypeclassUses events
@@ -38,9 +38,9 @@ recoverTypeclassUses events =
         (ident, unresolveType $ substituteMany allSubs (TUnknown mempty unknownId))
       fixTC (identifier, name, matches) =
         (identifier, name, substituteMatch <$> matches)
-      toTypeclassHead (identifier, name, fixedMatches) =
-        M.singleton identifier (TypeclassHead name (snd <$> fixedMatches))
-   in mconcat $ toTypeclassHead . fixTC <$> allTCs
+      toConstraint (identifier, name, fixedMatches) =
+        M.singleton identifier (Constraint name (snd <$> fixedMatches))
+   in mconcat $ toConstraint . fixTC <$> allTCs
 
 -- thing we're matching, typeclass we're checking
 matchType ::
@@ -72,17 +72,17 @@ instanceMatchesType needleTys haystackTys =
 lookupTypeclassInstance ::
   (MonadError (TCError ann) m, Ord ann) =>
   TCEnv ann ->
-  TypeclassHead ann ->
+  Constraint ann ->
   m (Instance ann)
-lookupTypeclassInstance env tch@(TypeclassHead name tys) =
+lookupTypeclassInstance env tch@(Constraint name tys) =
   -- first, do we have a concrete instance?
   case M.lookup tch (tceInstances env) of
     Just tcInstance -> pure tcInstance
     Nothing -> do
       case mapMaybe
-        ( \(TypeclassHead innerName innerTys) ->
+        ( \(Constraint innerName innerTys) ->
             case (innerName == name, instanceMatchesType tys innerTys) of
-              (True, Right matches) -> Just (TypeclassHead innerName innerTys, matches)
+              (True, Right matches) -> Just (Constraint innerName innerTys, matches)
               _ -> Nothing
         )
         (M.keys (tceInstances env)) of
@@ -92,7 +92,7 @@ lookupTypeclassInstance env tch@(TypeclassHead name tys) =
           case M.lookup foundConstraint (tceInstances env) of
             Just (Instance {inConstraints, inExpr}) -> do
               -- specialise contraints to found types
-              let subbedConstraints = substituteTypeclassHead subs <$> inConstraints
+              let subbedConstraints = substituteConstraint subs <$> inConstraints
               -- see if found types exist
               traverse_ (lookupTypeclassInstance env) subbedConstraints
               -- return new instance
@@ -102,9 +102,12 @@ lookupTypeclassInstance env tch@(TypeclassHead name tys) =
         _ ->
           throwError (TCTypeclassInstanceNotFound name tys)
 
-substituteTypeclassHead :: [Substitution Identity ann] -> TypeclassHead ann -> TypeclassHead ann
-substituteTypeclassHead subs (TypeclassHead name tys) =
-  TypeclassHead name (substituteMany subs <$> tys)
+substituteConstraint ::
+  [Substitution Identity ann] ->
+  Constraint ann ->
+  Constraint ann
+substituteConstraint subs (Constraint name tys) =
+  Constraint name (substituteMany subs <$> tys)
 
 -- | do we have a matching constraint?
 -- first look for a concrete instance
@@ -113,9 +116,9 @@ substituteTypeclassHead subs (TypeclassHead name tys) =
 lookupTypeclassConstraint ::
   (MonadError (TCError ann) m, Ord ann) =>
   TCEnv ann ->
-  TypeclassHead ann ->
+  Constraint ann ->
   m ()
-lookupTypeclassConstraint env tch@(TypeclassHead name tys) = do
+lookupTypeclassConstraint env tch@(Constraint name tys) = do
   -- see if this is a valid instance first?
   _ <-
     void (lookupTypeclassInstance env tch) `catchError` \_ -> do

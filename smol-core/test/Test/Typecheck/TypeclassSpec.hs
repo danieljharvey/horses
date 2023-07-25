@@ -48,7 +48,7 @@ spec = do
           [ TCWTypeclassUse (UniqueDefinition "a" 123) "Eq" [("a", 10)],
             TCWSubstitution (Substitution (SubUnknown 10) tyInt)
           ]
-          `shouldBe` M.singleton (UniqueDefinition "a" 123) (TypeclassHead "Eq" [tyInt])
+          `shouldBe` M.singleton (UniqueDefinition "a" 123) (Constraint "Eq" [tyInt])
 
     describe "instanceMatchesType" $ do
       it "Eq (a,Bool) does not match Eq (Int, Int)" $ do
@@ -64,33 +64,33 @@ spec = do
 
     describe "lookupTypeclassInstance" $ do
       it "Is not there" $ do
-        lookupTypeclassInstance @() typecheckEnv (TypeclassHead "Eq" [tyBool])
+        lookupTypeclassInstance @() typecheckEnv (Constraint "Eq" [tyBool])
           `shouldSatisfy` isLeft
 
       it "Is there" $ do
-        let result = lookupTypeclassInstance @() typecheckEnv (TypeclassHead "Eq" [tyInt])
+        let result = lookupTypeclassInstance @() typecheckEnv (Constraint "Eq" [tyInt])
         inConstraints <$> result `shouldBe` Right []
 
       it "Nested item is there" $ do
-        let result = lookupTypeclassInstance @() typecheckEnv (TypeclassHead "Eq" [tyTuple tyInt [tyInt]])
-        inConstraints <$> result `shouldBe` Right [TypeclassHead "Eq" [tyInt], TypeclassHead "Eq" [tyInt]]
+        let result = lookupTypeclassInstance @() typecheckEnv (Constraint "Eq" [tyTuple tyInt [tyInt]])
+        inConstraints <$> result `shouldBe` Right [Constraint "Eq" [tyInt], Constraint "Eq" [tyInt]]
 
       it "Doubly nested item is there" $ do
-        let result = lookupTypeclassInstance @() typecheckEnv (TypeclassHead "Eq" [tyTuple tyInt [tyTuple tyInt [tyInt]]])
+        let result = lookupTypeclassInstance @() typecheckEnv (Constraint "Eq" [tyTuple tyInt [tyTuple tyInt [tyInt]]])
         result `shouldSatisfy` isRight
 
       it "Other nested item is there" $ do
-        lookupTypeclassInstance @() typecheckEnv (TypeclassHead "Eq" [tyTuple tyBool [tyInt]])
+        lookupTypeclassInstance @() typecheckEnv (Constraint "Eq" [tyTuple tyBool [tyInt]])
           `shouldSatisfy` isLeft
 
     describe "lookupTypeclassConstraint" $ do
       it "Is not there" $ do
-        lookupTypeclassConstraint @() typecheckEnv (TypeclassHead "Eq" [tcVar "a"])
+        lookupTypeclassConstraint @() typecheckEnv (Constraint "Eq" [tcVar "a"])
           `shouldSatisfy` isLeft
 
       it "Is there" $ do
-        let tcEnvWithConstraint = typecheckEnv {tceConstraints = [TypeclassHead "Eq" [tcVar "a"]]}
-        lookupTypeclassConstraint @() tcEnvWithConstraint (TypeclassHead "Eq" [tcVar "a"])
+        let tcEnvWithConstraint = typecheckEnv {tceConstraints = [Constraint "Eq" [tcVar "a"]]}
+        lookupTypeclassConstraint @() tcEnvWithConstraint (Constraint "Eq" [tcVar "a"])
           `shouldSatisfy` isRight
 
     describe "Check instances" $ do
@@ -98,7 +98,7 @@ spec = do
         checkInstance @()
           typecheckEnv
           showTypeclass
-          (TypeclassHead "Show" [tyUnit])
+          (Constraint "Show" [tyUnit])
           ( Instance
               { inExpr = unsafeParseInstanceExpr "\\a -> \"Unit\"",
                 inConstraints = []
@@ -110,7 +110,7 @@ spec = do
         checkInstance @()
           typecheckEnv
           showTypeclass
-          (TypeclassHead "Show" [tyUnit])
+          (Constraint "Show" [tyUnit])
           ( Instance
               { inExpr = unsafeParseInstanceExpr "\\a -> 123",
                 inConstraints = []
@@ -122,7 +122,7 @@ spec = do
         checkInstance @()
           typecheckEnv
           eqTypeclass
-          (TypeclassHead "Eq" [tyInt])
+          (Constraint "Eq" [tyInt])
           ( Instance
               { inExpr = unsafeParseInstanceExpr "\\a -> \\b -> a == b",
                 inConstraints = []
@@ -134,7 +134,7 @@ spec = do
         checkInstance @()
           typecheckEnv
           eqTypeclass
-          (TypeclassHead "Show" [tyUnit])
+          (Constraint "Show" [tyUnit])
           ( Instance
               { inExpr = unsafeParseInstanceExpr "\\a -> \\b -> 123",
                 inConstraints = []
@@ -146,13 +146,13 @@ spec = do
         checkInstance @()
           typecheckEnv
           eqTypeclass
-          (TypeclassHead "Eq" [tyTuple (tcVar "a") [tcVar "b"]])
+          (Constraint "Eq" [tyTuple (tcVar "a") [tcVar "b"]])
           ( Instance
               { inExpr =
                   unsafeParseInstanceExpr "\\a -> \\b -> case (a,b) of ((a1, a2), (b1, b2)) -> if equals a1 b1 then equals a2 b2 else False",
                 inConstraints =
-                  [ TypeclassHead "Eq" [tcVar "a"],
-                    TypeclassHead "Eq" [tcVar "b"]
+                  [ Constraint "Eq" [tcVar "a"],
+                    Constraint "Eq" [tcVar "b"]
                   ]
               }
           )
@@ -162,12 +162,12 @@ spec = do
         checkInstance @()
           typecheckEnv
           eqTypeclass
-          (TypeclassHead "Eq" [tyTuple (tcVar "a") [tcVar "b"]])
+          (Constraint "Eq" [tyTuple (tcVar "a") [tcVar "b"]])
           ( Instance
               { inExpr =
                   unsafeParseInstanceExpr "\\a -> \\b -> case (a,b) of ((a1, a2), (b1, b2)) -> if equals a1 b1 then equals a2 b2 else False",
                 inConstraints =
-                  [ TypeclassHead "Eq" [tcVar "a"]
+                  [ Constraint "Eq" [tcVar "a"]
                   ]
               }
           )
@@ -184,7 +184,7 @@ spec = do
       it "Eq Int functions inlined" $ do
         let expr = getRight $ evalExpr "equals (1: Int) (2: Int)"
             expected = void $ getRight $ evalExpr "let equals = (\\a -> \\b -> a == b : Int -> Int -> Bool); equals (1 : Int) (2 : Int)"
-            typeclasses = M.singleton "equals" (TypeclassHead "Eq" [tyInt])
+            typeclasses = M.singleton "equals" (Constraint "Eq" [tyInt])
 
         fmap void (inlineTypeclassFunctions typecheckEnv typeclasses expr)
           `shouldBe` Right expected
