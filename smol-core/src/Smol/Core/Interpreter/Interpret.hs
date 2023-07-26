@@ -21,7 +21,7 @@ initialStack = StackFrame mempty
 addEmptyStackFrames ::
   Expr dep ann ->
   Expr dep (ExprData ann)
-addEmptyStackFrames expr =
+addEmptyStackFrames =
   fmap
     ( \ann ->
         ExprData
@@ -30,7 +30,6 @@ addEmptyStackFrames expr =
             edAnnotation = ann
           }
     )
-    expr
 
 interpret ::
   (Eq ann, Show ann) =>

@@ -74,6 +74,7 @@ library
     Smol.Core.Modules.Dependencies
     Smol.Core.Modules.FromParts
     Smol.Core.Modules.Helpers
+    Smol.Core.Modules.Interpret
     Smol.Core.Modules.Monad
     Smol.Core.Modules.ResolveDeps
     Smol.Core.Modules.RunTests
