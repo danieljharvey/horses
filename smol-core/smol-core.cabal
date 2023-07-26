@@ -148,6 +148,7 @@ test-suite smol-core-tests
     Test.Helpers
     Test.Interpreter.InterpreterSpec
     Test.Modules.FromPartsSpec
+    Test.Modules.InterpreterSpec
     Test.Modules.ResolveDepsSpec
     Test.Modules.RunTestsSpec
     Test.Modules.TypecheckSpec

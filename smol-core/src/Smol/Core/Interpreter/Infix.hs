@@ -4,13 +4,13 @@ import Control.Monad (void, (<=<))
 import Control.Monad.Except
 import Smol.Core.Interpreter.Types
 import Smol.Core.Interpreter.Types.InterpreterError
+import Smol.Core.Typecheck.Shared
 import Smol.Core.Types.Expr
 import Smol.Core.Types.Op
 import Smol.Core.Types.Prim
 
 -- | this assumes that
 interpretInfix ::
-  (Monoid ann) =>
   InterpretFn ann ->
   Op ->
   InterpretExpr ann ->
@@ -21,12 +21,12 @@ interpretInfix interpretFn operator a b = do
   plainB <- interpretFn <=< interpretFn $ b
   case operator of
     OpEquals -> do
-      let withBool = pure . EPrim mempty . PBool
+      let withBool = pure . EPrim (getExprAnnotation a) . PBool
       if void plainA == void plainB
         then withBool True
         else withBool False
     OpAdd -> do
-      let withInt = pure . EPrim mempty . PInt
+      let withInt = pure . EPrim (getExprAnnotation a) . PInt
           getInt exp' = case exp' of
             (EPrim _ (PInt i)) -> Right i
             _ -> Left $ AdditionWithNonNumber a

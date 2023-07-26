@@ -1,7 +1,6 @@
 module Smol.Core.Interpreter.Interpret (interpret, addEmptyStackFrames) where
 
 import Control.Monad.Reader
-import Data.Functor
 import qualified Data.List.NonEmpty as NE
 import Data.Map.Strict (Map)
 import Smol.Core.Interpreter.App
@@ -20,14 +19,21 @@ initialStack :: StackFrame ann
 initialStack = StackFrame mempty
 
 addEmptyStackFrames ::
-  (Monoid ann) =>
   Expr dep ann ->
   Expr dep (ExprData ann)
 addEmptyStackFrames expr =
-  expr $> mempty
+  fmap
+    ( \ann ->
+        ExprData
+          { edIsRecursive = False,
+            edStackFrame = mempty,
+            edAnnotation = ann
+          }
+    )
+    expr
 
 interpret ::
-  (Eq ann, Monoid ann, Show ann) =>
+  (Eq ann, Show ann) =>
   Map (ResolvedDep Identifier) (InterpretExpr ann) ->
   InterpretExpr ann ->
   Either (InterpreterError ann) (InterpretExpr ann)
@@ -37,17 +43,17 @@ interpret deps expr =
 -- somewhat pointless separate function to make debug logging each value out
 -- easier
 interpretExpr ::
-  (Eq ann, Monoid ann, Show ann) =>
+  (Eq ann, Show ann) =>
   InterpretExpr ann ->
   InterpreterM ann (InterpretExpr ann)
 interpretExpr =
   interpretExpr'
 
 interpretExpr' ::
-  (Eq ann, Monoid ann, Show ann) =>
+  (Eq ann, Show ann) =>
   InterpretExpr ann ->
   InterpreterM ann (InterpretExpr ann)
-interpretExpr' (EPrim _ val) = pure (EPrim mempty val)
+interpretExpr' (EPrim ann val) = pure (EPrim ann val)
 interpretExpr' (EAnn _ _ expr) = interpretExpr' expr
 interpretExpr' (ELet exprData ident expr body) =
   interpretLet interpretExpr (ident, exprData) expr body

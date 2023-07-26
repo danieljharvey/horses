@@ -3,6 +3,7 @@ module Main (main) where
 import Test.Hspec
 import qualified Test.Interpreter.InterpreterSpec
 import qualified Test.Modules.FromPartsSpec
+import qualified Test.Modules.InterpreterSpec
 import qualified Test.Modules.ResolveDepsSpec
 import qualified Test.Modules.RunTestsSpec
 import qualified Test.Modules.TypecheckSpec
@@ -22,7 +23,8 @@ main = hspec $ do
   Test.Typecheck.PatternSpec.spec
   Test.ParserSpec.spec
   Test.Interpreter.InterpreterSpec.spec
-  Test.Modules.ResolveDepsSpec.spec
-  Test.Modules.TypecheckSpec.spec
   Test.Modules.FromPartsSpec.spec
+  Test.Modules.InterpreterSpec.spec
+  Test.Modules.ResolveDepsSpec.spec
   Test.Modules.RunTestsSpec.spec
+  Test.Modules.TypecheckSpec.spec

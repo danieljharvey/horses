@@ -4,6 +4,7 @@ import Smol.Core.Interpreter.FindUses
 import Smol.Core.Interpreter.Monad
 import Smol.Core.Interpreter.Types
 import Smol.Core.Interpreter.Types.Stack
+import Smol.Core.Typecheck.Shared (getExprAnnotation)
 import Smol.Core.Types.Expr
 import Smol.Core.Types.Identifier
 import Smol.Core.Types.ResolvedDep
@@ -13,7 +14,6 @@ import Smol.Core.Types.ResolvedDep
 -- this is NOT the one, we need some form of indirection so the closure can say
 -- "and look up whatever 'var' is pls"
 interpretLetExpr ::
-  (Monoid ann) =>
   InterpretFn ann ->
   ResolvedDep Identifier ->
   InterpretExpr ann ->
@@ -24,13 +24,14 @@ interpretLetExpr interpretFn var expr = do
     lambdaExpr@ELambda {} ->
       if isRecursive var lambdaExpr
         then -- make this a function of \binding -> actualFunction
-          interpretFn (ELambda (ExprData mempty True mempty) var lambdaExpr)
+
+          let annotation = edAnnotation (getExprAnnotation lambdaExpr)
+           in interpretFn (ELambda (ExprData mempty True annotation) var lambdaExpr)
         else -- non-recursive, run as normal
           interpretFn lambdaExpr
     _ -> pure intExpr
 
 interpretLet ::
-  (Monoid ann) =>
   InterpretFn ann ->
   (ResolvedDep Identifier, ExprData ann) ->
   InterpretExpr ann ->

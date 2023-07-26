@@ -32,5 +32,26 @@ spec = do
         runTests <$> typedMod `shouldBe` Right mempty
 
       it "Two tests, one pass, one fail, no deps" $ do
-        let typedMod = testTypecheck (joinText ["def yes = True", "def no = False", "test \"pass\" using yes", "test \"fail\" using no"])
+        let typedMod =
+              testTypecheck
+                ( joinText
+                    [ "def yes = True",
+                      "def no = False",
+                      "test \"pass\" using yes",
+                      "test \"fail\" using no"
+                    ]
+                )
+        runTests <$> typedMod `shouldBe` Right [("pass", True), ("fail", False)]
+
+      it "Two tests, one pass, one fail, with deps" $ do
+        let typedMod =
+              testTypecheck
+                ( joinText
+                    [ "def id a = a",
+                      "def yes = id True",
+                      "def no = id False",
+                      "test \"pass\" using yes",
+                      "test \"fail\" using no"
+                    ]
+                )
         runTests <$> typedMod `shouldBe` Right [("pass", True), ("fail", False)]
