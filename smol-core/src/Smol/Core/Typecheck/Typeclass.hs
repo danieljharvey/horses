@@ -6,6 +6,7 @@ module Smol.Core.Typecheck.Typeclass
   ( checkInstance,
     lookupInstanceAndCheck,
     inlineTypeclassFunctions,
+  getTypeclassMethodNames,
     module Smol.Core.Typecheck.Typeclass.Helpers,
   )
 where
@@ -81,6 +82,14 @@ checkInstance tcEnv (Typeclass _ args funcName ty) (Constraint _ tys) (Instance 
         (typedExpr, _typeclassUses) <- elaborate typecheckEnv resolvedExpr
 
         pure (funcName, typedExpr)
+
+-- let's get all the method names from the Typeclasses
+-- mentioned in the instance constraints
+getTypeclassMethodNames :: TCEnv ann -> S.Set Identifier
+getTypeclassMethodNames tcEnv =
+          S.fromList $
+            tcFuncName <$> M.elems (tceClasses tcEnv)
+
 
 -- | 10x typeclasses implementation - we inline all the instances as Let
 -- bindings

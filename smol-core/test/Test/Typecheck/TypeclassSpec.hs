@@ -1,7 +1,7 @@
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE TypeApplications #-}
-
+  {-# LANGUAGE RankNTypes #-}
 module Test.Typecheck.TypeclassSpec (spec) where
 
 import Control.Monad.Identity
@@ -15,6 +15,12 @@ import Smol.Core.Typecheck.Typeclass
 import Test.Helpers
 import Test.Hspec
 
+unresolve :: ResolvedDep a -> Identity a
+unresolve (LocalDefinition a) = Identity a
+unresolve (UniqueDefinition a _) = Identity a
+unresolve (TypeclassCall a _) = Identity a
+
+
 evalExpr ::
   Text ->
   Either (TCError Annotation) (ResolvedExpr (Type ResolvedDep Annotation))
@@ -27,11 +33,12 @@ getRight (Right a) = a
 getRight (Left e) = error (show e)
 
 testElaborate ::
+  forall ann.
   (Ord ann, Show ann, Monoid ann) =>
   Expr ParseDep ann ->
   Either (TCError ann) (Expr ResolvedDep (Type ResolvedDep ann))
 testElaborate expr =
-  case resolveExprDeps expr mempty of
+  case resolveExprDeps expr (getTypeclassMethodNames @() typecheckEnv) of
     Left e -> error (show e)
     Right resolvedExpr -> case elaborate typecheckEnv resolvedExpr of
       Right (typedExpr, _typeclassUses) -> pure typedExpr
@@ -173,18 +180,29 @@ spec = do
           )
           `shouldSatisfy` isLeft
 
-    describe "Inline typeclass functions" $ do
+    fdescribe "Inline typeclass functions" $ do
+      let simplify = void . mapExprDep unresolve
+
       it "No functions, no change" $ do
         let expr = getRight $ evalExpr "1 + 2"
             expected = getRight $ evalExpr "1 + 2"
 
-        inlineTypeclassFunctions typecheckEnv mempty expr
-          `shouldBe` Right expected
+        simplify <$> inlineTypeclassFunctions typecheckEnv mempty expr
+          `shouldBe` Right (simplify expected)
 
       it "Eq Int functions inlined" $ do
         let expr = getRight $ evalExpr "equals (1: Int) (2: Int)"
-            expected = void $ getRight $ evalExpr "let equals = (\\a -> \\b -> a == b : Int -> Int -> Bool); equals (1 : Int) (2 : Int)"
+            expected = getRight $ evalExpr "\\instances -> case instances of equals -> equals (1 : Int) (2 : Int)"
             typeclasses = M.singleton "equals" (Constraint "Eq" [tyInt])
 
-        fmap void (inlineTypeclassFunctions typecheckEnv typeclasses expr)
-          `shouldBe` Right expected
+        simplify <$> (inlineTypeclassFunctions typecheckEnv typeclasses expr)
+          `shouldBe` Right (simplify expected)
+
+      it "Eq (a,b) functions inlined" $ do
+        let expr = getRight $ evalExpr "\\a -> \\b -> case (a,b) of ((a1, a2), (b1, b2)) -> if equals a1 b1 then equals a2 b2 else False"
+            expected = getRight $ evalExpr "\\instances -> case instances of (equals1,equals2) -> \\a -> \\b -> case (a,b) of ((a1, a2), (b1, b2)) -> if equals1 a1 b1 then equals2 a2 b2 else False"
+
+            typeclasses = M.singleton "equals" (Constraint "Eq" [tyInt])
+
+        simplify <$> (inlineTypeclassFunctions typecheckEnv typeclasses expr)
+          `shouldBe` Right (simplify expected)
