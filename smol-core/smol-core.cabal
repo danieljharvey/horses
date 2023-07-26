@@ -74,6 +74,7 @@ library
     Smol.Core.Modules.Dependencies
     Smol.Core.Modules.FromParts
     Smol.Core.Modules.Helpers
+    Smol.Core.Modules.Interpret
     Smol.Core.Modules.Monad
     Smol.Core.Modules.ResolveDeps
     Smol.Core.Modules.RunTests
@@ -148,6 +149,7 @@ test-suite smol-core-tests
     Test.Helpers
     Test.Interpreter.InterpreterSpec
     Test.Modules.FromPartsSpec
+    Test.Modules.InterpreterSpec
     Test.Modules.ResolveDepsSpec
     Test.Modules.RunTestsSpec
     Test.Modules.TypecheckSpec

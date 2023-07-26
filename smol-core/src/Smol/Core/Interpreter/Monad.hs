@@ -47,20 +47,37 @@ getCurrentStackFrame :: InterpreterM ann (StackFrame ann)
 getCurrentStackFrame = asks ireStack
 
 lookupVar ::
-  (Monoid ann, Show ann) =>
+  (Show ann) =>
   ResolvedDep Identifier ->
   InterpreterM ann (InterpretExpr ann)
-lookupVar identifier = do
+lookupVar identifier =
+  lookupVarInStack identifier
+    `catchError` \_ -> lookupVarInDeps identifier
+
+lookupVarInDeps ::
+  ResolvedDep Identifier ->
+  InterpreterM ann (InterpretExpr ann)
+lookupVarInDeps identifier = do
+  matchingDep <- asks (M.lookup identifier . ireGlobals)
+  case matchingDep of
+    Just a -> pure a
+    Nothing -> throwError (CouldNotFindVar mempty identifier)
+
+lookupVarInStack ::
+  (Show ann) =>
+  ResolvedDep Identifier ->
+  InterpreterM ann (InterpretExpr ann)
+lookupVarInStack identifier = do
   (StackFrame entries) <- getCurrentStackFrame
   case M.lookup identifier entries of
-    Just myLam@(ELambda (ExprData _ isRec _) _ _) ->
+    Just myLam@(ELambda ed@(ExprData _ isRec _) _ _) ->
       -- when we save functions on the stack we save them as
       -- \letName -> function
       -- so that recursion works
       -- therefore when fetching it we apply it to itself
       -- like a fixpoint combinator thing
       if isRec
-        then pure (EApp mempty myLam myLam)
+        then pure (EApp ed myLam myLam)
         else pure myLam
     -- if it's another var, fetch that
     Just (EVar _ a) -> lookupVar a

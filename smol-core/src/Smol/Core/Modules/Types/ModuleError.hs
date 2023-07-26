@@ -11,6 +11,7 @@ import Data.Set (Set)
 import Data.Text (Text)
 import qualified Data.Text as T
 import qualified Error.Diagnose as Diag
+import Smol.Core.Interpreter.Types.InterpreterError
 import Smol.Core.Modules.Types.DefIdentifier
 import Smol.Core.Modules.Types.ModuleName
 import Smol.Core.Modules.Types.TestName
@@ -39,6 +40,7 @@ data ModuleError ann
   | DefMissingTypeAnnotation DefIdentifier Identifier
   | EmptyTestName Identifier
   | ErrorInTest TestName (TestError ann)
+  | ErrorInInterpreter (InterpreterError ann)
   deriving stock (Eq, Ord, Show)
 
 moduleErrorDiagnostic :: ModuleError Annotation -> Diag.Diagnostic Text
