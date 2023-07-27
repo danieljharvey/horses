@@ -31,7 +31,7 @@ checkPattern ::
     MonadError (TCError ann) m,
     MonadReader (TCEnv ann) m,
     MonadState (TCState ann) m,
-    MonadWriter [Substitution ResolvedDep ann] m
+    MonadWriter [TCWrite ann] m
   ) =>
   ResolvedType ann ->
   Pattern ResolvedDep ann ->
@@ -56,7 +56,7 @@ checkPattern checkTy checkPat =
           env = envA <> mconcat (NE.toList envRest)
       -- we have learned that our unknown type equals the tuple of new unknowns
       -- we have created
-      tell [Substitution (SubUnknown a) ty]
+      tell [TCWSubstitution $ Substitution (SubUnknown a) ty]
       pure (PTuple ty patA patRest, env)
     (ty, PVar _ ident) ->
       pure (PVar ty ident, M.singleton ident ty)

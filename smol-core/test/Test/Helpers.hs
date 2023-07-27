@@ -37,10 +37,10 @@ module Test.Helpers
   )
 where
 
+import Control.Monad.Identity
 import Control.Monad.Reader
 import Control.Monad.State
 import Control.Monad.Writer
-import Control.Monad.Identity
 import Data.Foldable (foldl')
 import Data.Functor
 import qualified Data.List.NonEmpty as NE
@@ -177,7 +177,7 @@ joinText = T.intercalate "\n"
 runTypecheckM ::
   (Monad m) =>
   TCEnv ann ->
-  StateT (TCState ann) (WriterT [Substitution ResolvedDep ann] (ReaderT (TCEnv ann) m)) a ->
+  StateT (TCState ann) (WriterT [TCWrite ann] (ReaderT (TCEnv ann) m)) a ->
   m a
 runTypecheckM env action =
   fst

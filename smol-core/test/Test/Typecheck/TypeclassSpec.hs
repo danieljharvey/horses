@@ -198,6 +198,43 @@ spec = do
           )
           `shouldSatisfy` isLeft
 
+    fdescribe "dedupeConstraints" $ do
+      it "Empty is empty" $ do
+        dedupeConstraints @() mempty `shouldBe` (mempty, mempty)
+
+      it "One is one and gets a new name" $ do
+        dedupeConstraints @() (M.singleton "oldname" (Constraint "Eq" [tyInt]))
+          `shouldBe` ( [ ( TypeclassCall "newname" 1,
+                           Constraint "Eq" [tyInt]
+                         )
+                       ],
+                       M.singleton "oldname" (TypeclassCall "newname" 1)
+                     )
+
+      it "Two functions, each used twice become one of each" $ do
+        dedupeConstraints @()
+          ( M.fromList
+              [ ("eqInt1", Constraint "Eq" [tyInt]),
+                ("eqInt2", Constraint "Eq" [tyInt]),
+                ("eqBool1", Constraint "Eq" [tyBool]),
+                ("eqBool2", Constraint "Eq" [tyBool])
+              ]
+          )
+          `shouldBe` ( [ ( TypeclassCall "newname" 1,
+                           Constraint "Eq" [tyInt]
+                         ),
+                         ( TypeclassCall "newname" 2,
+                           Constraint "Eq" [tyBool]
+                         )
+                       ],
+                       M.fromList
+                         [ ("eqInt1", TypeclassCall "newname" 1),
+                           ("eqInt2", TypeclassCall "newname" 1),
+                           ("eqBool1", TypeclassCall "newname" 2),
+                           ("eqBool2", TypeclassCall "newname" 2)
+                         ]
+                     )
+
     fdescribe "Inline typeclass functions" $ do
       let simplify :: Expr ResolvedDep ann -> Expr CompareWrapper ()
           simplify = void . mapExprDep CompareWrapper
@@ -216,17 +253,26 @@ spec = do
                     `shouldBe` Right (simplify expectedExpr)
         )
         [ (mempty, ["1 + 2"], ["1 + 2"]),
-          ( M.singleton "tcequals1" (Constraint "Eq" [tyInt]),
+          ( M.singleton "blah1" (Constraint "Eq" [tyInt]),
             ["equals (1: Int) (2: Int)"],
-            [ "let tcequals1 = (\\a1 -> \\b2 -> a1 == b2 : Int -> Int -> Bool);",
+            [ "\\instances -> case (instances : Int -> Int -> Bool) of tcequals1 ->",
               "tcequals1 (1 : Int) (2 : Int)"
+            ]
+          ),
+          ( M.fromList
+              [ ("blah1", Constraint "Eq" [tyInt]),
+                ("blah2", Constraint "Eq" [tyInt])
+              ],
+            ["if equals (1: Int) (2: Int) then equals (2: Int) (3: Int) else False"],
+            [ "\\instances1 -> case (instances1 : Int -> Int -> Bool) of tcequals1 ->",
+              "if tcequals1 (1 : Int) (2 : Int) then tcequals1 (2: Int) (3: Int) else False"
             ]
           ),
           ( M.fromList [("eqA", Constraint "Eq" [tcVar "a"]), ("eqB", Constraint "Eq" [tcVar "b"])],
             [ "(\\a -> \\b -> case (a,b) of ((a1, b1), (a2, b2)) -> ",
               "if equals a1 a2 then equals b1 b2 else False : (a,b) -> (a,b) -> Bool)"
             ],
-            [ "\\instances -> case instances of (eqA, eqB) -> ",
+            [ "\\instances -> case (instances : (a -> a -> Bool, b -> b -> Bool)) of (eqA, eqB) -> ",
               "(\\a -> \\b -> case (a,b) of ((a1, a2), (b1, b2)) ->",
               "if a1 b1 then eqB b1 b2 else False : (a,b) -> (a,b) -> Bool)"
             ]

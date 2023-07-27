@@ -4,7 +4,6 @@
 
 module Test.TypecheckSpec (spec) where
 
-import Control.Monad.Reader
 import Control.Monad.State
 import Data.Bifunctor
 import Data.Either
