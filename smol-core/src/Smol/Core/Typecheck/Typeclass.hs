@@ -6,7 +6,7 @@ module Smol.Core.Typecheck.Typeclass
   ( checkInstance,
     lookupInstanceAndCheck,
     inlineTypeclassFunctions,
-  getTypeclassMethodNames,
+    getTypeclassMethodNames,
     module Smol.Core.Typecheck.Typeclass.Helpers,
   )
 where
@@ -87,12 +87,11 @@ checkInstance tcEnv (Typeclass _ args funcName ty) (Constraint _ tys) (Instance 
 -- mentioned in the instance constraints
 getTypeclassMethodNames :: TCEnv ann -> S.Set Identifier
 getTypeclassMethodNames tcEnv =
-          S.fromList $
-            tcFuncName <$> M.elems (tceClasses tcEnv)
+  S.fromList $
+    tcFuncName <$> M.elems (tceClasses tcEnv)
 
-
--- | 10x typeclasses implementation - we inline all the instances as Let
--- bindings
+-- | 10x typeclasses implementation - given an `expr` that calls typeclass
+-- methods, we inline all the instances as Let bindings
 -- `let equals_1 = \a -> \b -> a == b in equals_1 10 11`
 inlineTypeclassFunctions ::
   (MonadError (TCError ann) m, Ord ann, Show ann, Monoid ann) =>

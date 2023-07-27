@@ -1,48 +1,66 @@
+{-# LANGUAGE DerivingStrategies #-}
 {-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE GeneralisedNewtypeDeriving #-}
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE RankNTypes #-}
 {-# LANGUAGE TypeApplications #-}
-  {-# LANGUAGE RankNTypes #-}
+
 module Test.Typecheck.TypeclassSpec (spec) where
 
 import Control.Monad.Identity
+import qualified Data.Char as Char
 import Data.Either
+import Data.Foldable (traverse_)
 import Data.Functor
 import qualified Data.Map.Strict as M
 import Data.Text (Text)
 import Smol.Core
 import Smol.Core.Modules.ResolveDeps
+import Smol.Core.Typecheck.FromParsedExpr (fromParsedExpr)
 import Smol.Core.Typecheck.Typeclass
 import Test.Helpers
 import Test.Hspec
 
-unresolve :: ResolvedDep a -> Identity a
-unresolve (LocalDefinition a) = Identity a
-unresolve (UniqueDefinition a _) = Identity a
-unresolve (TypeclassCall a _) = Identity a
+-- this is really grubby, soz
+unresolve :: (Show a) => ResolvedDep a -> String
+unresolve (LocalDefinition a) = filter Char.isAlphaNum (show a)
+unresolve (UniqueDefinition a i) = filter Char.isAlphaNum (show a <> show i)
+unresolve (TypeclassCall a i) = filter Char.isAlphaNum ("tc" <> show a <> show i)
 
+newtype CompareWrapper a = CompareWrapper (ResolvedDep a)
+  deriving newtype (Ord, Show)
+
+instance (Show a) => Eq (CompareWrapper a) where
+  (CompareWrapper a) == (CompareWrapper b) =
+    unresolve a == unresolve b
 
 evalExpr ::
   Text ->
   Either (TCError Annotation) (ResolvedExpr (Type ResolvedDep Annotation))
 evalExpr input = case parseExprAndFormatError input of
   Left e -> error (show e)
-  Right expr -> testElaborate expr
+  Right expr ->
+    case resolveExprDeps expr (getTypeclassMethodNames @() typecheckEnv) of
+      Left e -> error (show e)
+      Right resolvedExpr -> case elaborate typecheckEnv resolvedExpr of
+        Right (typedExpr, _typeclassUses) -> pure typedExpr
+        Left e -> Left e
+
+-- | elaborate but don't do clever resolving so we can construct the
+-- expectations we want
+evalExprUnsafe ::
+  Text ->
+  Either (TCError Annotation) (ResolvedExpr (Type ResolvedDep Annotation))
+evalExprUnsafe input = case parseExprAndFormatError input of
+  Left e -> error (show e)
+  Right expr ->
+    case elaborate typecheckEnv (fromParsedExpr expr) of
+      Right (typedExpr, _typeclassUses) -> pure typedExpr
+      Left e -> Left e
 
 getRight :: (Show e) => Either e a -> a
 getRight (Right a) = a
 getRight (Left e) = error (show e)
-
-testElaborate ::
-  forall ann.
-  (Ord ann, Show ann, Monoid ann) =>
-  Expr ParseDep ann ->
-  Either (TCError ann) (Expr ResolvedDep (Type ResolvedDep ann))
-testElaborate expr =
-  case resolveExprDeps expr (getTypeclassMethodNames @() typecheckEnv) of
-    Left e -> error (show e)
-    Right resolvedExpr -> case elaborate typecheckEnv resolvedExpr of
-      Right (typedExpr, _typeclassUses) -> pure typedExpr
-      Left e -> Left e
 
 spec :: Spec
 spec = do
@@ -181,28 +199,36 @@ spec = do
           `shouldSatisfy` isLeft
 
     fdescribe "Inline typeclass functions" $ do
-      let simplify = void . mapExprDep unresolve
+      let simplify :: Expr ResolvedDep ann -> Expr CompareWrapper ()
+          simplify = void . mapExprDep CompareWrapper
 
-      it "No functions, no change" $ do
-        let expr = getRight $ evalExpr "1 + 2"
-            expected = getRight $ evalExpr "1 + 2"
+      it "Test Eq instance even works" $ do
+        (CompareWrapper (LocalDefinition ("a1" :: String))) `shouldBe` (CompareWrapper (UniqueDefinition "a" 1))
 
-        simplify <$> inlineTypeclassFunctions typecheckEnv mempty expr
-          `shouldBe` Right (simplify expected)
-
-      it "Eq Int functions inlined" $ do
-        let expr = getRight $ evalExpr "equals (1: Int) (2: Int)"
-            expected = getRight $ evalExpr "\\instances -> case instances of equals -> equals (1 : Int) (2 : Int)"
-            typeclasses = M.singleton "equals" (Constraint "Eq" [tyInt])
-
-        simplify <$> (inlineTypeclassFunctions typecheckEnv typeclasses expr)
-          `shouldBe` Right (simplify expected)
-
-      it "Eq (a,b) functions inlined" $ do
-        let expr = getRight $ evalExpr "\\a -> \\b -> case (a,b) of ((a1, a2), (b1, b2)) -> if equals a1 b1 then equals a2 b2 else False"
-            expected = getRight $ evalExpr "\\instances -> case instances of (equals1,equals2) -> \\a -> \\b -> case (a,b) of ((a1, a2), (b1, b2)) -> if equals1 a1 b1 then equals2 a2 b2 else False"
-
-            typeclasses = M.singleton "equals" (Constraint "Eq" [tyInt])
-
-        simplify <$> (inlineTypeclassFunctions typecheckEnv typeclasses expr)
-          `shouldBe` Right (simplify expected)
+      traverse_
+        ( \(typeclasses, parts, expectedParts) ->
+            let input = joinText parts
+                expected = joinText expectedParts
+             in it ("Successfully inlined " <> show input) $ do
+                  let expr = getRight $ evalExpr input
+                      expectedExpr = getRight $ evalExprUnsafe expected
+                  simplify <$> (inlineTypeclassFunctions typecheckEnv typeclasses expr)
+                    `shouldBe` Right (simplify expectedExpr)
+        )
+        [ (mempty, ["1 + 2"], ["1 + 2"]),
+          ( M.singleton "tcequals1" (Constraint "Eq" [tyInt]),
+            ["equals (1: Int) (2: Int)"],
+            [ "let tcequals1 = (\\a1 -> \\b2 -> a1 == b2 : Int -> Int -> Bool);",
+              "tcequals1 (1 : Int) (2 : Int)"
+            ]
+          ),
+          ( M.fromList [("eqA", Constraint "Eq" [tcVar "a"]), ("eqB", Constraint "Eq" [tcVar "b"])],
+            [ "(\\a -> \\b -> case (a,b) of ((a1, b1), (a2, b2)) -> ",
+              "if equals a1 a2 then equals b1 b2 else False : (a,b) -> (a,b) -> Bool)"
+            ],
+            [ "\\instances -> case instances of (eqA, eqB) -> ",
+              "(\\a -> \\b -> case (a,b) of ((a1, a2), (b1, b2)) ->",
+              "if a1 b1 then eqB b1 b2 else False : (a,b) -> (a,b) -> Bool)"
+            ]
+          )
+        ]
