@@ -3,7 +3,6 @@
 
 module Test.TypecheckSpec (spec) where
 
-import Control.Monad.Reader
 import Control.Monad.State
 import Data.Bifunctor
 import Data.Either
@@ -193,7 +192,9 @@ spec = do
               ("let a = if True then 1 else 2; let b = if True then 7 else 9; a + b", "8 | 9 | 10 | 11"),
               ("\\a -> a == True", "Bool -> Bool"),
               ("(\\x -> (x 1, x (False,True))) (\\a -> a)", "(1, (False, True))"), -- look! higher rank types
-              ("let f = (\\x -> (x 1, x False) : (a -> a) -> (1, False)); let id = \\a -> a; f id", "(1, False)") -- they need annotation, but that's ok
+              ("let f = (\\x -> (x 1, x False) : (a -> a) -> (1, False)); let id = \\a -> a; f id", "(1, False)"), -- they need annotation, but that's ok
+              ("\\a -> \\b -> if a then a else b", "Bool -> Bool -> Bool"),
+              ("\\a -> case a of (b,c) -> if b then b else c", "(Bool,Bool) -> Bool")
             ]
       traverse_
         ( \(inputExpr, expectedType) -> it (T.unpack inputExpr <> " :: " <> T.unpack expectedType) $ do
@@ -280,7 +281,7 @@ spec = do
         let pat = PConstructor () (LocalDefinition "Right") [PVar () "a"]
             ty = fromParsedType (tyCons "Either" [tyVar "e", tyVar "a"])
 
-        fst <$> runReaderT (checkPattern ty pat) typecheckEnv
+        fst <$> runTypecheckM typecheckEnv (checkPattern ty pat)
           `shouldBe` Right
             ( PConstructor
                 ty
@@ -292,7 +293,7 @@ spec = do
         let pat = PConstructor () (LocalDefinition "Right") [PLiteral () (PBool True)]
             ty = fromParsedType (tyCons "Either" [tyIntLit [1], tyBoolLit True])
 
-        fst <$> runReaderT (checkPattern ty pat) typecheckEnv
+        fst <$> runTypecheckM typecheckEnv (checkPattern ty pat)
           `shouldBe` Right
             ( PConstructor
                 ty
@@ -304,7 +305,7 @@ spec = do
         let pat = PConstructor () (LocalDefinition "Left") [PVar () "e"]
             ty = fromParsedType (tyCons "Either" [tyVar "e", tyVar "a"])
 
-        fst <$> runReaderT (checkPattern ty pat) typecheckEnv
+        fst <$> runTypecheckM typecheckEnv (checkPattern ty pat)
           `shouldBe` Right
             ( PConstructor
                 ty
@@ -317,7 +318,7 @@ spec = do
             ty = fromParsedType (tyCons "State" [tyVar "s", tyVar "a"])
             tyExpected = TFunc () mempty (tyVar "s") (tyTuple (tyVar "a") [tyVar "s"])
 
-        fst <$> runReaderT (checkPattern ty pat) typecheckEnv
+        fst <$> runTypecheckM typecheckEnv (checkPattern ty pat)
           `shouldBe` Right
             ( PConstructor
                 ty

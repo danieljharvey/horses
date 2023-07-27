@@ -25,9 +25,13 @@ module Test.Helpers
     unsafeParseType,
     unsafeParseTypedExpr,
     joinText,
+    runTypecheckM,
   )
 where
 
+import Control.Monad.Reader
+import Control.Monad.State
+import Control.Monad.Writer
 import Data.Foldable (foldl')
 import Data.Functor
 import qualified Data.List.NonEmpty as NE
@@ -147,3 +151,21 @@ unsafeParseTypedExpr input = case parseExprAndFormatError input of
 
 joinText :: [T.Text] -> T.Text
 joinText = T.intercalate "\n"
+
+----
+
+runTypecheckM ::
+  (Monad m) =>
+  TCEnv ann ->
+  StateT (TCState ann) (WriterT [Substitution ResolvedDep ann] (ReaderT (TCEnv ann) m)) a ->
+  m a
+runTypecheckM env action =
+  fst
+    <$> runReaderT
+      ( runWriterT
+          ( evalStateT
+              action
+              (TCState mempty 0 mempty)
+          )
+      )
+      env

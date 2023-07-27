@@ -39,9 +39,9 @@ elaborate ::
   TCEnv ann ->
   ResolvedExpr ann ->
   m (ResolvedExpr (ResolvedType ann))
-elaborate env expr =
-  fmap simplifyType . fst
-    <$> runReaderT
+elaborate env expr = do
+  (typedExpr, subs) <-
+    runReaderT
       ( runWriterT
           ( evalStateT
               (infer expr)
@@ -49,6 +49,7 @@ elaborate env expr =
           )
       )
       env
+  pure (simplifyType . substituteMany subs <$> typedExpr)
 
 inferInfix ::
   ( Ord ann,
