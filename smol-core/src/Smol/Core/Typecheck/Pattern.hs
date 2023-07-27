@@ -10,6 +10,8 @@ where
 import Control.Monad (when, zipWithM)
 import Control.Monad.Except
 import Control.Monad.Reader
+import Control.Monad.State
+import Control.Monad.Writer
 import qualified Data.List.NonEmpty as NE
 import Data.Map.Strict (Map)
 import qualified Data.Map.Strict as M
@@ -27,7 +29,9 @@ checkPattern ::
   ( Show ann,
     Eq ann,
     MonadError (TCError ann) m,
-    MonadReader (TCEnv ann) m
+    MonadReader (TCEnv ann) m,
+    MonadState (TCState ann) m,
+    MonadWriter [Substitution ResolvedDep ann] m
   ) =>
   ResolvedType ann ->
   Pattern ResolvedDep ann ->
@@ -42,6 +46,17 @@ checkPattern checkTy checkPat =
       (patRest, envRest) <- neUnzip <$> neZipWithM checkPattern tRest pRest
       let ty = TTuple ann (getPatternAnnotation patA) (getPatternAnnotation <$> patRest)
           env = envA <> mconcat (NE.toList envRest)
+      pure (PTuple ty patA patRest, env)
+    (TUnknown _ a, PTuple ann pA pRest) -> do
+      tA <- getUnknown (getPatternAnnotation pA)
+      (patA, envA) <- checkPattern tA pA
+      tRest <- traverse (getUnknown . getPatternAnnotation) pRest
+      (patRest, envRest) <- neUnzip <$> neZipWithM checkPattern tRest pRest
+      let ty = TTuple ann tA tRest
+          env = envA <> mconcat (NE.toList envRest)
+      -- we have learned that our unknown type equals the tuple of new unknowns
+      -- we have created
+      tell [Substitution (SubUnknown a) ty]
       pure (PTuple ty patA patRest, env)
     (ty, PVar _ ident) ->
       pure (PVar ty ident, M.singleton ident ty)

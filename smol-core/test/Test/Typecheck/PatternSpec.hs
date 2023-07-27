@@ -2,7 +2,6 @@
 
 module Test.Typecheck.PatternSpec (spec) where
 
-import Control.Monad.Reader
 import qualified Data.Map.Strict as M
 import Smol.Core
 import Test.BuiltInTypes
@@ -14,14 +13,14 @@ spec = do
   describe "checkPattern" $ do
     let emptyEnv = TCEnv mempty mempty (builtInTypes emptyResolvedDep)
     it "PVar" $ do
-      snd <$> runReaderT (checkPattern tyInt (PVar () "a")) emptyEnv
+      snd <$> runTypecheckM emptyEnv (checkPattern tyInt (PVar () "a"))
         `shouldBe` Right
           ( M.singleton "a" tyInt
           )
 
     it "PVar with unique" $ do
       let mkUnique a = UniqueDefinition a 123
-      snd <$> runReaderT (checkPattern tyInt (PVar () (mkUnique "a"))) emptyEnv
+      snd <$> runTypecheckM emptyEnv (checkPattern tyInt (PVar () (mkUnique "a")))
         `shouldBe` Right
           ( M.singleton (mkUnique "a") tyInt
           )
@@ -29,7 +28,8 @@ spec = do
     it "PConstructor with unique" $ do
       let mkUnique a = UniqueDefinition a 123
       snd
-        <$> runReaderT
+        <$> runTypecheckM
+          emptyEnv
           ( checkPattern
               ( TApp
                   ()
@@ -38,7 +38,6 @@ spec = do
               )
               (PConstructor () "EInt" [PWildcard (), PVar () (mkUnique "i")])
           )
-          emptyEnv
         `shouldBe` Right
           ( M.fromList
               [ (mkUnique "i", tyInt)
@@ -48,13 +47,13 @@ spec = do
     it "PConstructor with unique from unknown type" $ do
       let mkUnique a = UniqueDefinition a 123
       snd
-        <$> runReaderT
+        <$> runTypecheckM
+          emptyEnv
           ( checkPattern
               ( TUnknown () 123
               )
               (PConstructor () "EInt" [PWildcard (), PVar () (mkUnique "i")])
           )
-          emptyEnv
         `shouldBe` Right
           ( M.fromList
               [ (mkUnique "i", tyInt)
