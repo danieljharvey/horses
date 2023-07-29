@@ -12,6 +12,7 @@ module Smol.Core.Typecheck.Typeclass
   )
 where
 
+import Debug.Trace
 import Control.Monad.Except
 import Control.Monad.Identity
 import Data.Functor
@@ -130,7 +131,7 @@ swapExprVarnames :: M.Map (ResolvedDep Identifier) (ResolvedDep Identifier) -> E
 swapExprVarnames swappies expr =
   go expr
   where
-    go (EVar ann ident) = case M.lookup ident swappies of
+    go (EVar ann ident) = case M.lookup (traceShowId ident) (traceShowId swappies) of
       Just newIdent -> EVar ann newIdent
       Nothing -> EVar ann ident
     go other = mapExpr go other
@@ -173,14 +174,15 @@ inlineTypeclassFunctions env constraints expr = do
   maybePattern <- getTypeForDictionary env dedupedConstraints
   case maybePattern of
     Just pat -> do
-      let wholeType = TFunc mempty mempty (getPatternAnnotation pat) (getExprAnnotation expr)
+      let dictType = getPatternAnnotation pat
+          wholeType = TFunc mempty mempty dictType (getExprAnnotation expr)
       pure $
         ELambda
           wholeType
           "instances"
           ( EPatternMatch
               (getExprAnnotation expr)
-              (EAnn wholeType (wholeType $> wholeType) (EVar wholeType "instances"))
+              (EAnn dictType (dictType $> dictType) (EVar dictType "instances"))
               (NE.fromList [(pat, tidyExpr)])
           )
     Nothing -> pure expr

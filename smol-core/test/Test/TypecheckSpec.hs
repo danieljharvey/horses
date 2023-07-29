@@ -30,14 +30,6 @@ getLeft :: (Show a) => Either e a -> e
 getLeft (Left e) = e
 getLeft (Right a) = error (show a)
 
--- simplify type for equality check
--- remove anything that can't be described in a type signature
-simplifyType :: (Ord (dep Identifier)) => Type dep ann -> Type dep ann
-simplifyType (TFunc ann _ fn arg) =
-  TFunc ann mempty (simplifyType fn) (simplifyType arg)
-simplifyType (TArray ann _ as) = TArray ann 0 (simplifyType as)
-simplifyType other = mapType simplifyType other
-
 testElaborate ::
   (Ord ann, Show ann, Monoid ann) =>
   Expr ParseDep ann ->
@@ -192,8 +184,8 @@ spec = do
         ( \(inputExpr, expectedType) -> it (T.unpack inputExpr <> " :: " <> T.unpack expectedType) $ do
             case (,) <$> first (T.pack . show) (evalExpr inputExpr) <*> parseTypeAndFormatError expectedType of
               Right (te, typ) ->
-                let result = simplifyType (getExprAnnotation te) $> ()
-                    expected = fromParsedType (simplifyType typ $> ())
+                let result = typeForComparison (getExprAnnotation te) $> ()
+                    expected = fromParsedType (typeForComparison typ $> ())
                  in result `shouldBe` expected
               other -> error (show other)
         )

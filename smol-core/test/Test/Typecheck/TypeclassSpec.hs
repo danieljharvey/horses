@@ -7,6 +7,7 @@
 
 module Test.Typecheck.TypeclassSpec (spec) where
 
+import Smol.Core.Helpers
 import Control.Monad.Identity
 import qualified Data.Char as Char
 import Data.Either
@@ -249,14 +250,16 @@ spec = do
              in it ("Successfully inlined " <> show input) $ do
                   let expr = getRight $ evalExpr input
                       expectedExpr = getRight $ evalExprUnsafe expected
-                  simplify <$> (inlineTypeclassFunctions typecheckEnv typeclasses expr)
-                    `shouldBe` Right (simplify expectedExpr)
+                      result = inlineTypeclassFunctions typecheckEnv typeclasses expr
+                  tracePrettyM "expected" expectedExpr
+                  tracePrettyM "result" (getRight result)
+                  simplify <$> result `shouldBe` Right (simplify expectedExpr)
         )
         [ (mempty, ["1 + 2"], ["1 + 2"]),
-          ( M.singleton "blah1" (Constraint "Eq" [tyInt]),
+          ( M.singleton (TypeclassCall "equals" 1) (Constraint "Eq" [tyInt]),
             ["equals (1: Int) (2: Int)"],
-            [ "\\instances -> case (instances : Int -> Int -> Bool) of tcequals1 ->",
-              "tcequals1 (1 : Int) (2 : Int)"
+            [ "\\instances -> case (instances : Int -> Int -> Bool) of tcnewname1 ->",
+              "tcnewname1 (1 : Int) (2 : Int)"
             ]
           ),
           ( M.fromList
