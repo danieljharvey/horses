@@ -12,7 +12,7 @@ module Smol.Core.Typecheck.Typeclass
   )
 where
 
-import Debug.Trace
+import Smol.Core.Helpers
 import Control.Monad.Except
 import Control.Monad.Identity
 import Data.Functor
@@ -81,8 +81,9 @@ checkInstance tcEnv (Typeclass _ args funcName ty) (Constraint _ tys) (Instance 
               constraints
 
     case resolveExprDeps (resolveExpr annotatedExpr) typeclassMethodNames of
-      Left resolveErr -> error (show resolveErr)
+      Left resolveErr -> error $ "Resolve error: " <> show resolveErr
       Right resolvedExpr -> do
+        tracePrettyM "resolved" resolvedExpr
         (typedExpr, _typeclassUses) <- elaborate typecheckEnv resolvedExpr
 
         pure (funcName, typedExpr)
@@ -131,7 +132,7 @@ swapExprVarnames :: M.Map (ResolvedDep Identifier) (ResolvedDep Identifier) -> E
 swapExprVarnames swappies expr =
   go expr
   where
-    go (EVar ann ident) = case M.lookup (traceShowId ident) (traceShowId swappies) of
+    go (EVar ann ident) = case M.lookup ident swappies of
       Just newIdent -> EVar ann newIdent
       Nothing -> EVar ann ident
     go other = mapExpr go other

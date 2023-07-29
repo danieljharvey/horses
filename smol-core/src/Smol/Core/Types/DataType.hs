@@ -84,7 +84,7 @@ renderDataType ::
 renderDataType (DataType tyCon vars' constructors') =
   "type"
     <+> prettyDoc tyCon
-      <> printVars vars'
+    <> printVars vars'
     <+> if M.null constructors'
       then mempty
       else

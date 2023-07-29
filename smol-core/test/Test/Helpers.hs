@@ -34,7 +34,7 @@ module Test.Helpers
     eqTypeclass,
     unsafeParseInstanceExpr,
     tcVar,
-    typeForComparison
+    typeForComparison,
   )
 where
 
@@ -267,5 +267,3 @@ typeForComparison (TFunc ann _ fn arg) =
   TFunc ann mempty (typeForComparison fn) (typeForComparison arg)
 typeForComparison (TArray ann _ as) = TArray ann 0 (typeForComparison as)
 typeForComparison other = mapType typeForComparison other
-
-

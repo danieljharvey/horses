@@ -1,3 +1,4 @@
+{-# LANGUAGE DeriveFunctor #-}
 {-# LANGUAGE DerivingStrategies #-}
 {-# LANGUAGE OverloadedStrings #-}
 
@@ -29,11 +30,11 @@ data Typeclass ann = Typeclass
     tcFuncName :: Identifier,
     tcFuncType :: Type Identity ann
   }
-  deriving stock (Eq, Ord, Show)
+  deriving stock (Eq, Ord, Show, Functor)
 
 data Constraint ann
   = Constraint String [Type Identity ann]
-  deriving stock (Eq, Ord, Show)
+  deriving stock (Eq, Ord, Show, Functor)
 
 instance Printer (Constraint ann) where
   prettyDoc (Constraint tcn tys) =
@@ -46,7 +47,7 @@ data Instance ann = Instance
   { inConstraints :: [Constraint ann],
     inExpr :: Expr Identity ann
   }
-  deriving stock (Eq, Ord, Show)
+  deriving stock (Eq, Ord, Show, Functor)
 
 instance Printer (Instance ann) where
   prettyDoc (Instance [] expr) = prettyDoc expr
