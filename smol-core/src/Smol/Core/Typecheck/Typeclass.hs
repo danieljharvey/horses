@@ -12,7 +12,8 @@ module Smol.Core.Typecheck.Typeclass
   )
 where
 
-import Smol.Core.Helpers
+import Data.Foldable (foldl')
+import Data.Maybe (fromMaybe)
 import Control.Monad.Except
 import Control.Monad.Identity
 import Data.Functor
@@ -30,10 +31,15 @@ import Smol.Core.Typecheck.Typeclass.Helpers
 import Smol.Core.Typecheck.Types
 import Smol.Core.Types
 
-resolveExpr :: Expr Identity ann -> Expr ParseDep ann
-resolveExpr = mapExprDep resolve
+toParseExpr :: Expr Identity ann -> Expr ParseDep ann
+toParseExpr = mapExprDep resolve
   where
     resolve (Identity a) = emptyParseDep a
+
+resolveType :: Type Identity ann -> Type ResolvedDep ann
+resolveType = mapTypeDep resolve
+  where
+    resolve (Identity a) = emptyResolvedDep a
 
 lookupInstanceAndCheck ::
   (Ord ann, Monoid ann, Show ann, MonadError (TCError ann) m) =>
@@ -47,6 +53,16 @@ lookupInstanceAndCheck env tch@(Constraint typeclassName _) = do
     Nothing -> error "fuck"
   checkInstance env typeclass tch tcInstance
 
+applyConstraintTypes :: Typeclass ann -> Constraint ann -> Type Identity ann
+applyConstraintTypes (Typeclass _ args _ ty) (Constraint _ tys) =
+  let subs =
+          ( \(ident, tySub) ->
+              Substitution (SubId $ Identity ident) tySub
+          )
+            <$> zip args tys
+
+   in substituteMany subs ty
+
 checkInstance ::
   (MonadError (TCError ann) m, Ord ann, Show ann, Monoid ann) =>
   TCEnv ann ->
@@ -54,15 +70,10 @@ checkInstance ::
   Constraint ann ->
   Instance ann ->
   m (Identifier, Expr ResolvedDep (Type ResolvedDep ann))
-checkInstance tcEnv (Typeclass _ args funcName ty) (Constraint _ tys) (Instance constraints expr) =
+checkInstance tcEnv typeclass constraint (Instance constraints expr) =
   do
-    let subs =
-          ( \(ident, tySub) ->
-              Substitution (SubId $ Identity ident) tySub
-          )
-            <$> zip args tys
-
-    let subbedType = substituteMany subs ty
+    let subbedType = applyConstraintTypes typeclass constraint
+        funcName = tcFuncName typeclass
 
     let -- we add the instance's constraints (so typechecker forgives a missing `Eq a` etc)
         typecheckEnv = tcEnv {tceConstraints = constraints}
@@ -80,10 +91,9 @@ checkInstance tcEnv (Typeclass _ args funcName ty) (Constraint _ tys) (Instance 
               )
               constraints
 
-    case resolveExprDeps (resolveExpr annotatedExpr) typeclassMethodNames of
+    case resolveExprDeps (toParseExpr annotatedExpr) typeclassMethodNames of
       Left resolveErr -> error $ "Resolve error: " <> show resolveErr
       Right resolvedExpr -> do
-        tracePrettyM "resolved" resolvedExpr
         (typedExpr, _typeclassUses) <- elaborate typecheckEnv resolvedExpr
 
         pure (funcName, typedExpr)
@@ -106,8 +116,8 @@ dedupeConstraints ::
 dedupeConstraints dupes =
   let initial = (mempty, mempty, 0)
       deduped =
-        foldr
-          ( \(ident, constraint) (found, swaps, count) ->
+        foldl'
+          ( \(found, swaps, count) (ident, constraint)->
               case M.lookup constraint found of
                 Just foundIdent ->
                   ( found,
@@ -132,9 +142,12 @@ swapExprVarnames :: M.Map (ResolvedDep Identifier) (ResolvedDep Identifier) -> E
 swapExprVarnames swappies expr =
   go expr
   where
-    go (EVar ann ident) = case M.lookup ident swappies of
-      Just newIdent -> EVar ann newIdent
-      Nothing -> EVar ann ident
+    newIdent ident = fromMaybe ident (M.lookup ident swappies)
+
+    go (EVar ann ident) =
+      EVar ann (newIdent ident)
+    go (ELambda ann ident body) =
+      ELambda ann (newIdent ident) (go body)
     go other = mapExpr go other
 
 getTypeForDictionary ::
@@ -148,8 +161,15 @@ getTypeForDictionary ::
   m (Maybe (Pattern ResolvedDep (Type ResolvedDep ann)))
 getTypeForDictionary env constraints = do
   let getConstraintPattern (ident, constraint) = do
-        (_, instanceExpr) <- lookupInstanceAndCheck env constraint
-        let ty = getExprAnnotation instanceExpr
+        result <- runExceptT $ lookupInstanceAndCheck env constraint
+        ty <- case result of
+          -- we found the instance, return it's type
+          Right (_, instanceExpr) -> pure (getExprAnnotation instanceExpr)
+          -- we didn't find an instance, but we can get the type from the
+          -- constraint
+          Left e -> case typeForConstraint env constraint of
+                      Just ty -> pure (resolveType ty)
+                      Nothing -> throwError e
         pure (PVar ty ident)
   case constraints of
     [] -> pure Nothing
@@ -159,6 +179,15 @@ getTypeForDictionary env constraints = do
       pRest <- traverse getConstraintPattern (NE.fromList rest)
       let ty = TTuple mempty (getPatternAnnotation pOne) (getPatternAnnotation <$> pRest)
       pure $ Just $ PTuple ty pOne pRest
+
+-- | when typechecking instances we can look them up and literally typecheck
+-- them, however for constraints we don't have concrete code yet
+-- however, we can just substitute the types from the Constraint to the Typeclass
+-- to see what type we should get
+typeForConstraint :: TCEnv ann -> Constraint ann -> Maybe (Type Identity ann)
+typeForConstraint env constraint@(Constraint tcn _) = do
+  M.lookup tcn (tceClasses env) <&>
+    \typeclass -> applyConstraintTypes typeclass constraint
 
 -- | 10x typeclasses implementation - given an `expr` that calls typeclass
 -- methods, we inline all the instances as Let bindings
@@ -172,7 +201,9 @@ inlineTypeclassFunctions ::
 inlineTypeclassFunctions env constraints expr = do
   let (dedupedConstraints, nameSwaps) = dedupeConstraints constraints
       tidyExpr = swapExprVarnames nameSwaps expr
+
   maybePattern <- getTypeForDictionary env dedupedConstraints
+
   case maybePattern of
     Just pat -> do
       let dictType = getPatternAnnotation pat
@@ -182,7 +213,7 @@ inlineTypeclassFunctions env constraints expr = do
           wholeType
           "instances"
           ( EPatternMatch
-              (getExprAnnotation expr)
+              (getExprAnnotation tidyExpr)
               (EAnn dictType (dictType $> dictType) (EVar dictType "instances"))
               (NE.fromList [(pat, tidyExpr)])
           )

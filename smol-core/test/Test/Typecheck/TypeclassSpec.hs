@@ -16,7 +16,6 @@ import qualified Data.Map.Strict as M
 import Data.String (fromString)
 import Data.Text (Text)
 import Smol.Core
-import Smol.Core.Helpers
 import Smol.Core.Modules.ResolveDeps
 import Smol.Core.Typecheck.FromParsedExpr (fromParsedExpr)
 import Smol.Core.Typecheck.Typeclass
@@ -188,7 +187,7 @@ spec = do
         )
         `shouldSatisfy` isLeft
 
-  fdescribe "dedupeConstraints" $ do
+  describe "dedupeConstraints" $ do
     it "Empty is empty" $ do
       dedupeConstraints @() mempty `shouldBe` (mempty, mempty)
 
@@ -210,22 +209,22 @@ spec = do
               ("eqBool2", Constraint "Eq" [tyBool])
             ]
         )
-        `shouldBe` ( [ ( TypeclassCall "newname" 1,
+        `shouldBe` ( [ ( TypeclassCall "newname" 2,
                          Constraint "Eq" [tyInt]
                        ),
-                       ( TypeclassCall "newname" 2,
+                       ( TypeclassCall "newname" 1,
                          Constraint "Eq" [tyBool]
                        )
                      ],
                      M.fromList
-                       [ ("eqInt1", TypeclassCall "newname" 1),
-                         ("eqInt2", TypeclassCall "newname" 1),
-                         ("eqBool1", TypeclassCall "newname" 2),
-                         ("eqBool2", TypeclassCall "newname" 2)
+                       [ ("eqInt1", TypeclassCall "newname" 2),
+                         ("eqInt2", TypeclassCall "newname" 2),
+                         ("eqBool1", TypeclassCall "newname" 1),
+                         ("eqBool2", TypeclassCall "newname" 1)
                        ]
                    )
 
-  fdescribe "Inline typeclass functions" $ do
+  describe "Inline typeclass functions" $ do
     let simplify :: Expr ResolvedDep ann -> Expr ResolvedDep ()
         simplify = void . goExpr
           where
@@ -239,6 +238,8 @@ spec = do
               EVar ann (changeIdent ident)
             goExpr (EAnn ann ty rest) =
               EAnn ann (typeForComparison ty) (goExpr rest)
+            goExpr (ELambda ann ident body) =
+              ELambda ann (changeIdent ident) (goExpr body)
             goExpr (EPatternMatch ann matchExpr pats) =
               EPatternMatch ann (goExpr matchExpr) (fmap (bimap goPattern goExpr) pats)
             goExpr other = mapExpr goExpr other
@@ -252,14 +253,11 @@ spec = do
               expected = joinText expectedParts
            in it ("Successfully inlined " <> show input) $ do
                 let expr = getRight $ evalExpr (M.elems typeclasses) input
-                tracePrettyM "expr" expr
                 
                 let env = typecheckEnv { tceConstraints = M.elems typeclasses }
 
                 let expectedExpr = getRight $ evalExprUnsafe expected
                     result = inlineTypeclassFunctions env typeclasses expr
-
-                tracePrettyM "expected" expectedExpr
 
                 simplify <$> result `shouldBe` Right (simplify expectedExpr)
       )
@@ -279,13 +277,14 @@ spec = do
             "if tcnewname1 (1 : Int) (2 : Int) then tcnewname1 (2: Int) (3: Int) else False"
           ]
         ),
-        ( M.fromList [("eqA", Constraint "Eq" [tcVar "a"]), ("eqB", Constraint "Eq" [tcVar "b"])],
-          [ "(\\a -> \\b -> case (a,b) of ((a1, b1), (a2, b2)) -> ",
-            "if equals a1 a2 then equals b1 b2 else False : (a,b) -> (a,b) -> Bool)"
+        ( M.fromList [(TypeclassCall "equals" 7, Constraint "Eq" [tcVar "a"]),
+            (TypeclassCall "equals" 8, Constraint "Eq" [tcVar "b"])],
+          [ "(\\a -> \\b -> case (a,b) of ((leftA, leftB), (rightA, rightB)) -> ",
+            "if equals leftA rightA then equals leftB rightB else False : (a,b) -> (a,b) -> Bool)"
           ],
           [ "\\instances -> case (instances : (a -> a -> Bool, b -> b -> Bool)) of (tcnewname1, tcnewname2) -> ",
-            "(\\a -> \\b -> case (a,b) of ((a1, a2), (b1, b2)) ->",
-            "if tcnewname1 a1 b1 then tcnewname2 b1 b2 else False : (a,b) -> (a,b) -> Bool)"
+            "(\\a1 -> \\b2 -> case (a1,b2) of ((leftA3, leftB4), (rightA5, rightB6)) ->",
+            "if tcnewname1 leftA3 rightA5 then tcnewname2 leftB4 rightB6 else False : (a,b) -> (a,b) -> Bool)"
           ]
         )
       ]

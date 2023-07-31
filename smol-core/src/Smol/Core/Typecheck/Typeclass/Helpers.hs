@@ -8,9 +8,7 @@ module Smol.Core.Typecheck.Typeclass.Helpers
     instanceMatchesType,
   )
 where
-import Smol.Core.Helpers
 
-import Debug.Trace
 import Control.Monad (unless, void, zipWithM)
 import Control.Monad.Except
 import Control.Monad.Identity
@@ -79,16 +77,14 @@ lookupTypeclassInstance ::
   TCEnv ann ->
   Constraint ann ->
   m (Instance ann)
-lookupTypeclassInstance env tch@(Constraint name tys) = do
-  traceShowM tch
-  tracePrettyM "env" (tceInstances env)
+lookupTypeclassInstance env tch@(Constraint name tys) =
   -- first, do we have a concrete instance?
   case M.lookup tch (tceInstances env) of
     Just tcInstance -> pure tcInstance
     Nothing -> do
-      case traceShowId $ mapMaybe
+      case mapMaybe
         ( \(Constraint innerName innerTys) ->
-            case traceShowId (innerName == name, instanceMatchesType tys innerTys) of
+            case (innerName == name, instanceMatchesType tys innerTys) of
               (True, Right matches) -> Just (Constraint innerName innerTys, matches)
               _ -> Nothing
         )
