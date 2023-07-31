@@ -8,7 +8,9 @@ module Smol.Core.Typecheck.Typeclass.Helpers
     instanceMatchesType,
   )
 where
+import Smol.Core.Helpers
 
+import Debug.Trace
 import Control.Monad (unless, void, zipWithM)
 import Control.Monad.Except
 import Control.Monad.Identity
@@ -66,22 +68,27 @@ instanceMatchesType ::
 instanceMatchesType needleTys haystackTys =
   fmap mconcat $ zipWithM matchType needleTys haystackTys
 
+--lookupConcreteInstance :: TCEnv ann -> Constraint ann -> Maybe (Instance ann)
+--lookupConcreteInstance
+
 -- | do we have a matching instance? if we're looking for a concrete type and
 -- it's not there, explode (ie, there is no `Eq Bool`)
 -- or return it
 lookupTypeclassInstance ::
-  (MonadError (TCError ann) m, Ord ann) =>
+  (MonadError (TCError ann) m, Ord ann, Show ann) =>
   TCEnv ann ->
   Constraint ann ->
   m (Instance ann)
-lookupTypeclassInstance env tch@(Constraint name tys) =
+lookupTypeclassInstance env tch@(Constraint name tys) = do
+  traceShowM tch
+  tracePrettyM "env" (tceInstances env)
   -- first, do we have a concrete instance?
   case M.lookup tch (tceInstances env) of
     Just tcInstance -> pure tcInstance
     Nothing -> do
-      case mapMaybe
+      case traceShowId $ mapMaybe
         ( \(Constraint innerName innerTys) ->
-            case (innerName == name, instanceMatchesType tys innerTys) of
+            case traceShowId (innerName == name, instanceMatchesType tys innerTys) of
               (True, Right matches) -> Just (Constraint innerName innerTys, matches)
               _ -> Nothing
         )
@@ -114,7 +121,7 @@ substituteConstraint subs (Constraint name tys) =
 -- if one is not there, see if we already have a matching constraint
 -- in TCEnv (ie, the function has declared `Eq a`)
 lookupTypeclassConstraint ::
-  (MonadError (TCError ann) m, Ord ann) =>
+  (MonadError (TCError ann) m, Ord ann, Show ann) =>
   TCEnv ann ->
   Constraint ann ->
   m ()
