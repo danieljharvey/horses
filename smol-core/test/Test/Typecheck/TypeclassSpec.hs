@@ -25,16 +25,14 @@ import Test.Hspec
 evalExpr ::
   [Constraint Annotation] ->
   Text ->
-  Either (TCError Annotation) (ResolvedExpr (Type ResolvedDep Annotation))
+  Either (TCError Annotation) ( ResolvedExpr (Type ResolvedDep Annotation))
 evalExpr constraints input =
   case parseExprAndFormatError input of
     Left e -> error (show e)
     Right expr ->
       case resolveExprDeps expr (getTypeclassMethodNames @() typecheckEnv) of
         Left e -> error $ "error getting method names :" <> show e
-        Right resolvedExpr -> case elaborate (typecheckEnv {tceConstraints = constraints}) resolvedExpr of
-          Right (typedExpr, _typeclassUses) -> pure typedExpr
-          Left e -> Left e
+        Right resolvedExpr -> fst <$> elaborate (typecheckEnv {tceConstraints = constraints}) resolvedExpr 
 
 -- | elaborate but don't do clever resolving so we can construct the
 -- expectations we want
@@ -224,7 +222,15 @@ spec = do
                        ]
                    )
 
-  describe "Inline typeclass functions" $ do
+  describe "Pass typeclass instances" $ do
+    it "Nothing happens with no constraints" $ do
+      let inputExpr = getRight $ evalExpr mempty "if equals (1: Int) (2: Int) then False else True"
+          constraints = [Constraint "Eq" [tyInt]]
+          expected = evalExprUnsafe "\\a -> \\b -> a == b"
+
+      createTypeclassDict constraints inputExpr `shouldBe` expected
+
+  describe "Convert expr to use typeclass dictionaries" $ do
     let simplify :: Expr ResolvedDep ann -> Expr ResolvedDep ()
         simplify = void . goExpr
           where
@@ -248,7 +254,7 @@ spec = do
             goPattern other = mapPattern goPattern other
 
     traverse_
-      ( \(typeclasses, parts, expectedParts) ->
+      ( \(typeclasses, parts, expectedConstraints, expectedParts) ->
           let input = joinText parts
               expected = joinText expectedParts
            in it ("Successfully inlined " <> show input) $ do
@@ -257,13 +263,16 @@ spec = do
                 let env = typecheckEnv { tceConstraints = M.elems typeclasses }
 
                 let expectedExpr = getRight $ evalExprUnsafe expected
-                    result = inlineTypeclassFunctions env typeclasses expr
+                    result = convertExprToUseTypeclassDictionary env typeclasses expr
 
-                simplify <$> result `shouldBe` Right (simplify expectedExpr)
+                fst <$> result `shouldBe` Right expectedConstraints
+                simplify . snd <$> result `shouldBe` Right (simplify expectedExpr)
+
       )
-      [ (mempty, ["1 + 2"], ["1 + 2"]),
+      [ (mempty, ["1 + 2"], mempty, ["1 + 2"]),
         ( M.singleton (TypeclassCall "equals" 1) (Constraint "Eq" [tyInt]),
           ["equals (1: Int) (2: Int)"],
+          [Constraint "Eq" [tyInt]],
           [ "\\instances -> case (instances : Int -> Int -> Bool) of tcnewname1 ->",
             "tcnewname1 (1 : Int) (2 : Int)"
           ]
@@ -273,6 +282,7 @@ spec = do
               (TypeclassCall "equals" 2, Constraint "Eq" [tyInt])
             ],
           ["if equals (1: Int) (2: Int) then equals (2: Int) (3: Int) else False"],
+          [Constraint "Eq" [tyInt]],
           [ "\\instances -> case (instances : Int -> Int -> Bool) of tcnewname1 ->",
             "if tcnewname1 (1 : Int) (2 : Int) then tcnewname1 (2: Int) (3: Int) else False"
           ]
@@ -282,6 +292,7 @@ spec = do
           [ "(\\a -> \\b -> case (a,b) of ((leftA, leftB), (rightA, rightB)) -> ",
             "if equals leftA rightA then equals leftB rightB else False : (a,b) -> (a,b) -> Bool)"
           ],
+          [Constraint "Eq" [tcVar "a"], Constraint "Eq" [tcVar "b"]],
           [ "\\instances -> case (instances : (a -> a -> Bool, b -> b -> Bool)) of (tcnewname1, tcnewname2) -> ",
             "(\\a1 -> \\b2 -> case (a1,b2) of ((leftA3, leftB4), (rightA5, rightB6)) ->",
             "if tcnewname1 leftA3 rightA5 then tcnewname2 leftB4 rightB6 else False : (a,b) -> (a,b) -> Bool)"

@@ -114,6 +114,7 @@ library
     Smol.Core.Typecheck.Simplify
     Smol.Core.Typecheck.Substitute
     Smol.Core.Typecheck.Subtype
+    Smol.Core.Typecheck.Typecheck
     Smol.Core.Typecheck.Typeclass
     Smol.Core.Typecheck.Typeclass.Helpers
     Smol.Core.Typecheck.Types

@@ -6,8 +6,9 @@ module Smol.Core.Typecheck.Typeclass
   ( checkInstance,
     dedupeConstraints,
     lookupInstanceAndCheck,
-    inlineTypeclassFunctions,
+    convertExprToUseTypeclassDictionary,
     getTypeclassMethodNames,
+    createTypeclassDict,
     module Smol.Core.Typecheck.Typeclass.Helpers,
   )
 where
@@ -42,7 +43,7 @@ resolveType = mapTypeDep resolve
     resolve (Identity a) = emptyResolvedDep a
 
 lookupInstanceAndCheck ::
-  (Ord ann, Monoid ann, Show ann, MonadError (TCError ann) m) =>
+  (Ord ann,  Monoid ann, Show ann, MonadError (TCError ann) m) =>
   TCEnv ann ->
   Constraint ann ->
   m (Identifier, Expr ResolvedDep (Type ResolvedDep ann))
@@ -64,7 +65,7 @@ applyConstraintTypes (Typeclass _ args _ ty) (Constraint _ tys) =
    in substituteMany subs ty
 
 checkInstance ::
-  (MonadError (TCError ann) m, Ord ann, Show ann, Monoid ann) =>
+  (MonadError (TCError ann) m, Monoid ann, Ord ann, Show ann ) =>
   TCEnv ann ->
   Typeclass ann ->
   Constraint ann ->
@@ -192,19 +193,19 @@ typeForConstraint env constraint@(Constraint tcn _) = do
 -- | 10x typeclasses implementation - given an `expr` that calls typeclass
 -- methods, we inline all the instances as Let bindings
 -- `let equals_1 = \a -> \b -> a == b in equals_1 10 11`
-inlineTypeclassFunctions ::
+convertExprToUseTypeclassDictionary ::
   (MonadError (TCError ann) m, Ord ann, Show ann, Monoid ann) =>
   TCEnv ann ->
   M.Map (ResolvedDep Identifier) (Constraint ann) ->
   Expr ResolvedDep (Type ResolvedDep ann) ->
-  m (Expr ResolvedDep (Type ResolvedDep ann))
-inlineTypeclassFunctions env constraints expr = do
+  m ([Constraint ann], Expr ResolvedDep (Type ResolvedDep ann))
+convertExprToUseTypeclassDictionary env constraints expr = do
   let (dedupedConstraints, nameSwaps) = dedupeConstraints constraints
       tidyExpr = swapExprVarnames nameSwaps expr
 
   maybePattern <- getTypeForDictionary env dedupedConstraints
 
-  case maybePattern of
+  newExpr <- case maybePattern of
     Just pat -> do
       let dictType = getPatternAnnotation pat
           wholeType = TFunc mempty mempty dictType (getExprAnnotation expr)
@@ -218,3 +219,10 @@ inlineTypeclassFunctions env constraints expr = do
               (NE.fromList [(pat, tidyExpr)])
           )
     Nothing -> pure expr
+
+  pure (snd <$> dedupedConstraints, newExpr)
+
+createTypeclassDict :: (Monad m) =>
+    [Constraint ann] -> Expr ResolvedDep (Type ResolvedDep ann)
+  -> m (Expr ResolvedDep (Type ResolvedDep ann))
+createTypeclassDict _ expr = pure expr

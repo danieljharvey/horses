@@ -8,7 +8,7 @@ import Data.Text (Text)
 import Smol.Core
 import Smol.Core.Interpreter.Types.Stack
 import Smol.Core.Typecheck.FromParsedExpr
-import Smol.Core.Typecheck.Typeclass
+import Smol.Core.Typecheck.Typecheck (typecheck)
 import Test.Helpers
 import Test.Hspec
 
@@ -29,15 +29,13 @@ discardLeft (Right a) = a
 -- | typecheck, resolve typeclasses, interpret, profit
 doInterpret :: Text -> Expr ResolvedDep ()
 doInterpret input =
-  case elaborate typecheckEnv (fromParsedExpr (unsafeParseExpr input)) of
-    Right (typedExpr, typeclassUses) ->
+  case typecheck typecheckEnv (fromParsedExpr (unsafeParseExpr input)) of
+    Right (_constraints, typedExpr ) ->
       fmap edAnnotation
         . discardLeft
         . interpret mempty
         . addEmptyStackFrames
         . void
-        . discardLeft
-        . inlineTypeclassFunctions typecheckEnv typeclassUses
         $ typedExpr
     Left e -> error (show e)
 
