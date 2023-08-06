@@ -14,14 +14,13 @@ module Smol.Core.Typecheck.Typeclass
   )
 where
 
-import Data.Foldable (foldl')
-import Data.Maybe (fromMaybe)
 import Control.Monad.Except
 import Control.Monad.Identity
+import Data.Foldable (foldl')
 import Data.Functor
 import qualified Data.List.NonEmpty as NE
 import qualified Data.Map.Strict as M
-import Data.Maybe (mapMaybe)
+import Data.Maybe (fromMaybe, mapMaybe)
 import qualified Data.Set as S
 import Data.Tuple (swap)
 import Smol.Core.ExprUtils
@@ -44,9 +43,9 @@ resolveType = mapTypeDep resolve
     resolve (Identity a) = emptyResolvedDep a
 
 lookupInstanceAndCheck ::
-  (Ord ann,  Monoid ann, Show ann, MonadError (TCError ann) m) =>
+  (Ord ann, Monoid ann, Show ann, MonadError (TCError ann) m) =>
   TCEnv ann ->
-  Constraint ann ->
+  Constraint () ->
   m (Identifier, Expr ResolvedDep (Type ResolvedDep ann))
 lookupInstanceAndCheck env tch@(Constraint typeclassName _) = do
   tcInstance <- lookupTypeclassInstance env tch
@@ -58,15 +57,14 @@ lookupInstanceAndCheck env tch@(Constraint typeclassName _) = do
 applyConstraintTypes :: Typeclass ann -> Constraint ann -> Type Identity ann
 applyConstraintTypes (Typeclass _ args _ ty) (Constraint _ tys) =
   let subs =
-          ( \(ident, tySub) ->
-              Substitution (SubId $ Identity ident) tySub
-          )
-            <$> zip args tys
-
+        ( \(ident, tySub) ->
+            Substitution (SubId $ Identity ident) tySub
+        )
+          <$> zip args tys
    in substituteMany subs ty
 
 checkInstance ::
-  (MonadError (TCError ann) m, Monoid ann, Ord ann, Show ann ) =>
+  (MonadError (TCError ann) m, Monoid ann, Ord ann, Show ann) =>
   TCEnv ann ->
   Typeclass ann ->
   Constraint ann ->
@@ -119,7 +117,7 @@ dedupeConstraints dupes =
   let initial = (mempty, mempty, 0)
       deduped =
         foldl'
-          ( \(found, swaps, count) (ident, constraint)->
+          ( \(found, swaps, count) (ident, constraint) ->
               case M.lookup constraint found of
                 Just foundIdent ->
                   ( found,
@@ -170,8 +168,8 @@ getTypeForDictionary env constraints = do
           -- we didn't find an instance, but we can get the type from the
           -- constraint
           Left e -> case typeForConstraint env constraint of
-                      Just ty -> pure (resolveType ty)
-                      Nothing -> throwError e
+            Just ty -> pure (resolveType ty)
+            Nothing -> throwError e
         pure (PVar ty ident)
   case constraints of
     [] -> pure Nothing
@@ -188,8 +186,8 @@ getTypeForDictionary env constraints = do
 -- to see what type we should get
 typeForConstraint :: TCEnv ann -> Constraint ann -> Maybe (Type Identity ann)
 typeForConstraint env constraint@(Constraint tcn _) = do
-  M.lookup tcn (tceClasses env) <&>
-    \typeclass -> applyConstraintTypes typeclass constraint
+  M.lookup tcn (tceClasses env)
+    <&> \typeclass -> applyConstraintTypes typeclass constraint
 
 -- | 10x typeclasses implementation - given an `expr` that calls typeclass
 -- methods, we inline all the instances as Let bindings
@@ -223,30 +221,34 @@ convertExprToUseTypeclassDictionary env constraints expr = do
 
   pure (snd <$> dedupedConstraints, newExpr)
 
-createTypeclassDict :: (Show ann, Ord ann, Monoid ann, MonadError (TCError ann) m ) =>
-    TCEnv ann -> [Constraint ann]
-  -> m (Expr ResolvedDep (Type ResolvedDep ann))
+createTypeclassDict ::
+  (Show ann, Ord ann, Monoid ann, MonadError (TCError ann) m) =>
+  TCEnv ann ->
+  [Constraint ()] ->
+  m (Expr ResolvedDep (Type ResolvedDep ann))
 createTypeclassDict env constraints = do
   instances <- traverse (fmap snd . lookupInstanceAndCheck env) constraints
   case instances of
     [] -> error "what the fuck man, no constraints"
     [one] -> pure one
-    (theFirst:theRest) -> let ty = TTuple mempty (getExprAnnotation theFirst) (NE.fromList $ getExprAnnotation <$> theRest) in
-      pure $ ETuple ty theFirst (NE.fromList theRest)
-
+    (theFirst : theRest) ->
+      let ty = TTuple mempty (getExprAnnotation theFirst) (NE.fromList $ getExprAnnotation <$> theRest)
+       in pure $ ETuple ty theFirst (NE.fromList theRest)
 
 -- given we know the types of all our deps
 -- pass dictionaries to them all
-passDictionaries :: (Monoid ann, Ord ann, Show ann, MonadError (TCError ann) m) =>
-  TCEnv ann -> Expr ResolvedDep (Type ResolvedDep ann) -> m (Expr ResolvedDep (Type ResolvedDep ann))
-passDictionaries env
-  = go
-    where
-      go (EVar ann (LocalDefinition def)) =
-        case M.lookup def (tceGlobals env) of
-          Just (constraints, _defExpr) -> do
-            dict <- createTypeclassDict env constraints
-            pure (EApp ann (EVar ann (LocalDefinition def)) dict)
-          Nothing -> error $ "Could not find " <> show def
-      go other = bindExpr go other
-
+passDictionaries ::
+  (Monoid ann, Ord ann, Show ann, MonadError (TCError ann) m) =>
+  TCEnv ann ->
+  Expr ResolvedDep (Type ResolvedDep ann) ->
+  m (Expr ResolvedDep (Type ResolvedDep ann))
+passDictionaries env =
+  go
+  where
+    go (EVar ann ident) =
+      case M.lookup ident (tceVars env) of
+        Just (constraints, _defExpr) -> do
+          dict <- createTypeclassDict env constraints
+          pure (EApp ann (EVar ann ident) dict)
+        Nothing -> pure (EVar ann ident)
+    go other = bindExpr go other

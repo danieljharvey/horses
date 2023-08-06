@@ -1,4 +1,6 @@
+{-# LANGUAGE DeriveAnyClass #-}
 {-# LANGUAGE DeriveFunctor #-}
+{-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE DerivingStrategies #-}
 {-# LANGUAGE OverloadedStrings #-}
 
@@ -14,7 +16,9 @@ module Smol.Core.Typecheck.Types
 where
 
 import Control.Monad.Identity
+import Data.Aeson (FromJSON, ToJSON)
 import Data.Map.Strict (Map)
+import GHC.Generics
 import qualified Prettyprinter as PP
 import Smol.Core.Printer
 import Smol.Core.Typecheck.Types.TCError
@@ -34,7 +38,8 @@ data Typeclass ann = Typeclass
 
 data Constraint ann
   = Constraint String [Type Identity ann]
-  deriving stock (Eq, Ord, Show, Functor)
+  deriving stock (Eq, Ord, Show, Functor, Generic)
+  deriving anyclass (ToJSON, FromJSON)
 
 instance Printer (Constraint ann) where
   prettyDoc (Constraint tcn tys) =
@@ -55,10 +60,9 @@ instance Printer (Instance ann) where
     "(" <> PP.concatWith (\a b -> a <> ", " <> b) (prettyDoc <$> constraints) <> ") => " <> prettyDoc expr
 
 data TCEnv ann = TCEnv
-  { tceVars :: Map (ResolvedDep Identifier) (ResolvedType ann),
-    tceGlobals :: Map Identifier ([Constraint ann], ResolvedType ann),
+  { tceVars :: Map (ResolvedDep Identifier) ([Constraint ()], ResolvedType ann),
     tceDataTypes :: Map (ResolvedDep TypeName) (DataType ResolvedDep ann),
     tceClasses :: Map String (Typeclass ann),
-    tceInstances :: Map (Constraint ann) (Instance ann),
+    tceInstances :: Map (Constraint ()) (Instance ann),
     tceConstraints :: [Constraint ann]
   }

@@ -252,7 +252,6 @@ typecheckEnv :: (Monoid ann, Ord ann) => TCEnv ann
 typecheckEnv =
   TCEnv
     mempty
-    mempty
     (builtInTypes emptyResolvedDep)
     classes
     instances

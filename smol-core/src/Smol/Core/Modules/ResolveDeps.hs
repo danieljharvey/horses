@@ -127,7 +127,14 @@ resolveTopLevelExpression ::
 resolveTopLevelExpression tle typeclassMethods localDefs localTypes = flip runReaderT initialEnv $ do
   resolvedExpr <- resolveM (tleExpr tle)
   let resolvedType = fmap resolveType (tleType tle)
-  pure (TopLevelExpression {tleExpr = resolvedExpr, tleType = resolvedType})
+
+  pure
+    ( TopLevelExpression
+        { tleConstraints = tleConstraints tle,
+          tleExpr = resolvedExpr,
+          tleType = resolvedType
+        }
+    )
   where
     initialEnv = ResolveEnv mempty localDefs localTypes typeclassMethods
 

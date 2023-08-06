@@ -66,8 +66,8 @@ instanceMatchesType ::
 instanceMatchesType needleTys haystackTys =
   fmap mconcat $ zipWithM matchType needleTys haystackTys
 
---lookupConcreteInstance :: TCEnv ann -> Constraint ann -> Maybe (Instance ann)
---lookupConcreteInstance
+-- lookupConcreteInstance :: TCEnv ann -> Constraint ann -> Maybe (Instance ann)
+-- lookupConcreteInstance
 
 -- | do we have a matching instance? if we're looking for a concrete type and
 -- it's not there, explode (ie, there is no `Eq Bool`)
@@ -75,7 +75,7 @@ instanceMatchesType needleTys haystackTys =
 lookupTypeclassInstance ::
   (MonadError (TCError ann) m, Ord ann, Show ann) =>
   TCEnv ann ->
-  Constraint ann ->
+  Constraint () ->
   m (Instance ann)
 lookupTypeclassInstance env tch@(Constraint name tys) =
   -- first, do we have a concrete instance?

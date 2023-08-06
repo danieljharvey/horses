@@ -9,6 +9,7 @@ import Smol.Core
 import Smol.Core.Interpreter.Types.Stack
 import Smol.Core.Typecheck.FromParsedExpr
 import Smol.Core.Typecheck.Typecheck (typecheck)
+import Smol.Core.Typecheck.Typeclass
 import Test.Helpers
 import Test.Hspec
 
@@ -30,12 +31,14 @@ discardLeft (Right a) = a
 doInterpret :: Text -> Expr ResolvedDep ()
 doInterpret input =
   case typecheck typecheckEnv (fromParsedExpr (unsafeParseExpr input)) of
-    Right (_constraints, typedExpr ) ->
+    Right (_constraints, typedExpr) ->
       fmap edAnnotation
         . discardLeft
         . interpret mempty
         . addEmptyStackFrames
         . void
+        . discardLeft
+        . passDictionaries typecheckEnv
         $ typedExpr
     Left e -> error (show e)
 

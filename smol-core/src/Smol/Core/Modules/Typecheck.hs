@@ -7,6 +7,7 @@ import qualified Builder as Build
 import Control.Monad.Except
 import Data.Bifunctor (first)
 import Data.Foldable (traverse_)
+import Data.Functor (void)
 import Data.Map.Strict (Map)
 import qualified Data.Map.Strict as M
 import Data.Maybe (fromMaybe, mapMaybe)
@@ -19,6 +20,7 @@ import Smol.Core.Modules.Helpers (filterNameDefs, filterTypeDefs)
 import Smol.Core.Modules.Types
 import Smol.Core.Modules.Types.DepType
 import Smol.Core.Modules.Types.ModuleError
+import Smol.Core.Typecheck.Typecheck (typecheck)
 
 getModuleDefIdentifiers ::
   Map DefIdentifier (Set DefIdentifier) ->
@@ -203,14 +205,17 @@ typecheckOneExprDef ::
   (DefIdentifier, TopLevelExpression ResolvedDep Annotation) ->
   m (TopLevelExpression ResolvedDep (Type ResolvedDep Annotation))
 typecheckOneExprDef input _inputModule deps (def, tle) = do
-  let exprTypeMap = mapKey LocalDefinition $ getExprAnnotation . tleExpr <$> filterNameDefs (filterExprs deps)
+  -- where are we getting constraints from?
+  let exprTypeMap =
+        mapKey LocalDefinition $
+          (\depTLE -> (tleConstraints depTLE, getExprAnnotation (tleExpr depTLE)))
+            <$> filterNameDefs (filterExprs deps)
 
   -- initial typechecking environment
   let env =
         TCEnv
           { tceVars = exprTypeMap,
             tceDataTypes = getDataTypeMap deps,
-            tceGlobals = mempty,
             tceClasses = mempty,
             tceInstances = mempty,
             tceConstraints = mempty -- we'll get these from the type
@@ -222,15 +227,21 @@ typecheckOneExprDef input _inputModule deps (def, tle) = do
         Just ty -> EAnn (getTypeAnnotation ty) ty (tleExpr tle)
 
   -- typecheck it
-  (newExpr, _typeclassUses) <-
+  (constraints, newExpr) <-
     liftEither $
       first
         (DefDoesNotTypeCheck input def)
-        (elaborate env actualExpr)
+        (typecheck env actualExpr)
 
   -- split the type out again
   let (typedType, typedExpr) = case newExpr of
         (EAnn _ ty expr) -> (Just ty, expr)
         other -> (Nothing, other)
 
-  pure (TopLevelExpression typedExpr typedType)
+  pure
+    ( TopLevelExpression
+        { tleConstraints = fmap void constraints,
+          tleExpr = typedExpr,
+          tleType = typedType
+        }
+    )

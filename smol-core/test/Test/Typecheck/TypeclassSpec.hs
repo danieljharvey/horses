@@ -24,38 +24,37 @@ import Test.Hspec
 
 simplify :: Expr ResolvedDep ann -> Expr ResolvedDep ()
 simplify = void . goExpr
-          where
-            changeIdent (TypeclassCall ident i) =
-              LocalDefinition $ "tc" <> ident <> fromString (show i)
-            changeIdent (UniqueDefinition ident i) =
-              LocalDefinition $ ident <> fromString (show i)
-            changeIdent ident = ident
+  where
+    changeIdent (TypeclassCall ident i) =
+      LocalDefinition $ "tc" <> ident <> fromString (show i)
+    changeIdent (UniqueDefinition ident i) =
+      LocalDefinition $ ident <> fromString (show i)
+    changeIdent ident = ident
 
-            goExpr (EVar ann ident) =
-              EVar ann (changeIdent ident)
-            goExpr (EAnn ann ty rest) =
-              EAnn ann (typeForComparison ty) (goExpr rest)
-            goExpr (ELambda ann ident body) =
-              ELambda ann (changeIdent ident) (goExpr body)
-            goExpr (EPatternMatch ann matchExpr pats) =
-              EPatternMatch ann (goExpr matchExpr) (fmap (bimap goPattern goExpr) pats)
-            goExpr other = mapExpr goExpr other
+    goExpr (EVar ann ident) =
+      EVar ann (changeIdent ident)
+    goExpr (EAnn ann ty rest) =
+      EAnn ann (typeForComparison ty) (goExpr rest)
+    goExpr (ELambda ann ident body) =
+      ELambda ann (changeIdent ident) (goExpr body)
+    goExpr (EPatternMatch ann matchExpr pats) =
+      EPatternMatch ann (goExpr matchExpr) (fmap (bimap goPattern goExpr) pats)
+    goExpr other = mapExpr goExpr other
 
-            goPattern (PVar ann ident) = PVar ann (changeIdent ident)
-            goPattern other = mapPattern goPattern other
-
+    goPattern (PVar ann ident) = PVar ann (changeIdent ident)
+    goPattern other = mapPattern goPattern other
 
 evalExpr ::
   [Constraint Annotation] ->
   Text ->
-  Either (TCError Annotation) ( ResolvedExpr (Type ResolvedDep Annotation))
+  Either (TCError Annotation) (ResolvedExpr (Type ResolvedDep Annotation))
 evalExpr constraints input =
   case parseExprAndFormatError input of
     Left e -> error (show e)
     Right expr ->
       case resolveExprDeps expr (getTypeclassMethodNames @() typecheckEnv) of
         Left e -> error $ "error getting method names :" <> show e
-        Right resolvedExpr -> fst <$> elaborate (typecheckEnv {tceConstraints = constraints}) resolvedExpr 
+        Right resolvedExpr -> fst <$> elaborate (typecheckEnv {tceConstraints = constraints}) resolvedExpr
 
 -- | elaborate but don't do clever resolving so we can construct the
 -- expectations we want
@@ -247,15 +246,13 @@ spec = do
 
   describe "Get dictionaries" $ do
     it "Single item dictionary for single constraint" $ do
-      let
-          constraints = [Constraint "Eq" [tyInt]]
+      let constraints = [Constraint "Eq" [tyInt]]
           expected = evalExprUnsafe "(\\a1 -> \\b2 -> a1 == b2 : Int -> Int -> Bool)"
 
       simplify <$> createTypeclassDict typecheckEnv constraints `shouldBe` simplify <$> expected
 
     it "Tuple for two constraints" $ do
-      let
-          constraints = [Constraint "Eq" [tyInt], Constraint "Eq" [tyInt]]
+      let constraints = [Constraint "Eq" [tyInt], Constraint "Eq" [tyInt]]
           expected = evalExprUnsafe "((\\a1 -> \\b2 -> a1 == b2 : Int -> Int -> Bool), (\\a1 -> \\b2 -> a1 == b2 : Int -> Int -> Bool))"
 
       simplify <$> createTypeclassDict typecheckEnv constraints `shouldBe` simplify <$> expected
@@ -267,15 +264,14 @@ spec = do
               expected = joinText expectedParts
            in it ("Successfully inlined " <> show input) $ do
                 let expr = getRight $ evalExpr (M.elems typeclasses) input
-                
-                let env = typecheckEnv { tceConstraints = M.elems typeclasses }
+
+                let env = typecheckEnv {tceConstraints = M.elems typeclasses}
 
                 let expectedExpr = getRight $ evalExprUnsafe expected
                     result = convertExprToUseTypeclassDictionary env typeclasses expr
 
                 fst <$> result `shouldBe` Right expectedConstraints
                 simplify . snd <$> result `shouldBe` Right (simplify expectedExpr)
-
       )
       [ (mempty, ["1 + 2"], mempty, ["1 + 2"]),
         ( M.singleton (TypeclassCall "equals" 1) (Constraint "Eq" [tyInt]),
@@ -295,8 +291,10 @@ spec = do
             "if tcnewname1 (1 : Int) (2 : Int) then tcnewname1 (2: Int) (3: Int) else False"
           ]
         ),
-        ( M.fromList [(TypeclassCall "equals" 7, Constraint "Eq" [tcVar "a"]),
-            (TypeclassCall "equals" 8, Constraint "Eq" [tcVar "b"])],
+        ( M.fromList
+            [ (TypeclassCall "equals" 7, Constraint "Eq" [tcVar "a"]),
+              (TypeclassCall "equals" 8, Constraint "Eq" [tcVar "b"])
+            ],
           [ "(\\a -> \\b -> case (a,b) of ((leftA, leftB), (rightA, rightB)) -> ",
             "if equals leftA rightA then equals leftB rightB else False : (a,b) -> (a,b) -> Bool)"
           ],

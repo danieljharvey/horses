@@ -28,9 +28,9 @@ import Smol.Core.Typecheck.Shared
 import Smol.Core.Typecheck.Simplify
 import Smol.Core.Typecheck.Substitute
 import Smol.Core.Typecheck.Subtype
+import Smol.Core.Typecheck.Typeclass.Helpers
 import Smol.Core.Typecheck.Types
 import Smol.Core.Types
-import Smol.Core.Typecheck.Typeclass.Helpers
 
 elaborate ::
   ( Ord ann,
@@ -51,17 +51,15 @@ elaborate env expr =
     )
     env
     >>= \(typedExpr, events) -> do
+      -- apply substitutions
+      let simpleExpr = simplifyType . substituteMany (filterSubstitutions events) <$> typedExpr
 
-  -- apply substitutions
-  let simpleExpr = simplifyType . substituteMany (filterSubstitutions events) <$> typedExpr
+      let typeclassUses = recoverTypeclassUses events
 
-  let typeclassUses = recoverTypeclassUses events
+      -- lookup typeclasses we need, explode if they're missing
+      traverse_ (lookupTypeclassConstraint env) (M.elems typeclassUses)
 
-  -- lookup typeclasses we need, explode if they're missing
-  traverse_ (lookupTypeclassConstraint env) (M.elems typeclassUses)
-
-  pure (simpleExpr, typeclassUses)
-
+      pure (simpleExpr, typeclassUses)
 
 inferInfix ::
   ( Ord ann,

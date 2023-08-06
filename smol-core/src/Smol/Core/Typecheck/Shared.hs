@@ -227,7 +227,9 @@ lookupVar ::
 lookupVar ann ident = do
   maybeVar <- asks (M.lookup ident . tceVars)
   case maybeVar of
-    Just expr -> pure expr
+    Just (_constraints, expr) ->
+      -- TODO: raise constraints used maybe?
+      pure expr
     Nothing -> do
       classes <- asks tceClasses
 
@@ -266,7 +268,7 @@ withVar ::
 withVar ident expr =
   local
     ( \env ->
-        env {tceVars = M.singleton ident expr <> tceVars env}
+        env {tceVars = M.singleton ident (mempty, expr) <> tceVars env}
     )
 
 pushArg ::
@@ -352,7 +354,7 @@ withNewVars ::
   m a ->
   m a
 withNewVars vars =
-  local (\env -> env {tceVars = vars <> tceVars env})
+  local (\env -> env {tceVars = ((,) mempty <$> vars) <> tceVars env})
 
 typeLiteralFromPrim :: Prim -> TypeLiteral
 typeLiteralFromPrim (PBool b) = TLBool b

@@ -26,7 +26,7 @@ spec = do
 
             expected =
               mempty
-                { moExpressions = M.singleton "main" (TopLevelExpression expr Nothing)
+                { moExpressions = M.singleton "main" (TopLevelExpression mempty expr Nothing)
                 }
 
         fst <$> resolveModuleDeps mempty mod' `shouldBe` Right expected
@@ -46,7 +46,7 @@ spec = do
             typeclassMethods = S.singleton "equals"
             expected =
               mempty
-                { moExpressions = M.singleton "main" (TopLevelExpression expr Nothing)
+                { moExpressions = M.singleton "main" (TopLevelExpression mempty expr Nothing)
                 }
 
         fst <$> resolveModuleDeps typeclassMethods mod' `shouldBe` Right expected
@@ -67,7 +67,7 @@ spec = do
 
             expected =
               mempty
-                { moExpressions = M.singleton "main" (TopLevelExpression expr Nothing)
+                { moExpressions = M.singleton "main" (TopLevelExpression mempty expr Nothing)
                 }
 
         fst <$> resolveModuleDeps mempty mod' `shouldBe` Right expected
@@ -78,7 +78,7 @@ spec = do
 
             expected =
               mempty
-                { moExpressions = M.singleton "main" (TopLevelExpression expr Nothing)
+                { moExpressions = M.singleton "main" (TopLevelExpression mempty expr Nothing)
                 }
 
         fst <$> resolveModuleDeps mempty mod' `shouldBe` Right expected
@@ -97,7 +97,7 @@ spec = do
                 )
             expected =
               mempty
-                { moExpressions = M.singleton "main" (TopLevelExpression expr Nothing)
+                { moExpressions = M.singleton "main" (TopLevelExpression mempty expr Nothing)
                 }
 
         fst <$> resolveModuleDeps mempty mod' `shouldBe` Right expected
@@ -121,8 +121,8 @@ spec = do
               mempty
                 { moExpressions =
                     M.fromList
-                      [ ("main", TopLevelExpression mainExpr Nothing),
-                        ("dep", TopLevelExpression depExpr Nothing)
+                      [ ("main", TopLevelExpression mempty mainExpr Nothing),
+                        ("dep", TopLevelExpression mempty depExpr Nothing)
                       ]
                 }
 
@@ -144,7 +144,7 @@ spec = do
             expected =
               mempty
                 { moExpressions =
-                    M.singleton "main" (TopLevelExpression mainExpr Nothing),
+                    M.singleton "main" (TopLevelExpression mempty mainExpr Nothing),
                   moDataTypes =
                     M.singleton
                       "Moybe"

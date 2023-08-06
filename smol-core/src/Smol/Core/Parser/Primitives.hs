@@ -33,8 +33,8 @@ primParser =
         <|> truePrimParser
         <|> falsePrimParser
         <|> PUnit
-        <$ unitParser
-          <|> stringPrimParser
+          <$ unitParser
+        <|> stringPrimParser
     )
 
 typeLiteralParser :: Parser TypeLiteral
@@ -42,14 +42,14 @@ typeLiteralParser =
   myLexeme
     ( TLInt
         <$> multiIntParser
-          <|> TLBool
-        <$> trueParser
-          <|> TLBool
-        <$> falseParser
-          <|> TLUnit
-        <$ unitParser
-          <|> TLString
-        <$> multiStringParser
+        <|> TLBool
+          <$> trueParser
+        <|> TLBool
+          <$> falseParser
+        <|> TLUnit
+          <$ unitParser
+        <|> TLString
+          <$> multiStringParser
     )
 
 -- 2, -2, +2

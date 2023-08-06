@@ -19,7 +19,6 @@ import Smol.Core.Typecheck.FromParsedExpr
 import Test.Helpers
 import Test.Hspec
 
-
 evalExpr ::
   Text ->
   Either (TCError Annotation) (ResolvedExpr (Type ResolvedDep Annotation))
@@ -37,7 +36,7 @@ testElaborate ::
   Either (TCError ann) (Expr ResolvedDep (Type ResolvedDep ann))
 testElaborate expr =
   case elaborate typecheckEnv (fromParsedExpr expr) of
-    Right (typedExpr ,_) -> pure typedExpr
+    Right (typedExpr, _) -> pure typedExpr
     Left e -> Left e
 
 spec :: Spec

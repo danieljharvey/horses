@@ -88,6 +88,7 @@ exprAndTypeFromParts moduleItems ident idents expr =
           expr
           idents
       tleType = findTypeExpression ident moduleItems
+      tleConstraints = mempty
    in TopLevelExpression {..}
 
 expressionExists :: Identifier -> [ModuleItem ann] -> Bool
