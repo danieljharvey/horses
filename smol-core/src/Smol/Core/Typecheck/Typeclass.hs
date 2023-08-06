@@ -9,6 +9,7 @@ module Smol.Core.Typecheck.Typeclass
     convertExprToUseTypeclassDictionary,
     getTypeclassMethodNames,
     createTypeclassDict,
+    passDictionaries,
     module Smol.Core.Typecheck.Typeclass.Helpers,
   )
 where
@@ -222,7 +223,30 @@ convertExprToUseTypeclassDictionary env constraints expr = do
 
   pure (snd <$> dedupedConstraints, newExpr)
 
-createTypeclassDict :: (Monad m) =>
-    [Constraint ann] -> Expr ResolvedDep (Type ResolvedDep ann)
+createTypeclassDict :: (Show ann, Ord ann, Monoid ann, MonadError (TCError ann) m ) =>
+    TCEnv ann -> [Constraint ann]
   -> m (Expr ResolvedDep (Type ResolvedDep ann))
-createTypeclassDict _ expr = pure expr
+createTypeclassDict env constraints = do
+  instances <- traverse (fmap snd . lookupInstanceAndCheck env) constraints
+  case instances of
+    [] -> error "what the fuck man, no constraints"
+    [one] -> pure one
+    (theFirst:theRest) -> let ty = TTuple mempty (getExprAnnotation theFirst) (NE.fromList $ getExprAnnotation <$> theRest) in
+      pure $ ETuple ty theFirst (NE.fromList theRest)
+
+
+-- given we know the types of all our deps
+-- pass dictionaries to them all
+passDictionaries :: (Monoid ann, Ord ann, Show ann, MonadError (TCError ann) m) =>
+  TCEnv ann -> Expr ResolvedDep (Type ResolvedDep ann) -> m (Expr ResolvedDep (Type ResolvedDep ann))
+passDictionaries env
+  = go
+    where
+      go (EVar ann (LocalDefinition def)) =
+        case M.lookup def (tceGlobals env) of
+          Just (constraints, _defExpr) -> do
+            dict <- createTypeclassDict env constraints
+            pure (EApp ann (EVar ann (LocalDefinition def)) dict)
+          Nothing -> error $ "Could not find " <> show def
+      go other = bindExpr go other
+

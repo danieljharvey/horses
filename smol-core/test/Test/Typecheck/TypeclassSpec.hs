@@ -22,6 +22,29 @@ import Smol.Core.Typecheck.Typeclass
 import Test.Helpers
 import Test.Hspec
 
+simplify :: Expr ResolvedDep ann -> Expr ResolvedDep ()
+simplify = void . goExpr
+          where
+            changeIdent (TypeclassCall ident i) =
+              LocalDefinition $ "tc" <> ident <> fromString (show i)
+            changeIdent (UniqueDefinition ident i) =
+              LocalDefinition $ ident <> fromString (show i)
+            changeIdent ident = ident
+
+            goExpr (EVar ann ident) =
+              EVar ann (changeIdent ident)
+            goExpr (EAnn ann ty rest) =
+              EAnn ann (typeForComparison ty) (goExpr rest)
+            goExpr (ELambda ann ident body) =
+              ELambda ann (changeIdent ident) (goExpr body)
+            goExpr (EPatternMatch ann matchExpr pats) =
+              EPatternMatch ann (goExpr matchExpr) (fmap (bimap goPattern goExpr) pats)
+            goExpr other = mapExpr goExpr other
+
+            goPattern (PVar ann ident) = PVar ann (changeIdent ident)
+            goPattern other = mapPattern goPattern other
+
+
 evalExpr ::
   [Constraint Annotation] ->
   Text ->
@@ -222,37 +245,22 @@ spec = do
                        ]
                    )
 
-  describe "Pass typeclass instances" $ do
-    it "Nothing happens with no constraints" $ do
-      let inputExpr = getRight $ evalExpr mempty "if equals (1: Int) (2: Int) then False else True"
+  describe "Get dictionaries" $ do
+    it "Single item dictionary for single constraint" $ do
+      let
           constraints = [Constraint "Eq" [tyInt]]
-          expected = evalExprUnsafe "\\a -> \\b -> a == b"
+          expected = evalExprUnsafe "(\\a1 -> \\b2 -> a1 == b2 : Int -> Int -> Bool)"
 
-      createTypeclassDict constraints inputExpr `shouldBe` expected
+      simplify <$> createTypeclassDict typecheckEnv constraints `shouldBe` simplify <$> expected
+
+    it "Tuple for two constraints" $ do
+      let
+          constraints = [Constraint "Eq" [tyInt], Constraint "Eq" [tyInt]]
+          expected = evalExprUnsafe "((\\a1 -> \\b2 -> a1 == b2 : Int -> Int -> Bool), (\\a1 -> \\b2 -> a1 == b2 : Int -> Int -> Bool))"
+
+      simplify <$> createTypeclassDict typecheckEnv constraints `shouldBe` simplify <$> expected
 
   describe "Convert expr to use typeclass dictionaries" $ do
-    let simplify :: Expr ResolvedDep ann -> Expr ResolvedDep ()
-        simplify = void . goExpr
-          where
-            changeIdent (TypeclassCall ident i) =
-              LocalDefinition $ "tc" <> ident <> fromString (show i)
-            changeIdent (UniqueDefinition ident i) =
-              LocalDefinition $ ident <> fromString (show i)
-            changeIdent ident = ident
-
-            goExpr (EVar ann ident) =
-              EVar ann (changeIdent ident)
-            goExpr (EAnn ann ty rest) =
-              EAnn ann (typeForComparison ty) (goExpr rest)
-            goExpr (ELambda ann ident body) =
-              ELambda ann (changeIdent ident) (goExpr body)
-            goExpr (EPatternMatch ann matchExpr pats) =
-              EPatternMatch ann (goExpr matchExpr) (fmap (bimap goPattern goExpr) pats)
-            goExpr other = mapExpr goExpr other
-
-            goPattern (PVar ann ident) = PVar ann (changeIdent ident)
-            goPattern other = mapPattern goPattern other
-
     traverse_
       ( \(typeclasses, parts, expectedConstraints, expectedParts) ->
           let input = joinText parts

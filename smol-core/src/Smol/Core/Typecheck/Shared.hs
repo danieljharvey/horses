@@ -20,7 +20,6 @@ module Smol.Core.Typecheck.Shared
     withNewVars,
     pushArg,
     getApplyReturnType,
-    withGlobal,
     lookupConstructor,
     lookupTypeName,
     typeForConstructor,
@@ -268,18 +267,6 @@ withVar ident expr =
   local
     ( \env ->
         env {tceVars = M.singleton ident expr <> tceVars env}
-    )
-
-withGlobal ::
-  (MonadReader (TCEnv ann) m) =>
-  Identifier ->
-  ResolvedType ann ->
-  m a ->
-  m a
-withGlobal ident expr =
-  local
-    ( \env ->
-        env {tceGlobals = M.singleton ident expr <> tceGlobals env}
     )
 
 pushArg ::

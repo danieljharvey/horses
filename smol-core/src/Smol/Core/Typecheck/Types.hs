@@ -56,7 +56,7 @@ instance Printer (Instance ann) where
 
 data TCEnv ann = TCEnv
   { tceVars :: Map (ResolvedDep Identifier) (ResolvedType ann),
-    tceGlobals :: Map Identifier (ResolvedType ann),
+    tceGlobals :: Map Identifier ([Constraint ann], ResolvedType ann),
     tceDataTypes :: Map (ResolvedDep TypeName) (DataType ResolvedDep ann),
     tceClasses :: Map String (Typeclass ann),
     tceInstances :: Map (Constraint ann) (Instance ann),
