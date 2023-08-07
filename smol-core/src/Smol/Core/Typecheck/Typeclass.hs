@@ -45,7 +45,7 @@ resolveType = mapTypeDep resolve
 lookupInstanceAndCheck ::
   (Ord ann, Monoid ann, Show ann, MonadError (TCError ann) m) =>
   TCEnv ann ->
-  Constraint () ->
+  Constraint ann ->
   m (Identifier, Expr ResolvedDep (Type ResolvedDep ann))
 lookupInstanceAndCheck env tch@(Constraint typeclassName _) = do
   tcInstance <- lookupTypeclassInstance env tch
@@ -224,7 +224,7 @@ convertExprToUseTypeclassDictionary env constraints expr = do
 createTypeclassDict ::
   (Show ann, Ord ann, Monoid ann, MonadError (TCError ann) m) =>
   TCEnv ann ->
-  [Constraint ()] ->
+  [Constraint ann] ->
   m (Expr ResolvedDep (Type ResolvedDep ann))
 createTypeclassDict env constraints = do
   instances <- traverse (fmap snd . lookupInstanceAndCheck env) constraints

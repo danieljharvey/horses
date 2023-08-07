@@ -3,11 +3,12 @@
 
 module Smol.Core.Modules.Typecheck (typecheckModule) where
 
+import Control.Monad.Identity
 import qualified Builder as Build
 import Control.Monad.Except
 import Data.Bifunctor (first)
 import Data.Foldable (traverse_)
-import Data.Functor (void)
+import Data.Functor (($>))
 import Data.Map.Strict (Map)
 import qualified Data.Map.Strict as M
 import Data.Maybe (fromMaybe, mapMaybe)
@@ -196,6 +197,13 @@ getDataTypeMap =
     . filterTypeDefs
     . filterDataTypes
 
+resolveConstraint :: Constraint ann -> Constraint (Type ResolvedDep ann)
+resolveConstraint (Constraint tcn tys)
+  = Constraint tcn (resolveTy  <$> tys)
+    where
+      resolveTy ty = ty $> toResolvedDep ty
+      toResolvedDep = mapTypeDep (LocalDefinition . runIdentity)
+
 -- given types for other required definition, typecheck a definition
 typecheckOneExprDef ::
   (MonadError (ModuleError Annotation) m) =>
@@ -208,7 +216,7 @@ typecheckOneExprDef input _inputModule deps (def, tle) = do
   -- where are we getting constraints from?
   let exprTypeMap =
         mapKey LocalDefinition $
-          (\depTLE -> (tleConstraints depTLE, getExprAnnotation (tleExpr depTLE)))
+          (\depTLE -> ((fmap . fmap) getTypeAnnotation (tleConstraints depTLE), getExprAnnotation (tleExpr depTLE)))
             <$> filterNameDefs (filterExprs deps)
 
   -- initial typechecking environment
@@ -218,7 +226,7 @@ typecheckOneExprDef input _inputModule deps (def, tle) = do
             tceDataTypes = getDataTypeMap deps,
             tceClasses = mempty,
             tceInstances = mempty,
-            tceConstraints = mempty -- we'll get these from the type
+            tceConstraints = tleConstraints tle
           }
 
   -- if we have a type, add an annotation
@@ -240,7 +248,7 @@ typecheckOneExprDef input _inputModule deps (def, tle) = do
 
   pure
     ( TopLevelExpression
-        { tleConstraints = fmap void constraints,
+        { tleConstraints = fmap resolveConstraint constraints,
           tleExpr = typedExpr,
           tleType = typedType
         }

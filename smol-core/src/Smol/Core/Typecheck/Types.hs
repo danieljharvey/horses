@@ -60,9 +60,9 @@ instance Printer (Instance ann) where
     "(" <> PP.concatWith (\a b -> a <> ", " <> b) (prettyDoc <$> constraints) <> ") => " <> prettyDoc expr
 
 data TCEnv ann = TCEnv
-  { tceVars :: Map (ResolvedDep Identifier) ([Constraint ()], ResolvedType ann),
+  { tceVars :: Map (ResolvedDep Identifier) ([Constraint ann], ResolvedType ann),
     tceDataTypes :: Map (ResolvedDep TypeName) (DataType ResolvedDep ann),
     tceClasses :: Map String (Typeclass ann),
-    tceInstances :: Map (Constraint ()) (Instance ann),
+    tceInstances :: Map (Constraint ann) (Instance ann),
     tceConstraints :: [Constraint ann]
   }

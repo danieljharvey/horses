@@ -28,7 +28,7 @@ import Smol.Core.Types.TypeName
 
 -- a single expression of zero or more exprs and an optional type
 data TopLevelExpression dep ann = TopLevelExpression
-  { tleConstraints :: [Constraint ()],
+  { tleConstraints :: [Constraint ann],
     tleExpr :: Expr dep ann,
     tleType :: Maybe (Type dep ann)
   }

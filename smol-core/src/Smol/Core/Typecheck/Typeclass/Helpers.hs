@@ -75,7 +75,7 @@ instanceMatchesType needleTys haystackTys =
 lookupTypeclassInstance ::
   (MonadError (TCError ann) m, Ord ann, Show ann) =>
   TCEnv ann ->
-  Constraint () ->
+  Constraint ann ->
   m (Instance ann)
 lookupTypeclassInstance env tch@(Constraint name tys) =
   -- first, do we have a concrete instance?
