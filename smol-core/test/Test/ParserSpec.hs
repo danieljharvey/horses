@@ -26,6 +26,13 @@ testInputs =
 spec :: Spec
 spec = do
   describe "Parser" $ do
+    fdescribe "Constraint" $ do
+      let inputs = [ ("Eq Int", Constraint "Eq" [tyInt]) ]
+      traverse_
+        (\(input, expected) ->
+          parseConstraintAndFormatError input `shouldBe` Right expected
+          ) inputs
+
     fdescribe "Module" $ do
       let singleDefs =
             [ "type Dog a = Woof String | Other a",
