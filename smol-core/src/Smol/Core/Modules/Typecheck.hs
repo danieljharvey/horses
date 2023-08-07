@@ -3,9 +3,9 @@
 
 module Smol.Core.Modules.Typecheck (typecheckModule) where
 
-import Control.Monad.Identity
 import qualified Builder as Build
 import Control.Monad.Except
+import Control.Monad.Identity
 import Data.Bifunctor (first)
 import Data.Foldable (traverse_)
 import Data.Functor (($>))
@@ -198,11 +198,11 @@ getDataTypeMap =
     . filterDataTypes
 
 resolveConstraint :: Constraint ann -> Constraint (Type ResolvedDep ann)
-resolveConstraint (Constraint tcn tys)
-  = Constraint tcn (resolveTy  <$> tys)
-    where
-      resolveTy ty = ty $> toResolvedDep ty
-      toResolvedDep = mapTypeDep (LocalDefinition . runIdentity)
+resolveConstraint (Constraint tcn tys) =
+  Constraint tcn (resolveTy <$> tys)
+  where
+    resolveTy ty = ty $> toResolvedDep ty
+    toResolvedDep = mapTypeDep (LocalDefinition . runIdentity)
 
 -- given types for other required definition, typecheck a definition
 typecheckOneExprDef ::

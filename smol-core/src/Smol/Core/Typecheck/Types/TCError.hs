@@ -8,6 +8,7 @@ where
 
 import Control.Monad.Identity
 import Data.Set (Set)
+import Smol.Core.Typecheck.Typeclass.Types
 import Smol.Core.Types
 import Smol.Core.Types.PatternMatchError (PatternMatchError)
 
@@ -27,5 +28,5 @@ data TCError ann
   | TCExpectedConstructorType (ResolvedType ann)
   | TCCompoundTypeInEquality (ResolvedType ann) -- for now we only do primitive equality
   | TCPatternMatchError (PatternMatchError (ResolvedType ann))
-  | TCTypeclassInstanceNotFound String [Type Identity ann]
+  | TCTypeclassInstanceNotFound TypeclassName [Type Identity ann]
   deriving stock (Eq, Ord, Show, Foldable)

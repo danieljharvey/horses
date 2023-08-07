@@ -9,10 +9,12 @@ module Smol.Core.Parser.Identifiers
     moduleNameParser,
     typeNameParser,
     plainTypeNameParser,
+    typeclassNameParser,
     testNameParser,
   )
 where
 
+import Smol.Core.Typecheck.Typeclass.Types
 import Control.Monad
 import qualified Data.Char as Char
 import Data.Set (Set)
@@ -169,6 +171,19 @@ moduleNameParser =
     maybePred
       moduleName
       (filterProtectedNames >=> safeMkModuleName)
+
+----
+
+typeclassName :: Parser Text
+typeclassName = takeWhile1P (Just "constructor") Char.isAlphaNum
+
+typeclassNameParser :: Parser TypeclassName
+typeclassNameParser =
+  myLexeme $
+    maybePred
+      typeclassName
+      (filterProtectedNames >=> safeMkTypeclassName)
+
 
 --------
 

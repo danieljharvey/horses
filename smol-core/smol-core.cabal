@@ -101,6 +101,7 @@ library
     Smol.Core.Parser.Primitives
     Smol.Core.Parser.Shared
     Smol.Core.Parser.Type
+    Smol.Core.Parser.Typeclass
     Smol.Core.Printer
     Smol.Core.SourceSpan
     Smol.Core.Typecheck
@@ -117,6 +118,7 @@ library
     Smol.Core.Typecheck.Typecheck
     Smol.Core.Typecheck.Typeclass
     Smol.Core.Typecheck.Typeclass.Helpers
+    Smol.Core.Typecheck.Typeclass.Types
     Smol.Core.Typecheck.Types
     Smol.Core.Typecheck.Types.Substitution
     Smol.Core.Typecheck.Types.TCError

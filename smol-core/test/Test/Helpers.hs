@@ -219,7 +219,7 @@ eqTypeclass =
       tcFuncType = tyFunc (tcVar "a") (tyFunc (tcVar "a") tyBool)
     }
 
-classes :: (Monoid ann) => M.Map String (Typeclass ann)
+classes :: (Monoid ann) => M.Map TypeclassName (Typeclass ann)
 classes =
   M.fromList
     [ ("Eq", eqTypeclass),

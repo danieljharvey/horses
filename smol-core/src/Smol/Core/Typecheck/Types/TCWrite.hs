@@ -7,18 +7,24 @@ module Smol.Core.Typecheck.Types.TCWrite (TCWrite (..), filterSubstitutions, fil
 import Data.Maybe (mapMaybe)
 import Data.String
 import Smol.Core.Printer
+import Smol.Core.Typecheck.Typeclass.Types
 import Smol.Core.Typecheck.Types.Substitution
 import Smol.Core.Types.Identifier
 import Smol.Core.Types.ResolvedDep
 
 -- stuff emitted during typechecking
 data TCWrite ann
-  = TCWSubstitution (Substitution ResolvedDep ann)
-  | TCWTypeclassUse (ResolvedDep Identifier) String [(Identifier, Integer)]
+  = TCWSubstitution
+      (Substitution ResolvedDep ann)
+  | TCWTypeclassUse
+      (ResolvedDep Identifier)
+      TypeclassName
+      [(Identifier, Integer)]
   deriving stock (Eq, Ord, Show)
 
 instance (Show ann) => Printer (TCWrite ann) where
-  prettyDoc (TCWTypeclassUse _ tcName matches) = fromString tcName <> " : " <> fromString (show matches)
+  prettyDoc (TCWTypeclassUse _ tcn matches) =
+    prettyDoc tcn <> " : " <> fromString (show matches)
   prettyDoc (TCWSubstitution sub) = prettyDoc sub
 
 filterSubstitutions :: [TCWrite ann] -> [Substitution ResolvedDep ann]
@@ -29,7 +35,7 @@ filterSubstitutions =
         _ -> Nothing
     )
 
-filterTypeclassUses :: [TCWrite ann] -> [(ResolvedDep Identifier, String, [(Identifier, Integer)])]
+filterTypeclassUses :: [TCWrite ann] -> [(ResolvedDep Identifier, TypeclassName, [(Identifier, Integer)])]
 filterTypeclassUses =
   mapMaybe
     ( \case
