@@ -2,23 +2,23 @@
 {-# LANGUAGE DeriveFunctor #-}
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE DerivingStrategies #-}
+{-# LANGUAGE GeneralisedNewtypeDeriving #-}
 {-# LANGUAGE OverloadedStrings #-}
-  {-# LANGUAGE GeneralisedNewtypeDeriving #-}
+
 module Smol.Core.Typecheck.Typeclass.Types
-  (
-    Typeclass (..),
+  ( Typeclass (..),
     Constraint (..),
     Instance (..),
-    module Smol.Core.Typecheck.Typeclass.Types.TypeclassName
+    module Smol.Core.Typecheck.Typeclass.Types.TypeclassName,
   )
 where
 
-import Smol.Core.Typecheck.Typeclass.Types.TypeclassName
 import Control.Monad.Identity
 import Data.Aeson (FromJSON, ToJSON)
 import GHC.Generics
 import qualified Prettyprinter as PP
 import Smol.Core.Printer
+import Smol.Core.Typecheck.Typeclass.Types.TypeclassName
 import Smol.Core.Types
 
 -- | the typeclass described in it's most general form, ie

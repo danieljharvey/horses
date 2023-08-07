@@ -15,13 +15,14 @@ import Data.Maybe (fromMaybe, mapMaybe)
 import Data.Set (Set)
 import Data.Text (Text)
 import Smol.Core
-import Smol.Core.Helpers (mapKey)
+import Smol.Core.Helpers
 import Smol.Core.Modules.Dependencies
 import Smol.Core.Modules.Helpers (filterNameDefs, filterTypeDefs)
 import Smol.Core.Modules.Types
 import Smol.Core.Modules.Types.DepType
 import Smol.Core.Modules.Types.ModuleError
 import Smol.Core.Typecheck.Typecheck (typecheck)
+import Smol.Core.Typecheck.Typeclass.BuiltIns
 
 getModuleDefIdentifiers ::
   Map DefIdentifier (Set DefIdentifier) ->
@@ -224,8 +225,8 @@ typecheckOneExprDef input _inputModule deps (def, tle) = do
         TCEnv
           { tceVars = exprTypeMap,
             tceDataTypes = getDataTypeMap deps,
-            tceClasses = mempty,
-            tceInstances = mempty,
+            tceClasses = builtInClasses,
+            tceInstances = builtInInstances,
             tceConstraints = tleConstraints tle
           }
 
@@ -246,10 +247,14 @@ typecheckOneExprDef input _inputModule deps (def, tle) = do
         (EAnn _ ty expr) -> (Just ty, expr)
         other -> (Nothing, other)
 
-  pure
-    ( TopLevelExpression
-        { tleConstraints = fmap resolveConstraint constraints,
-          tleExpr = typedExpr,
-          tleType = typedType
-        }
-    )
+  let typedTle =
+        TopLevelExpression
+          { tleConstraints = fmap resolveConstraint constraints,
+            tleExpr = typedExpr,
+            tleType = typedType
+          }
+
+  tracePrettyM "tle con" constraints
+  tracePrettyM "tle expr" typedExpr
+
+  pure typedTle

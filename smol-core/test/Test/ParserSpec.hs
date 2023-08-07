@@ -26,8 +26,15 @@ testInputs =
 spec :: Spec
 spec = do
   describe "Parser" $ do
-    fdescribe "Constraint" $ do
-      let inputs = [("Eq Int", Constraint "Eq" [tyInt])]
+    describe "Constraint" $ do
+      let inputs =
+            [ ( "Eq Int",
+                Constraint "Eq" [tyInt]
+              ),
+              ( "Eq (a,b)",
+                Constraint "Eq" [tyTuple (tcVar "a") [tcVar "b"]]
+              )
+            ]
       traverse_
         ( \(input, expected) ->
             it (T.unpack $ "Parses constraint: " <> input) $ do
@@ -35,7 +42,7 @@ spec = do
         )
         inputs
 
-    fdescribe "Module" $ do
+    describe "Module" $ do
       let singleDefs =
             [ "type Dog a = Woof String | Other a",
               "def id : a -> a",

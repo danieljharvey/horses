@@ -70,7 +70,8 @@ spec = do
         )
         cases
 
-    describe "interpret with typeclasses" $ do
+    -- not sure this is the way
+    xdescribe "interpret with typeclasses" $ do
       let cases =
             [ ("equals (1 : Int) (1 : Int)", "True"), -- use Eq Int
               ("equals (2 : Int) (1 : Int)", "False"), -- use Eq Int

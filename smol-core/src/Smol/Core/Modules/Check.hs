@@ -1,4 +1,5 @@
 {-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE TypeApplications #-}
 
 module Smol.Core.Modules.Check
   ( checkModule,
@@ -6,6 +7,8 @@ module Smol.Core.Modules.Check
 where
 
 import Control.Monad.Except
+import qualified Data.Map.Strict as M
+import qualified Data.Set as S
 import qualified Data.Text as T
 import Smol.Core
 import Smol.Core.Modules.FromParts
@@ -14,6 +17,7 @@ import Smol.Core.Modules.Typecheck
 import Smol.Core.Modules.Types.Module
 import Smol.Core.Modules.Types.ModuleError
 import Smol.Core.Modules.Types.ModuleItem
+import Smol.Core.Typecheck.Typeclass.BuiltIns
 
 -- this is the front door as such
 checkModule ::
@@ -23,5 +27,9 @@ checkModule ::
   m (Module ResolvedDep (Type ResolvedDep Annotation))
 checkModule input moduleItems = do
   myModule <- moduleFromModuleParts moduleItems
-  (resolvedModule, deps) <- modifyError ErrorInResolveDeps (resolveModuleDeps mempty myModule)
-  typecheckModule input resolvedModule deps
+  let typeclassMethods = S.fromList . M.elems . fmap tcFuncName $ builtInClasses @Annotation
+  (resolvedModule, deps) <-
+    modifyError ErrorInResolveDeps (resolveModuleDeps typeclassMethods myModule)
+  typedModule <- typecheckModule input resolvedModule deps
+  _ <- error "now do passDictionaries to all the stuff in the module pls"
+  pure typedModule

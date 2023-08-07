@@ -14,7 +14,6 @@ module Smol.Core.Parser.Identifiers
   )
 where
 
-import Smol.Core.Typecheck.Typeclass.Types
 import Control.Monad
 import qualified Data.Char as Char
 import Data.Set (Set)
@@ -25,6 +24,7 @@ import Smol.Core.Modules.Types.ModuleName
 import Smol.Core.Modules.Types.TestName
 import Smol.Core.Parser.Primitives (textPrim)
 import Smol.Core.Parser.Shared
+import Smol.Core.Typecheck.Typeclass.Types
 import Smol.Core.Types
 import Text.Megaparsec
 
@@ -183,7 +183,6 @@ typeclassNameParser =
     maybePred
       typeclassName
       (filterProtectedNames >=> safeMkTypeclassName)
-
 
 --------
 

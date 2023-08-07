@@ -1,0 +1,5 @@
+def useEqualsInt : Bool
+def useEqualsInt = equals (1: Int) (2: Int)
+
+def useEqualsA : (Eq a) => a -> a -> Bool
+def useEqualsA a b = equals a b

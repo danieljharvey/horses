@@ -36,7 +36,17 @@ spec = do
                 ],
                 "-10"
               ),
-              (["def id a = a", "def useId a = id a", "def main = useId 100"], "100")
+              ( [ "def id a = a",
+                  "def useId a = id a",
+                  "def main = useId 100"
+                ],
+                "100"
+              ),
+              ( [ "def main = useEquals",
+                  "def useEquals = equals (1: Int) (2: Int)"
+                ],
+                "False"
+              )
             ]
       traverse_
         ( \(parts, expect) ->

@@ -6,6 +6,7 @@ module Smol.Core.Parser.Module
   )
 where
 
+import qualified Data.List.NonEmpty as NE
 import Data.Text (Text)
 import Data.Void
 import Smol.Core.Modules.Types.ModuleItem
@@ -14,6 +15,8 @@ import Smol.Core.Parser.Expr
 import Smol.Core.Parser.Identifiers
 import Smol.Core.Parser.Shared
 import Smol.Core.Parser.Type
+import Smol.Core.Parser.Typeclass
+import Smol.Core.Typecheck.Typeclass.Types
 import Smol.Core.Types
 import Text.Megaparsec hiding (parseTest)
 
@@ -75,7 +78,16 @@ moduleTypeDefinitionParser = do
   myString "def"
   name <- identifierParser
   myString ":"
-  ModuleExpressionType name <$> typeParser
+  constraints <- try typeConstraintParser <|> pure mempty
+  ModuleExpressionType name constraints <$> typeParser
+
+typeConstraintParser :: Parser [Constraint Annotation]
+typeConstraintParser = do
+  myString "("
+  constraints <- commaSep constraintParser
+  myString ")"
+  myString "=>"
+  pure (NE.toList constraints)
 
 -- `test "everything is fine" with myFunctionName`
 parseTest :: Parser (ModuleItem Annotation)

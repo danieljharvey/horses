@@ -47,7 +47,7 @@ addModulePart allParts part mod' =
           { moExpressions =
               M.singleton name exp' <> moExpressions mod'
           }
-    ModuleExpressionType _name _ty -> do
+    ModuleExpressionType _name _ _ty -> do
       pure mod' -- we sort these elsewhere
     ModuleTest testName ident
       | "" == testName ->
@@ -87,8 +87,12 @@ exprAndTypeFromParts moduleItems ident idents expr =
           (ELambda mempty . emptyParseDep)
           expr
           idents
-      tleType = findTypeExpression ident moduleItems
-      tleConstraints = mempty
+      (tleConstraints, tleType) =
+        case findTypeExpression ident moduleItems of
+          Just (constraints, ty) ->
+            (constraints, Just ty)
+          Nothing ->
+            (mempty, Nothing)
    in TopLevelExpression {..}
 
 expressionExists :: Identifier -> [ModuleItem ann] -> Bool
@@ -101,11 +105,11 @@ expressionExists ident moduleItems =
       )
       moduleItems
 
-findTypeExpression :: Identifier -> [ModuleItem ann] -> Maybe (Type ParseDep ann)
+findTypeExpression :: Identifier -> [ModuleItem ann] -> Maybe ([Constraint ann], Type ParseDep ann)
 findTypeExpression ident moduleItems =
   case mapMaybe
     ( \case
-        ModuleExpressionType name ty | name == ident -> Just ty
+        ModuleExpressionType name constraints ty | name == ident -> Just (constraints, ty)
         _ -> Nothing
     )
     moduleItems of
