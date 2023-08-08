@@ -25,6 +25,7 @@ import Data.Maybe (fromMaybe, mapMaybe)
 import qualified Data.Set as S
 import Data.Tuple (swap)
 import Smol.Core.ExprUtils
+import Smol.Core.Helpers
 import Smol.Core.Modules.ResolveDeps
 import Smol.Core.Typecheck.Elaborate (elaborate)
 import Smol.Core.Typecheck.Shared
@@ -263,6 +264,7 @@ passOuterDictionaries ::
   m (Expr ResolvedDep (Type ResolvedDep ann))
 passOuterDictionaries _ [] expr = pure expr
 passOuterDictionaries env constraints expr = do
-          dict <- createTypeclassDict env constraints
-          let ann = getExprAnnotation expr
-          pure (EApp ann expr dict)
+  tracePrettyM "passOuterDictionaries" constraints
+  dict <- createTypeclassDict env constraints
+  let ann = getExprAnnotation expr
+  pure (EApp ann expr dict)

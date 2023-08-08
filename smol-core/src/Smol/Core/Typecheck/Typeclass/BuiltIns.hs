@@ -45,7 +45,7 @@ builtInInstances =
   M.fromList
     [ ( Constraint "Eq" [TPrim mempty TPInt],
         Instance
-          { inExpr = ELambda mempty "a" (ELambda mempty "b" (EInfix mempty OpAdd (EVar mempty "a") (EVar mempty "b"))),
+          { inExpr = ELambda mempty "a" (ELambda mempty "b" (EInfix mempty OpEquals (EVar mempty "a") (EVar mempty "b"))),
             inConstraints = []
           }
       )
