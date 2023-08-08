@@ -1,4 +1,5 @@
 {-# LANGUAGE DeriveAnyClass #-}
+{-# LANGUAGE DeriveFoldable #-}
 {-# LANGUAGE DeriveFunctor #-}
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE DerivingStrategies #-}
@@ -33,7 +34,7 @@ data Typeclass ann = Typeclass
 
 data Constraint ann
   = Constraint TypeclassName [Type Identity ann]
-  deriving stock (Eq, Ord, Show, Functor, Generic)
+  deriving stock (Eq, Ord, Show, Functor, Foldable, Generic)
   deriving anyclass (ToJSON, FromJSON)
 
 instance Printer (Constraint ann) where

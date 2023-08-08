@@ -76,8 +76,9 @@ spec = do
                 ],
                 "101"
               ),
-              ( [ "def main = equals ((1:Int),(2: Int)) ((1: Int), (2: Int))" ],
-                "True")
+              ( ["def main = equals ((1:Int),(2: Int)) ((1: Int), (2: Int))"],
+                "True"
+              )
             ]
       traverse_
         ( \(parts, expect) ->

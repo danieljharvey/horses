@@ -93,7 +93,7 @@ lookupTypeclassInstance env constraint@(Constraint name tys) =
         -- we deliberately fail if we find more than one matching instance
         [(foundConstraint, subs)] -> do
           -- a) look up main instance
-          case M.lookup foundConstraint (tceInstances env) of
+          case lookupConcreteInstance env foundConstraint of
             Just (Instance {inConstraints, inExpr}) -> do
               -- specialise contraints to found types
               let subbedConstraints = substituteConstraint subs <$> inConstraints
@@ -103,8 +103,10 @@ lookupTypeclassInstance env constraint@(Constraint name tys) =
               pure (Instance {inConstraints = subbedConstraints, inExpr})
             Nothing ->
               throwError (TCTypeclassInstanceNotFound name tys)
-        _ ->
+        [] ->
           throwError (TCTypeclassInstanceNotFound name tys)
+        multiple ->
+          throwError (TCConflictingTypeclassInstancesFound (fst <$> multiple))
 
 substituteConstraint ::
   [Substitution Identity ann] ->

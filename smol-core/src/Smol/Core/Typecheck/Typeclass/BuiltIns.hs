@@ -2,16 +2,15 @@
 
 module Smol.Core.Typecheck.Typeclass.BuiltIns (builtInClasses, builtInInstances) where
 
-
+import Control.Monad.Identity
 import Data.Functor
-import Smol.Core.ExprUtils
-import Smol.Core.Parser
 import qualified Data.List.NonEmpty as NE
 import qualified Data.Map.Strict as M
+import qualified Data.Text as T
+import Smol.Core.ExprUtils
+import Smol.Core.Parser
 import Smol.Core.Typecheck.Typeclass.Types
 import Smol.Core.Types
-import qualified Data.Text as T
-import Control.Monad.Identity
 
 showTypeclass :: (Monoid ann) => Typeclass ann
 showTypeclass =
@@ -50,7 +49,6 @@ unsafeParseExpr input = case parseExprAndFormatError input of
   Right expr -> expr $> ()
   Left e -> error (show e)
 
-
 identityFromParsedExpr :: Expr ParseDep ann -> Expr Identity ann
 identityFromParsedExpr = mapExprDep resolve
   where
@@ -60,13 +58,11 @@ unsafeParseInstanceExpr :: (Monoid ann) => T.Text -> Expr Identity ann
 unsafeParseInstanceExpr =
   fmap (const mempty) . identityFromParsedExpr . unsafeParseExpr
 
-
 tyInt :: (Monoid ann) => Type dep ann
 tyInt = TPrim mempty TPInt
 
 tcVar :: (Monoid ann) => Identifier -> Type Identity ann
 tcVar = TVar mempty . Identity
-
 
 tyTuple ::
   (Monoid ann) =>
@@ -93,6 +89,3 @@ builtInInstances =
           }
       )
     ]
-
-
-
