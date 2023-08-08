@@ -25,7 +25,6 @@ import Data.Maybe (fromMaybe, mapMaybe)
 import qualified Data.Set as S
 import Data.Tuple (swap)
 import Smol.Core.ExprUtils
-import Smol.Core.Helpers
 import Smol.Core.Modules.ResolveDeps
 import Smol.Core.Typecheck.Elaborate (elaborate)
 import Smol.Core.Typecheck.Shared
@@ -209,10 +208,10 @@ convertExprToUseTypeclassDictionary env constraints expr = do
   newExpr <- case maybePattern of
     Just pat -> do
       let dictType = getPatternAnnotation pat
-          wholeType = TFunc mempty mempty dictType (getExprAnnotation expr)
+          exprType = getExprAnnotation expr
       pure $
         ELambda
-          wholeType
+          exprType -- we want the overall expression to have the same type so we can still typecheck and ignore the constraints
           "instances"
           ( EPatternMatch
               (getExprAnnotation tidyExpr)
@@ -264,7 +263,6 @@ passOuterDictionaries ::
   m (Expr ResolvedDep (Type ResolvedDep ann))
 passOuterDictionaries _ [] expr = pure expr
 passOuterDictionaries env constraints expr = do
-  tracePrettyM "passOuterDictionaries" constraints
   dict <- createTypeclassDict env constraints
   let ann = getExprAnnotation expr
   pure (EApp ann expr dict)

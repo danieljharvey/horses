@@ -12,7 +12,6 @@ import qualified Data.Map.Strict as M
 import qualified Data.Set as S
 import qualified Data.Text as T
 import Smol.Core
-import Smol.Core.Helpers
 import Smol.Core.Modules.FromParts
 import Smol.Core.Modules.ResolveDeps
 import Smol.Core.Modules.Typecheck
@@ -58,14 +57,10 @@ passModuleDictionaries inputModule = do
                   tceConstraints = constraints
                 }
 
-        tracePrettyM "old expr" expr 
-
         newExpr <-
           modifyError
             (DefDoesNotTypeCheck mempty (DIName ident))
             (passOuterDictionaries env constraints <=< passDictionaries env $ expr)
-
-        tracePrettyM "new expr" newExpr
 
         pure $ (ident, tle {tleExpr = newExpr})
 
