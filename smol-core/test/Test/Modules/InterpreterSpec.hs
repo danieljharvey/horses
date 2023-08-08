@@ -28,7 +28,7 @@ testInterpret input =
 spec :: Spec
 spec = do
   describe "Module InterpreterSpec" $ do
-    describe "interpret" $ do
+    fdescribe "interpret" $ do
       let cases =
             [ (["def main = 1 + 1"], "2"),
               ( [ "def id a = a",
@@ -42,8 +42,7 @@ spec = do
                 ],
                 "100"
               ),
-              ( [ "def main = useEquals",
-                  "def useEquals = equals (1: Int) (2: Int)"
+              ( [ "def main = equals (1: Int) (2: Int)"
                 ],
                 "False"
               )

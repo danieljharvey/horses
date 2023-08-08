@@ -254,7 +254,4 @@ typecheckOneExprDef input _inputModule deps (def, tle) = do
             tleType = typedType
           }
 
-  tracePrettyM "tle con" constraints
-  tracePrettyM "tle expr" typedExpr
-
   pure typedTle

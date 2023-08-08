@@ -10,6 +10,7 @@ module Smol.Core.Typecheck.Typeclass
     getTypeclassMethodNames,
     createTypeclassDict,
     passDictionaries,
+    passOuterDictionaries,
     module Smol.Core.Typecheck.Typeclass.Helpers,
   )
 where
@@ -252,3 +253,16 @@ passDictionaries env =
           pure (EApp ann (EVar ann ident) dict)
         Nothing -> pure (EVar ann ident)
     go other = bindExpr go other
+
+-- pass dictionaries to the current expression
+passOuterDictionaries ::
+  (Monoid ann, Ord ann, Show ann, MonadError (TCError ann) m) =>
+  TCEnv ann ->
+  [Constraint ann] ->
+  Expr ResolvedDep (Type ResolvedDep ann) ->
+  m (Expr ResolvedDep (Type ResolvedDep ann))
+passOuterDictionaries _ [] expr = pure expr
+passOuterDictionaries env constraints expr = do
+          dict <- createTypeclassDict env constraints
+          let ann = getExprAnnotation expr
+          pure (EApp ann expr dict)
