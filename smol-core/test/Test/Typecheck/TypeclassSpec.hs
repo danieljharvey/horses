@@ -249,13 +249,22 @@ spec = do
       let constraints = [Constraint "Eq" [tyInt]]
           expected = evalExprUnsafe "(\\a1 -> \\b2 -> a1 == b2 : Int -> Int -> Bool)"
 
-      simplify <$> createTypeclassDict typecheckEnv constraints `shouldBe` simplify <$> expected
+      (fmap . fmap) simplify (createTypeclassDict typecheckEnv constraints) `shouldBe`
+        Just . simplify <$> expected
 
     it "Tuple for two constraints" $ do
       let constraints = [Constraint "Eq" [tyInt], Constraint "Eq" [tyInt]]
           expected = evalExprUnsafe "((\\a1 -> \\b2 -> a1 == b2 : Int -> Int -> Bool), (\\a1 -> \\b2 -> a1 == b2 : Int -> Int -> Bool))"
 
-      simplify <$> createTypeclassDict typecheckEnv constraints `shouldBe` simplify <$> expected
+      (fmap . fmap) simplify (createTypeclassDict typecheckEnv constraints) `shouldBe`
+        Just . simplify <$> expected
+
+    it "No dictionary for non-concrete type" $ do
+      let constraints = [Constraint "Eq" [tcVar "a"]]
+          expected = Nothing
+
+      createTypeclassDict @() typecheckEnv constraints `shouldBe`
+        Right expected
 
   describe "isConcrete" $ do
     it "yes, because it has no vars" $ do

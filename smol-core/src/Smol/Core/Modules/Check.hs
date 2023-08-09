@@ -6,13 +6,11 @@ module Smol.Core.Modules.Check
   )
 where
 
-import Control.Monad
 import Control.Monad.Except
 import qualified Data.Map.Strict as M
 import qualified Data.Set as S
 import qualified Data.Text as T
 import Smol.Core
-import Smol.Core.Helpers
 import Smol.Core.Modules.FromParts
 import Smol.Core.Modules.ResolveDeps
 import Smol.Core.Modules.Typecheck
@@ -48,26 +46,10 @@ passModuleDictionaries inputModule = do
         let constraints = (fmap . fmap) getTypeAnnotation (tleConstraints tle)
             expr = tleExpr tle
 
-        tracePrettyM "ident" ident
-        tracePrettyM "expr" expr
-        tracePrettyM "constraints" constraints
-
-        -- initial typechecking environment
-        let env =
-              TCEnv
-                { tceVars = mempty,
-                  tceDataTypes = mempty,
-                  tceClasses = builtInClasses,
-                  tceInstances = builtInInstances,
-                  tceConstraints = constraints
-                }
-
         newExpr <-
           modifyError
             (DefDoesNotTypeCheck mempty (DIName ident))
-            (passOuterDictionaries env constraints <=< passDictionaries env $ expr)
-
-        tracePrettyM "newExpr" newExpr
+            (passAllDictionaries constraints expr)
 
         pure $ (ident, tle {tleExpr = newExpr})
 

@@ -76,16 +76,27 @@ spec = do
                 ],
                 "101"
               ),
-              ( ["def main = equals ((1:Int),(2: Int)) ((1: Int), (2: Int))"],
+              ( ["def main = equals ((1:Int), (2: Int)) ((1: Int), (2: Int))"],
                 "True"
               ),
               ( [ "def main : Bool",
-                  "def main = equals (1: Int) (2: Int)",
-                  "def useEqualsA : (Eq a) => a -> a -> Bool",
-                  "def useEqualsA a b = equals a b"
+                  "def main = useEquals (1: Int) (2: Int)",
+                  "def useEquals : (Eq a) => a -> a -> Bool",
+                  "def useEquals a b = equals a b"
                 ],
                 "False"
-              )
+              ){-,
+              ( [ "def main : Bool",
+                  "def main = notEquals (1: Int) (2: Int)",
+                  "def notEquals : (Eq a) => a -> a -> Bool",
+                  "def notEquals a b = if isEquals a b then False else True",
+                  "def isEquals : (Eq a) => a -> a -> Bool",
+                  "def isEquals a b = equals a b"
+
+                ],
+                "False"
+              )-}
+
             ]
       traverse_
         ( \(parts, expect) ->

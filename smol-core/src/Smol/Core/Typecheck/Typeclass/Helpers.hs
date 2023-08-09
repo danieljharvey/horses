@@ -10,6 +10,7 @@ module Smol.Core.Typecheck.Typeclass.Helpers
   )
 where
 
+import Smol.Core.Helpers
 import Data.Monoid
 import Smol.Core.TypeUtils
 import Control.Monad (unless, void, zipWithM)
@@ -85,7 +86,9 @@ lookupTypeclassInstance ::
   TCEnv ann ->
   Constraint ann ->
   m (Instance ann)
-lookupTypeclassInstance env constraint@(Constraint name tys) =
+lookupTypeclassInstance env constraint@(Constraint name tys) = do
+  tracePrettyM "lookupTypeclassInstance" constraint
+
   -- first, do we have a concrete instance?
   case lookupConcreteInstance env constraint of
     Just tcInstance -> pure tcInstance
@@ -131,13 +134,14 @@ lookupTypeclassConstraint ::
   TCEnv ann ->
   Constraint ann ->
   m ()
-lookupTypeclassConstraint env tch@(Constraint name tys) = do
+lookupTypeclassConstraint env constraint@(Constraint name tys) = do
+  tracePrettyM "lookupTypeclassConstraint" constraint
   -- see if this is a valid instance first?
   _ <-
-    void (lookupTypeclassInstance env tch) `catchError` \_ -> do
+    void (lookupTypeclassInstance env constraint) `catchError` \_ -> do
       -- maybe it's a constraint, look there
       unless
-        (elem tch (tceConstraints env))
+        (elem constraint (tceConstraints env))
         (throwError (TCTypeclassInstanceNotFound name tys))
   pure ()
 

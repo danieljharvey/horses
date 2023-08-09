@@ -9,12 +9,18 @@ module Smol.Core.Typecheck.Typeclass
     convertExprToUseTypeclassDictionary,
     getTypeclassMethodNames,
     createTypeclassDict,
+    passAllDictionaries,
     passDictionaries,
     passOuterDictionaries,
     module Smol.Core.Typecheck.Typeclass.Helpers,
   )
 where
 
+import Control.Monad
+import Smol.Core.Typecheck.Typeclass.BuiltIns
+import Smol.Core.Helpers
+import Control.Monad.Trans.Maybe
+import Data.Monoid
 import Control.Monad.Except
 import Control.Monad.Identity
 import Data.Foldable (foldl')
@@ -243,27 +249,31 @@ convertExprToUseTypeclassDictionary env constraints expr = do
 
   pure (snd <$> dedupedConstraints, newExpr)
 
+-- | create a typeclass dictionary
+-- if any of the types are non-concrete (ie, `Eq a`)
+-- then return Nothing - these aren't ready to be applied
 createTypeclassDict ::
   (Show ann, Ord ann, Monoid ann, MonadError (TCError ann) m) =>
   TCEnv ann ->
   [Constraint ann] ->
-  m (Expr ResolvedDep (Type ResolvedDep ann))
+  m (Maybe (Expr ResolvedDep (Type ResolvedDep ann)))
 createTypeclassDict env constraints = do
-  -- I think this is where we run should recurse on each of these instances
-  -- and do `convertExprToUseTypeclassDictionary` then `passDictionaries` to each one
-  instances <-
-    traverse
-      ( \constraint -> do
-          (_, newConstraints, expr) <- lookupInstanceAndCheck env constraint
-          createInstance env newConstraints expr
-      )
-      constraints
-  case instances of
-    [] -> error "what the fuck man, no constraints"
-    [one] -> pure one
-    (theFirst : theRest) ->
-      let ty = TTuple mempty (getExprAnnotation theFirst) (NE.fromList $ getExprAnnotation <$> theRest)
-       in pure $ ETuple ty theFirst (NE.fromList theRest)
+  if not $ getAll $ foldMap (All . isConcrete) constraints
+    then pure Nothing
+    else runMaybeT $ do
+      instances <-
+        traverse
+          ( \constraint -> do
+              (_, newConstraints, expr) <- lookupInstanceAndCheck env constraint
+              createInstance env newConstraints expr
+          )
+          constraints
+      case instances of
+        [] -> error "what the fuck man, no constraints"
+        [one] -> pure one
+        (theFirst : theRest) ->
+          let ty = TTuple mempty (getExprAnnotation theFirst) (NE.fromList $ getExprAnnotation <$> theRest)
+           in pure $ ETuple ty theFirst (NE.fromList theRest)
 
 -- given we know the types of all our deps
 -- pass dictionaries to them all
@@ -278,8 +288,11 @@ passDictionaries env =
     go (EVar ann ident) =
       case M.lookup ident (tceVars env) of
         Just (constraints, _defExpr) -> do
-          dict <- createTypeclassDict env constraints
-          pure (EApp ann (EVar ann ident) dict)
+          maybeDict <- createTypeclassDict env constraints
+          case maybeDict of
+            Just dict ->
+              pure (EApp ann (EVar ann ident) dict)
+            Nothing -> pure (EVar ann ident)
         Nothing -> pure (EVar ann ident)
     go other = bindExpr go other
 
@@ -292,6 +305,37 @@ passOuterDictionaries ::
   m (Expr ResolvedDep (Type ResolvedDep ann))
 passOuterDictionaries _ [] expr = pure expr
 passOuterDictionaries env constraints expr = do
-  dict <- createTypeclassDict env constraints
-  let ann = getExprAnnotation expr
-  pure (EApp ann expr dict)
+  maybeDict <- createTypeclassDict env constraints
+  case maybeDict of
+    Just dict -> do
+      let ann = getExprAnnotation expr
+      pure (EApp ann expr dict)
+    Nothing -> pure expr
+
+-- | well well well lets put it all together
+passAllDictionaries :: (MonadError (TCError ann)  m, Show ann, Ord ann, Monoid ann) =>
+  [Constraint ann] ->
+  Expr ResolvedDep (Type ResolvedDep ann)
+  -> m (Expr ResolvedDep (Type ResolvedDep ann))
+passAllDictionaries constraints expr = do
+        tracePrettyM "expr" expr
+        tracePrettyM "constraints" constraints
+
+        -- initial typechecking environment
+        let env =
+              TCEnv
+                { tceVars = mempty,
+                  tceDataTypes = mempty,
+                  tceClasses = builtInClasses,
+                  tceInstances = builtInInstances,
+                  tceConstraints = constraints
+                }
+
+        newExpr <-
+            passOuterDictionaries env constraints <=< passDictionaries env $ expr
+
+        tracePrettyM "newExpr" newExpr
+
+        pure newExpr
+
+
