@@ -47,7 +47,8 @@ lookupInstanceAndCheck ::
   (Ord ann, Monoid ann, Show ann, MonadError (TCError ann) m) =>
   TCEnv ann ->
   Constraint ann ->
-  m (Identifier, Expr ResolvedDep (Type ResolvedDep ann))
+  m (Identifier, M.Map (ResolvedDep Identifier) (Constraint ann),
+    Expr ResolvedDep (Type ResolvedDep ann))
 lookupInstanceAndCheck env tch@(Constraint typeclassName _) = do
   tcInstance <- lookupTypeclassInstance env tch
   typeclass <- case M.lookup typeclassName (tceClasses env) of
@@ -70,7 +71,7 @@ checkInstance ::
   Typeclass ann ->
   Constraint ann ->
   Instance ann ->
-  m (Identifier, Expr ResolvedDep (Type ResolvedDep ann))
+  m (Identifier, M.Map (ResolvedDep Identifier) (Constraint ann), Expr ResolvedDep (Type ResolvedDep ann))
 checkInstance tcEnv typeclass constraint (Instance constraints expr) =
   do
     let subbedType = applyConstraintTypes typeclass constraint
@@ -95,9 +96,9 @@ checkInstance tcEnv typeclass constraint (Instance constraints expr) =
     case resolveExprDeps (toParseExpr annotatedExpr) typeclassMethodNames of
       Left resolveErr -> error $ "Resolve error: " <> show resolveErr
       Right resolvedExpr -> do
-        (typedExpr, _typeclassUses) <- elaborate typecheckEnv resolvedExpr
+        (typedExpr, typeclassUses) <- elaborate typecheckEnv resolvedExpr
 
-        pure (funcName, typedExpr)
+        pure (funcName, typeclassUses, typedExpr)
 
 -- let's get all the method names from the Typeclasses
 -- mentioned in the instance constraints
@@ -165,7 +166,7 @@ getTypeForDictionary env constraints = do
         result <- runExceptT $ lookupInstanceAndCheck env constraint
         ty <- case result of
           -- we found the instance, return it's type
-          Right (_, instanceExpr) -> pure (getExprAnnotation instanceExpr)
+          Right (_, _ , instanceExpr) -> pure (getExprAnnotation instanceExpr)
           -- we didn't find an instance, but we can get the type from the
           -- constraint
           Left e -> case typeForConstraint env constraint of
@@ -228,7 +229,11 @@ createTypeclassDict ::
   [Constraint ann] ->
   m (Expr ResolvedDep (Type ResolvedDep ann))
 createTypeclassDict env constraints = do
-  instances <- traverse (fmap snd . lookupInstanceAndCheck env) constraints
+  let third = (\(_,_,a) -> a)
+  -- I think this is where we run should recurse on each of these instances
+  -- and do `convertExprToUseTypeclassDictionary` then `passDictionaries` to each one 
+  instances <- traverse (fmap third . lookupInstanceAndCheck env) constraints
+  _ <- error "read the note above here ding dong"
   case instances of
     [] -> error "what the fuck man, no constraints"
     [one] -> pure one
