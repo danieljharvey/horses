@@ -78,6 +78,13 @@ spec = do
               ),
               ( ["def main = equals ((1:Int),(2: Int)) ((1: Int), (2: Int))"],
                 "True"
+              ),
+              ( [ "def main : Bool",
+                  "def main = equals (1: Int) (2: Int)",
+                  "def useEqualsA : (Eq a) => a -> a -> Bool",
+                  "def useEqualsA a b = equals a b"
+                ],
+                "False"
               )
             ]
       traverse_

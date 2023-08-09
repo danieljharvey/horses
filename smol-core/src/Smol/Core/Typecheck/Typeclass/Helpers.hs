@@ -6,14 +6,17 @@ module Smol.Core.Typecheck.Typeclass.Helpers
     lookupTypeclassConstraint,
     lookupTypeclassInstance,
     instanceMatchesType,
+    isConcrete
   )
 where
 
-import Data.Functor (($>))
+import Data.Monoid
+import Smol.Core.TypeUtils
 import Control.Monad (unless, void, zipWithM)
 import Control.Monad.Except
 import Control.Monad.Identity
 import Data.Foldable (traverse_)
+import Data.Functor (($>))
 import qualified Data.List.NonEmpty as NE
 import qualified Data.Map.Strict as M
 import Data.Maybe (mapMaybe)
@@ -137,3 +140,11 @@ lookupTypeclassConstraint env tch@(Constraint name tys) = do
         (elem tch (tceConstraints env))
         (throwError (TCTypeclassInstanceNotFound name tys))
   pure ()
+
+-- look for vars, if no, then it's concrete
+isConcrete :: Constraint ann -> Bool
+isConcrete (Constraint _ tys)
+  = not $ getAny $ foldMap containsVars tys
+  where
+    containsVars (TVar {}) = Any True
+    containsVars other = monoidType containsVars other

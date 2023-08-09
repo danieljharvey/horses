@@ -257,6 +257,13 @@ spec = do
 
       simplify <$> createTypeclassDict typecheckEnv constraints `shouldBe` simplify <$> expected
 
+  describe "isConcrete" $ do
+    it "yes, because it has no vars" $ do
+      isConcrete @() (Constraint "Eq" [tyInt]) `shouldBe` True
+
+    it "no, because it has a var" $ do
+      isConcrete @() (Constraint "Eq" [tcVar "a"]) `shouldBe` False
+
   describe "Convert expr to use typeclass dictionaries" $ do
     traverse_
       ( \(typeclasses, parts, expectedConstraints, expectedParts) ->
