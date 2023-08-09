@@ -59,9 +59,10 @@
           pkgs.haskell.lib.doJailbreak (pkg.overrideAttrs (_: { meta = { }; }));
 
         packageName = "mimsa";
-      in {
+      in
+      {
         # we're not interested in building with Nix, just using it for deps
-        packages.${system}.${packageName} = {};
+        packages.${system}.${packageName} = { };
 
         defaultPackage = self.packages.${system}.${packageName};
 
@@ -71,7 +72,7 @@
             oldHaskellPackages.ormolu
             haskell-language-server
             ghcid
-            cabal-fmt
+            # cabal-fmt
             cabal-install
             ghc
             pkgs.zlib # used by `digest` package
@@ -83,12 +84,10 @@
 
           # put clang_14 on the path
           #shellHook = with pkgs; ''
-           # export PATH="${clang_14}/bin:$PATH"
+          # export PATH="${clang_14}/bin:$PATH"
           #'';
 
           inputsFrom = builtins.attrValues self.packages.${system};
         };
       });
 }
-
-
