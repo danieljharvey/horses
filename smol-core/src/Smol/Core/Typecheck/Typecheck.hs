@@ -10,7 +10,7 @@ where
 
 import Control.Monad.Except
 import Smol.Core.Typecheck.Elaborate (elaborate)
-import Smol.Core.Typecheck.Typeclass (convertExprToUseTypeclassDictionary)
+import Smol.Core.Typecheck.Typeclass.Deduplicate (deduplicateConstraints)
 import Smol.Core.Typecheck.Types
 import Smol.Core.Types
 
@@ -24,5 +24,5 @@ typecheck ::
 typecheck env expr = do
   (typedExpr, typeclassUses) <- elaborate env expr
 
-  -- inline those functions
-  convertExprToUseTypeclassDictionary env typeclassUses typedExpr
+  -- deduplicate constraints, and match them to the variables that use them
+  pure (deduplicateConstraints typeclassUses typedExpr)

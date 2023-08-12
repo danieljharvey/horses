@@ -6,13 +6,10 @@ module Smol.Core.Typecheck.Typeclass.Helpers
     lookupTypeclassConstraint,
     lookupTypeclassInstance,
     instanceMatchesType,
-    isConcrete
+    isConcrete,
   )
 where
 
-import Smol.Core.Helpers
-import Data.Monoid
-import Smol.Core.TypeUtils
 import Control.Monad (unless, void, zipWithM)
 import Control.Monad.Except
 import Control.Monad.Identity
@@ -21,7 +18,10 @@ import Data.Functor (($>))
 import qualified Data.List.NonEmpty as NE
 import qualified Data.Map.Strict as M
 import Data.Maybe (mapMaybe)
+import Data.Monoid
 import Smol.Core.ExprUtils
+import Smol.Core.Helpers
+import Smol.Core.TypeUtils
 import Smol.Core.Typecheck.Substitute
 import Smol.Core.Typecheck.Types
 import Smol.Core.Types
@@ -147,8 +147,8 @@ lookupTypeclassConstraint env constraint@(Constraint name tys) = do
 
 -- look for vars, if no, then it's concrete
 isConcrete :: Constraint ann -> Bool
-isConcrete (Constraint _ tys)
-  = not $ getAny $ foldMap containsVars tys
+isConcrete (Constraint _ tys) =
+  not $ getAny $ foldMap containsVars tys
   where
     containsVars (TVar {}) = Any True
     containsVars other = monoidType containsVars other

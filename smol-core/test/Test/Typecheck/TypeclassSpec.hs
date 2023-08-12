@@ -47,14 +47,18 @@ simplify = void . goExpr
 evalExpr ::
   [Constraint Annotation] ->
   Text ->
-  Either (TCError Annotation) (ResolvedExpr (Type ResolvedDep Annotation))
+  Either
+    (TCError Annotation)
+    ( ResolvedExpr (Type ResolvedDep Annotation),
+      M.Map (ResolvedDep Identifier) (Constraint Annotation)
+    )
 evalExpr constraints input =
   case parseExprAndFormatError input of
     Left e -> error (show e)
     Right expr ->
       case resolveExprDeps expr (getTypeclassMethodNames @() typecheckEnv) of
         Left e -> error $ "error getting method names :" <> show e
-        Right resolvedExpr -> fst <$> elaborate (typecheckEnv {tceConstraints = constraints}) resolvedExpr
+        Right resolvedExpr -> elaborate (typecheckEnv {tceConstraints = constraints}) resolvedExpr
 
 -- | elaborate but don't do clever resolving so we can construct the
 -- expectations we want
@@ -207,21 +211,19 @@ spec = do
         )
         `shouldSatisfy` isLeft
 
-  describe "dedupeConstraints" $ do
+  describe "findDedupedConstraints" $ do
     it "Empty is empty" $ do
-      dedupeConstraints @() mempty `shouldBe` (mempty, mempty)
+      findDedupedConstraints @() mempty `shouldBe` (mempty, mempty)
 
     it "One is one and gets a new name" $ do
-      dedupeConstraints @() (M.singleton "oldname" (Constraint "Eq" [tyInt]))
-        `shouldBe` ( [ ( TypeclassCall "newname" 1,
-                         Constraint "Eq" [tyInt]
-                       )
+      findDedupedConstraints @() (M.singleton "oldname" (Constraint "Eq" [tyInt]))
+        `shouldBe` ( [ Constraint "Eq" [tyInt]
                      ],
                      M.singleton "oldname" (TypeclassCall "newname" 1)
                    )
 
     it "Two functions, each used twice become one of each" $ do
-      dedupeConstraints @()
+      findDedupedConstraints @()
         ( M.fromList
             [ ("eqInt1", Constraint "Eq" [tyInt]),
               ("eqInt2", Constraint "Eq" [tyInt]),
@@ -229,12 +231,8 @@ spec = do
               ("eqBool2", Constraint "Eq" [tyBool])
             ]
         )
-        `shouldBe` ( [ ( TypeclassCall "newname" 2,
-                         Constraint "Eq" [tyInt]
-                       ),
-                       ( TypeclassCall "newname" 1,
-                         Constraint "Eq" [tyBool]
-                       )
+        `shouldBe` ( [ Constraint "Eq" [tyInt],
+                       Constraint "Eq" [tyBool]
                      ],
                      M.fromList
                        [ ("eqInt1", TypeclassCall "newname" 2),
@@ -249,22 +247,15 @@ spec = do
       let constraints = [Constraint "Eq" [tyInt]]
           expected = evalExprUnsafe "(\\a1 -> \\b2 -> a1 == b2 : Int -> Int -> Bool)"
 
-      (fmap . fmap) simplify (createTypeclassDict typecheckEnv constraints) `shouldBe`
-        Just . simplify <$> expected
+      fmap simplify (createTypeclassDict typecheckEnv constraints)
+        `shouldBe` simplify <$> expected
 
     it "Tuple for two constraints" $ do
       let constraints = [Constraint "Eq" [tyInt], Constraint "Eq" [tyInt]]
           expected = evalExprUnsafe "((\\a1 -> \\b2 -> a1 == b2 : Int -> Int -> Bool), (\\a1 -> \\b2 -> a1 == b2 : Int -> Int -> Bool))"
 
-      (fmap . fmap) simplify (createTypeclassDict typecheckEnv constraints) `shouldBe`
-        Just . simplify <$> expected
-
-    it "No dictionary for non-concrete type" $ do
-      let constraints = [Constraint "Eq" [tcVar "a"]]
-          expected = Nothing
-
-      createTypeclassDict @() typecheckEnv constraints `shouldBe`
-        Right expected
+      fmap simplify (createTypeclassDict typecheckEnv constraints)
+        `shouldBe` simplify <$> expected
 
   describe "isConcrete" $ do
     it "yes, because it has no vars" $ do
@@ -275,46 +266,44 @@ spec = do
 
   describe "Convert expr to use typeclass dictionaries" $ do
     traverse_
-      ( \(typeclasses, parts, expectedConstraints, expectedParts) ->
+      ( \(constraints, parts, expectedConstraints, expectedParts) ->
           let input = joinText parts
               expected = joinText expectedParts
            in it ("Successfully inlined " <> show input) $ do
-                let expr = getRight $ evalExpr (M.elems typeclasses) input
-
-                let env = typecheckEnv {tceConstraints = M.elems typeclasses}
+                let (expr, typeclassUses) = getRight $ evalExpr constraints input
+                    env = typecheckEnv {tceConstraints = constraints}
 
                 let expectedExpr = getRight $ evalExprUnsafe expected
-                    result = convertExprToUseTypeclassDictionary env typeclasses expr
+                    (dedupedConstraints, tidyExpr) = deduplicateConstraints typeclassUses expr
+                    result = convertExprToUseTypeclassDictionary env dedupedConstraints tidyExpr
 
-                fst <$> result `shouldBe` Right expectedConstraints
-                simplify . snd <$> result `shouldBe` Right (simplify expectedExpr)
+                dedupedConstraints `shouldBe` expectedConstraints
+                simplify <$> result `shouldBe` Right (simplify expectedExpr)
       )
       [ (mempty, ["1 + 2"], mempty, ["1 + 2"]),
-        ( M.singleton (TypeclassCall "equals" 1) (Constraint "Eq" [tyInt]),
+        ( mempty,
           ["equals (1: Int) (2: Int)"],
           [Constraint "Eq" [tyInt]],
           [ "\\instances -> case (instances : Int -> Int -> Bool) of tcnewname1 ->",
             "tcnewname1 (1 : Int) (2 : Int)"
           ]
         ),
-        ( M.fromList
-            [ (TypeclassCall "equals" 1, Constraint "Eq" [tyInt]),
-              (TypeclassCall "equals" 2, Constraint "Eq" [tyInt])
-            ],
+        ( mempty,
           ["if equals (1: Int) (2: Int) then equals (2: Int) (3: Int) else False"],
           [Constraint "Eq" [tyInt]],
           [ "\\instances -> case (instances : Int -> Int -> Bool) of tcnewname1 ->",
             "if tcnewname1 (1 : Int) (2 : Int) then tcnewname1 (2: Int) (3: Int) else False"
           ]
         ),
-        ( M.fromList
-            [ (TypeclassCall "equals" 7, Constraint "Eq" [tcVar "a"]),
-              (TypeclassCall "equals" 8, Constraint "Eq" [tcVar "b"])
-            ],
+        ( [ Constraint "Eq" [tcVar "a"],
+            Constraint "Eq" [tcVar "b"]
+          ],
           [ "(\\a -> \\b -> case (a,b) of ((leftA, leftB), (rightA, rightB)) -> ",
             "if equals leftA rightA then equals leftB rightB else False : (a,b) -> (a,b) -> Bool)"
           ],
-          [Constraint "Eq" [tcVar "a"], Constraint "Eq" [tcVar "b"]],
+          [ Constraint "Eq" [tcVar "a"],
+            Constraint "Eq" [tcVar "b"]
+          ],
           [ "\\instances -> case (instances : (a -> a -> Bool, b -> b -> Bool)) of (tcnewname1, tcnewname2) -> ",
             "(\\a1 -> \\b2 -> case (a1,b2) of ((leftA3, leftB4), (rightA5, rightB6)) ->",
             "if tcnewname1 leftA3 rightA5 then tcnewname2 leftB4 rightB6 else False : (a,b) -> (a,b) -> Bool)"

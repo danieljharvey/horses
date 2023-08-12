@@ -85,18 +85,17 @@ spec = do
                   "def useEquals a b = equals a b"
                 ],
                 "False"
-              ){-,
-              ( [ "def main : Bool",
-                  "def main = notEquals (1: Int) (2: Int)",
-                  "def notEquals : (Eq a) => a -> a -> Bool",
-                  "def notEquals a b = if isEquals a b then False else True",
-                  "def isEquals : (Eq a) => a -> a -> Bool",
-                  "def isEquals a b = equals a b"
+              ) {-,
+                ( [ "def main : Bool",
+                    "def main = notEquals (1: Int) (2: Int)",
+                    "def notEquals : (Eq a) => a -> a -> Bool",
+                    "def notEquals a b = if isEquals a b then False else True",
+                    "def isEquals : (Eq a) => a -> a -> Bool",
+                    "def isEquals a b = equals a b"
 
-                ],
-                "False"
-              )-}
-
+                  ],
+                  "False"
+                )-}
             ]
       traverse_
         ( \(parts, expect) ->

@@ -4,7 +4,6 @@
 
 module Smol.Core.Typecheck.Typeclass
   ( checkInstance,
-    dedupeConstraints,
     lookupInstanceAndCheck,
     convertExprToUseTypeclassDictionary,
     getTypeclassMethodNames,
@@ -13,28 +12,27 @@ module Smol.Core.Typecheck.Typeclass
     passDictionaries,
     passOuterDictionaries,
     module Smol.Core.Typecheck.Typeclass.Helpers,
+    module Smol.Core.Typecheck.Typeclass.Deduplicate,
   )
 where
 
 import Control.Monad
-import Smol.Core.Typecheck.Typeclass.BuiltIns
-import Smol.Core.Helpers
-import Control.Monad.Trans.Maybe
-import Data.Monoid
 import Control.Monad.Except
 import Control.Monad.Identity
-import Data.Foldable (foldl')
 import Data.Functor
 import qualified Data.List.NonEmpty as NE
 import qualified Data.Map.Strict as M
-import Data.Maybe (fromMaybe, mapMaybe)
+import Data.Maybe (mapMaybe)
+import Data.Monoid
 import qualified Data.Set as S
-import Data.Tuple (swap)
 import Smol.Core.ExprUtils
+import Smol.Core.Helpers
 import Smol.Core.Modules.ResolveDeps
-import Smol.Core.Typecheck.Elaborate (elaborate)
 import Smol.Core.Typecheck.Shared
 import Smol.Core.Typecheck.Substitute
+import Smol.Core.Typecheck.Typecheck (typecheck)
+import Smol.Core.Typecheck.Typeclass.BuiltIns
+import Smol.Core.Typecheck.Typeclass.Deduplicate
 import Smol.Core.Typecheck.Typeclass.Helpers
 import Smol.Core.Typecheck.Types
 import Smol.Core.Types
@@ -55,7 +53,7 @@ lookupInstanceAndCheck ::
   Constraint ann ->
   m
     ( Identifier,
-      M.Map (ResolvedDep Identifier) (Constraint ann),
+      [Constraint ann],
       Expr ResolvedDep (Type ResolvedDep ann)
     )
 lookupInstanceAndCheck env tch@(Constraint typeclassName _) = do
@@ -80,7 +78,7 @@ checkInstance ::
   Typeclass ann ->
   Constraint ann ->
   Instance ann ->
-  m (Identifier, M.Map (ResolvedDep Identifier) (Constraint ann), Expr ResolvedDep (Type ResolvedDep ann))
+  m (Identifier, [Constraint ann], Expr ResolvedDep (Type ResolvedDep ann))
 checkInstance tcEnv typeclass constraint (Instance constraints expr) =
   do
     let subbedType = applyConstraintTypes typeclass constraint
@@ -105,9 +103,9 @@ checkInstance tcEnv typeclass constraint (Instance constraints expr) =
     case resolveExprDeps (toParseExpr annotatedExpr) typeclassMethodNames of
       Left resolveErr -> error $ "Resolve error: " <> show resolveErr
       Right resolvedExpr -> do
-        (typedExpr, typeclassUses) <- elaborate typecheckEnv resolvedExpr
+        (newConstraints, typedExpr) <- typecheck typecheckEnv resolvedExpr
 
-        pure (funcName, typeclassUses, typedExpr)
+        pure (funcName, newConstraints, typedExpr)
 
 -- let's get all the method names from the Typeclasses
 -- mentioned in the instance constraints
@@ -116,64 +114,16 @@ getTypeclassMethodNames tcEnv =
   S.fromList $
     tcFuncName <$> M.elems (tceClasses tcEnv)
 
--- just because we use a method twice doesn't mean we want to pass it in twice
--- returns a new ordered set of constraints with fresh names,
--- and a list of substitutions to change in the expression to make everything
--- work
-dedupeConstraints ::
-  (Ord ann) =>
-  M.Map (ResolvedDep Identifier) (Constraint ann) ->
-  ([(ResolvedDep Identifier, Constraint ann)], M.Map (ResolvedDep Identifier) (ResolvedDep Identifier))
-dedupeConstraints dupes =
-  let initial = (mempty, mempty, 0)
-      deduped =
-        foldl'
-          ( \(found, swaps, count) (ident, constraint) ->
-              case M.lookup constraint found of
-                Just foundIdent ->
-                  ( found,
-                    swaps <> M.singleton ident foundIdent,
-                    count
-                  )
-                Nothing ->
-                  let newCount = count + 1
-                      newIdent = TypeclassCall "newname" newCount
-                   in ( found <> M.singleton constraint newIdent,
-                        swaps <> M.singleton ident newIdent,
-                        newCount
-                      )
-          )
-          initial
-          (M.toList dupes)
-      (finalFound, finalSwaps, _) = deduped
-   in (swap <$> M.toList finalFound, finalSwaps)
-
--- | swap var names of typeclass calls for their new deduped ones
-swapExprVarnames ::
-  M.Map (ResolvedDep Identifier) (ResolvedDep Identifier) ->
-  Expr ResolvedDep ann ->
-  Expr ResolvedDep ann
-swapExprVarnames swappies expr =
-  go expr
-  where
-    newIdent ident = fromMaybe ident (M.lookup ident swappies)
-
-    go (EVar ann ident) =
-      EVar ann (newIdent ident)
-    go (ELambda ann ident body) =
-      ELambda ann (newIdent ident) (go body)
-    go other = mapExpr go other
-
 createInstance ::
   (MonadError (TCError ann) m, Ord ann, Show ann, Monoid ann) =>
   TCEnv ann ->
-  M.Map (ResolvedDep Identifier) (Constraint ann) ->
+  [Constraint ann] ->
   Expr ResolvedDep (Type ResolvedDep ann) ->
   m (Expr ResolvedDep (Type ResolvedDep ann))
-createInstance env typeclassUses typedExpr = do
+createInstance env constraints typedExpr = do
   -- if this has any constraints of it's own, convert to dictionary-receiving
   -- style
-  (constraints, dictExpr) <- convertExprToUseTypeclassDictionary env typeclassUses typedExpr
+  dictExpr <- convertExprToUseTypeclassDictionary env constraints typedExpr
 
   -- pass dictionaries to it
   passOuterDictionaries env constraints dictExpr
@@ -185,10 +135,11 @@ getTypeForDictionary ::
     Monoid ann
   ) =>
   TCEnv ann ->
-  [(ResolvedDep Identifier, Constraint ann)] ->
+  [Constraint ann] ->
   m (Maybe (Pattern ResolvedDep (Type ResolvedDep ann)))
 getTypeForDictionary env constraints = do
-  let getConstraintPattern (ident, constraint) = do
+  let getConstraintPattern constraint i = do
+        let ident = identForConstraint (i + 1)
         result <- runExceptT $ lookupInstanceAndCheck env constraint
         ty <- case result of
           -- we found the instance, return it's type
@@ -201,10 +152,10 @@ getTypeForDictionary env constraints = do
         pure (PVar ty ident)
   case constraints of
     [] -> pure Nothing
-    [one] -> Just <$> getConstraintPattern one
+    [one] -> Just <$> getConstraintPattern one (-1)
     (one : rest) -> do
-      pOne <- getConstraintPattern one
-      pRest <- traverse getConstraintPattern (NE.fromList rest)
+      pOne <- getConstraintPattern one (-1)
+      pRest <- NE.fromList <$> traverseInd getConstraintPattern rest
       let ty = TTuple mempty (getPatternAnnotation pOne) (getPatternAnnotation <$> pRest)
       pure $ Just $ PTuple ty pOne pRest
 
@@ -223,14 +174,11 @@ typeForConstraint env constraint@(Constraint tcn _) = do
 convertExprToUseTypeclassDictionary ::
   (MonadError (TCError ann) m, Ord ann, Show ann, Monoid ann) =>
   TCEnv ann ->
-  M.Map (ResolvedDep Identifier) (Constraint ann) ->
+  [Constraint ann] ->
   Expr ResolvedDep (Type ResolvedDep ann) ->
-  m ([Constraint ann], Expr ResolvedDep (Type ResolvedDep ann))
+  m (Expr ResolvedDep (Type ResolvedDep ann))
 convertExprToUseTypeclassDictionary env constraints expr = do
-  let (dedupedConstraints, nameSwaps) = dedupeConstraints constraints
-      tidyExpr = swapExprVarnames nameSwaps expr
-
-  maybePattern <- getTypeForDictionary env dedupedConstraints
+  maybePattern <- getTypeForDictionary env constraints
 
   newExpr <- case maybePattern of
     Just pat -> do
@@ -241,13 +189,13 @@ convertExprToUseTypeclassDictionary env constraints expr = do
           exprType -- we want the overall expression to have the same type so we can still typecheck and ignore the constraints
           "instances"
           ( EPatternMatch
-              (getExprAnnotation tidyExpr)
+              (getExprAnnotation expr)
               (EAnn dictType (dictType $> dictType) (EVar dictType "instances"))
-              (NE.fromList [(pat, tidyExpr)])
+              (NE.fromList [(pat, expr)])
           )
     Nothing -> pure expr
 
-  pure (snd <$> dedupedConstraints, newExpr)
+  pure newExpr
 
 -- | create a typeclass dictionary
 -- if any of the types are non-concrete (ie, `Eq a`)
@@ -256,24 +204,26 @@ createTypeclassDict ::
   (Show ann, Ord ann, Monoid ann, MonadError (TCError ann) m) =>
   TCEnv ann ->
   [Constraint ann] ->
-  m (Maybe (Expr ResolvedDep (Type ResolvedDep ann)))
+  m (Expr ResolvedDep (Type ResolvedDep ann))
 createTypeclassDict env constraints = do
-  if not $ getAll $ foldMap (All . isConcrete) constraints
-    then pure Nothing
-    else runMaybeT $ do
-      instances <-
-        traverse
-          ( \constraint -> do
-              (_, newConstraints, expr) <- lookupInstanceAndCheck env constraint
-              createInstance env newConstraints expr
-          )
-          constraints
-      case instances of
-        [] -> error "what the fuck man, no constraints"
-        [one] -> pure one
-        (theFirst : theRest) ->
-          let ty = TTuple mempty (getExprAnnotation theFirst) (NE.fromList $ getExprAnnotation <$> theRest)
-           in pure $ ETuple ty theFirst (NE.fromList theRest)
+  instances <-
+    traverse
+      ( \constraint -> do
+          (_, newConstraints, expr) <- lookupInstanceAndCheck env constraint
+          createInstance env newConstraints expr
+      )
+      constraints
+  case instances of
+    [] -> error "what the fuck man, no constraints"
+    [one] -> pure one
+    (theFirst : theRest) ->
+      let ty = TTuple mempty (getExprAnnotation theFirst) (NE.fromList $ getExprAnnotation <$> theRest)
+       in pure $ ETuple ty theFirst (NE.fromList theRest)
+
+constraintsAreAllConcrete :: [Constraint ann] -> Bool
+constraintsAreAllConcrete =
+  getAll
+    . foldMap (All . isConcrete)
 
 -- given we know the types of all our deps
 -- pass dictionaries to them all
@@ -288,15 +238,18 @@ passDictionaries env =
     go (EVar ann ident) =
       case M.lookup ident (tceVars env) of
         Just (constraints, _defExpr) -> do
-          maybeDict <- createTypeclassDict env constraints
-          case maybeDict of
-            Just dict ->
+          if constraintsAreAllConcrete constraints
+            then do
+              dict <- createTypeclassDict env constraints
+
               pure (EApp ann (EVar ann ident) dict)
-            Nothing -> pure (EVar ann ident)
+            else pure (EVar ann ident)
         Nothing -> pure (EVar ann ident)
     go other = bindExpr go other
 
 -- pass dictionaries to the current expression
+-- TODO: I don't think this should happen ever
+-- we should be inlining concrete instances instead
 passOuterDictionaries ::
   (Monoid ann, Ord ann, Show ann, MonadError (TCError ann) m) =>
   TCEnv ann ->
@@ -305,37 +258,39 @@ passOuterDictionaries ::
   m (Expr ResolvedDep (Type ResolvedDep ann))
 passOuterDictionaries _ [] expr = pure expr
 passOuterDictionaries env constraints expr = do
-  maybeDict <- createTypeclassDict env constraints
-  case maybeDict of
-    Just dict -> do
+  if constraintsAreAllConcrete constraints
+    then do
+      dict <- createTypeclassDict env constraints
       let ann = getExprAnnotation expr
       pure (EApp ann expr dict)
-    Nothing -> pure expr
+    else pure expr
 
 -- | well well well lets put it all together
-passAllDictionaries :: (MonadError (TCError ann)  m, Show ann, Ord ann, Monoid ann) =>
+passAllDictionaries ::
+  (MonadError (TCError ann) m, Show ann, Ord ann, Monoid ann) =>
   [Constraint ann] ->
-  Expr ResolvedDep (Type ResolvedDep ann)
-  -> m (Expr ResolvedDep (Type ResolvedDep ann))
+  Expr ResolvedDep (Type ResolvedDep ann) ->
+  m (Expr ResolvedDep (Type ResolvedDep ann))
 passAllDictionaries constraints expr = do
-        tracePrettyM "expr" expr
-        tracePrettyM "constraints" constraints
+  tracePrettyM "expr" expr
+  tracePrettyM "constraints" constraints
 
-        -- initial typechecking environment
-        let env =
-              TCEnv
-                { tceVars = mempty,
-                  tceDataTypes = mempty,
-                  tceClasses = builtInClasses,
-                  tceInstances = builtInInstances,
-                  tceConstraints = constraints
-                }
+  -- initial typechecking environment
+  let env =
+        TCEnv
+          { tceVars = mempty,
+            tceDataTypes = mempty,
+            tceClasses = builtInClasses,
+            tceInstances = builtInInstances,
+            tceConstraints = constraints
+          }
 
-        newExpr <-
-            passOuterDictionaries env constraints <=< passDictionaries env $ expr
+  newExpr <-
+    passOuterDictionaries env constraints
+      <=< passDictionaries env
+      <=< convertExprToUseTypeclassDictionary env constraints
+      $ expr
 
-        tracePrettyM "newExpr" newExpr
+  tracePrettyM "newExpr" newExpr
 
-        pure newExpr
-
-
+  pure newExpr
