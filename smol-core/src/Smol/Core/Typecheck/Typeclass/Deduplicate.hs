@@ -1,4 +1,3 @@
-
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE NamedFieldPuns #-}
 {-# LANGUAGE OverloadedStrings #-}
@@ -6,20 +5,20 @@
 module Smol.Core.Typecheck.Typeclass.Deduplicate
   ( deduplicateConstraints,
     findDedupedConstraints,
-    identForConstraint
+    identForConstraint,
   )
 where
 
 import Data.Foldable (foldl')
 import qualified Data.Map.Strict as M
-import Data.Maybe (fromMaybe )
+import Data.Maybe (fromMaybe)
 import Smol.Core.ExprUtils
 import Smol.Core.Typecheck.Types
 import Smol.Core.Types
 
 -- | find deduplicated constraints and apply them to expr
 deduplicateConstraints ::
-  ( Ord ann ) =>
+  (Ord ann) =>
   M.Map (ResolvedDep Identifier) (Constraint ann) ->
   Expr ResolvedDep (Type ResolvedDep ann) ->
   ([Constraint ann], Expr ResolvedDep (Type ResolvedDep ann))
@@ -77,4 +76,3 @@ swapExprVarnames swappies expr =
     go (ELambda ann ident body) =
       ELambda ann (newIdent ident) (go body)
     go other = mapExpr go other
-

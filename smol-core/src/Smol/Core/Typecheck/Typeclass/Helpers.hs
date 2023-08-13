@@ -20,7 +20,6 @@ import qualified Data.Map.Strict as M
 import Data.Maybe (mapMaybe)
 import Data.Monoid
 import Smol.Core.ExprUtils
-import Smol.Core.Helpers
 import Smol.Core.TypeUtils
 import Smol.Core.Typecheck.Substitute
 import Smol.Core.Typecheck.Types
@@ -87,8 +86,6 @@ lookupTypeclassInstance ::
   Constraint ann ->
   m (Instance ann)
 lookupTypeclassInstance env constraint@(Constraint name tys) = do
-  tracePrettyM "lookupTypeclassInstance" constraint
-
   -- first, do we have a concrete instance?
   case lookupConcreteInstance env constraint of
     Just tcInstance -> pure tcInstance
@@ -135,7 +132,6 @@ lookupTypeclassConstraint ::
   Constraint ann ->
   m ()
 lookupTypeclassConstraint env constraint@(Constraint name tys) = do
-  tracePrettyM "lookupTypeclassConstraint" constraint
   -- see if this is a valid instance first?
   _ <-
     void (lookupTypeclassInstance env constraint) `catchError` \_ -> do

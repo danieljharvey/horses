@@ -203,7 +203,7 @@ convertExprToUseTypeclassDictionary env constraints expr = do
 createTypeclassDict ::
   (Show ann, Ord ann, Monoid ann, MonadError (TCError ann) m) =>
   TCEnv ann ->
-  [Constraint ann] ->
+  NE.NonEmpty (Constraint ann) ->
   m (Expr ResolvedDep (Type ResolvedDep ann))
 createTypeclassDict env constraints = do
   instances <-
@@ -213,12 +213,11 @@ createTypeclassDict env constraints = do
           createInstance env newConstraints expr
       )
       constraints
-  case instances of
-    [] -> error "what the fuck man, no constraints"
-    [one] -> pure one
-    (theFirst : theRest) ->
-      let ty = TTuple mempty (getExprAnnotation theFirst) (NE.fromList $ getExprAnnotation <$> theRest)
-       in pure $ ETuple ty theFirst (NE.fromList theRest)
+  case NE.uncons instances of
+    (one, Nothing) -> pure one
+    (theFirst, Just theRest) ->
+      let ty = TTuple mempty (getExprAnnotation theFirst) (getExprAnnotation <$> theRest)
+       in pure $ ETuple ty theFirst theRest
 
 constraintsAreAllConcrete :: [Constraint ann] -> Bool
 constraintsAreAllConcrete =
@@ -235,15 +234,15 @@ passDictionaries ::
 passDictionaries env =
   go
   where
-    go (EVar ann ident) =
+    go (EVar ann ident) = do
+      tracePrettyM "lookup value for " ident
       case M.lookup ident (tceVars env) of
         Just (constraints, _defExpr) -> do
-          if constraintsAreAllConcrete constraints
-            then do
-              dict <- createTypeclassDict env constraints
-
-              pure (EApp ann (EVar ann ident) dict)
-            else pure (EVar ann ident)
+          tracePrettyM "found constraints" constraints
+          case NE.nonEmpty constraints of
+            Just neConstraints -> 
+              EApp ann (EVar ann ident) <$> createTypeclassDict env neConstraints
+            Nothing -> pure (EVar ann ident)
         Nothing -> pure (EVar ann ident)
     go other = bindExpr go other
 
@@ -258,27 +257,28 @@ passOuterDictionaries ::
   m (Expr ResolvedDep (Type ResolvedDep ann))
 passOuterDictionaries _ [] expr = pure expr
 passOuterDictionaries env constraints expr = do
-  if constraintsAreAllConcrete constraints
-    then do
-      dict <- createTypeclassDict env constraints
+  case (constraintsAreAllConcrete constraints, NE.nonEmpty constraints) of
+    (True, Just neConstraints) -> do
+      dict <- createTypeclassDict env neConstraints
       let ann = getExprAnnotation expr
       pure (EApp ann expr dict)
-    else pure expr
+    _ -> pure expr
 
 -- | well well well lets put it all together
 passAllDictionaries ::
   (MonadError (TCError ann) m, Show ann, Ord ann, Monoid ann) =>
+  M.Map (ResolvedDep Identifier) ([Constraint ann], ResolvedType ann) ->
   [Constraint ann] ->
   Expr ResolvedDep (Type ResolvedDep ann) ->
   m (Expr ResolvedDep (Type ResolvedDep ann))
-passAllDictionaries constraints expr = do
-  tracePrettyM "expr" expr
+passAllDictionaries varsInScope constraints expr = do
   tracePrettyM "constraints" constraints
+  tracePrettyM "expr" expr
 
   -- initial typechecking environment
   let env =
         TCEnv
-          { tceVars = mempty,
+          { tceVars = varsInScope,
             tceDataTypes = mempty,
             tceClasses = builtInClasses,
             tceInstances = builtInInstances,

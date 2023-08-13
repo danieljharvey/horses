@@ -7,6 +7,7 @@
 
 module Test.Typecheck.TypeclassSpec (spec) where
 
+import qualified Data.List.NonEmpty as NE
 import Control.Monad.Identity
 import Data.Bifunctor (bimap)
 import Data.Either
@@ -244,14 +245,14 @@ spec = do
 
   describe "Get dictionaries" $ do
     it "Single item dictionary for single constraint" $ do
-      let constraints = [Constraint "Eq" [tyInt]]
+      let constraints = NE.fromList [Constraint "Eq" [tyInt]]
           expected = evalExprUnsafe "(\\a1 -> \\b2 -> a1 == b2 : Int -> Int -> Bool)"
 
       fmap simplify (createTypeclassDict typecheckEnv constraints)
         `shouldBe` simplify <$> expected
 
     it "Tuple for two constraints" $ do
-      let constraints = [Constraint "Eq" [tyInt], Constraint "Eq" [tyInt]]
+      let constraints = NE.fromList [Constraint "Eq" [tyInt], Constraint "Eq" [tyInt]]
           expected = evalExprUnsafe "((\\a1 -> \\b2 -> a1 == b2 : Int -> Int -> Bool), (\\a1 -> \\b2 -> a1 == b2 : Int -> Int -> Bool))"
 
       fmap simplify (createTypeclassDict typecheckEnv constraints)

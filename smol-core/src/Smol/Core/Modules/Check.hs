@@ -37,19 +37,42 @@ checkModule input moduleItems = do
 
   passModuleDictionaries typedModule
 
+-- get input for typechecker from module
+getVarsInScope ::
+  Module ResolvedDep (Type ResolvedDep ann) ->
+  M.Map (ResolvedDep Identifier) ([Constraint ann], ResolvedType ann)
+getVarsInScope =
+  M.fromList
+    . fmap go
+    . M.toList
+    . moExpressions
+  where
+    go (ident, tle) =
+      ( LocalDefinition ident,
+        (constraintsFromTLE tle, getExprAnnotation (tleExpr tle))
+      )
+
+constraintsFromTLE ::
+  TopLevelExpression ResolvedDep (Type ResolvedDep ann) ->
+  [Constraint ann]
+constraintsFromTLE tle =
+  (fmap . fmap) getTypeAnnotation (tleConstraints tle)
+
 passModuleDictionaries ::
   (MonadError (ModuleError Annotation) m) =>
   Module ResolvedDep (Type ResolvedDep Annotation) ->
   m (Module ResolvedDep (Type ResolvedDep Annotation))
 passModuleDictionaries inputModule = do
+  let varsInScope = getVarsInScope inputModule
+
   let passDictToTopLevelExpression (ident, tle) = do
-        let constraints = (fmap . fmap) getTypeAnnotation (tleConstraints tle)
+        let constraints = constraintsFromTLE tle
             expr = tleExpr tle
 
         newExpr <-
           modifyError
             (DefDoesNotTypeCheck mempty (DIName ident))
-            (passAllDictionaries constraints expr)
+            (passAllDictionaries varsInScope constraints expr)
 
         pure $ (ident, tle {tleExpr = newExpr})
 
