@@ -7,12 +7,12 @@
 
 module Test.Typecheck.TypeclassSpec (spec) where
 
-import qualified Data.List.NonEmpty as NE
 import Control.Monad.Identity
 import Data.Bifunctor (bimap)
 import Data.Either
 import Data.Foldable (traverse_)
 import Data.Functor
+import qualified Data.List.NonEmpty as NE
 import qualified Data.Map.Strict as M
 import Data.String (fromString)
 import Data.Text (Text)
@@ -220,7 +220,7 @@ spec = do
       findDedupedConstraints @() (M.singleton "oldname" (Constraint "Eq" [tyInt]))
         `shouldBe` ( [ Constraint "Eq" [tyInt]
                      ],
-                     M.singleton "oldname" (TypeclassCall "newname" 1)
+                     M.singleton "oldname" (TypeclassCall "valuefromdictionary" 0)
                    )
 
     it "Two functions, each used twice become one of each" $ do
@@ -236,10 +236,10 @@ spec = do
                        Constraint "Eq" [tyBool]
                      ],
                      M.fromList
-                       [ ("eqInt1", TypeclassCall "newname" 2),
-                         ("eqInt2", TypeclassCall "newname" 2),
-                         ("eqBool1", TypeclassCall "newname" 1),
-                         ("eqBool2", TypeclassCall "newname" 1)
+                       [ ("eqBool1", TypeclassCall "valuefromdictionary" 0),
+                         ("eqBool2", TypeclassCall "valuefromdictionary" 0),
+                         ("eqInt1", TypeclassCall "valuefromdictionary" 1),
+                         ("eqInt2", TypeclassCall "valuefromdictionary" 1)
                        ]
                    )
 
@@ -285,15 +285,15 @@ spec = do
         ( mempty,
           ["equals (1: Int) (2: Int)"],
           [Constraint "Eq" [tyInt]],
-          [ "\\instances -> case (instances : Int -> Int -> Bool) of tcnewname1 ->",
-            "tcnewname1 (1 : Int) (2 : Int)"
+          [ "\\instances -> case (instances : Int -> Int -> Bool) of tcvaluefromdictionary0 ->",
+            "tcvaluefromdictionary0 (1 : Int) (2 : Int)"
           ]
         ),
         ( mempty,
           ["if equals (1: Int) (2: Int) then equals (2: Int) (3: Int) else False"],
           [Constraint "Eq" [tyInt]],
-          [ "\\instances -> case (instances : Int -> Int -> Bool) of tcnewname1 ->",
-            "if tcnewname1 (1 : Int) (2 : Int) then tcnewname1 (2: Int) (3: Int) else False"
+          [ "\\instances -> case (instances : Int -> Int -> Bool) of tcvaluefromdictionary0 ->",
+            "if tcvaluefromdictionary0 (1 : Int) (2 : Int) then tcvaluefromdictionary0 (2: Int) (3: Int) else False"
           ]
         ),
         ( [ Constraint "Eq" [tcVar "a"],
@@ -305,9 +305,54 @@ spec = do
           [ Constraint "Eq" [tcVar "a"],
             Constraint "Eq" [tcVar "b"]
           ],
-          [ "\\instances -> case (instances : (a -> a -> Bool, b -> b -> Bool)) of (tcnewname1, tcnewname2) -> ",
+          [ "\\instances -> case (instances : (a -> a -> Bool, b -> b -> Bool)) of (tcvaluefromdictionary0, tcvaluefromdictionary1) -> ",
             "(\\a1 -> \\b2 -> case (a1,b2) of ((leftA3, leftB4), (rightA5, rightB6)) ->",
-            "if tcnewname1 leftA3 rightA5 then tcnewname2 leftB4 rightB6 else False : (a,b) -> (a,b) -> Bool)"
+            "if tcvaluefromdictionary0 leftA3 rightA5 then tcvaluefromdictionary1 leftB4 rightB6 else False : (a,b) -> (a,b) -> Bool)"
           ]
         )
+      ]
+
+  -- the whole transformation basically
+  fdescribe "passAllDictionaries" $ do
+    traverse_
+      ( \(constraints, parts,  expectedParts) ->
+          let input = joinText parts
+              expected = joinText expectedParts
+           in it ("Successfully inlined " <> show input) $ do
+                let varsInScope = mempty
+                let (expr, typeclassUses) = getRight $ evalExpr constraints input
+
+                let expectedExpr = getRight $ evalExprUnsafe expected
+                    (dedupedConstraints, tidyExpr) = deduplicateConstraints typeclassUses expr
+                    result = passAllDictionaries varsInScope dedupedConstraints tidyExpr
+
+                simplify <$> result `shouldBe` Right (simplify expectedExpr)
+      )
+      [ (mempty, ["1 + 2"],  ["1 + 2"]),
+        ( mempty,
+          ["equals (1: Int) (2: Int)"],
+          [ "(\\a -> \\b -> a == b : Int -> Int -> Bool) (1 : Int) (2: Int)"
+          ]
+        ){-,
+        ( mempty,
+          ["if equals (1: Int) (2: Int) then equals (2: Int) (3: Int) else False"],
+          [Constraint "Eq" [tyInt]],
+          [ "\\instances -> case (instances : Int -> Int -> Bool) of tcvaluefromdictionary0 ->",
+            "if tcvaluefromdictionary0 (1 : Int) (2 : Int) then tcvaluefromdictionary0 (2: Int) (3: Int) else False"
+          ]
+        ),
+        ( [ Constraint "Eq" [tcVar "a"],
+            Constraint "Eq" [tcVar "b"]
+          ],
+          [ "(\\a -> \\b -> case (a,b) of ((leftA, leftB), (rightA, rightB)) -> ",
+            "if equals leftA rightA then equals leftB rightB else False : (a,b) -> (a,b) -> Bool)"
+          ],
+          [ Constraint "Eq" [tcVar "a"],
+            Constraint "Eq" [tcVar "b"]
+          ],
+          [ "\\instances -> case (instances : (a -> a -> Bool, b -> b -> Bool)) of (tcvaluefromdictionary0, tcvaluefromdictionary1) -> ",
+            "(\\a1 -> \\b2 -> case (a1,b2) of ((leftA3, leftB4), (rightA5, rightB6)) ->",
+            "if tcvaluefromdictionary0 leftA3 rightA5 then tcvaluefromdictionary1 leftB4 rightB6 else False : (a,b) -> (a,b) -> Bool)"
+          ]
+        )-}
       ]

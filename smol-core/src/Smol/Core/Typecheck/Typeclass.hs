@@ -20,6 +20,7 @@ import Control.Monad
 import Control.Monad.Except
 import Control.Monad.Identity
 import Data.Functor
+import Data.List (elemIndex)
 import qualified Data.List.NonEmpty as NE
 import qualified Data.Map.Strict as M
 import Data.Maybe (mapMaybe)
@@ -198,8 +199,8 @@ convertExprToUseTypeclassDictionary env constraints expr = do
   pure newExpr
 
 -- | create a typeclass dictionary
--- if any of the types are non-concrete (ie, `Eq a`)
--- then return Nothing - these aren't ready to be applied
+-- return either solid instances or use vars from constraints if not available
+-- (ie "pass them through", as such)
 createTypeclassDict ::
   (Show ann, Ord ann, Monoid ann, MonadError (TCError ann) m) =>
   TCEnv ann ->
@@ -209,8 +210,15 @@ createTypeclassDict env constraints = do
   instances <-
     traverse
       ( \constraint -> do
-          (_, newConstraints, expr) <- lookupInstanceAndCheck env constraint
-          createInstance env newConstraints expr
+          result <- runExceptT (lookupInstanceAndCheck env constraint)
+          case result of
+            Right (_, newConstraints, expr) -> createInstance env newConstraints expr
+            Left e -> do
+              tracePrettyM "constraint" constraint
+              tracePrettyM "all constraints" (tceConstraints env)
+              case (,) <$> elemIndex constraint (tceConstraints env) <*> typeForConstraint env constraint of
+                Just (index, ty) -> pure (EVar (resolveType ty) (identForConstraint $ fromIntegral index))
+                Nothing -> throwError e
       )
       constraints
   case NE.uncons instances of
@@ -240,7 +248,7 @@ passDictionaries env =
         Just (constraints, _defExpr) -> do
           tracePrettyM "found constraints" constraints
           case NE.nonEmpty constraints of
-            Just neConstraints -> 
+            Just neConstraints ->
               EApp ann (EVar ann ident) <$> createTypeclassDict env neConstraints
             Nothing -> pure (EVar ann ident)
         Nothing -> pure (EVar ann ident)

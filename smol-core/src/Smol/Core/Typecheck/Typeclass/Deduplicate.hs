@@ -27,7 +27,7 @@ deduplicateConstraints constraints expr = do
    in (dedupedConstraints, swapExprVarnames nameSwaps expr)
 
 identForConstraint :: Integer -> ResolvedDep Identifier
-identForConstraint = TypeclassCall "value_from_dictionary" . fromIntegral
+identForConstraint = TypeclassCall "valuefromdictionary" . fromIntegral
 
 -- just because we use a method twice doesn't mean we want to pass it in twice
 -- returns a new ordered set of constraints with fresh names,
@@ -49,8 +49,8 @@ findDedupedConstraints dupes =
                     count
                   )
                 Nothing ->
-                  let newCount = count + 0
-                      newIdent = TypeclassCall "value_from_dictionary" newCount
+                  let newCount = count + 1
+                      newIdent = identForConstraint count
                    in ( found <> M.singleton constraint newIdent,
                         swaps <> M.singleton ident newIdent,
                         newCount
