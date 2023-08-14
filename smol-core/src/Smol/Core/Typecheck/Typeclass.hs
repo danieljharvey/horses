@@ -179,7 +179,7 @@ convertExprToUseTypeclassDictionary ::
   Expr ResolvedDep (Type ResolvedDep ann) ->
   m (Expr ResolvedDep (Type ResolvedDep ann))
 convertExprToUseTypeclassDictionary env constraints expr = do
-  maybePattern <- getTypeForDictionary env constraints
+  maybePattern <- getTypeForDictionary env (filterNotConcrete constraints)
 
   newExpr <- case maybePattern of
     Just pat -> do
@@ -212,7 +212,8 @@ createTypeclassDict env constraints = do
       ( \constraint -> do
           result <- runExceptT (lookupInstanceAndCheck env constraint)
           case result of
-            Right (_, newConstraints, expr) -> createInstance env newConstraints expr
+            Right (_, newConstraints, expr) -> 
+              createInstance env newConstraints expr
             Left e -> do
               tracePrettyM "constraint" constraint
               tracePrettyM "all constraints" (tceConstraints env)
@@ -231,6 +232,9 @@ constraintsAreAllConcrete :: [Constraint ann] -> Bool
 constraintsAreAllConcrete =
   getAll
     . foldMap (All . isConcrete)
+
+filterNotConcrete :: [Constraint ann] -> [Constraint ann]
+filterNotConcrete = filter (not . isConcrete)
 
 -- given we know the types of all our deps
 -- pass dictionaries to them all
@@ -251,7 +255,14 @@ passDictionaries env =
             Just neConstraints ->
               EApp ann (EVar ann ident) <$> createTypeclassDict env neConstraints
             Nothing -> pure (EVar ann ident)
-        Nothing -> pure (EVar ann ident)
+        Nothing -> do
+          result <- recoverInstance env ident ann
+          case result of
+            Just constraint -> do
+              (_,_,fnExpr) <- lookupInstanceAndCheck env constraint
+              pure fnExpr 
+            Nothing ->
+              pure (EVar ann ident)
     go other = bindExpr go other
 
 -- pass dictionaries to the current expression
@@ -294,8 +305,8 @@ passAllDictionaries varsInScope constraints expr = do
           }
 
   newExpr <-
-    passOuterDictionaries env constraints
-      <=< passDictionaries env
+    --    passOuterDictionaries env constraints
+    {- <=< -} passDictionaries env
       <=< convertExprToUseTypeclassDictionary env constraints
       $ expr
 

@@ -7,9 +7,12 @@ module Smol.Core.Typecheck.Typeclass.Helpers
     lookupTypeclassInstance,
     instanceMatchesType,
     isConcrete,
+    recoverInstance
   )
 where
 
+import Control.Monad.Writer
+import Smol.Core.Typecheck.Subtype
 import Control.Monad (unless, void, zipWithM)
 import Control.Monad.Except
 import Control.Monad.Identity
@@ -17,7 +20,7 @@ import Data.Foldable (traverse_)
 import Data.Functor (($>))
 import qualified Data.List.NonEmpty as NE
 import qualified Data.Map.Strict as M
-import Data.Maybe (mapMaybe)
+import Data.Maybe (mapMaybe, listToMaybe)
 import Data.Monoid
 import Smol.Core.ExprUtils
 import Smol.Core.TypeUtils
@@ -148,3 +151,26 @@ isConcrete (Constraint _ tys) =
   where
     containsVars (TVar {}) = Any True
     containsVars other = monoidType containsVars other
+
+resolveType :: Type Identity ann -> Type ResolvedDep ann
+resolveType = mapTypeDep r
+  where
+    r (Identity a) = LocalDefinition a
+
+-- given a func name and type, find the typeclass instance (if applicable)
+recoverInstance :: (MonadError (TCError ann) m, Eq ann, Show ann, Monoid ann) =>
+  TCEnv ann -> ResolvedDep Identifier -> Type ResolvedDep ann -> m (Maybe (Constraint ann))
+recoverInstance env ident ty = do
+      let getInnerIdent (TypeclassCall i _) = Just i
+          getInnerIdent (LocalDefinition i) = Just i -- not sure if this should happen but it makes testing waaaay easier
+          getInnerIdent _ = Nothing
+
+      -- if name matches typeclass instance, return freshened type
+      case listToMaybe $ M.elems $ M.filter (\tc -> Just (tcFuncName tc) == getInnerIdent ident) (tceClasses env) of
+        -- need to turn Type Identity ann into Type ResolvedDep ann
+        Just tc -> do
+          (_, subs) <- runWriterT $ isSubtypeOf (resolveType $ tcFuncType tc) ty
+          let constraint = Constraint (tcName tc) (unresolveType . substituteMany (filterSubstitutions subs) . TVar mempty . emptyResolvedDep <$> tcArgs tc)
+          pure (Just constraint)
+        Nothing -> pure Nothing
+

@@ -32,7 +32,7 @@ testInterpret input =
 
 spec :: Spec
 spec = do
-  describe "Module InterpreterSpec" $ do
+  fdescribe "Module InterpreterSpec" $ do
     describe "interpret" $ do
       let cases =
             [ (["def main = 1 + 1"], "2"),

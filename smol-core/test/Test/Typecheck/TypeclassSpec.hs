@@ -17,6 +17,7 @@ import qualified Data.Map.Strict as M
 import Data.String (fromString)
 import Data.Text (Text)
 import Smol.Core
+import Smol.Core.Helpers
 import Smol.Core.Modules.ResolveDeps
 import Smol.Core.Typecheck.FromParsedExpr (fromParsedExpr)
 import Smol.Core.Typecheck.Typeclass
@@ -128,7 +129,8 @@ spec = do
         `shouldSatisfy` isLeft
 
     it "Is there" $ do
-      let tcEnvWithConstraint = typecheckEnv {tceConstraints = [Constraint "Eq" [tcVar "a"]]}
+      let tcEnvWithConstraint =
+            typecheckEnv {tceConstraints = [Constraint "Eq" [tcVar "a"]]}
       lookupTypeclassConstraint @() tcEnvWithConstraint (Constraint "Eq" [tcVar "a"])
         `shouldSatisfy` isRight
 
@@ -212,28 +214,36 @@ spec = do
         )
         `shouldSatisfy` isLeft
 
+  -- don't do anything with concrete ones pls
+  -- then we can look those up again later
   describe "findDedupedConstraints" $ do
     it "Empty is empty" $ do
       findDedupedConstraints @() mempty `shouldBe` (mempty, mempty)
 
     it "One is one and gets a new name" $ do
-      findDedupedConstraints @() (M.singleton "oldname" (Constraint "Eq" [tyInt]))
-        `shouldBe` ( [ Constraint "Eq" [tyInt]
+      findDedupedConstraints @() (M.singleton "oldname" (Constraint "Eq" [tcVar "a"]))
+        `shouldBe` ( [ Constraint "Eq" [tcVar "a"]
                      ],
                      M.singleton "oldname" (TypeclassCall "valuefromdictionary" 0)
+                   )
+
+    it "We don't rename concrete instances" $ do
+      findDedupedConstraints @() (M.singleton "oldname" (Constraint "Eq" [tyInt]))
+        `shouldBe` ( mempty, 
+                     mempty 
                    )
 
     it "Two functions, each used twice become one of each" $ do
       findDedupedConstraints @()
         ( M.fromList
-            [ ("eqInt1", Constraint "Eq" [tyInt]),
-              ("eqInt2", Constraint "Eq" [tyInt]),
-              ("eqBool1", Constraint "Eq" [tyBool]),
-              ("eqBool2", Constraint "Eq" [tyBool])
+            [ ("eqInt1", Constraint "Eq" [tcVar "a"]),
+              ("eqInt2", Constraint "Eq" [tcVar "a"]),
+              ("eqBool1", Constraint "Eq" [tcVar "b"]),
+              ("eqBool2", Constraint "Eq" [tcVar "b"])
             ]
         )
-        `shouldBe` ( [ Constraint "Eq" [tyInt],
-                       Constraint "Eq" [tyBool]
+        `shouldBe` ( [ Constraint "Eq" [tcVar "a"],
+                       Constraint "Eq" [tcVar "b"]
                      ],
                      M.fromList
                        [ ("eqBool1", TypeclassCall "valuefromdictionary" 0),
@@ -313,14 +323,16 @@ spec = do
       ]
 
   -- the whole transformation basically
-  fdescribe "passAllDictionaries" $ do
+  describe "passAllDictionaries" $ do
     traverse_
-      ( \(constraints, parts,  expectedParts) ->
+      ( \(constraints, parts, expectedParts) ->
           let input = joinText parts
               expected = joinText expectedParts
            in it ("Successfully inlined " <> show input) $ do
                 let varsInScope = mempty
                 let (expr, typeclassUses) = getRight $ evalExpr constraints input
+
+                tracePrettyM "typeclassUses" typeclassUses
 
                 let expectedExpr = getRight $ evalExprUnsafe expected
                     (dedupedConstraints, tidyExpr) = deduplicateConstraints typeclassUses expr
@@ -328,31 +340,31 @@ spec = do
 
                 simplify <$> result `shouldBe` Right (simplify expectedExpr)
       )
-      [ (mempty, ["1 + 2"],  ["1 + 2"]),
+      [ (mempty, ["1 + 2"], ["1 + 2"]),
         ( mempty,
           ["equals (1: Int) (2: Int)"],
-          [ "(\\a -> \\b -> a == b : Int -> Int -> Bool) (1 : Int) (2: Int)"
+          [ "(\\a1 -> \\b2 -> a1 == b2 : Int -> Int -> Bool) (1 : Int) (2: Int)"
           ]
-        ){-,
-        ( mempty,
-          ["if equals (1: Int) (2: Int) then equals (2: Int) (3: Int) else False"],
-          [Constraint "Eq" [tyInt]],
-          [ "\\instances -> case (instances : Int -> Int -> Bool) of tcvaluefromdictionary0 ->",
-            "if tcvaluefromdictionary0 (1 : Int) (2 : Int) then tcvaluefromdictionary0 (2: Int) (3: Int) else False"
-          ]
-        ),
-        ( [ Constraint "Eq" [tcVar "a"],
-            Constraint "Eq" [tcVar "b"]
-          ],
-          [ "(\\a -> \\b -> case (a,b) of ((leftA, leftB), (rightA, rightB)) -> ",
-            "if equals leftA rightA then equals leftB rightB else False : (a,b) -> (a,b) -> Bool)"
-          ],
-          [ Constraint "Eq" [tcVar "a"],
-            Constraint "Eq" [tcVar "b"]
-          ],
-          [ "\\instances -> case (instances : (a -> a -> Bool, b -> b -> Bool)) of (tcvaluefromdictionary0, tcvaluefromdictionary1) -> ",
-            "(\\a1 -> \\b2 -> case (a1,b2) of ((leftA3, leftB4), (rightA5, rightB6)) ->",
-            "if tcvaluefromdictionary0 leftA3 rightA5 then tcvaluefromdictionary1 leftB4 rightB6 else False : (a,b) -> (a,b) -> Bool)"
-          ]
-        )-}
+        ) {-,
+          ( mempty,
+            ["if equals (1: Int) (2: Int) then equals (2: Int) (3: Int) else False"],
+            [Constraint "Eq" [tyInt]],
+            [ "\\instances -> case (instances : Int -> Int -> Bool) of tcvaluefromdictionary0 ->",
+              "if tcvaluefromdictionary0 (1 : Int) (2 : Int) then tcvaluefromdictionary0 (2: Int) (3: Int) else False"
+            ]
+          ),
+          ( [ Constraint "Eq" [tcVar "a"],
+              Constraint "Eq" [tcVar "b"]
+            ],
+            [ "(\\a -> \\b -> case (a,b) of ((leftA, leftB), (rightA, rightB)) -> ",
+              "if equals leftA rightA then equals leftB rightB else False : (a,b) -> (a,b) -> Bool)"
+            ],
+            [ Constraint "Eq" [tcVar "a"],
+              Constraint "Eq" [tcVar "b"]
+            ],
+            [ "\\instances -> case (instances : (a -> a -> Bool, b -> b -> Bool)) of (tcvaluefromdictionary0, tcvaluefromdictionary1) -> ",
+              "(\\a1 -> \\b2 -> case (a1,b2) of ((leftA3, leftB4), (rightA5, rightB6)) ->",
+              "if tcvaluefromdictionary0 leftA3 rightA5 then tcvaluefromdictionary1 leftB4 rightB6 else False : (a,b) -> (a,b) -> Bool)"
+            ]
+          )-}
       ]
