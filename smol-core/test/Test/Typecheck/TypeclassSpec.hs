@@ -323,7 +323,7 @@ spec = do
       ]
 
   -- the whole transformation basically
-  describe "passAllDictionaries" $ do
+  describe "toDictionaryPassing" $ do
     traverse_
       ( \(constraints, parts, expectedParts) ->
           let input = joinText parts
@@ -336,7 +336,7 @@ spec = do
 
                 let expectedExpr = getRight $ evalExprUnsafe expected
                     (dedupedConstraints, tidyExpr) = deduplicateConstraints typeclassUses expr
-                    result = passAllDictionaries varsInScope dedupedConstraints tidyExpr
+                    result = toDictionaryPassing varsInScope dedupedConstraints tidyExpr
 
                 simplify <$> result `shouldBe` Right (simplify expectedExpr)
       )
@@ -345,14 +345,15 @@ spec = do
           ["equals (1: Int) (2: Int)"],
           [ "(\\a1 -> \\b2 -> a1 == b2 : Int -> Int -> Bool) (1 : Int) (2: Int)"
           ]
-        ) {-,
+        ),
           ( mempty,
-            ["if equals (1: Int) (2: Int) then equals (2: Int) (3: Int) else False"],
-            [Constraint "Eq" [tyInt]],
-            [ "\\instances -> case (instances : Int -> Int -> Bool) of tcvaluefromdictionary0 ->",
-              "if tcvaluefromdictionary0 (1 : Int) (2 : Int) then tcvaluefromdictionary0 (2: Int) (3: Int) else False"
-            ]
-          ),
+            ["equals ((1: Int), (2: Int)) ((2: Int), (3: Int))"],
+            ["(\\a1 -> \\b2 -> case (a1,b2) of ((a13, a24), (b15, b26)) ->",
+            "if (\\a1 -> \\b2 -> a1 == b2 : Int -> Int -> Bool) a13 b15 ",
+            "then (\\a1 -> \\b2 -> a1 == b2 : Int -> Int -> Bool) a24 b26",
+            "else False : (Int,Int) -> (Int,Int) -> Bool)",
+            "((1: Int), (2: Int)) ((2: Int), (3: Int))"]
+          ){-,
           ( [ Constraint "Eq" [tcVar "a"],
               Constraint "Eq" [tcVar "b"]
             ],

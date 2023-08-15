@@ -72,7 +72,7 @@ passModuleDictionaries inputModule = do
         newExpr <-
           modifyError
             (DefDoesNotTypeCheck mempty (DIName ident))
-            (passAllDictionaries varsInScope constraints expr)
+            (toDictionaryPassing varsInScope constraints expr)
 
         pure $ (ident, tle {tleExpr = newExpr})
 

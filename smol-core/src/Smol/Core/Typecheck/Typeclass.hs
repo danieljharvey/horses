@@ -8,7 +8,7 @@ module Smol.Core.Typecheck.Typeclass
     convertExprToUseTypeclassDictionary,
     getTypeclassMethodNames,
     createTypeclassDict,
-    passAllDictionaries,
+    toDictionaryPassing,
     passDictionaries,
     passOuterDictionaries,
     module Smol.Core.Typecheck.Typeclass.Helpers,
@@ -115,20 +115,6 @@ getTypeclassMethodNames tcEnv =
   S.fromList $
     tcFuncName <$> M.elems (tceClasses tcEnv)
 
-createInstance ::
-  (MonadError (TCError ann) m, Ord ann, Show ann, Monoid ann) =>
-  TCEnv ann ->
-  [Constraint ann] ->
-  Expr ResolvedDep (Type ResolvedDep ann) ->
-  m (Expr ResolvedDep (Type ResolvedDep ann))
-createInstance env constraints typedExpr = do
-  -- if this has any constraints of it's own, convert to dictionary-receiving
-  -- style
-  dictExpr <- convertExprToUseTypeclassDictionary env constraints typedExpr
-
-  -- pass dictionaries to it
-  passOuterDictionaries env constraints dictExpr
-
 getTypeForDictionary ::
   ( MonadError (TCError ann) m,
     Ord ann,
@@ -213,7 +199,8 @@ createTypeclassDict env constraints = do
           result <- runExceptT (lookupInstanceAndCheck env constraint)
           case result of
             Right (_, newConstraints, expr) -> 
-              createInstance env newConstraints expr
+              --createInstance env newConstraints expr
+              toDictionaryPassing (tceVars env) newConstraints expr
             Left e -> do
               tracePrettyM "constraint" constraint
               tracePrettyM "all constraints" (tceConstraints env)
@@ -250,17 +237,22 @@ passDictionaries env =
       tracePrettyM "lookup value for " ident
       case M.lookup ident (tceVars env) of
         Just (constraints, _defExpr) -> do
+          -- need to specialise constraint to actual type here
           tracePrettyM "found constraints" constraints
+          tracePrettyM "var type" ann
           case NE.nonEmpty constraints of
-            Just neConstraints ->
-              EApp ann (EVar ann ident) <$> createTypeclassDict env neConstraints
+            Just neConstraints -> do
+              -- use the call type to specialise to the instance we need
+              specialisedConstraints <- traverse (specialiseConstraint env ann) neConstraints
+              EApp ann (EVar ann ident) <$> createTypeclassDict env specialisedConstraints
             Nothing -> pure (EVar ann ident)
         Nothing -> do
           result <- recoverInstance env ident ann
           case result of
             Just constraint -> do
-              (_,_,fnExpr) <- lookupInstanceAndCheck env constraint
-              pure fnExpr 
+              (_,fnConstraints,fnExpr) <- lookupInstanceAndCheck env constraint
+              -- convert instance to dictionary passing then return it inlined
+              toDictionaryPassing mempty fnConstraints fnExpr
             Nothing ->
               pure (EVar ann ident)
     go other = bindExpr go other
@@ -284,13 +276,13 @@ passOuterDictionaries env constraints expr = do
     _ -> pure expr
 
 -- | well well well lets put it all together
-passAllDictionaries ::
+toDictionaryPassing ::
   (MonadError (TCError ann) m, Show ann, Ord ann, Monoid ann) =>
   M.Map (ResolvedDep Identifier) ([Constraint ann], ResolvedType ann) ->
   [Constraint ann] ->
   Expr ResolvedDep (Type ResolvedDep ann) ->
   m (Expr ResolvedDep (Type ResolvedDep ann))
-passAllDictionaries varsInScope constraints expr = do
+toDictionaryPassing varsInScope constraints expr = do
   tracePrettyM "constraints" constraints
   tracePrettyM "expr" expr
 
