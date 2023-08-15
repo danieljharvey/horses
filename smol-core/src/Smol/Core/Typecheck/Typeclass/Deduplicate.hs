@@ -9,11 +9,11 @@ module Smol.Core.Typecheck.Typeclass.Deduplicate
   )
 where
 
-import Smol.Core.Typecheck.Typeclass.Helpers (isConcrete)
 import Data.Foldable (foldl')
 import qualified Data.Map.Strict as M
 import Data.Maybe (fromMaybe)
 import Smol.Core.ExprUtils
+import Smol.Core.Typecheck.Typeclass.Helpers (isConcrete)
 import Smol.Core.Typecheck.Types
 import Smol.Core.Types
 
@@ -44,21 +44,20 @@ findDedupedConstraints dupes =
         foldl'
           ( \(found, swaps, count) (ident, constraint) ->
               if isConcrete constraint
-                 then (found, swaps, count)
-                 else
-                    case M.lookup constraint found of
-                      Just foundIdent ->
-                        ( found,
-                          swaps <> M.singleton ident foundIdent,
-                          count
+                then (found, swaps, count)
+                else case M.lookup constraint found of
+                  Just foundIdent ->
+                    ( found,
+                      swaps <> M.singleton ident foundIdent,
+                      count
+                    )
+                  Nothing ->
+                    let newCount = count + 1
+                        newIdent = identForConstraint count
+                     in ( found <> M.singleton constraint newIdent,
+                          swaps <> M.singleton ident newIdent,
+                          newCount
                         )
-                      Nothing ->
-                        let newCount = count + 1
-                            newIdent = identForConstraint count
-                         in ( found <> M.singleton constraint newIdent,
-                              swaps <> M.singleton ident newIdent,
-                              newCount
-                            )
           )
           initial
           (M.toList dupes)

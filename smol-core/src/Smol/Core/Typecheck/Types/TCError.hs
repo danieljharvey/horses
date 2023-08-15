@@ -29,6 +29,6 @@ data TCError ann
   | TCCompoundTypeInEquality (ResolvedType ann) -- for now we only do primitive equality
   | TCPatternMatchError (PatternMatchError (ResolvedType ann))
   | TCTypeclassNotFound TypeclassName
-  | TCTypeclassInstanceNotFound TypeclassName [Type Identity ann]
+  | TCTypeclassInstanceNotFound TypeclassName [Type Identity ann] [Constraint ann]
   | TCConflictingTypeclassInstancesFound [Constraint ann]
   deriving stock (Eq, Ord, Show, Foldable)

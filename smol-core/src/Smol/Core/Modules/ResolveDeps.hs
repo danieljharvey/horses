@@ -32,9 +32,10 @@ resolveExprDeps ::
   (Show ann, MonadError ResolveDepsError m) =>
   Expr ParseDep ann ->
   Set Identifier ->
+  Set DefIdentifier ->
   m (Expr ResolvedDep ann)
-resolveExprDeps expr typeclassMethods =
-  evalStateT (resolveExpr expr typeclassMethods mempty mempty) (ResolveState 0)
+resolveExprDeps expr typeclassMethods localDefs =
+  evalStateT (resolveExpr expr typeclassMethods localDefs mempty) (ResolveState 0)
 
 resolveExpr ::
   (Show ann, MonadError ResolveDepsError m, MonadState ResolveState m) =>

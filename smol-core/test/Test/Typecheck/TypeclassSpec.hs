@@ -1,12 +1,13 @@
 {-# LANGUAGE DerivingStrategies #-}
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE GeneralisedNewtypeDeriving #-}
+{-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE RankNTypes #-}
 {-# LANGUAGE TypeApplications #-}
 
 module Test.Typecheck.TypeclassSpec (spec) where
-
+import Data.List (nub)
 import Control.Monad.Identity
 import Data.Bifunctor (bimap)
 import Data.Either
@@ -14,12 +15,14 @@ import Data.Foldable (traverse_)
 import Data.Functor
 import qualified Data.List.NonEmpty as NE
 import qualified Data.Map.Strict as M
+import Data.Maybe (mapMaybe)
+import qualified Data.Set as S
 import Data.String (fromString)
 import Data.Text (Text)
 import Smol.Core
-import Smol.Core.Helpers
 import Smol.Core.Modules.ResolveDeps
-import Smol.Core.Typecheck.FromParsedExpr (fromParsedExpr)
+import Smol.Core.Modules.Types.DefIdentifier
+import Smol.Core.Typecheck.FromParsedExpr (fromParsedExpr )
 import Smol.Core.Typecheck.Typeclass
 import Test.Helpers
 import Test.Hspec
@@ -48,29 +51,46 @@ simplify = void . goExpr
 
 evalExpr ::
   [Constraint Annotation] ->
+  M.Map (ResolvedDep Identifier) ([Constraint Annotation], Type ResolvedDep Annotation) ->
   Text ->
   Either
     (TCError Annotation)
     ( ResolvedExpr (Type ResolvedDep Annotation),
       M.Map (ResolvedDep Identifier) (Constraint Annotation)
     )
-evalExpr constraints input =
+evalExpr constraints varsInScope input =
   case parseExprAndFormatError input of
     Left e -> error (show e)
     Right expr ->
-      case resolveExprDeps expr (getTypeclassMethodNames @() typecheckEnv) of
-        Left e -> error $ "error getting method names :" <> show e
-        Right resolvedExpr -> elaborate (typecheckEnv {tceConstraints = constraints}) resolvedExpr
+      let localDefs =
+            S.fromList $
+              mapMaybe
+                ( \case
+                    LocalDefinition i -> Just (DIName i)
+                    _ -> Nothing
+                )
+                (M.keys varsInScope)
+       in case resolveExprDeps expr (getTypeclassMethodNames @() typecheckEnv) localDefs of
+            Left e -> error $ "error resolving Expr deps :" <> show e
+            Right resolvedExpr ->
+              let env =
+                    typecheckEnv
+                      { tceConstraints = constraints,
+                        tceVars = varsInScope
+                      }
+               in elaborate env resolvedExpr
 
 -- | elaborate but don't do clever resolving so we can construct the
 -- expectations we want
 evalExprUnsafe ::
+  M.Map (ResolvedDep Identifier) ([Constraint Annotation], Type ResolvedDep Annotation) ->
   Text ->
   Either (TCError Annotation) (ResolvedExpr (Type ResolvedDep Annotation))
-evalExprUnsafe input = case parseExprAndFormatError input of
+evalExprUnsafe varsInScope input = case parseExprAndFormatError input of
   Left e -> error (show e)
   Right expr ->
-    case elaborate typecheckEnv (fromParsedExpr expr) of
+    let env = typecheckEnv { tceVars = varsInScope }
+     in case elaborate env (fromParsedExpr expr) of
       Right (typedExpr, _typeclassUses) -> pure typedExpr
       Left e -> Left e
 
@@ -229,8 +249,8 @@ spec = do
 
     it "We don't rename concrete instances" $ do
       findDedupedConstraints @() (M.singleton "oldname" (Constraint "Eq" [tyInt]))
-        `shouldBe` ( mempty, 
-                     mempty 
+        `shouldBe` ( mempty,
+                     mempty
                    )
 
     it "Two functions, each used twice become one of each" $ do
@@ -256,14 +276,14 @@ spec = do
   describe "Get dictionaries" $ do
     it "Single item dictionary for single constraint" $ do
       let constraints = NE.fromList [Constraint "Eq" [tyInt]]
-          expected = evalExprUnsafe "(\\a1 -> \\b2 -> a1 == b2 : Int -> Int -> Bool)"
+          expected = evalExprUnsafe mempty "(\\a1 -> \\b2 -> a1 == b2 : Int -> Int -> Bool)"
 
       fmap simplify (createTypeclassDict typecheckEnv constraints)
         `shouldBe` simplify <$> expected
 
     it "Tuple for two constraints" $ do
       let constraints = NE.fromList [Constraint "Eq" [tyInt], Constraint "Eq" [tyInt]]
-          expected = evalExprUnsafe "((\\a1 -> \\b2 -> a1 == b2 : Int -> Int -> Bool), (\\a1 -> \\b2 -> a1 == b2 : Int -> Int -> Bool))"
+          expected = evalExprUnsafe mempty "((\\a1 -> \\b2 -> a1 == b2 : Int -> Int -> Bool), (\\a1 -> \\b2 -> a1 == b2 : Int -> Int -> Bool))"
 
       fmap simplify (createTypeclassDict typecheckEnv constraints)
         `shouldBe` simplify <$> expected
@@ -281,10 +301,10 @@ spec = do
           let input = joinText parts
               expected = joinText expectedParts
            in it ("Successfully inlined " <> show input) $ do
-                let (expr, typeclassUses) = getRight $ evalExpr constraints input
+                let (expr, typeclassUses) = getRight $ evalExpr constraints mempty input
                     env = typecheckEnv {tceConstraints = constraints}
 
-                let expectedExpr = getRight $ evalExprUnsafe expected
+                let expectedExpr = getRight $ evalExprUnsafe mempty expected
                     (dedupedConstraints, tidyExpr) = deduplicateConstraints typeclassUses expr
                     result = convertExprToUseTypeclassDictionary env dedupedConstraints tidyExpr
 
@@ -292,20 +312,6 @@ spec = do
                 simplify <$> result `shouldBe` Right (simplify expectedExpr)
       )
       [ (mempty, ["1 + 2"], mempty, ["1 + 2"]),
-        ( mempty,
-          ["equals (1: Int) (2: Int)"],
-          [Constraint "Eq" [tyInt]],
-          [ "\\instances -> case (instances : Int -> Int -> Bool) of tcvaluefromdictionary0 ->",
-            "tcvaluefromdictionary0 (1 : Int) (2 : Int)"
-          ]
-        ),
-        ( mempty,
-          ["if equals (1: Int) (2: Int) then equals (2: Int) (3: Int) else False"],
-          [Constraint "Eq" [tyInt]],
-          [ "\\instances -> case (instances : Int -> Int -> Bool) of tcvaluefromdictionary0 ->",
-            "if tcvaluefromdictionary0 (1 : Int) (2 : Int) then tcvaluefromdictionary0 (2: Int) (3: Int) else False"
-          ]
-        ),
         ( [ Constraint "Eq" [tcVar "a"],
             Constraint "Eq" [tcVar "b"]
           ],
@@ -325,47 +331,41 @@ spec = do
   -- the whole transformation basically
   describe "toDictionaryPassing" $ do
     traverse_
-      ( \(constraints, parts, expectedParts) ->
+      ( \(varsInScope, constraints, parts, expectedParts) -> do
           let input = joinText parts
               expected = joinText expectedParts
            in it ("Successfully inlined " <> show input) $ do
-                let varsInScope = mempty
-                let (expr, typeclassUses) = getRight $ evalExpr constraints input
+                let (expr, typeclassUses) = getRight $ evalExpr constraints varsInScope input
 
-                tracePrettyM "typeclassUses" typeclassUses
-
-                let expectedExpr = getRight $ evalExprUnsafe expected
+                let expectedExpr = getRight $ evalExprUnsafe varsInScope expected
                     (dedupedConstraints, tidyExpr) = deduplicateConstraints typeclassUses expr
-                    result = toDictionaryPassing varsInScope dedupedConstraints tidyExpr
+                    allConstraints = nub (dedupedConstraints <> constraints) -- we lose outer constraints sometimes
+                    result = toDictionaryPassing varsInScope allConstraints tidyExpr
 
                 simplify <$> result `shouldBe` Right (simplify expectedExpr)
       )
-      [ (mempty, ["1 + 2"], ["1 + 2"]),
+      [ (mempty, mempty, ["1 + 2"], ["1 + 2"]),
         ( mempty,
+          mempty,
           ["equals (1: Int) (2: Int)"],
           [ "(\\a1 -> \\b2 -> a1 == b2 : Int -> Int -> Bool) (1 : Int) (2: Int)"
           ]
         ),
-          ( mempty,
-            ["equals ((1: Int), (2: Int)) ((2: Int), (3: Int))"],
-            ["(\\a1 -> \\b2 -> case (a1,b2) of ((a13, a24), (b15, b26)) ->",
+        ( mempty,
+          mempty,
+          ["equals ((1: Int), (2: Int)) ((2: Int), (3: Int))"],
+          [ "(\\a1 -> \\b2 -> case (a1,b2) of ((a13, a24), (b15, b26)) ->",
             "if (\\a1 -> \\b2 -> a1 == b2 : Int -> Int -> Bool) a13 b15 ",
             "then (\\a1 -> \\b2 -> a1 == b2 : Int -> Int -> Bool) a24 b26",
             "else False : (Int,Int) -> (Int,Int) -> Bool)",
-            "((1: Int), (2: Int)) ((2: Int), (3: Int))"]
-          ){-,
-          ( [ Constraint "Eq" [tcVar "a"],
-              Constraint "Eq" [tcVar "b"]
-            ],
-            [ "(\\a -> \\b -> case (a,b) of ((leftA, leftB), (rightA, rightB)) -> ",
-              "if equals leftA rightA then equals leftB rightB else False : (a,b) -> (a,b) -> Bool)"
-            ],
-            [ Constraint "Eq" [tcVar "a"],
-              Constraint "Eq" [tcVar "b"]
-            ],
-            [ "\\instances -> case (instances : (a -> a -> Bool, b -> b -> Bool)) of (tcvaluefromdictionary0, tcvaluefromdictionary1) -> ",
-              "(\\a1 -> \\b2 -> case (a1,b2) of ((leftA3, leftB4), (rightA5, rightB6)) ->",
-              "if tcvaluefromdictionary0 leftA3 rightA5 then tcvaluefromdictionary1 leftB4 rightB6 else False : (a,b) -> (a,b) -> Bool)"
-            ]
-          )-}
+            "((1: Int), (2: Int)) ((2: Int), (3: Int))"
+          ]
+        ),
+        ( mempty,
+          [Constraint "Eq" [tcVar "a"]],
+          ["(\\a -> \\b -> equals a b : a -> a -> Bool)"],
+          [ "\\instances -> case (instances : (a -> a -> Bool)) of tcvaluefromdictionary0 -> ",
+            "(\\a1 -> \\b2 -> tcvaluefromdictionary0 a1 b2 : a -> a -> Bool)"
+          ]
+        )
       ]

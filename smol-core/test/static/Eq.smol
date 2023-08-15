@@ -7,3 +7,11 @@ def useEqualsA a b = equals a b
 def notEquals : (Eq a) => a -> a -> Bool
 def notEquals a b = if useEqualsA a b then False else True
 
+def pair : (Int,Int)
+def pair = (1,2)
+
+def flipPair : (a,b) -> (b, a)
+def flipPair pair = case pair of (a,b) -> (b,a)
+
+def main : Bool
+def main = notEquals pair (flipPair pair)

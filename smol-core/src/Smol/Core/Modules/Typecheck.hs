@@ -3,6 +3,7 @@
 
 module Smol.Core.Modules.Typecheck (typecheckModule) where
 
+import Data.List (nub)
 import qualified Builder as Build
 import Control.Monad.Except
 import Control.Monad.Identity
@@ -247,9 +248,12 @@ typecheckOneExprDef input _inputModule deps (def, tle) = do
         (EAnn _ ty expr) -> (Just ty, expr)
         other -> (Nothing, other)
 
+  -- add supplied constraints to any we discovered in typechecking
+  let allConstraints = nub (fmap resolveConstraint $ constraints <> tleConstraints tle)
+
   let typedTle =
         TopLevelExpression
-          { tleConstraints = fmap resolveConstraint constraints,
+          { tleConstraints = allConstraints,
             tleExpr = typedExpr,
             tleType = typedType
           }

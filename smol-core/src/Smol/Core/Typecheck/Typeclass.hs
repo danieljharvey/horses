@@ -10,7 +10,6 @@ module Smol.Core.Typecheck.Typeclass
     createTypeclassDict,
     toDictionaryPassing,
     passDictionaries,
-    passOuterDictionaries,
     module Smol.Core.Typecheck.Typeclass.Helpers,
     module Smol.Core.Typecheck.Typeclass.Deduplicate,
   )
@@ -24,7 +23,6 @@ import Data.List (elemIndex)
 import qualified Data.List.NonEmpty as NE
 import qualified Data.Map.Strict as M
 import Data.Maybe (mapMaybe)
-import Data.Monoid
 import qualified Data.Set as S
 import Smol.Core.ExprUtils
 import Smol.Core.Helpers
@@ -101,7 +99,7 @@ checkInstance tcEnv typeclass constraint (Instance constraints expr) =
               )
               constraints
 
-    case resolveExprDeps (toParseExpr annotatedExpr) typeclassMethodNames of
+    case resolveExprDeps (toParseExpr annotatedExpr) typeclassMethodNames mempty of
       Left resolveErr -> error $ "Resolve error: " <> show resolveErr
       Right resolvedExpr -> do
         (newConstraints, typedExpr) <- typecheck typecheckEnv resolvedExpr
@@ -198,12 +196,12 @@ createTypeclassDict env constraints = do
       ( \constraint -> do
           result <- runExceptT (lookupInstanceAndCheck env constraint)
           case result of
-            Right (_, newConstraints, expr) -> 
-              --createInstance env newConstraints expr
+            Right (_, newConstraints, expr) ->
+              -- found a concrete instance
               toDictionaryPassing (tceVars env) newConstraints expr
             Left e -> do
-              tracePrettyM "constraint" constraint
-              tracePrettyM "all constraints" (tceConstraints env)
+              -- no concrete instance, maybe we can pass through a constraint
+              -- from the current function
               case (,) <$> elemIndex constraint (tceConstraints env) <*> typeForConstraint env constraint of
                 Just (index, ty) -> pure (EVar (resolveType ty) (identForConstraint $ fromIntegral index))
                 Nothing -> throwError e
@@ -214,11 +212,6 @@ createTypeclassDict env constraints = do
     (theFirst, Just theRest) ->
       let ty = TTuple mempty (getExprAnnotation theFirst) (getExprAnnotation <$> theRest)
        in pure $ ETuple ty theFirst theRest
-
-constraintsAreAllConcrete :: [Constraint ann] -> Bool
-constraintsAreAllConcrete =
-  getAll
-    . foldMap (All . isConcrete)
 
 filterNotConcrete :: [Constraint ann] -> [Constraint ann]
 filterNotConcrete = filter (not . isConcrete)
@@ -234,12 +227,9 @@ passDictionaries env =
   go
   where
     go (EVar ann ident) = do
-      tracePrettyM "lookup value for " ident
       case M.lookup ident (tceVars env) of
         Just (constraints, _defExpr) -> do
           -- need to specialise constraint to actual type here
-          tracePrettyM "found constraints" constraints
-          tracePrettyM "var type" ann
           case NE.nonEmpty constraints of
             Just neConstraints -> do
               -- use the call type to specialise to the instance we need
@@ -250,30 +240,12 @@ passDictionaries env =
           result <- recoverInstance env ident ann
           case result of
             Just constraint -> do
-              (_,fnConstraints,fnExpr) <- lookupInstanceAndCheck env constraint
+              (_, fnConstraints, fnExpr) <- lookupInstanceAndCheck env constraint
               -- convert instance to dictionary passing then return it inlined
               toDictionaryPassing mempty fnConstraints fnExpr
             Nothing ->
               pure (EVar ann ident)
     go other = bindExpr go other
-
--- pass dictionaries to the current expression
--- TODO: I don't think this should happen ever
--- we should be inlining concrete instances instead
-passOuterDictionaries ::
-  (Monoid ann, Ord ann, Show ann, MonadError (TCError ann) m) =>
-  TCEnv ann ->
-  [Constraint ann] ->
-  Expr ResolvedDep (Type ResolvedDep ann) ->
-  m (Expr ResolvedDep (Type ResolvedDep ann))
-passOuterDictionaries _ [] expr = pure expr
-passOuterDictionaries env constraints expr = do
-  case (constraintsAreAllConcrete constraints, NE.nonEmpty constraints) of
-    (True, Just neConstraints) -> do
-      dict <- createTypeclassDict env neConstraints
-      let ann = getExprAnnotation expr
-      pure (EApp ann expr dict)
-    _ -> pure expr
 
 -- | well well well lets put it all together
 toDictionaryPassing ::
@@ -283,9 +255,6 @@ toDictionaryPassing ::
   Expr ResolvedDep (Type ResolvedDep ann) ->
   m (Expr ResolvedDep (Type ResolvedDep ann))
 toDictionaryPassing varsInScope constraints expr = do
-  tracePrettyM "constraints" constraints
-  tracePrettyM "expr" expr
-
   -- initial typechecking environment
   let env =
         TCEnv
@@ -297,11 +266,8 @@ toDictionaryPassing varsInScope constraints expr = do
           }
 
   newExpr <-
-    --    passOuterDictionaries env constraints
-    {- <=< -} passDictionaries env
+    passDictionaries env
       <=< convertExprToUseTypeclassDictionary env constraints
       $ expr
-
-  tracePrettyM "newExpr" newExpr
 
   pure newExpr

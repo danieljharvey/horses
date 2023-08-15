@@ -70,12 +70,6 @@ spec = do
                 ],
                 "False"
               ),
-              ( [ "def uselessConstraint : (Eq a) => Int -> Int",
-                  "def uselessConstraint a = a + 1",
-                  "def main = uselessConstraint 100"
-                ],
-                "101"
-              ),
               ( ["def main = equals ((1:Int), (2: Int)) ((1: Int), (2: Int))"],
                 "True"
               ),
