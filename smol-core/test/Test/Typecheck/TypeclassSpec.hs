@@ -7,12 +7,13 @@
 {-# LANGUAGE TypeApplications #-}
 
 module Test.Typecheck.TypeclassSpec (spec) where
-import Data.List (nub)
+
 import Control.Monad.Identity
 import Data.Bifunctor (bimap)
 import Data.Either
 import Data.Foldable (traverse_)
 import Data.Functor
+import Data.List (nub)
 import qualified Data.List.NonEmpty as NE
 import qualified Data.Map.Strict as M
 import Data.Maybe (mapMaybe)
@@ -22,7 +23,7 @@ import Data.Text (Text)
 import Smol.Core
 import Smol.Core.Modules.ResolveDeps
 import Smol.Core.Modules.Types.DefIdentifier
-import Smol.Core.Typecheck.FromParsedExpr (fromParsedExpr )
+import Smol.Core.Typecheck.FromParsedExpr (fromParsedExpr)
 import Smol.Core.Typecheck.Typeclass
 import Test.Helpers
 import Test.Hspec
@@ -89,10 +90,10 @@ evalExprUnsafe ::
 evalExprUnsafe varsInScope input = case parseExprAndFormatError input of
   Left e -> error (show e)
   Right expr ->
-    let env = typecheckEnv { tceVars = varsInScope }
+    let env = typecheckEnv {tceVars = varsInScope}
      in case elaborate env (fromParsedExpr expr) of
-      Right (typedExpr, _typeclassUses) -> pure typedExpr
-      Left e -> Left e
+          Right (typedExpr, _typeclassUses) -> pure typedExpr
+          Left e -> Left e
 
 getRight :: (Show e) => Either e a -> a
 getRight (Right a) = a

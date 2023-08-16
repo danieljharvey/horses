@@ -15,7 +15,7 @@ module Smol.Core.Typecheck.Typeclass.Types
 where
 
 import Control.Monad.Identity
-import Data.Aeson (FromJSON, ToJSON)
+import Data.Aeson (FromJSON, FromJSONKey, ToJSON, ToJSONKey)
 import GHC.Generics
 import qualified Prettyprinter as PP
 import Smol.Core.Printer
@@ -35,7 +35,7 @@ data Typeclass ann = Typeclass
 data Constraint ann
   = Constraint TypeclassName [Type Identity ann]
   deriving stock (Eq, Ord, Show, Functor, Foldable, Generic)
-  deriving anyclass (ToJSON, FromJSON)
+  deriving anyclass (ToJSON, ToJSONKey, FromJSON, FromJSONKey)
 
 instance Printer (Constraint ann) where
   prettyDoc (Constraint tcn tys) =
@@ -48,7 +48,8 @@ data Instance ann = Instance
   { inConstraints :: [Constraint ann],
     inExpr :: Expr Identity ann
   }
-  deriving stock (Eq, Ord, Show, Functor)
+  deriving stock (Eq, Ord, Show, Functor, Generic)
+  deriving anyclass (ToJSON, FromJSON)
 
 instance Printer (Instance ann) where
   prettyDoc (Instance [] expr) = prettyDoc expr

@@ -208,8 +208,8 @@ protectedTypeNames =
       "type",
       "infix",
       "test",
-      "import",
-      "export"
+      "using",
+      "instance"
     ]
 
 tyVarParser :: Parser Identifier

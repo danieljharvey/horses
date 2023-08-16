@@ -46,6 +46,7 @@ data ModuleItem ann
   | ModuleExpressionType Identifier [Constraint ann] (Type ParseDep ann)
   | ModuleDataType (DataType ParseDep ann)
   | ModuleTest TestName Identifier
+  | ModuleInstance (Constraint ann) Identifier
   deriving stock (Eq, Ord, Functor)
 
 deriving stock instance

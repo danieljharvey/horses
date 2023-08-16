@@ -50,9 +50,8 @@ protectedNames =
       "Nat",
       "Unit",
       "def",
-      "export",
-      "import",
-      "test"
+      "test",
+      "instance"
     ]
 
 filterProtectedNames :: Text -> Maybe Text

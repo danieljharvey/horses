@@ -51,7 +51,9 @@ spec = do
               "def compose : (c -> b) -> (a -> b) -> (a -> c)",
               "def onePlusOneEqualsTwo = 1 + 1 == 2",
               "test \"one plus one equals two\" using onePlusOneEqualsTwo",
-              "def usesEquals : (Eq (a,b)) => (a,b) -> (a,b) -> Bool"
+              "def usesEquals : (Eq (a,b)) => (a,b) -> (a,b) -> Bool",
+              "class Eq a { equals: a -> a -> Bool }",
+              "instance Eq Int using eqInt"
             ]
 
       it "All defs" $ do

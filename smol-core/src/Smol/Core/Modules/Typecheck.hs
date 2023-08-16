@@ -3,13 +3,13 @@
 
 module Smol.Core.Modules.Typecheck (typecheckModule) where
 
-import Data.List (nub)
 import qualified Builder as Build
 import Control.Monad.Except
 import Control.Monad.Identity
 import Data.Bifunctor (first)
 import Data.Foldable (traverse_)
 import Data.Functor (($>))
+import Data.List (nub)
 import Data.Map.Strict (Map)
 import qualified Data.Map.Strict as M
 import Data.Maybe (fromMaybe, mapMaybe)
@@ -70,7 +70,8 @@ moduleFromDepTypes oldModule definitions =
    in -- replace input module with typechecked versions
       oldModule
         { moExpressions = newExpressions,
-          moDataTypes = mapKeyMaybe getTypeName (filterDataTypes definitions)
+          moDataTypes = mapKeyMaybe getTypeName (filterDataTypes definitions),
+          moInstances = mempty -- well this is wrong
         }
 
 --- typecheck a single module

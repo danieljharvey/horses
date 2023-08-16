@@ -41,8 +41,7 @@ parseModuleItem =
     <|> try moduleDefinitionParser
     <|> try moduleTypeDeclarationParser
     <|> parseTest
-
---    <|> parseInfix
+    <|> parseInstance
 
 -------
 
@@ -96,3 +95,11 @@ parseTest = do
   testName <- testNameParser
   myString "using"
   ModuleTest testName <$> identifierParser
+
+-- `instance Eq Int using eqInt`
+parseInstance :: Parser (ModuleItem Annotation)
+parseInstance = do
+  myString "instance"
+  constraint <- constraintParser
+  myString "using"
+  ModuleInstance constraint <$> identifierParser
