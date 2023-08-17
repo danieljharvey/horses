@@ -3,6 +3,7 @@
 
 module Smol.Core.Modules.Typecheck (typecheckModule) where
 
+import Smol.Core.Typecheck.Typeclass (checkInstance, lookupTypeclass)
 import qualified Builder as Build
 import Control.Monad.Except
 import Control.Monad.Identity
@@ -55,10 +56,13 @@ moduleFromDepTypes oldModule definitions =
   let firstMaybe f (a, b) = case f a of
         Just fa -> Just (fa, b)
         Nothing -> Nothing
+
       mapKeyMaybe f =
         M.fromList . mapMaybe (firstMaybe f) . M.toList
+
       getTypeName (DIType tn) = Just tn
       getTypeName _ = Nothing
+
       newExpressions =
         M.fromList $
           mapMaybe
@@ -71,7 +75,8 @@ moduleFromDepTypes oldModule definitions =
       oldModule
         { moExpressions = newExpressions,
           moDataTypes = mapKeyMaybe getTypeName (filterDataTypes definitions),
-          moInstances = mempty -- well this is wrong
+          moInstances = mempty, -- well this is wrong
+          moClasses = mempty
         }
 
 --- typecheck a single module
@@ -152,6 +157,8 @@ typecheckOneDef input inputModule deps (def, dep) =
           inputModule
           deps
           (def, expr)
+    DTInstance inst ->
+      DTInstance <$> typecheckInstance input inputModule deps def inst
     DTData dt ->
       DTData
         <$> typecheckOneTypeDef
@@ -159,6 +166,41 @@ typecheckOneDef input inputModule deps (def, dep) =
           inputModule
           (filterDataTypes deps)
           (def, dt)
+
+typecheckInstance ::
+  (MonadError (ModuleError Annotation) m) =>
+  Text ->
+  Module ResolvedDep Annotation ->
+  Map DefIdentifier (DepType ResolvedDep (Type ResolvedDep Annotation)) ->
+  DefIdentifier ->
+  Instance Annotation ->
+  m (Instance (Type ResolvedDep Annotation))
+typecheckInstance _input _inputModule deps def inst = do
+  -- where are we getting constraints from?
+  let exprTypeMap =
+        mapKey LocalDefinition $
+          (\depTLE -> ((fmap . fmap) getTypeAnnotation (tleConstraints depTLE), getExprAnnotation (tleExpr depTLE)))
+            <$> filterNameDefs (filterExprs deps)
+
+  let constraint = case def of
+                     DIInstance c -> c
+                     _ -> error "def is not constraint, yikes"
+
+
+  -- initial typechecking environment
+  let env =
+        TCEnv
+          { tceVars = exprTypeMap,
+            tceDataTypes = getDataTypeMap deps,
+            tceClasses = builtInClasses,
+            tceInstances = builtInInstances,
+            tceConstraints = mempty --tleConstraints tle
+          }
+
+  typeclass <- mapError _ (lookupTypeclass env (conTypeclass constraint))
+
+  mapError _ (checkInstance env typeclass (constraint $> mempty) inst)
+
 
 -- typechecking in this context means "does this data type make sense"
 -- and "do we know about all external datatypes it mentions"

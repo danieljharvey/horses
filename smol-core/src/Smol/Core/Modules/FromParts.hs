@@ -64,9 +64,8 @@ addModulePart allParts part mod' =
               { moTests = UnitTest testName ident : moTests mod'
               }
         else throwError (ErrorInResolveDeps $ VarNotFound ident)
-    ModuleInstance constraint ident ->
-      case findExpression ident allParts of
-        Just tle ->
+    ModuleClass _ -> pure mod' -- TODO
+    ModuleInstance constraint expr ->
           pure $
             mod'
               { moInstances =
@@ -74,13 +73,11 @@ addModulePart allParts part mod' =
                     (void constraint)
                     ( Instance
                         { inConstraints = mempty,
-                          inExpr = identityFromParseDep (tleExpr tle)
+                          inExpr = identityFromParseDep expr
                         }
                     )
                     <> moInstances mod'
               }
-        Nothing ->
-          throwError (ErrorInResolveDeps $ VarNotFound ident)
     ModuleDataType dt@(DataType tyCon _ _) -> do
       let typeName = coerce tyCon
       checkDataType mod' dt

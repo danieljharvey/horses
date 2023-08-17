@@ -5,6 +5,7 @@ module Smol.Core.Typecheck.Typeclass.Helpers
   ( recoverTypeclassUses,
     lookupTypeclassConstraint,
     lookupTypeclassInstance,
+    lookupTypeclass,
     instanceMatchesType,
     isConcrete,
     recoverInstance,

@@ -15,3 +15,12 @@ def flipPair pair = case pair of (a,b) -> (b,a)
 
 def main : Bool
 def main = notEquals pair (flipPair pair)
+
+instance Eq Bool = \a -> \b -> a == b
+
+instance Eq String = \a -> \b -> a == b
+
+def useNewInstances : Bool
+def useNewInstances = if equals (True : Bool) (False : Bool)
+                      then equals ("dog" : String) ("log" : String)
+                      else False

@@ -41,7 +41,9 @@ data Module dep ann = Module
   { moExpressions :: Map Identifier (TopLevelExpression dep ann),
     moDataTypes :: Map TypeName (DataType dep ann),
     moTests :: [Test],
-    moInstances :: Map (Constraint ()) (Instance ann)
+    moInstances :: Map (Constraint ()) (Instance ann),
+    moClasses :: Map TypeclassName (Typeclass ann)
+
   }
   deriving stock (Functor, Generic)
 
@@ -132,12 +134,13 @@ printDefinition name (TopLevelExpression {tleType, tleExpr}) =
    in prettyType <> prettyExpr
 
 instance Semigroup (Module dep ann) where
-  (Module a b c d) <> (Module a' b' c' d') =
-    Module (a <> a') (b <> b') (c <> c') (d <> d')
+  (Module a b c d e) <> (Module a' b' c' d' e') =
+    Module (a <> a') (b <> b') (c <> c') (d <> d') (e <> e')
 
 instance Monoid (Module dep ann) where
   mempty =
     Module
+      mempty
       mempty
       mempty
       mempty

@@ -6,6 +6,8 @@ module Smol.Core.Parser.Module
   )
 where
 
+import Control.Monad.Identity
+import Smol.Core.ExprUtils
 import qualified Data.List.NonEmpty as NE
 import Data.Text (Text)
 import Data.Void
@@ -42,6 +44,7 @@ parseModuleItem =
     <|> try moduleTypeDeclarationParser
     <|> parseTest
     <|> parseInstance
+    <|> parseClass
 
 -------
 
@@ -96,10 +99,32 @@ parseTest = do
   myString "using"
   ModuleTest testName <$> identifierParser
 
--- `instance Eq Int using eqInt`
+-- `instance Eq Int = \a -> \b -> a == b`
 parseInstance :: Parser (ModuleItem Annotation)
 parseInstance = do
   myString "instance"
   constraint <- constraintParser
-  myString "using"
-  ModuleInstance constraint <$> identifierParser
+  myString "="
+  ModuleInstance constraint <$> expressionParser
+
+parseClass :: Parser (ModuleItem Annotation)
+parseClass = do
+  myString "class"
+  typeclassName <- typeclassNameParser
+  parts <-
+      chainl1 ((: []) <$> identifierParser) (pure (<>))
+        <|> pure mempty
+  myString "{"
+  fnName <- identifierParser
+  myString ":"
+  let resolve (ParseDep a _) = Identity a
+  ty <- mapTypeDep resolve <$> typeParser
+  myString "}"
+
+  pure $ ModuleClass (Typeclass {
+          tcName  =typeclassName,
+          tcArgs = parts,
+          tcFuncName = fnName,
+          tcFuncType = ty
+
+                                })

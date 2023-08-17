@@ -14,13 +14,14 @@ import Smol.Core.Modules.Types.TestName
 import Smol.Core.Printer
 import Smol.Core.Types.Identifier
 import Smol.Core.Types.TypeName
+import Smol.Core.Typecheck.Typeclass.Types
 
 -- | different kinds of top-level definitions
 data DefIdentifier
   = DIName Identifier
-  | --  | DIInfix InfixOp
-    DIType TypeName
+  | DIType TypeName
   | DITest TestName
+  | DIInstance (Constraint ())
   deriving stock (Eq, Ord, Show, Generic)
   deriving anyclass
     ( JSON.ToJSON,
@@ -34,3 +35,5 @@ instance Printer DefIdentifier where
   -- prettyDoc (DIInfix infixOp) = prettyDoc infixOp
   prettyDoc (DIType typeName) = prettyDoc typeName
   prettyDoc (DITest testName) = "\"" <> prettyDoc testName <> "\""
+  prettyDoc (DIInstance constraint)
+    = prettyDoc constraint
