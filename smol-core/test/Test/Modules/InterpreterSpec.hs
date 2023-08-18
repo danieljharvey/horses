@@ -96,7 +96,8 @@ spec = do
                 "True"
               )
               {-
-                  -- next we need dependencies
+                  -- next we need to work out the dependencies of our typeclass
+                  -- functions
               ( ["type Pet = Dog | Cat | Rat",
                   "instance Eq Pet = \\a -> \\b -> case (a,b) of (Dog,Dog) -> True | (Cat, Cat) -> True | (Rat,Rat) -> True | _ -> False",
                   "def main : Bool",
