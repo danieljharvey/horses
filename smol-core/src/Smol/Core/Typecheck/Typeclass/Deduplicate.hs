@@ -1,5 +1,4 @@
 {-# LANGUAGE FlexibleContexts #-}
-{-# LANGUAGE NamedFieldPuns #-}
 {-# LANGUAGE OverloadedStrings #-}
 
 module Smol.Core.Typecheck.Typeclass.Deduplicate
@@ -69,8 +68,8 @@ swapExprVarnames ::
   M.Map (ResolvedDep Identifier) (ResolvedDep Identifier) ->
   Expr ResolvedDep ann ->
   Expr ResolvedDep ann
-swapExprVarnames swappies expr =
-  go expr
+swapExprVarnames swappies =
+  go
   where
     newIdent ident = fromMaybe ident (M.lookup ident swappies)
 

@@ -174,7 +174,7 @@ convertExprToUseTypeclassDictionary ::
 convertExprToUseTypeclassDictionary env constraints expr = do
   maybePattern <- getTypeForDictionary env (filterNotConcrete constraints)
 
-  newExpr <- case maybePattern of
+  case maybePattern of
     Just pat -> do
       let dictType = getPatternAnnotation pat
           exprType = getExprAnnotation expr
@@ -188,8 +188,6 @@ convertExprToUseTypeclassDictionary env constraints expr = do
               (NE.fromList [(pat, expr)])
           )
     Nothing -> pure expr
-
-  pure newExpr
 
 -- | create a typeclass dictionary
 -- return either solid instances or use vars from constraints if not available
@@ -275,9 +273,6 @@ toDictionaryPassing varsInScope instances constraints expr = do
             tceConstraints = constraints
           }
 
-  newExpr <-
-    passDictionaries env
-      <=< convertExprToUseTypeclassDictionary env constraints
-      $ expr
-
-  pure newExpr
+  passDictionaries env
+    <=< convertExprToUseTypeclassDictionary env constraints
+    $ expr

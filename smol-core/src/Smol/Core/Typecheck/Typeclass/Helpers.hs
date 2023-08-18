@@ -73,7 +73,7 @@ instanceMatchesType ::
     (Type Identity ann, Type Identity ann)
     [Substitution Identity ann]
 instanceMatchesType needleTys haystackTys =
-  fmap mconcat $ zipWithM matchType needleTys haystackTys
+  mconcat <$> zipWithM matchType needleTys haystackTys
 
 -- | wipe out annotations when looking for instances
 -- this is fragile and depends on us manually creating instances with `mempty`
@@ -142,7 +142,7 @@ lookupTypeclassConstraint env constraint@(Constraint name tys) = do
     void (lookupTypeclassInstance env constraint) `catchError` \_ -> do
       -- maybe it's a constraint, look there
       unless
-        (elem constraint (tceConstraints env))
+        (constraint `elem` tceConstraints env)
         (throwError (TCTypeclassInstanceNotFound name tys (M.keys $ tceInstances env)))
   pure ()
 

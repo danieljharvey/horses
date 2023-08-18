@@ -1,10 +1,3 @@
-{-# LANGUAGE DeriveAnyClass #-}
-{-# LANGUAGE DeriveFunctor #-}
-{-# LANGUAGE DeriveGeneric #-}
-{-# LANGUAGE DerivingStrategies #-}
-{-# LANGUAGE GeneralisedNewtypeDeriving #-}
-{-# LANGUAGE OverloadedStrings #-}
-
 module Smol.Core.Typecheck.Types
   ( TCEnv (..),
     module Smol.Core.Typecheck.Typeclass.Types,

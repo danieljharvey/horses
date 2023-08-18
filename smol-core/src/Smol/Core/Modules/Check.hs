@@ -82,7 +82,7 @@ passModuleDictionaries inputModule = do
             (DefDoesNotTypeCheck mempty (DIName ident))
             (toDictionaryPassing varsInScope instances constraints expr)
 
-        pure $ (ident, tle {tleExpr = newExpr})
+        pure (ident, tle {tleExpr = newExpr})
 
   newExpressions <- M.fromList <$> traverse passDictToTopLevelExpression (M.toList $ moExpressions inputModule)
   pure $ inputModule {moExpressions = newExpressions}

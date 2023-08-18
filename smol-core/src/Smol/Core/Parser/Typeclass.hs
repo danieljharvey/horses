@@ -1,5 +1,3 @@
-{-# LANGUAGE OverloadedStrings #-}
-
 module Smol.Core.Parser.Typeclass
   ( constraintParser,
   )
