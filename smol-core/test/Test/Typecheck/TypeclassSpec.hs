@@ -336,11 +336,12 @@ spec = do
               expected = joinText expectedParts
            in it ("Successfully inlined " <> show input) $ do
                 let (expr, typeclassUses) = getRight $ evalExpr constraints varsInScope input
+                let env = typecheckEnv {tceVars = varsInScope}
 
                 let expectedExpr = getRight $ evalExprUnsafe varsInScope expected
                     (dedupedConstraints, tidyExpr) = deduplicateConstraints typeclassUses expr
                     allConstraints = nub (dedupedConstraints <> constraints) -- we lose outer constraints sometimes
-                    result = toDictionaryPassing varsInScope (tceInstances typecheckEnv) allConstraints tidyExpr
+                    result = toDictionaryPassing env allConstraints tidyExpr
 
                 simplify <$> result `shouldBe` Right (simplify expectedExpr)
       )

@@ -32,7 +32,6 @@ import Smol.Core.Modules.ResolveDeps
 import Smol.Core.Typecheck.Shared
 import Smol.Core.Typecheck.Substitute
 import Smol.Core.Typecheck.Typecheck (typecheck)
-import Smol.Core.Typecheck.Typeclass.BuiltIns
 import Smol.Core.Typecheck.Typeclass.Deduplicate
 import Smol.Core.Typecheck.Typeclass.Helpers
 import Smol.Core.Typecheck.Types
@@ -180,7 +179,7 @@ convertExprToUseTypeclassDictionary env constraints expr = do
           exprType = getExprAnnotation expr
       pure $
         ELambda
-          exprType -- we want the overall expression to have the same type so we can still typecheck and ignore the constraints
+          (TFunc mempty mempty dictType exprType)
           "instances"
           ( EPatternMatch
               (getExprAnnotation expr)
@@ -205,7 +204,7 @@ createTypeclassDict env constraints = do
           case result of
             Right (_, newConstraints, expr) ->
               -- found a concrete instance
-              toDictionaryPassing (tceVars env) (tceInstances env) newConstraints expr
+              toDictionaryPassing env newConstraints expr
             Left e -> do
               -- no concrete instance, maybe we can pass through a constraint
               -- from the current function
@@ -249,7 +248,7 @@ passDictionaries env =
             Just constraint -> do
               (_, fnConstraints, fnExpr) <- lookupInstanceAndCheck env constraint
               -- convert instance to dictionary passing then return it inlined
-              toDictionaryPassing mempty (tceInstances env) fnConstraints fnExpr
+              toDictionaryPassing env fnConstraints fnExpr
             Nothing ->
               pure (EVar ann ident)
     go other = bindExpr go other
@@ -257,22 +256,17 @@ passDictionaries env =
 -- | well well well lets put it all together
 toDictionaryPassing ::
   (MonadError (TCError ann) m, Show ann, Ord ann, Monoid ann) =>
-  M.Map (ResolvedDep Identifier) ([Constraint ann], ResolvedType ann) ->
-  M.Map (Constraint ann) (Instance ann) ->
+  TCEnv ann ->
   [Constraint ann] ->
   Expr ResolvedDep (Type ResolvedDep ann) ->
   m (Expr ResolvedDep (Type ResolvedDep ann))
-toDictionaryPassing varsInScope instances constraints expr = do
+toDictionaryPassing env constraints expr = do
   -- initial typechecking environment
-  let env =
-        TCEnv
-          { tceVars = varsInScope,
-            tceDataTypes = mempty,
-            tceClasses = builtInClasses,
-            tceInstances = builtInInstances <> instances,
-            tceConstraints = constraints
+  let typecheckEnv =
+        env
+          { tceConstraints = constraints
           }
 
-  passDictionaries env
-    <=< convertExprToUseTypeclassDictionary env constraints
+  passDictionaries typecheckEnv
+    <=< convertExprToUseTypeclassDictionary typecheckEnv constraints
     $ expr

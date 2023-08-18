@@ -3,6 +3,7 @@
 
 module Smol.Core.Typecheck.Typeclass.Helpers
   ( recoverTypeclassUses,
+    constraintsFromTLE,
     lookupTypeclassConstraint,
     lookupTypeclassInstance,
     lookupTypeclass,
@@ -10,6 +11,7 @@ module Smol.Core.Typecheck.Typeclass.Helpers
     isConcrete,
     recoverInstance,
     specialiseConstraint,
+    envFromTypecheckedModule,
   )
 where
 
@@ -24,9 +26,13 @@ import qualified Data.Map.Strict as M
 import Data.Maybe (listToMaybe, mapMaybe)
 import Data.Monoid
 import Smol.Core.ExprUtils
+import Smol.Core.Helpers (mapKey)
+import Smol.Core.Modules.Types
 import Smol.Core.TypeUtils
+import Smol.Core.Typecheck.Shared
 import Smol.Core.Typecheck.Substitute
 import Smol.Core.Typecheck.Subtype
+import Smol.Core.Typecheck.Typeclass.BuiltIns
 import Smol.Core.Typecheck.Types
 import Smol.Core.Types
 
@@ -217,3 +223,46 @@ specialiseConstraint env ty (Constraint tcn _tys) = do
   tc <- lookupTypeclass env tcn
   -- apply types
   applyTypeToConstraint tc ty
+
+constraintsFromTLE ::
+  TopLevelExpression ResolvedDep (Type ResolvedDep ann) ->
+  [Constraint ann]
+constraintsFromTLE tle =
+  (fmap . fmap) getTypeAnnotation (tleConstraints tle)
+
+-- get input for typechecker from module
+getVarsInScope ::
+  Module ResolvedDep (Type ResolvedDep ann) ->
+  M.Map (ResolvedDep Identifier) ([Constraint ann], ResolvedType ann)
+getVarsInScope =
+  M.fromList
+    . fmap go
+    . M.toList
+    . moExpressions
+  where
+    go (ident, tle) =
+      ( LocalDefinition ident,
+        (constraintsFromTLE tle, getExprAnnotation (tleExpr tle))
+      )
+
+envFromTypecheckedModule :: (Ord ann, Monoid ann) => Module ResolvedDep (Type ResolvedDep ann) -> TCEnv ann
+envFromTypecheckedModule inputModule =
+  let instances =
+        mapKey (fmap (const mempty))
+          . (fmap . fmap) getTypeAnnotation
+          . moInstances
+          $ inputModule
+
+      classes = (fmap . fmap) getTypeAnnotation (moClasses inputModule)
+
+      dataTypes =
+        (fmap . fmap)
+          getTypeAnnotation
+          (M.mapKeys LocalDefinition (moDataTypes inputModule))
+   in TCEnv
+        { tceVars = getVarsInScope inputModule,
+          tceDataTypes = dataTypes,
+          tceInstances = builtInInstances <> instances,
+          tceClasses = builtInClasses <> classes,
+          tceConstraints = mempty
+        }

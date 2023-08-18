@@ -89,13 +89,17 @@ moduleFromDepTypes oldModule definitions =
                 _ -> Nothing
             )
             (M.toList definitions)
+
+      typedClasses =
+        (\tc -> tc $> resolveType (tcFuncType tc))
+          <$> moClasses oldModule
    in -- replace input module with typechecked versions
 
       oldModule
         { moExpressions = typedExpressions,
           moDataTypes = mapKeyMaybe getTypeName (filterDataTypes definitions),
           moInstances = typedInstances,
-          moClasses = mempty
+          moClasses = typedClasses
         }
 
 --- typecheck a single module
@@ -208,12 +212,14 @@ typecheckInstance input inputModule deps def inst = do
   let instances :: Map (Constraint Annotation) (Instance Annotation)
       instances = mapKey (fmap (const mempty)) (moInstances inputModule)
 
+      classes = moClasses inputModule
+
   -- initial typechecking environment
   let env =
         TCEnv
           { tceVars = exprTypeMap,
             tceDataTypes = getDataTypeMap deps,
-            tceClasses = builtInClasses,
+            tceClasses = builtInClasses <> classes,
             tceInstances = builtInInstances <> instances,
             tceConstraints = mempty -- tleConstraints tle
           }
@@ -301,12 +307,14 @@ typecheckExprDef input inputModule deps (def, tle) = do
   let instances :: Map (Constraint Annotation) (Instance Annotation)
       instances = mapKey (fmap (const mempty)) (moInstances inputModule)
 
+      classes = moClasses inputModule
+
   -- initial typechecking environment
   let env =
         TCEnv
           { tceVars = exprTypeMap,
             tceDataTypes = getDataTypeMap deps,
-            tceClasses = builtInClasses,
+            tceClasses = builtInClasses <> classes,
             tceInstances = builtInInstances <> instances,
             tceConstraints = tleConstraints tle
           }

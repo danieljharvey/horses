@@ -64,7 +64,9 @@ addModulePart allParts part mod' =
               { moTests = UnitTest testName ident : moTests mod'
               }
         else throwError (ErrorInResolveDeps $ VarNotFound ident)
-    ModuleClass _ -> pure mod' -- TODO
+    ModuleClass tc ->
+      -- TODO: check duplicates and explode
+      pure $ mod' {moClasses = M.singleton (tcName tc) tc <> moClasses mod'}
     ModuleInstance constraint expr ->
       pure $
         mod'

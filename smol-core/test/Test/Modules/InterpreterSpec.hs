@@ -94,6 +94,13 @@ spec = do
                   "def main = equals (\"cat\" : String) (\"cat\" : String)"
                 ],
                 "True"
+              ),
+              ( [ "class Semigroup a { mappend: a -> a -> a }",
+                  "instance Semigroup Int = \\a -> \\b -> a + b",
+                  "def main : Bool",
+                  "def main = equals (mappend (20 : Int) (22 : Int)) (42 : Int)"
+                ],
+                "True"
               )
               {-
                   -- next we need to work out the dependencies of our typeclass

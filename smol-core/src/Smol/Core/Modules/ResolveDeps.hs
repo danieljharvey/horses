@@ -96,7 +96,8 @@ resolveModuleDeps typeclassMethods parsedModule = do
         ( parsedModule
             { moExpressions = resolvedExpressions,
               moDataTypes = resolvedDataTypes,
-              moInstances = resolvedInstances
+              moInstances = resolvedInstances,
+              moClasses = moClasses parsedModule
             },
           dependencies
         )

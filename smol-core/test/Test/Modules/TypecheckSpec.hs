@@ -109,3 +109,6 @@ spec = do
 
       it "Typechecks Eq successfully" $ do
         testModuleTypecheck "Eq" `shouldSatisfy` isRight
+
+      it "Typechecks Semigroup successfully" $ do
+        testModuleTypecheck "Semigroup" `shouldSatisfy` isRight

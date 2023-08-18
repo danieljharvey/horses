@@ -1,0 +1,8 @@
+
+class Semigroup a { mappend: a -> a -> a }
+
+/* it's Sum semigroup */
+instance Semigroup Int = \a -> \b -> a + a
+
+def main : Bool
+def main = equals (mappend (20 : Int) (22 : Int)) (42 : Int)

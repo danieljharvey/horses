@@ -11,7 +11,6 @@ import qualified Data.Map.Strict as M
 import qualified Data.Set as S
 import qualified Data.Text as T
 import Smol.Core
-import Smol.Core.Helpers (mapKey)
 import Smol.Core.Modules.FromParts
 import Smol.Core.Modules.ResolveDeps
 import Smol.Core.Modules.Typecheck
@@ -31,56 +30,37 @@ checkModule ::
   m (Module ResolvedDep (Type ResolvedDep Annotation))
 checkModule input moduleItems = do
   myModule <- moduleFromModuleParts moduleItems
-  let typeclassMethods = S.fromList . M.elems . fmap tcFuncName $ builtInClasses @Annotation
+
+  let classes = builtInClasses @Annotation <> moClasses myModule
+      typeclassMethods = S.fromList . M.elems . fmap tcFuncName $ classes
+
   (resolvedModule, deps) <-
     modifyError ErrorInResolveDeps (resolveModuleDeps typeclassMethods myModule)
+
   typedModule <- typecheckModule input resolvedModule deps
 
   passModuleDictionaries typedModule
-
--- get input for typechecker from module
-getVarsInScope ::
-  Module ResolvedDep (Type ResolvedDep ann) ->
-  M.Map (ResolvedDep Identifier) ([Constraint ann], ResolvedType ann)
-getVarsInScope =
-  M.fromList
-    . fmap go
-    . M.toList
-    . moExpressions
-  where
-    go (ident, tle) =
-      ( LocalDefinition ident,
-        (constraintsFromTLE tle, getExprAnnotation (tleExpr tle))
-      )
-
-constraintsFromTLE ::
-  TopLevelExpression ResolvedDep (Type ResolvedDep ann) ->
-  [Constraint ann]
-constraintsFromTLE tle =
-  (fmap . fmap) getTypeAnnotation (tleConstraints tle)
 
 passModuleDictionaries ::
   (MonadError (ModuleError Annotation) m) =>
   Module ResolvedDep (Type ResolvedDep Annotation) ->
   m (Module ResolvedDep (Type ResolvedDep Annotation))
 passModuleDictionaries inputModule = do
-  let varsInScope = getVarsInScope inputModule
-
-  let instances :: M.Map (Constraint Annotation) (Instance Annotation)
-      instances =
-        mapKey (fmap (const mempty))
-          . (fmap . fmap) getTypeAnnotation
-          . moInstances
-          $ inputModule
+  let env = envFromTypecheckedModule inputModule
 
   let passDictToTopLevelExpression (ident, tle) = do
         let constraints = constraintsFromTLE tle
             expr = tleExpr tle
 
+        let thisEnv =
+              env
+                { tceConstraints = constraints
+                }
+
         newExpr <-
           modifyError
             (DefDoesNotTypeCheck mempty (DIName ident))
-            (toDictionaryPassing varsInScope instances constraints expr)
+            (toDictionaryPassing thisEnv constraints expr)
 
         pure (ident, tle {tleExpr = newExpr})
 
