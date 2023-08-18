@@ -1,9 +1,13 @@
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE TypeApplications #-}
 
 module Test.IR.IRSpec (spec) where
 
+import Control.Monad.Except
 import Data.Foldable (traverse_)
 import qualified Data.Map as M
+import qualified Data.Set as S
 import Data.Text (Text)
 import qualified Data.Text as T
 import qualified LLVM.AST as LLVM
@@ -16,6 +20,8 @@ import Smol.Core.Modules.Typecheck
 import Smol.Core.Modules.Types
 import Smol.Core.Modules.Types.ModuleError
 import Smol.Core.Parser (parseModuleAndFormatError)
+import Smol.Core.Typecheck.Typeclass.BuiltIns
+import Smol.Core.Typecheck.Typeclass.Types
 import Smol.Core.Types
 import Test.BuiltInTypes
 import Test.Hspec
@@ -43,18 +49,22 @@ createLLVMModuleFromModule input =
     Left e -> error (show e)
 
 -- add the empty ones for testing
-addTestDataTypesToModule :: (Monoid ann) => Module ParseDep ann -> Module ParseDep ann
+addTestDataTypesToModule :: forall ann. (Monoid ann) => Module ParseDep ann -> Module ParseDep ann
 addTestDataTypesToModule myModule =
-  myModule {moDataTypes = moDataTypes myModule <> M.mapKeys pdIdentifier (builtInTypes emptyParseDep)}
+  let resolvedBuiltIns :: M.Map TypeName (DataType ParseDep ann)
+      resolvedBuiltIns = M.mapKeys pdIdentifier (builtInTypes emptyParseDep)
+   in myModule {moDataTypes = resolvedBuiltIns <> moDataTypes myModule}
 
 resolveModule :: Text -> Either (ModuleError Annotation) (Module ResolvedDep (Type ResolvedDep Annotation))
 resolveModule input =
   case parseModuleAndFormatError input of
-    Right moduleParts -> do
-      case moduleFromModuleParts moduleParts >>= resolveModuleDeps . addTestDataTypesToModule of
-        Left e -> error (show e)
-        Right (myModule, deps) -> do
-          typecheckModule input myModule deps
+    Right moduleItems -> runExcept $ do
+      myModule <- moduleFromModuleParts moduleItems
+      let typeclassMethods = S.fromList . M.elems . fmap tcFuncName $ builtInClasses @Annotation
+      (resolvedModule, deps) <-
+        modifyError ErrorInResolveDeps (resolveModuleDeps typeclassMethods (addTestDataTypesToModule myModule))
+
+      typecheckModule input resolvedModule deps
     Left e -> error (show e)
 
 testCompileModuleIR :: ([Text], Text) -> Spec

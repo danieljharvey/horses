@@ -27,10 +27,12 @@ import Smol.Core.Types.ResolvedDep
 resolveConstructor :: Smol.ResolvedDep Smol.Constructor -> Smol.Constructor
 resolveConstructor (LocalDefinition c) = c
 resolveConstructor (UniqueDefinition c idx) = c <> fromString ("_" <> show idx)
+resolveConstructor (TypeclassCall c idx) = fromString "tc_" <> c <> fromString ("_" <> show idx)
 
 resolveIdentifier :: Smol.ResolvedDep Smol.Identifier -> Smol.Identifier
 resolveIdentifier (LocalDefinition c) = c
 resolveIdentifier (UniqueDefinition i idx) = i <> fromString ("_" <> show idx)
+resolveIdentifier (TypeclassCall i idx) = fromString "tc_" <> i <> fromString ("_" <> show idx)
 
 isStringType :: Smol.Type dep ann -> Bool
 isStringType (Smol.TPrim _ Smol.TPString) = True
