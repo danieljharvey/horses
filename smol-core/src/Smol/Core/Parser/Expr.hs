@@ -285,7 +285,8 @@ patternMatchParser = addLocation $ do
   matchExpr <- matchExprWithParser
   patterns <-
     try patternMatchesParser
-      <|> pure <$> patternCaseParser
+      <|> pure
+        <$> patternCaseParser
   case NE.nonEmpty patterns of
     (Just nePatterns) -> pure $ EPatternMatch mempty matchExpr nePatterns
     _ -> error "need at least one pattern"

@@ -6,14 +6,19 @@ module Smol.Core.Parser.Module
   )
 where
 
+import Control.Monad.Identity
+import qualified Data.List.NonEmpty as NE
 import Data.Text (Text)
 import Data.Void
+import Smol.Core.ExprUtils
 import Smol.Core.Modules.Types.ModuleItem
 import Smol.Core.Parser.DataType (dataTypeParser)
 import Smol.Core.Parser.Expr
 import Smol.Core.Parser.Identifiers
 import Smol.Core.Parser.Shared
 import Smol.Core.Parser.Type
+import Smol.Core.Parser.Typeclass
+import Smol.Core.Typecheck.Typeclass.Types
 import Smol.Core.Types
 import Text.Megaparsec hiding (parseTest)
 
@@ -38,8 +43,8 @@ parseModuleItem =
     <|> try moduleDefinitionParser
     <|> try moduleTypeDeclarationParser
     <|> parseTest
-
---    <|> parseInfix
+    <|> parseInstance
+    <|> parseClass
 
 -------
 
@@ -75,7 +80,16 @@ moduleTypeDefinitionParser = do
   myString "def"
   name <- identifierParser
   myString ":"
-  ModuleExpressionType name <$> typeParser
+  constraints <- try typeConstraintParser <|> pure mempty
+  ModuleExpressionType name constraints <$> typeParser
+
+typeConstraintParser :: Parser [Constraint Annotation]
+typeConstraintParser = do
+  myString "("
+  constraints <- commaSep constraintParser
+  myString ")"
+  myString "=>"
+  pure (NE.toList constraints)
 
 -- `test "everything is fine" with myFunctionName`
 parseTest :: Parser (ModuleItem Annotation)
@@ -84,3 +98,35 @@ parseTest = do
   testName <- testNameParser
   myString "using"
   ModuleTest testName <$> identifierParser
+
+-- `instance Eq Int = \a -> \b -> a == b`
+parseInstance :: Parser (ModuleItem Annotation)
+parseInstance = do
+  myString "instance"
+  constraint <- constraintParser
+  myString "="
+  ModuleInstance constraint <$> expressionParser
+
+parseClass :: Parser (ModuleItem Annotation)
+parseClass = do
+  myString "class"
+  typeclassName <- typeclassNameParser
+  parts <-
+    chainl1 ((: []) <$> identifierParser) (pure (<>))
+      <|> pure mempty
+  myString "{"
+  fnName <- identifierParser
+  myString ":"
+  let resolve (ParseDep a _) = Identity a
+  ty <- mapTypeDep resolve <$> typeParser
+  myString "}"
+
+  pure $
+    ModuleClass
+      ( Typeclass
+          { tcName = typeclassName,
+            tcArgs = parts,
+            tcFuncName = fnName,
+            tcFuncType = ty
+          }
+      )

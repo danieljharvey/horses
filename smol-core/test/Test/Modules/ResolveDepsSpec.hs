@@ -26,10 +26,30 @@ spec = do
 
             expected =
               mempty
-                { moExpressions = M.singleton "main" (TopLevelExpression expr Nothing)
+                { moExpressions = M.singleton "main" (TopLevelExpression mempty expr Nothing)
                 }
 
-        fst <$> resolveModuleDeps mod' `shouldBe` Right expected
+        fst <$> resolveModuleDeps mempty mod' `shouldBe` Right expected
+
+      it "Marks a typeclass usage as TypeclassCall with unique number" $ do
+        let mod' = unsafeParseModule "def main = equals 1 2"
+            expr =
+              EApp
+                ()
+                ( EApp
+                    ()
+                    (EVar () (TypeclassCall "equals" 1))
+                    (int 1)
+                )
+                (int 2)
+
+            typeclassMethods = S.singleton "equals"
+            expected =
+              mempty
+                { moExpressions = M.singleton "main" (TopLevelExpression mempty expr Nothing)
+                }
+
+        fst <$> resolveModuleDeps typeclassMethods mod' `shouldBe` Right expected
 
       it "No deps, marks two different `a` values correctly" $ do
         let mod' = unsafeParseModule "def main = let a = 123 in let a = 456 in a"
@@ -47,10 +67,10 @@ spec = do
 
             expected =
               mempty
-                { moExpressions = M.singleton "main" (TopLevelExpression expr Nothing)
+                { moExpressions = M.singleton "main" (TopLevelExpression mempty expr Nothing)
                 }
 
-        fst <$> resolveModuleDeps mod' `shouldBe` Right expected
+        fst <$> resolveModuleDeps mempty mod' `shouldBe` Right expected
 
       it "Lambdas add new variables" $ do
         let mod' = unsafeParseModule "def main = \\a -> a"
@@ -58,10 +78,10 @@ spec = do
 
             expected =
               mempty
-                { moExpressions = M.singleton "main" (TopLevelExpression expr Nothing)
+                { moExpressions = M.singleton "main" (TopLevelExpression mempty expr Nothing)
                 }
 
-        fst <$> resolveModuleDeps mod' `shouldBe` Right expected
+        fst <$> resolveModuleDeps mempty mod' `shouldBe` Right expected
 
       it "Variables added in pattern matches are unique" $ do
         let mod' = unsafeParseModule "def main pair = case pair of (a,_) -> a"
@@ -77,10 +97,10 @@ spec = do
                 )
             expected =
               mempty
-                { moExpressions = M.singleton "main" (TopLevelExpression expr Nothing)
+                { moExpressions = M.singleton "main" (TopLevelExpression mempty expr Nothing)
                 }
 
-        fst <$> resolveModuleDeps mod' `shouldBe` Right expected
+        fst <$> resolveModuleDeps mempty mod' `shouldBe` Right expected
 
       it "'main' uses a dep from 'dep'" $ do
         let mod' = unsafeParseModule "def main = let a = dep in let a = 456 in a\ndef dep = 1"
@@ -101,12 +121,12 @@ spec = do
               mempty
                 { moExpressions =
                     M.fromList
-                      [ ("main", TopLevelExpression mainExpr Nothing),
-                        ("dep", TopLevelExpression depExpr Nothing)
+                      [ ("main", TopLevelExpression mempty mainExpr Nothing),
+                        ("dep", TopLevelExpression mempty depExpr Nothing)
                       ]
                 }
 
-        fst <$> resolveModuleDeps mod' `shouldBe` Right expected
+        fst <$> resolveModuleDeps mempty mod' `shouldBe` Right expected
 
       it "'main' uses a type dep from 'Moybe'" $ do
         let mod' = unsafeParseModule "type Moybe a = Jost a | Noothing\ndef main = let a = 456 in Jost a"
@@ -124,7 +144,7 @@ spec = do
             expected =
               mempty
                 { moExpressions =
-                    M.singleton "main" (TopLevelExpression mainExpr Nothing),
+                    M.singleton "main" (TopLevelExpression mempty mainExpr Nothing),
                   moDataTypes =
                     M.singleton
                       "Moybe"
@@ -146,4 +166,4 @@ spec = do
                   (DIType "Moybe", mempty)
                 ]
 
-        resolveModuleDeps mod' `shouldBe` Right (expected, depMap)
+        resolveModuleDeps mempty mod' `shouldBe` Right (expected, depMap)

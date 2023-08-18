@@ -15,7 +15,6 @@ import qualified Data.Text as T
 import Error.Diagnose (defaultStyle, printDiagnostic, stdout)
 import Smol.Core
 import Smol.Core.Typecheck.FromParsedExpr
-import Test.BuiltInTypes (builtInTypes)
 import Test.Helpers
 import Test.Hspec
 
@@ -30,31 +29,14 @@ getLeft :: (Show a) => Either e a -> e
 getLeft (Left e) = e
 getLeft (Right a) = error (show a)
 
--- simplify type for equality check
--- remove anything that can't be described in a type signature
-simplifyType :: (Ord (dep Identifier)) => Type dep ann -> Type dep ann
-simplifyType (TFunc ann _ fn arg) =
-  TFunc ann mempty (simplifyType fn) (simplifyType arg)
-simplifyType (TArray ann _ as) = TArray ann 0 (simplifyType as)
-simplifyType other = mapType simplifyType other
-
 testElaborate ::
   (Ord ann, Show ann, Monoid ann) =>
   Expr ParseDep ann ->
   Either (TCError ann) (Expr ResolvedDep (Type ResolvedDep ann))
-testElaborate expr = do
-  let env =
-        TCEnv
-          { tceDataTypes = builtInTypes emptyResolvedDep,
-            tceVars = mempty,
-            tceGlobals = mempty
-          }
-  case elaborate env (fromParsedExpr expr) of
-    Right typedExpr -> pure typedExpr
+testElaborate expr =
+  case elaborate typecheckEnv (fromParsedExpr expr) of
+    Right (typedExpr, _) -> pure typedExpr
     Left e -> Left e
-
-typecheckEnv :: TCEnv ()
-typecheckEnv = TCEnv mempty mempty (builtInTypes LocalDefinition)
 
 spec :: Spec
 spec = do
@@ -194,16 +176,29 @@ spec = do
               ("(\\x -> (x 1, x (False,True))) (\\a -> a)", "(1, (False, True))"), -- look! higher rank types
               ("let f = (\\x -> (x 1, x False) : (a -> a) -> (1, False)); let id = \\a -> a; f id", "(1, False)"), -- they need annotation, but that's ok
               ("\\a -> \\b -> if a then a else b", "Bool -> Bool -> Bool"),
-              ("\\a -> case a of (b,c) -> if b then b else c", "(Bool,Bool) -> Bool")
+              ("\\a -> case a of (b,c) -> if b then b else c", "(Bool,Bool) -> Bool"),
+              ("equals (10 : Int) (11: Int)", "Bool") -- using Eq Int typeclass instance
             ]
       traverse_
         ( \(inputExpr, expectedType) -> it (T.unpack inputExpr <> " :: " <> T.unpack expectedType) $ do
             case (,) <$> first (T.pack . show) (evalExpr inputExpr) <*> parseTypeAndFormatError expectedType of
               Right (te, typ) ->
-                let result = simplifyType (getExprAnnotation te) $> ()
-                    expected = fromParsedType (simplifyType typ $> ())
+                let result = typeForComparison (getExprAnnotation te) $> ()
+                    expected = fromParsedType (typeForComparison typ $> ())
                  in result `shouldBe` expected
               other -> error (show other)
+        )
+        inputs
+
+    describe "Expected failures" $ do
+      let inputs =
+            [ "equals (10 : Int) True", -- using Eq Int typeclass instance
+              "equals (True : Bool) (False : Bool)", -- there is no Eq Bool instance atm
+              "(\\a -> \\b -> equals a b : a -> a -> Bool)" -- this is missing an `Eq a` constraint
+            ]
+      traverse_
+        ( \inputExpr -> it (T.unpack inputExpr <> " fails typechecking") $ do
+            first (T.pack . show) (evalExpr inputExpr) `shouldSatisfy` isLeft
         )
         inputs
 

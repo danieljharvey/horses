@@ -128,7 +128,8 @@ printTypeDef mod' tn dt =
 -- given annotation and expr, pair annotation types with lambdas
 printPaired :: Type ann -> Expr Name ann -> Doc a
 printPaired (MTFunction _ fn arg) (MyLambda _ ident body) =
-  "(" <> prettyDoc ident
+  "("
+    <> prettyDoc ident
     <+> ":"
     <+> prettyDoc fn
       <> ")"

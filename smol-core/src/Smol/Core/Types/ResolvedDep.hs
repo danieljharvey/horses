@@ -21,6 +21,10 @@ data ResolvedDep identifier
       { rdIdentifier :: identifier,
         rdUnique :: Int
       }
+  | TypeclassCall
+      { rdIdentifier :: identifier,
+        rdUnique :: Int
+      }
   deriving stock (Eq, Ord, Show, Generic)
 
 instance

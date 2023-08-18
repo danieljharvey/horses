@@ -61,7 +61,7 @@ install:
 
 .PHONY: smol-repl
 smol-repl:
-	cabal run smol-repl:exe:smol-repl
+	cabal run smol-repl:exe:smol-repl -- repl
 
 .PHONY: run-server
 run-server:

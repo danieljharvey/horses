@@ -179,7 +179,8 @@ prettyLet var expr1 expr2 =
           prettyDoc var
    in group
         ( "let"
-            <+> prettyVar <> prettyArgs args
+            <+> prettyVar
+              <> prettyArgs args
             <+> "="
               <> line
               <> indentMulti 2 (prettyDoc letExpr)

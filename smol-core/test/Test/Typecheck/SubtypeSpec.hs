@@ -40,7 +40,7 @@ spec = do
         it "Maybe Nat <: Maybe i1" $ do
           let one = fromParsedType $ tyCons "Maybe" [tyInt]
               two = fromParsedType $ tyCons "Maybe" [tyUnknown 1]
-              expected = (one, [Substitution (SubUnknown 1) (TPrim () TPInt)])
+              expected = (one, [TCWSubstitution $ Substitution (SubUnknown 1) (TPrim () TPInt)])
 
           runWriterT (one `isSubtypeOf` two)
             `shouldBe` Right expected
@@ -48,7 +48,7 @@ spec = do
         it "Maybe Nat <: i1" $ do
           let one = fromParsedType $ tyCons "Maybe" [tyInt]
               two = fromParsedType $ TUnknown () 1
-              expected = (one, [Substitution (SubUnknown 1) one])
+              expected = (one, [TCWSubstitution $ Substitution (SubUnknown 1) one])
 
           runWriterT (one `isSubtypeOf` two)
             `shouldBe` Right expected
@@ -58,8 +58,8 @@ spec = do
               two = fromParsedType $ TApp () (TVar () "a") (TVar () "b")
               expected =
                 ( one,
-                  [ Substitution (SubId "a") (TConstructor () "Maybe"),
-                    Substitution (SubId "b") (TPrim () TPInt)
+                  [ TCWSubstitution $ Substitution (SubId "a") (TConstructor () "Maybe"),
+                    TCWSubstitution $ Substitution (SubId "b") (TPrim () TPInt)
                   ]
                 )
 
@@ -71,8 +71,8 @@ spec = do
               two = fromParsedType $ TApp () (TUnknown () 1) (TUnknown () 2)
               expected =
                 ( one,
-                  [ Substitution (SubUnknown 1) (TConstructor () "Maybe"),
-                    Substitution (SubUnknown 2) (TPrim () TPInt)
+                  [ TCWSubstitution $ Substitution (SubUnknown 1) (TConstructor () "Maybe"),
+                    TCWSubstitution $ Substitution (SubUnknown 2) (TPrim () TPInt)
                   ]
                 )
 
@@ -83,7 +83,7 @@ spec = do
           let maybeNat = tyCons "Maybe" [tyInt]
               one = fromParsedType $ TFunc () mempty (tyVar "a") maybeNat
               two = fromParsedType $ TFunc () mempty (tyVar "a") (TUnknown () 1)
-              expected = (one, [Substitution (SubUnknown 1) (fromParsedType maybeNat)])
+              expected = (one, [TCWSubstitution $ Substitution (SubUnknown 1) (fromParsedType maybeNat)])
 
           runWriterT (one `isSubtypeOf` two)
             `shouldBe` Right expected
@@ -152,7 +152,8 @@ spec = do
                 ("Maybe 1", "Maybe a"),
                 ("{ item: 1 }", "{}"),
                 ("[1 | 2]", "[Int]"),
-                ("1", "1 | 2")
+                ("1", "1 | 2"),
+                ("(Int,Int)", "(a,b)")
               ]
         traverse_
           ( \(lhs, rhs) -> it (show lhs <> " <: " <> show rhs) $ do

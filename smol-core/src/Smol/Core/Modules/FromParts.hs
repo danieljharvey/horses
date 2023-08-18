@@ -7,10 +7,11 @@
 module Smol.Core.Modules.FromParts (addModulePart, moduleFromModuleParts, exprAndTypeFromParts) where
 
 import Control.Monad.Except
+import Control.Monad.Identity
 import Data.Coerce
+import Data.Functor (void)
 import qualified Data.Map.Strict as M
-import Data.Maybe (mapMaybe)
-import Data.Monoid
+import Data.Maybe (isJust, mapMaybe)
 import Smol.Core
 import Smol.Core.Modules.Monad
 import Smol.Core.Modules.Types.Module
@@ -31,6 +32,9 @@ moduleFromModuleParts parts =
         addModulePart parts part mod'
    in foldr addPart (pure mempty) parts
 
+identityFromParseDep :: Expr ParseDep ann -> Expr Identity ann
+identityFromParseDep = mapExprDep (Identity . pdIdentifier)
+
 addModulePart ::
   (MonadError (ModuleError ann) m, Monoid ann) =>
   [ModuleItem ann] ->
@@ -47,7 +51,7 @@ addModulePart allParts part mod' =
           { moExpressions =
               M.singleton name exp' <> moExpressions mod'
           }
-    ModuleExpressionType _name _ty -> do
+    ModuleExpressionType _name _ _ty -> do
       pure mod' -- we sort these elsewhere
     ModuleTest testName ident
       | "" == testName ->
@@ -59,7 +63,23 @@ addModulePart allParts part mod' =
             mod'
               { moTests = UnitTest testName ident : moTests mod'
               }
-        else throwError (VarNotFound ident)
+        else throwError (ErrorInResolveDeps $ VarNotFound ident)
+    ModuleClass tc ->
+      -- TODO: check duplicates and explode
+      pure $ mod' {moClasses = M.singleton (tcName tc) tc <> moClasses mod'}
+    ModuleInstance constraint expr ->
+      pure $
+        mod'
+          { moInstances =
+              M.singleton
+                (void constraint)
+                ( Instance
+                    { inConstraints = mempty,
+                      inExpr = identityFromParseDep expr
+                    }
+                )
+                <> moInstances mod'
+          }
     ModuleDataType dt@(DataType tyCon _ _) -> do
       let typeName = coerce tyCon
       checkDataType mod' dt
@@ -87,24 +107,39 @@ exprAndTypeFromParts moduleItems ident idents expr =
           (ELambda mempty . emptyParseDep)
           expr
           idents
-      tleType = findTypeExpression ident moduleItems
+      (tleConstraints, tleType) =
+        case findTypeExpression ident moduleItems of
+          Just (constraints, ty) ->
+            (constraints, Just ty)
+          Nothing ->
+            (mempty, Nothing)
    in TopLevelExpression {..}
 
-expressionExists :: Identifier -> [ModuleItem ann] -> Bool
-expressionExists ident moduleItems =
-  getAny $
-    foldMap
-      ( \case
-          ModuleExpression name _ _ | name == ident -> Any True
-          _ -> Any False
-      )
-      moduleItems
+findExpression ::
+  (Monoid ann) =>
+  Identifier ->
+  [ModuleItem ann] ->
+  Maybe (TopLevelExpression ParseDep ann)
+findExpression ident moduleItems =
+  case mapMaybe
+    ( \case
+        ModuleExpression name bits expr
+          | name == ident ->
+              Just (exprAndTypeFromParts moduleItems name bits expr)
+        _ -> Nothing
+    )
+    moduleItems of
+    [a] -> Just a
+    _ -> Nothing -- we should have better errors for multiple declarations, but for now, chill out friend
 
-findTypeExpression :: Identifier -> [ModuleItem ann] -> Maybe (Type ParseDep ann)
+expressionExists :: (Monoid ann) => Identifier -> [ModuleItem ann] -> Bool
+expressionExists ident moduleItems = isJust (findExpression ident moduleItems)
+
+findTypeExpression :: Identifier -> [ModuleItem ann] -> Maybe ([Constraint ann], Type ParseDep ann)
 findTypeExpression ident moduleItems =
   case mapMaybe
     ( \case
-        ModuleExpressionType name ty | name == ident -> Just ty
+        ModuleExpressionType name constraints ty | name == ident -> Just (constraints, ty)
         _ -> Nothing
     )
     moduleItems of

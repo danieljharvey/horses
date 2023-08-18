@@ -25,10 +25,12 @@ evalExpr input =
         TCEnv
           { tceDataTypes = builtInTypes emptyResolvedDep,
             tceVars = mempty,
-            tceGlobals = mempty
+            tceClasses = mempty,
+            tceInstances = mempty,
+            tceConstraints = mempty
           }
    in case elaborate env (unsafeParseTypedExpr input $> mempty) of
-        Right typedExpr -> typedExpr
+        Right (typedExpr, _) -> typedExpr
         Left e -> error (show e)
 
 testEnv :: (Monoid ann) => IR.FromExprState ann

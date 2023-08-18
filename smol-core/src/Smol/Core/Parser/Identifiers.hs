@@ -9,6 +9,7 @@ module Smol.Core.Parser.Identifiers
     moduleNameParser,
     typeNameParser,
     plainTypeNameParser,
+    typeclassNameParser,
     testNameParser,
   )
 where
@@ -23,6 +24,7 @@ import Smol.Core.Modules.Types.ModuleName
 import Smol.Core.Modules.Types.TestName
 import Smol.Core.Parser.Primitives (textPrim)
 import Smol.Core.Parser.Shared
+import Smol.Core.Typecheck.Typeclass.Types
 import Smol.Core.Types
 import Text.Megaparsec
 
@@ -48,9 +50,8 @@ protectedNames =
       "Nat",
       "Unit",
       "def",
-      "export",
-      "import",
-      "test"
+      "test",
+      "instance"
     ]
 
 filterProtectedNames :: Text -> Maybe Text
@@ -169,6 +170,18 @@ moduleNameParser =
     maybePred
       moduleName
       (filterProtectedNames >=> safeMkModuleName)
+
+----
+
+typeclassName :: Parser Text
+typeclassName = takeWhile1P (Just "constructor") Char.isAlphaNum
+
+typeclassNameParser :: Parser TypeclassName
+typeclassNameParser =
+  myLexeme $
+    maybePred
+      typeclassName
+      (filterProtectedNames >=> safeMkTypeclassName)
 
 --------
 

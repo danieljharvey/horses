@@ -23,6 +23,7 @@ import Prettyprinter
 import Smol.Core.Modules.Types.TestName
 import Smol.Core.Modules.Types.TopLevelExpression
 import Smol.Core.Printer
+import Smol.Core.Typecheck.Typeclass.Types
 import Smol.Core.Types.Constructor
 import Smol.Core.Types.DataType
 import Smol.Core.Types.Expr
@@ -42,9 +43,11 @@ import Smol.Core.Types.TypeName
 -- when things don't make sense (duplicate defs etc)
 data ModuleItem ann
   = ModuleExpression Identifier [Identifier] (ParsedExpr ann)
-  | ModuleExpressionType Identifier (Type ParseDep ann)
+  | ModuleExpressionType Identifier [Constraint ann] (Type ParseDep ann)
   | ModuleDataType (DataType ParseDep ann)
   | ModuleTest TestName Identifier
+  | ModuleInstance (Constraint ann) (ParsedExpr ann)
+  | ModuleClass (Typeclass ann)
   deriving stock (Eq, Ord, Functor)
 
 deriving stock instance

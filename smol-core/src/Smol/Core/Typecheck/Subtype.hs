@@ -33,7 +33,7 @@ combineTypeMaps ::
   ( Eq ann,
     Show ann,
     MonadError (TCError ann) m,
-    MonadWriter [Substitution ResolvedDep ann] m
+    MonadWriter [TCWrite ann] m
   ) =>
   GlobalMap ann ->
   GlobalMap ann ->
@@ -60,7 +60,7 @@ generaliseLiteral a = a
 -- | used to combine branches of if or case matches
 combineMany ::
   ( MonadError (TCError ann) m,
-    MonadWriter [Substitution ResolvedDep ann] m,
+    MonadWriter [TCWrite ann] m,
     Show ann,
     Eq ann
   ) =>
@@ -72,12 +72,11 @@ combineMany types =
 -- | when calculating type for addition, we try and do the actual sum,
 -- otherwise treat literals as their more generic types (int, nat, etc) and
 -- then subtype as usual to check for errors
--- TODO: make this function part of `Type` so we can defer calculating it
 typeAddition ::
   ( Eq ann,
     Show ann,
     MonadError (TCError ann) m,
-    MonadWriter [Substitution ResolvedDep ann] m
+    MonadWriter [TCWrite ann] m
   ) =>
   ResolvedType ann ->
   ResolvedType ann ->
@@ -115,7 +114,7 @@ combine ::
   ( Eq ann,
     Show ann,
     MonadError (TCError ann) m,
-    MonadWriter [Substitution ResolvedDep ann] m
+    MonadWriter [TCWrite ann] m
   ) =>
   ResolvedType ann ->
   ResolvedType ann ->
@@ -150,7 +149,7 @@ isLiteralSubtypeOf union (TPrim _ TPInt) | isIntLiteral union = True
 isLiteralSubtypeOf _ _ = False
 
 isSubtypeOf ::
-  ( MonadWriter [Substitution ResolvedDep ann] m,
+  ( MonadWriter [TCWrite ann] m,
     MonadError (TCError ann) m,
     Eq ann,
     Show ann
@@ -166,7 +165,7 @@ isSubtypeOf a b = isSubtypeInner (simplifyType a) (simplifyType b)
 -- 1 | 2 is a subtype of Nat
 -- Nat is a subtype of Int
 isSubtypeInner ::
-  ( MonadWriter [Substitution ResolvedDep ann] m,
+  ( MonadWriter [TCWrite ann] m,
     MonadError (TCError ann) m,
     Eq ann,
     Show ann
@@ -188,16 +187,16 @@ isSubtypeInner (TVar ann a) (TVar ann' b) =
     else throwError (TCTypeMismatch (TVar ann a) (TVar ann' b))
 -- unknowns go before vars because they are weaker, as such
 isSubtypeInner (TUnknown _ i) b =
-  tell [Substitution (SubUnknown i) b]
+  tell [TCWSubstitution $ Substitution (SubUnknown i) b]
     >> pure b
 isSubtypeInner a (TUnknown _ i) =
-  tell [Substitution (SubUnknown i) a]
+  tell [TCWSubstitution $ Substitution (SubUnknown i) a]
     >> pure a
 isSubtypeInner (TVar _ ident) b =
-  tell [Substitution (SubId ident) b]
+  tell [TCWSubstitution $ Substitution (SubId ident) b]
     >> pure b
 isSubtypeInner a (TVar _ ident) =
-  tell [Substitution (SubId ident) a]
+  tell [TCWSubstitution $ Substitution (SubId ident) a]
     >> pure a
 isSubtypeInner (TInfix ann op a b) c =
   TInfix ann op <$> isSubtypeInner a c <*> isSubtypeInner b c

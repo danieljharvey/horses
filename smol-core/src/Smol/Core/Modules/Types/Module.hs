@@ -23,6 +23,7 @@ import Prettyprinter
 import Smol.Core.Modules.Types.Test
 import Smol.Core.Modules.Types.TopLevelExpression
 import Smol.Core.Printer
+import Smol.Core.Typecheck.Typeclass.Types
 import Smol.Core.Types.Constructor
 import Smol.Core.Types.DataType
 import Smol.Core.Types.Identifier
@@ -39,7 +40,9 @@ import Smol.Core.Types.TypeName
 data Module dep ann = Module
   { moExpressions :: Map Identifier (TopLevelExpression dep ann),
     moDataTypes :: Map TypeName (DataType dep ann),
-    moTests :: [Test]
+    moTests :: [Test],
+    moInstances :: Map (Constraint ()) (Instance ann),
+    moClasses :: Map TypeclassName (Typeclass ann)
   }
   deriving stock (Functor, Generic)
 
@@ -130,12 +133,14 @@ printDefinition name (TopLevelExpression {tleType, tleExpr}) =
    in prettyType <> prettyExpr
 
 instance Semigroup (Module dep ann) where
-  (Module a b c) <> (Module a' b' c') =
-    Module (a <> a') (b <> b') (c <> c')
+  (Module a b c d e) <> (Module a' b' c' d' e') =
+    Module (a <> a') (b <> b') (c <> c') (d <> d') (e <> e')
 
 instance Monoid (Module dep ann) where
   mempty =
     Module
+      mempty
+      mempty
       mempty
       mempty
       mempty

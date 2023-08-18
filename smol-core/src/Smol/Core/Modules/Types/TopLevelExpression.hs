@@ -15,6 +15,7 @@ where
 
 import Data.Aeson (FromJSON, FromJSONKey, ToJSON, ToJSONKey)
 import GHC.Generics (Generic)
+import Smol.Core.Typecheck.Types
 import Smol.Core.Types.Constructor
 import Smol.Core.Types.Expr
 import Smol.Core.Types.Identifier
@@ -27,7 +28,8 @@ import Smol.Core.Types.TypeName
 
 -- a single expression of zero or more exprs and an optional type
 data TopLevelExpression dep ann = TopLevelExpression
-  { tleExpr :: Expr dep ann,
+  { tleConstraints :: [Constraint ann],
+    tleExpr :: Expr dep ann,
     tleType :: Maybe (Type dep ann)
   }
   deriving stock (Functor, Generic)

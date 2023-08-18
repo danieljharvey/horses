@@ -1,3 +1,4 @@
+{-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE OverloadedStrings #-}
 
 module Smol.Core.Printer
@@ -9,6 +10,7 @@ where
 -- the Printer type class is used for internal debugging
 -- prettyDoc returns a Prettyprinter doc for nicer output
 
+import Control.Monad.Identity
 import Data.Map.Strict (Map)
 import qualified Data.Map.Strict as M
 import Data.Set (Set)
@@ -27,6 +29,9 @@ renderWithWidth w doc = renderStrict (layoutPretty layoutOptions (unAnnotate doc
 class Printer a where
   prettyDoc :: a -> Doc ann
 
+instance (Printer a) => Printer (Identity a) where
+  prettyDoc (Identity a) = prettyDoc a
+
 instance (Printer e, Printer a) => Printer (Either e a) where
   prettyDoc (Left e) = prettyDoc e
   prettyDoc (Right a) = prettyDoc a
@@ -37,6 +42,9 @@ instance Printer () where
 instance (Printer a) => Printer (Maybe a) where
   prettyDoc (Just a) = prettyDoc a
   prettyDoc _ = mempty
+
+instance {-# OVERLAPPING #-} Printer [Char] where
+  prettyDoc = pretty
 
 instance Printer Text where
   prettyDoc = pretty

@@ -1,5 +1,6 @@
 {-# LANGUAGE DerivingStrategies #-}
 {-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE OverloadedStrings #-}
 
 module Smol.Core.Typecheck.Shared
@@ -19,8 +20,6 @@ module Smol.Core.Typecheck.Shared
     withNewVars,
     pushArg,
     getApplyReturnType,
-    withGlobal,
-    lookupGlobal,
     lookupConstructor,
     lookupTypeName,
     typeForConstructor,
@@ -33,14 +32,17 @@ module Smol.Core.Typecheck.Shared
 where
 
 import Control.Monad.Except
+import Control.Monad.Identity
 import Control.Monad.Reader
 import Control.Monad.State
+import Control.Monad.Writer
 import Data.Foldable (foldl')
 import Data.Map.Strict (Map)
 import qualified Data.Map.Strict as M
 import Data.Maybe (listToMaybe, mapMaybe)
 import qualified Data.Set as S
 import qualified Data.Set.NonEmpty as NES
+import Smol.Core.ExprUtils (mapTypeDep)
 import Smol.Core.Helpers
 import Smol.Core.Typecheck.FreeVars
 import Smol.Core.Typecheck.Substitute
@@ -119,6 +121,7 @@ getClosureType ::
   ( MonadState (TCState ann) m,
     MonadReader (TCEnv ann) m,
     MonadError (TCError ann) m,
+    MonadWriter [TCWrite ann] m,
     Ord ann
   ) =>
   ann ->
@@ -213,15 +216,48 @@ typeForConstructor ann typeName vars args = do
         args
 
 lookupVar ::
-  (MonadReader (TCEnv ann) m, MonadError (TCError ann) m) =>
+  ( MonadState (TCState ann) m,
+    MonadReader (TCEnv ann) m,
+    MonadError (TCError ann) m,
+    MonadWriter [TCWrite ann] m
+  ) =>
   ann ->
   ResolvedDep Identifier ->
   m (ResolvedType ann)
 lookupVar ann ident = do
   maybeVar <- asks (M.lookup ident . tceVars)
   case maybeVar of
-    Just expr -> pure expr
-    Nothing -> throwError (TCCouldNotFindVar ann ident)
+    Just (_constraints, expr) ->
+      -- TODO: raise constraints used maybe?
+      pure expr
+    Nothing -> do
+      classes <- asks tceClasses
+
+      let getInnerIdent (TypeclassCall i _) = Just i
+          getInnerIdent (LocalDefinition i) = Just i -- not sure if this should happen but it makes testing waaaay easier
+          getInnerIdent _ = Nothing
+
+      -- if name matches typeclass instance, return freshened type
+      case listToMaybe $ M.elems $ M.filter (\tc -> Just (tcFuncName tc) == getInnerIdent ident) classes of
+        -- need to turn Type Identity ann into Type ResolvedDep ann
+        Just tc -> do
+          (newType, undoSubs) <- freshen (resolve $ tcFuncType tc)
+          tell [TCWTypeclassUse ident (tcName tc) (pairFromSubs undoSubs)]
+          pure newType
+        Nothing -> throwError (TCCouldNotFindVar ann ident)
+
+pairFromSubs :: [Substitution ResolvedDep ann] -> [(Identifier, Integer)]
+pairFromSubs =
+  mapMaybe
+    ( \case
+        (Substitution (SubUnknown i) (TVar _ (LocalDefinition var))) -> Just (var, i)
+        _ -> Nothing
+    )
+
+resolve :: Type Identity ann -> Type ResolvedDep ann
+resolve = mapTypeDep r
+  where
+    r (Identity a) = LocalDefinition a
 
 withVar ::
   (MonadReader (TCEnv ann) m) =>
@@ -232,32 +268,8 @@ withVar ::
 withVar ident expr =
   local
     ( \env ->
-        env {tceVars = M.singleton ident expr <> tceVars env}
+        env {tceVars = M.singleton ident (mempty, expr) <> tceVars env}
     )
-
-withGlobal ::
-  (MonadReader (TCEnv ann) m) =>
-  Identifier ->
-  ResolvedType ann ->
-  m a ->
-  m a
-withGlobal ident expr =
-  local
-    ( \env ->
-        env {tceGlobals = M.singleton ident expr <> tceGlobals env}
-    )
-
-lookupGlobal ::
-  (MonadReader (TCEnv ann) m, MonadError (TCError ann) m) =>
-  Identifier ->
-  m (ResolvedType ann)
-lookupGlobal ident = do
-  maybeVar <- asks (M.lookup ident . tceGlobals)
-  case maybeVar of
-    Just expr -> pure expr
-    Nothing -> do
-      allGlobals <- asks (M.keysSet . tceGlobals)
-      throwError (TCCouldNotFindGlobal ident allGlobals)
 
 pushArg ::
   (MonadState (TCState ann) m) =>
@@ -342,7 +354,7 @@ withNewVars ::
   m a ->
   m a
 withNewVars vars =
-  local (\env -> env {tceVars = vars <> tceVars env})
+  local (\env -> env {tceVars = ((,) mempty <$> vars) <> tceVars env})
 
 typeLiteralFromPrim :: Prim -> TypeLiteral
 typeLiteralFromPrim (PBool b) = TLBool b

@@ -12,6 +12,7 @@ import Smol.Core.Modules.Types.TopLevelExpression
 
 data DepType dep ann
   = DTExpr (TopLevelExpression dep ann)
+  | DTInstance (Instance ann)
   | DTData (DataType dep ann)
 
 deriving stock instance

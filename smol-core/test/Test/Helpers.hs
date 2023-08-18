@@ -6,10 +6,13 @@ module Test.Helpers
     tyInt,
     tyIntLit,
     tyStrLit,
+    tyUnit,
     tyVar,
     tyUnknown,
     tyTuple,
     tyCons,
+    tyFunc,
+    tyString,
     bool,
     int,
     var,
@@ -26,15 +29,23 @@ module Test.Helpers
     unsafeParseTypedExpr,
     joinText,
     runTypecheckM,
+    typecheckEnv,
+    showTypeclass,
+    eqTypeclass,
+    unsafeParseInstanceExpr,
+    tcVar,
+    typeForComparison,
   )
 where
 
+import Control.Monad.Identity
 import Control.Monad.Reader
 import Control.Monad.State
 import Control.Monad.Writer
 import Data.Foldable (foldl')
 import Data.Functor
 import qualified Data.List.NonEmpty as NE
+import qualified Data.Map.Strict as M
 import qualified Data.Sequence as Seq
 import qualified Data.Set.NonEmpty as NES
 import Data.Text (Text)
@@ -44,6 +55,7 @@ import Smol.Core.Modules.FromParts
 import Smol.Core.Modules.Types.Module
 import Smol.Core.Modules.Types.ModuleItem
 import Smol.Core.Typecheck.FromParsedExpr
+import Test.BuiltInTypes (builtInTypes)
 
 tyBool :: (Monoid ann) => Type dep ann
 tyBool = TPrim mempty TPBool
@@ -53,6 +65,12 @@ tyBoolLit = TLiteral mempty . TLBool
 
 tyInt :: (Monoid ann) => Type dep ann
 tyInt = TPrim mempty TPInt
+
+tyUnit :: (Monoid ann) => Type dep ann
+tyUnit = TLiteral mempty TLUnit
+
+tyString :: (Monoid ann) => Type dep ann
+tyString = TPrim mempty TPString
 
 tyIntLit :: (Monoid ann) => [Integer] -> Type dep ann
 tyIntLit = TLiteral mempty . TLInt . NES.fromList . NE.fromList
@@ -80,6 +98,9 @@ tyCons ::
   Type ParseDep ann
 tyCons typeName =
   foldl' (TApp mempty) (TConstructor mempty (emptyParseDep typeName))
+
+tyFunc :: (Monoid ann, Ord (dep Identifier)) => Type dep ann -> Type dep ann -> Type dep ann
+tyFunc = TFunc mempty mempty
 
 unit :: (Monoid ann) => Expr dep ann
 unit = EPrim mempty PUnit
@@ -157,7 +178,7 @@ joinText = T.intercalate "\n"
 runTypecheckM ::
   (Monad m) =>
   TCEnv ann ->
-  StateT (TCState ann) (WriterT [Substitution ResolvedDep ann] (ReaderT (TCEnv ann) m)) a ->
+  StateT (TCState ann) (WriterT [TCWrite ann] (ReaderT (TCEnv ann) m)) a ->
   m a
 runTypecheckM env action =
   fst
@@ -169,3 +190,79 @@ runTypecheckM env action =
           )
       )
       env
+
+------
+
+tcVar :: (Monoid ann) => Identifier -> Type Identity ann
+tcVar = TVar mempty . Identity
+
+identityFromParsedExpr :: Expr ParseDep ann -> Expr Identity ann
+identityFromParsedExpr = mapExprDep resolve
+  where
+    resolve (ParseDep a _) = Identity a
+
+showTypeclass :: (Monoid ann) => Typeclass ann
+showTypeclass =
+  Typeclass
+    { tcName = "Show",
+      tcArgs = ["a"],
+      tcFuncName = "show",
+      tcFuncType = tyFunc (tcVar "a") tyString
+    }
+
+eqTypeclass :: (Monoid ann) => Typeclass ann
+eqTypeclass =
+  Typeclass
+    { tcName = "Eq",
+      tcArgs = ["a"],
+      tcFuncName = "equals",
+      tcFuncType = tyFunc (tcVar "a") (tyFunc (tcVar "a") tyBool)
+    }
+
+classes :: (Monoid ann) => M.Map TypeclassName (Typeclass ann)
+classes =
+  M.fromList
+    [ ("Eq", eqTypeclass),
+      ("Show", showTypeclass)
+    ]
+
+unsafeParseInstanceExpr :: (Monoid ann) => Text -> Expr Identity ann
+unsafeParseInstanceExpr =
+  fmap (const mempty) . identityFromParsedExpr . unsafeParseExpr
+
+instances :: (Ord ann, Monoid ann) => M.Map (Constraint ann) (Instance ann)
+instances =
+  M.fromList
+    [ ( Constraint "Eq" [tyInt],
+        Instance {inExpr = unsafeParseInstanceExpr "\\a -> \\b -> a == b", inConstraints = []}
+      ),
+      ( Constraint "Eq" [tyTuple (tcVar "a") [tcVar "b"]],
+        Instance
+          { inExpr =
+              unsafeParseInstanceExpr "\\a -> \\b -> case (a,b) of ((a1, a2), (b1, b2)) -> if equals a1 b1 then equals a2 b2 else False",
+            inConstraints =
+              [ Constraint "Eq" [tcVar "a"],
+                Constraint "Eq" [tcVar "b"]
+              ]
+          }
+      )
+    ]
+
+typecheckEnv :: (Monoid ann, Ord ann) => TCEnv ann
+typecheckEnv =
+  TCEnv
+    mempty
+    (builtInTypes emptyResolvedDep)
+    classes
+    instances
+    mempty
+
+----
+
+-- simplify type for equality check
+-- remove anything that can't be described in a type signature
+typeForComparison :: (Ord (dep Identifier)) => Type dep ann -> Type dep ann
+typeForComparison (TFunc ann _ fn arg) =
+  TFunc ann mempty (typeForComparison fn) (typeForComparison arg)
+typeForComparison (TArray ann _ as) = TArray ann 0 (typeForComparison as)
+typeForComparison other = mapType typeForComparison other

@@ -2,25 +2,45 @@
 
 module Test.Interpreter.InterpreterSpec (spec) where
 
+import Control.Monad (void)
 import Data.Foldable (traverse_)
 import Data.Text (Text)
 import Smol.Core
 import Smol.Core.Interpreter.Types.Stack
 import Smol.Core.Typecheck.FromParsedExpr
+import Smol.Core.Typecheck.Typecheck (typecheck)
+import Smol.Core.Typecheck.Typeclass
 import Test.Helpers
 import Test.Hspec
 
-doInterpret :: Text -> Expr ResolvedDep ()
-doInterpret =
+-- | interpret without typechecking etc
+doBasicInterpret :: Text -> Expr ResolvedDep ()
+doBasicInterpret =
   fmap edAnnotation
     . discardLeft
     . interpret mempty
     . addEmptyStackFrames
     . fromParsedExpr
     . unsafeParseExpr
-  where
-    discardLeft (Left e) = error (show e)
-    discardLeft (Right a) = a
+
+discardLeft :: (Show e) => Either e a -> a
+discardLeft (Left e) = error (show e)
+discardLeft (Right a) = a
+
+-- | typecheck, resolve typeclasses, interpret, profit
+doInterpret :: Text -> Expr ResolvedDep ()
+doInterpret input =
+  case typecheck typecheckEnv (fromParsedExpr (unsafeParseExpr input)) of
+    Right (_constraints, typedExpr) ->
+      fmap edAnnotation
+        . discardLeft
+        . interpret mempty
+        . addEmptyStackFrames
+        . void
+        . discardLeft
+        . passDictionaries typecheckEnv
+        $ typedExpr
+    Left e -> error (show e)
 
 spec :: Spec
 spec = do
@@ -41,6 +61,21 @@ spec = do
               ("[1,2 + 3]", "[1,5]"),
               ("case [1,2,3] of [_, ...rest] -> rest | _ -> [42]", "[2,3]"),
               ("let f = \\a -> if a == 10 then a else a + f (a + 1); f 0", "55")
+            ]
+      traverse_
+        ( \(input, expect) ->
+            it (show input <> " = " <> show expect) $ do
+              doBasicInterpret input
+                `shouldBe` fromParsedExpr (unsafeParseExpr expect)
+        )
+        cases
+
+    -- not sure this is the way
+    describe "interpret with typeclasses" $ do
+      let cases =
+            [ ("equals (1 : Int) (1 : Int)", "True"), -- use Eq Int
+              ("equals (2 : Int) (1 : Int)", "False"), -- use Eq Int
+              ("equals ((1 : Int),(1 : Int)) ((1 : Int), (2 : Int))", "False") -- use Eq (a,b) and Eq Int
             ]
       traverse_
         ( \(input, expect) ->

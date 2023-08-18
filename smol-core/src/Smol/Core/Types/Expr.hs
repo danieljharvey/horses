@@ -178,7 +178,8 @@ prettyLet var expr1 expr2 =
           prettyDoc var
    in PP.group
         ( "let"
-            <+> prettyVar <> prettyArgs args
+            <+> prettyVar
+              <> prettyArgs args
             <+> "="
               <> PP.line
               <> indentMulti 2 (prettyDoc letExpr)

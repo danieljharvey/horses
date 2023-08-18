@@ -76,7 +76,7 @@ filterTypes =
 -- get the vars used by each def
 -- explode if there's not available
 getDependencies ::
-  (MonadError (ModuleError ann) m) =>
+  (MonadError ResolveDepsError m) =>
   (Expr ParseDep ann -> Set E.Entity) ->
   Module ParseDep ann ->
   m
@@ -98,11 +98,16 @@ getDependencies getUses mod' = do
       <$> traverse
         (getTypeDependencies mod')
         (moDataTypes mod')
-  pure (exprDeps <> typeDeps)
+  instanceDeps <-
+    M.mapKeys DIInstance
+      <$> traverse
+        (getInstanceDependencies getUses mod')
+        (moInstances mod')
+  pure (exprDeps <> typeDeps <> instanceDeps)
 
 -- get all dependencies of a type definition
 getTypeDependencies ::
-  (MonadError (ModuleError ann) m) =>
+  (MonadError ResolveDepsError m) =>
   Module ParseDep ann ->
   DataType ParseDep ann ->
   m (DepType ParseDep ann, Set DefIdentifier, Set E.Entity)
@@ -113,7 +118,7 @@ getTypeDependencies mod' dt = do
   pure (DTData dt, typeDefIds <> exprDefIds, allUses)
 
 getTypeUses ::
-  (MonadError (ModuleError ann) m) =>
+  (MonadError ResolveDepsError m) =>
   Module dep ann ->
   Set E.Entity ->
   m (Set DefIdentifier)
@@ -158,7 +163,7 @@ findTypesForConstructors mod' =
   S.fromList . mapMaybe (findTypenameInModule mod') . S.toList
 
 getConstructorUses ::
-  (MonadError (ModuleError ann) m) =>
+  (MonadError ResolveDepsError m) =>
   Module dep ann ->
   Set E.Entity ->
   m (Set DefIdentifier)
@@ -182,7 +187,7 @@ getConstructorUses mod' uses = do
         else throwError (CannotFindTypes unknownTypeDeps)
 
 getExprDependencies ::
-  (MonadError (ModuleError ann) m) =>
+  (MonadError ResolveDepsError m) =>
   (Expr dep ann -> Set E.Entity) ->
   Module dep ann ->
   TopLevelExpression dep ann ->
@@ -194,26 +199,28 @@ getExprDependencies getUses mod' expr = do
   typeDefIds <- getTypeUses mod' allUses
   pure (DTExpr expr, exprDefIds <> typeDefIds <> consDefIds, allUses)
 
+getInstanceDependencies ::
+  (MonadError ResolveDepsError m) =>
+  (Expr dep ann -> Set E.Entity) ->
+  Module dep ann ->
+  Instance ann ->
+  m (DepType dep ann, Set DefIdentifier, Set E.Entity)
+getInstanceDependencies _getUses _mod' inst = do
+  -- for now we say that an instance has no dependencies of it's own
+  -- this will soon be untrue though, and we'll probably have to stop the type
+  -- being `Expr Identity ann`, and instead just `Expr dep ann` so we can refer
+  -- to other deps in the module we're defined in
+  pure (DTInstance inst, mempty, mempty)
+
 getExprDeps ::
-  (MonadError (ModuleError ann) m) =>
+  (Monad m) =>
   Module dep ann ->
   Set E.Entity ->
   m (Set Identifier)
 getExprDeps mod' uses =
-  let nameDeps = filterDefs uses
-      unknownNameDeps =
-        S.filter
-          ( \dep ->
-              S.notMember dep (M.keysSet (moExpressions mod'))
-          )
-          nameDeps
-   in if S.null unknownNameDeps
-        then
-          let localNameDeps =
-                S.filter
-                  ( `S.member`
-                      M.keysSet (moExpressions mod')
-                  )
-                  nameDeps
-           in pure localNameDeps
-        else throwError (CannotFindValues unknownNameDeps)
+  pure $
+    S.filter
+      ( `S.member`
+          M.keysSet (moExpressions mod')
+      )
+      (filterDefs uses)

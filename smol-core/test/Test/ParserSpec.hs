@@ -26,6 +26,22 @@ testInputs =
 spec :: Spec
 spec = do
   describe "Parser" $ do
+    describe "Constraint" $ do
+      let inputs =
+            [ ( "Eq Int",
+                Constraint "Eq" [tyInt]
+              ),
+              ( "Eq (a,b)",
+                Constraint "Eq" [tyTuple (tcVar "a") [tcVar "b"]]
+              )
+            ]
+      traverse_
+        ( \(input, expected) ->
+            it (T.unpack $ "Parses constraint: " <> input) $ do
+              parseConstraintAndFormatError input `shouldBe` Right expected
+        )
+        inputs
+
     describe "Module" $ do
       let singleDefs =
             [ "type Dog a = Woof String | Other a",
@@ -34,7 +50,10 @@ spec = do
               "def compose f g a = f (g a)",
               "def compose : (c -> b) -> (a -> b) -> (a -> c)",
               "def onePlusOneEqualsTwo = 1 + 1 == 2",
-              "test \"one plus one equals two\" using onePlusOneEqualsTwo"
+              "test \"one plus one equals two\" using onePlusOneEqualsTwo",
+              "def usesEquals : (Eq (a,b)) => (a,b) -> (a,b) -> Bool",
+              "class Eq a { equals: a -> a -> Bool }",
+              "instance Eq Int = eqInt"
             ]
 
       it "All defs" $ do

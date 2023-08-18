@@ -101,6 +101,7 @@ library
     Smol.Core.Parser.Primitives
     Smol.Core.Parser.Shared
     Smol.Core.Parser.Type
+    Smol.Core.Parser.Typeclass
     Smol.Core.Printer
     Smol.Core.SourceSpan
     Smol.Core.Typecheck
@@ -114,7 +115,18 @@ library
     Smol.Core.Typecheck.Simplify
     Smol.Core.Typecheck.Substitute
     Smol.Core.Typecheck.Subtype
+    Smol.Core.Typecheck.Typecheck
+    Smol.Core.Typecheck.Typeclass
+    Smol.Core.Typecheck.Typeclass.BuiltIns
+    Smol.Core.Typecheck.Typeclass.Deduplicate
+    Smol.Core.Typecheck.Typeclass.Helpers
+    Smol.Core.Typecheck.Typeclass.Types
+    Smol.Core.Typecheck.Typeclass.Types.TypeclassName
     Smol.Core.Typecheck.Types
+    Smol.Core.Typecheck.Types.Substitution
+    Smol.Core.Typecheck.Types.TCError
+    Smol.Core.Typecheck.Types.TCState
+    Smol.Core.Typecheck.Types.TCWrite
     Smol.Core.Types
     Smol.Core.Types.Annotated
     Smol.Core.Types.Annotation
@@ -158,6 +170,7 @@ test-suite smol-core-tests
     Test.Typecheck.NestingMonadSpec
     Test.Typecheck.PatternSpec
     Test.Typecheck.SubtypeSpec
+    Test.Typecheck.TypeclassSpec
     Test.TypecheckSpec
 
   main-is:          Main.hs

@@ -7,8 +7,10 @@ module Smol.Core.Parser
     parseTypeAndFormatError,
     parseType,
     parseModule,
+    parseConstraint,
     parseModuleAndFormatError,
     parseDataTypeAndFormatError,
+    parseConstraintAndFormatError,
     ParseErrorType,
   )
 where
@@ -22,6 +24,8 @@ import Smol.Core.Parser.DataType (dataTypeParser)
 import Smol.Core.Parser.Expr
 import Smol.Core.Parser.Module
 import Smol.Core.Parser.Type
+import Smol.Core.Parser.Typeclass
+import Smol.Core.Typecheck.Types
 import Smol.Core.Types
 import Text.Megaparsec
 import Text.Megaparsec.Char
@@ -45,8 +49,14 @@ parseExprAndFormatError = parseAndFormat (space *> expressionParser <* eof)
 parseModule :: Text -> Either ParseErrorType [ModuleItem Annotation]
 parseModule = parse (space *> moduleParser <* eof) "repl"
 
+parseConstraint :: Text -> Either ParseErrorType (Constraint Annotation)
+parseConstraint = parse (space *> constraintParser <* eof) "repl"
+
 parseModuleAndFormatError :: Text -> Either Text [ModuleItem Annotation]
 parseModuleAndFormatError = parseAndFormat (space *> moduleParser <* eof)
 
 parseDataTypeAndFormatError :: Text -> Either Text (DataType ParseDep Annotation)
 parseDataTypeAndFormatError = parseAndFormat (space *> dataTypeParser <* eof)
+
+parseConstraintAndFormatError :: Text -> Either Text (Constraint Annotation)
+parseConstraintAndFormatError = parseAndFormat (space *> constraintParser <* eof)
