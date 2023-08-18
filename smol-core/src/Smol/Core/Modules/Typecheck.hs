@@ -3,7 +3,6 @@
 
 module Smol.Core.Modules.Typecheck (typecheckModule) where
 
-import Smol.Core.Typecheck.Typeclass (checkInstance, lookupTypeclass)
 import qualified Builder as Build
 import Control.Monad.Except
 import Control.Monad.Identity
@@ -24,8 +23,11 @@ import Smol.Core.Modules.Types
 import Smol.Core.Modules.Types.DepType
 import Smol.Core.Modules.Types.ModuleError
 import Smol.Core.Typecheck.Typecheck (typecheck)
+import Smol.Core.Typecheck.Typeclass (checkInstance, lookupTypeclass, resolveType, toIdentityExpr)
 import Smol.Core.Typecheck.Typeclass.BuiltIns
 
+-- go through the module, and wrap all the items in DefIdentifier keys and
+-- DepType for items
 getModuleDefIdentifiers ::
   Map DefIdentifier (Set DefIdentifier) ->
   Module dep ann ->
@@ -46,7 +48,14 @@ getModuleDefIdentifiers depMap inputModule =
                in (defId, (defId, DTData dt, getDeps defId))
           )
             <$> M.elems (moDataTypes inputModule)
-   in exprs <> dataTypes
+      instances =
+        M.fromList $
+          ( \(constraint, inst) ->
+              let defId = DIInstance constraint
+               in (defId, (defId, DTInstance inst, getDeps defId))
+          )
+            <$> M.toList (moInstances inputModule)
+   in exprs <> dataTypes <> instances
 
 moduleFromDepTypes ::
   Module ResolvedDep ann ->
@@ -63,7 +72,7 @@ moduleFromDepTypes oldModule definitions =
       getTypeName (DIType tn) = Just tn
       getTypeName _ = Nothing
 
-      newExpressions =
+      typedExpressions =
         M.fromList $
           mapMaybe
             ( \(k, a) -> case (k, a) of
@@ -71,11 +80,21 @@ moduleFromDepTypes oldModule definitions =
                 _ -> Nothing
             )
             (M.toList $ filterExprs definitions)
+
+      typedInstances =
+        M.fromList $
+          mapMaybe
+            ( \(k, a) -> case (k, a) of
+                (DIInstance constraint, DTInstance inst) -> Just (constraint, inst)
+                _ -> Nothing
+            )
+            (M.toList definitions)
    in -- replace input module with typechecked versions
+
       oldModule
-        { moExpressions = newExpressions,
+        { moExpressions = typedExpressions,
           moDataTypes = mapKeyMaybe getTypeName (filterDataTypes definitions),
-          moInstances = mempty, -- well this is wrong
+          moInstances = typedInstances,
           moClasses = mempty
         }
 
@@ -107,7 +126,7 @@ typecheckModule input inputModule depMap = do
   -- go!
   typecheckedDefs <-
     Build.stOutputs
-      <$> Build.doJobs (typecheckOneDef input inputModule) state
+      <$> Build.doJobs (typecheckDef input inputModule) state
 
   -- check all tests make sense
   traverse_ (typecheckTest typecheckedDefs) (moTests inputModule)
@@ -141,18 +160,18 @@ typecheckTest defs (UnitTest testName ident) = do
     _ -> throwError (ErrorInResolveDeps $ VarNotFound ident)
 
 -- given types for other required definition, typecheck a definition
-typecheckOneDef ::
+typecheckDef ::
   (MonadError (ModuleError Annotation) m) =>
   Text ->
   Module ResolvedDep Annotation ->
   Map DefIdentifier (DepType ResolvedDep (Type ResolvedDep Annotation)) ->
   (DefIdentifier, DepType ResolvedDep Annotation) ->
   m (DepType ResolvedDep (Type ResolvedDep Annotation))
-typecheckOneDef input inputModule deps (def, dep) =
+typecheckDef input inputModule deps (def, dep) =
   case dep of
     DTExpr expr ->
       DTExpr
-        <$> typecheckOneExprDef
+        <$> typecheckExprDef
           input
           inputModule
           deps
@@ -161,7 +180,7 @@ typecheckOneDef input inputModule deps (def, dep) =
       DTInstance <$> typecheckInstance input inputModule deps def inst
     DTData dt ->
       DTData
-        <$> typecheckOneTypeDef
+        <$> typecheckTypeDef
           input
           inputModule
           (filterDataTypes deps)
@@ -175,7 +194,7 @@ typecheckInstance ::
   DefIdentifier ->
   Instance Annotation ->
   m (Instance (Type ResolvedDep Annotation))
-typecheckInstance _input _inputModule deps def inst = do
+typecheckInstance input inputModule deps def inst = do
   -- where are we getting constraints from?
   let exprTypeMap =
         mapKey LocalDefinition $
@@ -183,9 +202,11 @@ typecheckInstance _input _inputModule deps def inst = do
             <$> filterNameDefs (filterExprs deps)
 
   let constraint = case def of
-                     DIInstance c -> c
-                     _ -> error "def is not constraint, yikes"
+        DIInstance c -> c
+        _ -> error "def is not constraint, yikes"
 
+  let instances :: Map (Constraint Annotation) (Instance Annotation)
+      instances = mapKey (fmap (const mempty)) (moInstances inputModule)
 
   -- initial typechecking environment
   let env =
@@ -193,25 +214,34 @@ typecheckInstance _input _inputModule deps def inst = do
           { tceVars = exprTypeMap,
             tceDataTypes = getDataTypeMap deps,
             tceClasses = builtInClasses,
-            tceInstances = builtInInstances,
-            tceConstraints = mempty --tleConstraints tle
+            tceInstances = builtInInstances <> instances,
+            tceConstraints = mempty -- tleConstraints tle
           }
 
-  typeclass <- mapError _ (lookupTypeclass env (conTypeclass constraint))
+  typeclass <-
+    modifyError
+      (DefDoesNotTypeCheck input def)
+      (lookupTypeclass env (conTypeclass constraint))
 
-  mapError _ (checkInstance env typeclass (constraint $> mempty) inst)
+  (_fnName, constraints, typedExpr) <-
+    modifyError (DefDoesNotTypeCheck input def) (checkInstance env typeclass (constraint $> mempty) inst)
 
+  pure $
+    Instance
+      { inExpr = toIdentityExpr typedExpr,
+        inConstraints = typeForConstraint <$> constraints
+      }
 
 -- typechecking in this context means "does this data type make sense"
 -- and "do we know about all external datatypes it mentions"
-typecheckOneTypeDef ::
+typecheckTypeDef ::
   (MonadError (ModuleError Annotation) m) =>
   Text ->
   Module ResolvedDep Annotation ->
   Map DefIdentifier (DataType ResolvedDep (Type ResolvedDep Annotation)) ->
   (DefIdentifier, DataType ResolvedDep Annotation) ->
   m (DataType ResolvedDep (Type ResolvedDep Annotation))
-typecheckOneTypeDef _input _inputModule _typeDeps (_def, dt) = do
+typecheckTypeDef _input _inputModule _typeDeps (_def, dt) = do
   -- just put a bullshit type in for now
   pure $ (`TPrim` TPBool) <$> dt
 
@@ -249,20 +279,27 @@ resolveConstraint (Constraint tcn tys) =
     resolveTy ty = ty $> toResolvedDep ty
     toResolvedDep = mapTypeDep (LocalDefinition . runIdentity)
 
+typeForConstraint :: Constraint ann -> Constraint (Type ResolvedDep ann)
+typeForConstraint (Constraint tc tys) =
+  Constraint tc $ fmap (\ty -> ty $> resolveType ty) tys
+
 -- given types for other required definition, typecheck a definition
-typecheckOneExprDef ::
+typecheckExprDef ::
   (MonadError (ModuleError Annotation) m) =>
   Text ->
   Module ResolvedDep Annotation ->
   Map DefIdentifier (DepType ResolvedDep (Type ResolvedDep Annotation)) ->
   (DefIdentifier, TopLevelExpression ResolvedDep Annotation) ->
   m (TopLevelExpression ResolvedDep (Type ResolvedDep Annotation))
-typecheckOneExprDef input _inputModule deps (def, tle) = do
+typecheckExprDef input inputModule deps (def, tle) = do
   -- where are we getting constraints from?
   let exprTypeMap =
         mapKey LocalDefinition $
           (\depTLE -> ((fmap . fmap) getTypeAnnotation (tleConstraints depTLE), getExprAnnotation (tleExpr depTLE)))
             <$> filterNameDefs (filterExprs deps)
+
+  let instances :: Map (Constraint Annotation) (Instance Annotation)
+      instances = mapKey (fmap (const mempty)) (moInstances inputModule)
 
   -- initial typechecking environment
   let env =
@@ -270,7 +307,7 @@ typecheckOneExprDef input _inputModule deps (def, tle) = do
           { tceVars = exprTypeMap,
             tceDataTypes = getDataTypeMap deps,
             tceClasses = builtInClasses,
-            tceInstances = builtInInstances,
+            tceInstances = builtInInstances <> instances,
             tceConstraints = tleConstraints tle
           }
 

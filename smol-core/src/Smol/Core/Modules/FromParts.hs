@@ -66,18 +66,18 @@ addModulePart allParts part mod' =
         else throwError (ErrorInResolveDeps $ VarNotFound ident)
     ModuleClass _ -> pure mod' -- TODO
     ModuleInstance constraint expr ->
-          pure $
-            mod'
-              { moInstances =
-                  M.singleton
-                    (void constraint)
-                    ( Instance
-                        { inConstraints = mempty,
-                          inExpr = identityFromParseDep expr
-                        }
-                    )
-                    <> moInstances mod'
-              }
+      pure $
+        mod'
+          { moInstances =
+              M.singleton
+                (void constraint)
+                ( Instance
+                    { inConstraints = mempty,
+                      inExpr = identityFromParseDep expr
+                    }
+                )
+                <> moInstances mod'
+          }
     ModuleDataType dt@(DataType tyCon _ _) -> do
       let typeName = coerce tyCon
       checkDataType mod' dt

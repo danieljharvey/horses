@@ -33,8 +33,7 @@ data Typeclass ann = Typeclass
   deriving stock (Eq, Ord, Show, Functor, Generic)
   deriving anyclass (ToJSON, FromJSON)
 
-data Constraint ann
-  = Constraint { conTypeclass :: TypeclassName, conType :: [Type Identity ann] }
+data Constraint ann = Constraint {conTypeclass :: TypeclassName, conType :: [Type Identity ann]}
   deriving stock (Eq, Ord, Show, Functor, Foldable, Generic)
   deriving anyclass (ToJSON, ToJSONKey, FromJSON, FromJSONKey)
 

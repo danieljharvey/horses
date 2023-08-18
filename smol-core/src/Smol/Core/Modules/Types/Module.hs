@@ -43,7 +43,6 @@ data Module dep ann = Module
     moTests :: [Test],
     moInstances :: Map (Constraint ()) (Instance ann),
     moClasses :: Map TypeclassName (Typeclass ann)
-
   }
   deriving stock (Functor, Generic)
 

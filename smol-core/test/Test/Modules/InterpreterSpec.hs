@@ -79,17 +79,31 @@ spec = do
                   "def useEquals a b = equals a b"
                 ],
                 "False"
-              ) {-,
-                ( [ "def main : Bool",
-                    "def main = notEquals (1: Int) (2: Int)",
-                    "def notEquals : (Eq a) => a -> a -> Bool",
-                    "def notEquals a b = if isEquals a b then False else True",
-                    "def isEquals : (Eq a) => a -> a -> Bool",
-                    "def isEquals a b = equals a b"
-
-                  ],
+              ),
+              ( [ "def main : Bool",
+                  "def main = notEquals (1: Int) (2: Int)",
+                  "def notEquals : (Eq a) => a -> a -> Bool",
+                  "def notEquals a b = if isEquals a b then False else True",
+                  "def isEquals : (Eq a) => a -> a -> Bool",
+                  "def isEquals a b = equals a b"
+                ],
+                "True"
+              ),
+              ( [ "instance Eq String = \\a -> \\b -> a == b",
+                  "def main : Bool",
+                  "def main = equals (\"cat\" : String) (\"cat\" : String)"
+                ],
+                "True"
+              )
+              {-
+                  -- next we need dependencies
+              ( ["type Pet = Dog | Cat | Rat",
+                  "instance Eq Pet = \\a -> \\b -> case (a,b) of (Dog,Dog) -> True | (Cat, Cat) -> True | (Rat,Rat) -> True | _ -> False",
+                  "def main : Bool",
+                  "def main = equals Dog Cat"],
                   "False"
-                )-}
+
+              ) -}
             ]
       traverse_
         ( \(parts, expect) ->

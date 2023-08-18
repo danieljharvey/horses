@@ -7,10 +7,10 @@ module Smol.Core.Parser.Module
 where
 
 import Control.Monad.Identity
-import Smol.Core.ExprUtils
 import qualified Data.List.NonEmpty as NE
 import Data.Text (Text)
 import Data.Void
+import Smol.Core.ExprUtils
 import Smol.Core.Modules.Types.ModuleItem
 import Smol.Core.Parser.DataType (dataTypeParser)
 import Smol.Core.Parser.Expr
@@ -112,8 +112,8 @@ parseClass = do
   myString "class"
   typeclassName <- typeclassNameParser
   parts <-
-      chainl1 ((: []) <$> identifierParser) (pure (<>))
-        <|> pure mempty
+    chainl1 ((: []) <$> identifierParser) (pure (<>))
+      <|> pure mempty
   myString "{"
   fnName <- identifierParser
   myString ":"
@@ -121,10 +121,12 @@ parseClass = do
   ty <- mapTypeDep resolve <$> typeParser
   myString "}"
 
-  pure $ ModuleClass (Typeclass {
-          tcName  =typeclassName,
-          tcArgs = parts,
-          tcFuncName = fnName,
-          tcFuncType = ty
-
-                                })
+  pure $
+    ModuleClass
+      ( Typeclass
+          { tcName = typeclassName,
+            tcArgs = parts,
+            tcFuncName = fnName,
+            tcFuncType = ty
+          }
+      )

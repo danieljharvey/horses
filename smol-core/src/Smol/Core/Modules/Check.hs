@@ -11,6 +11,7 @@ import qualified Data.Map.Strict as M
 import qualified Data.Set as S
 import qualified Data.Text as T
 import Smol.Core
+import Smol.Core.Helpers (mapKey)
 import Smol.Core.Modules.FromParts
 import Smol.Core.Modules.ResolveDeps
 import Smol.Core.Modules.Typecheck
@@ -65,6 +66,13 @@ passModuleDictionaries ::
 passModuleDictionaries inputModule = do
   let varsInScope = getVarsInScope inputModule
 
+  let instances :: M.Map (Constraint Annotation) (Instance Annotation)
+      instances =
+        mapKey (fmap (const mempty))
+          . (fmap . fmap) getTypeAnnotation
+          . moInstances
+          $ inputModule
+
   let passDictToTopLevelExpression (ident, tle) = do
         let constraints = constraintsFromTLE tle
             expr = tleExpr tle
@@ -72,7 +80,7 @@ passModuleDictionaries inputModule = do
         newExpr <-
           modifyError
             (DefDoesNotTypeCheck mempty (DIName ident))
-            (toDictionaryPassing varsInScope constraints expr)
+            (toDictionaryPassing varsInScope instances constraints expr)
 
         pure $ (ident, tle {tleExpr = newExpr})
 

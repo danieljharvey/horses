@@ -341,7 +341,7 @@ spec = do
                 let expectedExpr = getRight $ evalExprUnsafe varsInScope expected
                     (dedupedConstraints, tidyExpr) = deduplicateConstraints typeclassUses expr
                     allConstraints = nub (dedupedConstraints <> constraints) -- we lose outer constraints sometimes
-                    result = toDictionaryPassing varsInScope allConstraints tidyExpr
+                    result = toDictionaryPassing varsInScope (tceInstances typecheckEnv) allConstraints tidyExpr
 
                 simplify <$> result `shouldBe` Right (simplify expectedExpr)
       )

@@ -59,29 +59,44 @@ resolveModuleDeps ::
 resolveModuleDeps typeclassMethods parsedModule = do
   map' <- getDependencies extractUses parsedModule
   let resolveIt (DTData dt, _, _) =
-        pure (Left (resolveDataType dt))
+        pure (DTData (resolveDataType dt))
       resolveIt (DTExpr expr, defIds, _entities) =
-        Right <$> resolveTopLevelExpression expr typeclassMethods defIds (allConstructors parsedModule)
+        DTExpr <$> resolveTopLevelExpression expr typeclassMethods defIds (allConstructors parsedModule)
+      resolveIt (DTInstance inst, _defIds, _entities) =
+        pure (DTInstance inst)
+
   resolvedMap <- evalStateT (traverse resolveIt map') (ResolveState 0)
-  let newExpressions =
+
+  let resolvedExpressions =
         mapMaybeWithKey
           ( \k a -> case (k, a) of
-              (DIName identifier, Right expr) -> Just (identifier, expr)
+              (DIName identifier, DTExpr expr) -> Just (identifier, expr)
               _ -> Nothing
           )
           resolvedMap
-      newDataTypes =
+
+      resolvedDataTypes =
         mapMaybeWithKey
           ( \k a -> case (k, a) of
-              (DIType typeName, Left dt) -> Just (typeName, dt)
+              (DIType typeName, DTData dt) -> Just (typeName, dt)
               _ -> Nothing
           )
           resolvedMap
+
+      resolvedInstances =
+        mapMaybeWithKey
+          ( \k a -> case (k, a) of
+              (DIInstance constraint, DTInstance inst) -> Just (constraint, inst)
+              _ -> Nothing
+          )
+          resolvedMap
+
       dependencies = (\(_, b, _) -> b) <$> map'
    in pure
         ( parsedModule
-            { moExpressions = newExpressions,
-              moDataTypes = newDataTypes
+            { moExpressions = resolvedExpressions,
+              moDataTypes = resolvedDataTypes,
+              moInstances = resolvedInstances
             },
           dependencies
         )

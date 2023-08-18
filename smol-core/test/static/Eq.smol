@@ -20,6 +20,18 @@ instance Eq Bool = \a -> \b -> a == b
 
 instance Eq String = \a -> \b -> a == b
 
+/*
+
+let's work up to this yeah
+
+type Maybe a = Just a | Nothing
+
+instance (Eq a) => Eq (Maybe a) = \a -> \b -> case (a,b) of
+        (Just a, Just b) -> equals a b
+      | (Nothing, Nothing) -> True
+      | _ -> False
+*/
+
 def useNewInstances : Bool
 def useNewInstances = if equals (True : Bool) (False : Bool)
                       then equals ("dog" : String) ("log" : String)

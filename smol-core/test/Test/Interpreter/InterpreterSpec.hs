@@ -71,11 +71,11 @@ spec = do
         cases
 
     -- not sure this is the way
-    xdescribe "interpret with typeclasses" $ do
+    describe "interpret with typeclasses" $ do
       let cases =
             [ ("equals (1 : Int) (1 : Int)", "True"), -- use Eq Int
               ("equals (2 : Int) (1 : Int)", "False"), -- use Eq Int
-              ("equals ((1 : Int),(1 : Int)) ((1 : Int), (2 : Int))", "False") -- use Eq (a,b) and Eq Int (advanced, not ready for this yet)
+              ("equals ((1 : Int),(1 : Int)) ((1 : Int), (2 : Int))", "False") -- use Eq (a,b) and Eq Int
             ]
       traverse_
         ( \(input, expect) ->

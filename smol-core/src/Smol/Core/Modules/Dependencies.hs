@@ -98,7 +98,12 @@ getDependencies getUses mod' = do
       <$> traverse
         (getTypeDependencies mod')
         (moDataTypes mod')
-  pure (exprDeps <> typeDeps)
+  instanceDeps <-
+    M.mapKeys DIInstance
+      <$> traverse
+        (getInstanceDependencies getUses mod')
+        (moInstances mod')
+  pure (exprDeps <> typeDeps <> instanceDeps)
 
 -- get all dependencies of a type definition
 getTypeDependencies ::
@@ -193,6 +198,19 @@ getExprDependencies getUses mod' expr = do
   consDefIds <- getConstructorUses mod' allUses
   typeDefIds <- getTypeUses mod' allUses
   pure (DTExpr expr, exprDefIds <> typeDefIds <> consDefIds, allUses)
+
+getInstanceDependencies ::
+  (MonadError ResolveDepsError m) =>
+  (Expr dep ann -> Set E.Entity) ->
+  Module dep ann ->
+  Instance ann ->
+  m (DepType dep ann, Set DefIdentifier, Set E.Entity)
+getInstanceDependencies _getUses _mod' inst = do
+  -- for now we say that an instance has no dependencies of it's own
+  -- this will soon be untrue though, and we'll probably have to stop the type
+  -- being `Expr Identity ann`, and instead just `Expr dep ann` so we can refer
+  -- to other deps in the module we're defined in
+  pure (DTInstance inst, mempty, mempty)
 
 getExprDeps ::
   (Monad m) =>
