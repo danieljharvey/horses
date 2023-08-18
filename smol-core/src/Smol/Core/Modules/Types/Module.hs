@@ -41,7 +41,7 @@ data Module dep ann = Module
   { moExpressions :: Map Identifier (TopLevelExpression dep ann),
     moDataTypes :: Map TypeName (DataType dep ann),
     moTests :: [Test],
-    moInstances :: Map (Constraint ()) (Instance ann),
+    moInstances :: Map (Constraint ()) (Instance dep ann),
     moClasses :: Map TypeclassName (Typeclass ann)
   }
   deriving stock (Functor, Generic)

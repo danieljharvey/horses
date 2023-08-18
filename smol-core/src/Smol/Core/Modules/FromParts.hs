@@ -7,7 +7,6 @@
 module Smol.Core.Modules.FromParts (addModulePart, moduleFromModuleParts, exprAndTypeFromParts) where
 
 import Control.Monad.Except
-import Control.Monad.Identity
 import Data.Coerce
 import Data.Functor (void)
 import qualified Data.Map.Strict as M
@@ -31,9 +30,6 @@ moduleFromModuleParts parts =
         mod' <- output
         addModulePart parts part mod'
    in foldr addPart (pure mempty) parts
-
-identityFromParseDep :: Expr ParseDep ann -> Expr Identity ann
-identityFromParseDep = mapExprDep (Identity . pdIdentifier)
 
 addModulePart ::
   (MonadError (ModuleError ann) m, Monoid ann) =>
@@ -75,7 +71,7 @@ addModulePart allParts part mod' =
                 (void constraint)
                 ( Instance
                     { inConstraints = mempty,
-                      inExpr = identityFromParseDep expr
+                      inExpr = expr
                     }
                 )
                 <> moInstances mod'

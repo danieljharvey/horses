@@ -84,7 +84,11 @@ instanceMatchesType needleTys haystackTys =
 -- | wipe out annotations when looking for instances
 -- this is fragile and depends on us manually creating instances with `mempty`
 -- annotations in the first place
-lookupConcreteInstance :: (Monoid ann, Ord ann) => TCEnv ann -> Constraint ann -> Maybe (Instance ann)
+lookupConcreteInstance ::
+  (Monoid ann, Ord ann) =>
+  TCEnv ann ->
+  Constraint ann ->
+  Maybe (Instance ResolvedDep ann)
 lookupConcreteInstance env constraint =
   M.lookup (constraint $> mempty) (tceInstances env)
 
@@ -95,7 +99,7 @@ lookupTypeclassInstance ::
   (MonadError (TCError ann) m, Monoid ann, Ord ann, Show ann) =>
   TCEnv ann ->
   Constraint ann ->
-  m (Instance ann)
+  m (Instance ResolvedDep ann)
 lookupTypeclassInstance env constraint@(Constraint name tys) = do
   -- first, do we have a concrete instance?
   case lookupConcreteInstance env constraint of

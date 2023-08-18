@@ -203,7 +203,7 @@ getInstanceDependencies ::
   (MonadError ResolveDepsError m) =>
   (Expr dep ann -> Set E.Entity) ->
   Module dep ann ->
-  Instance ann ->
+  Instance dep ann ->
   m (DepType dep ann, Set DefIdentifier, Set E.Entity)
 getInstanceDependencies _getUses _mod' inst = do
   -- for now we say that an instance has no dependencies of it's own

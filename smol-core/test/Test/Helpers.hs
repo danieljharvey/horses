@@ -196,11 +196,6 @@ runTypecheckM env action =
 tcVar :: (Monoid ann) => Identifier -> Type Identity ann
 tcVar = TVar mempty . Identity
 
-identityFromParsedExpr :: Expr ParseDep ann -> Expr Identity ann
-identityFromParsedExpr = mapExprDep resolve
-  where
-    resolve (ParseDep a _) = Identity a
-
 showTypeclass :: (Monoid ann) => Typeclass ann
 showTypeclass =
   Typeclass
@@ -226,11 +221,11 @@ classes =
       ("Show", showTypeclass)
     ]
 
-unsafeParseInstanceExpr :: (Monoid ann) => Text -> Expr Identity ann
+unsafeParseInstanceExpr :: (Monoid ann) => Text -> Expr ResolvedDep ann
 unsafeParseInstanceExpr =
-  fmap (const mempty) . identityFromParsedExpr . unsafeParseExpr
+  fmap (const mempty) . fromParsedExpr . unsafeParseExpr
 
-instances :: (Ord ann, Monoid ann) => M.Map (Constraint ann) (Instance ann)
+instances :: (Ord ann, Monoid ann) => M.Map (Constraint ann) (Instance ResolvedDep ann)
 instances =
   M.fromList
     [ ( Constraint "Eq" [tyInt],

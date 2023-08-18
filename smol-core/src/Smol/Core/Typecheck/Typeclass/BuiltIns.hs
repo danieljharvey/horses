@@ -7,8 +7,8 @@ import Data.Functor
 import qualified Data.List.NonEmpty as NE
 import qualified Data.Map.Strict as M
 import qualified Data.Text as T
-import Smol.Core.ExprUtils
 import Smol.Core.Parser
+import Smol.Core.Typecheck.FromParsedExpr
 import Smol.Core.Typecheck.Typeclass.Types
 import Smol.Core.Types
 
@@ -49,14 +49,9 @@ unsafeParseExpr input = case parseExprAndFormatError input of
   Right expr -> expr $> ()
   Left e -> error (show e)
 
-identityFromParsedExpr :: Expr ParseDep ann -> Expr Identity ann
-identityFromParsedExpr = mapExprDep resolve
-  where
-    resolve (ParseDep a _) = Identity a
-
-unsafeParseInstanceExpr :: (Monoid ann) => T.Text -> Expr Identity ann
-unsafeParseInstanceExpr =
-  fmap (const mempty) . identityFromParsedExpr . unsafeParseExpr
+unsafeParseMemptyExpr :: (Monoid ann) => T.Text -> Expr ResolvedDep ann
+unsafeParseMemptyExpr =
+  fmap (const mempty) . fromParsedExpr . unsafeParseExpr
 
 tyInt :: (Monoid ann) => Type dep ann
 tyInt = TPrim mempty TPInt
@@ -72,16 +67,16 @@ tyTuple ::
 tyTuple a as = TTuple mempty a (NE.fromList as)
 
 -- we should get rid of this once we can parse these in modules
-builtInInstances :: (Ord ann, Monoid ann) => M.Map (Constraint ann) (Instance ann)
+builtInInstances :: (Ord ann, Monoid ann) => M.Map (Constraint ann) (Instance ResolvedDep ann)
 builtInInstances =
   M.fromList
     [ ( Constraint "Eq" [tyInt],
-        Instance {inExpr = unsafeParseInstanceExpr "\\a -> \\b -> a == b", inConstraints = []}
+        Instance {inExpr = unsafeParseMemptyExpr "\\a -> \\b -> a == b", inConstraints = []}
       ),
       ( Constraint "Eq" [tyTuple (tcVar "a") [tcVar "b"]],
         Instance
           { inExpr =
-              unsafeParseInstanceExpr "\\a -> \\b -> case (a,b) of ((a1, a2), (b1, b2)) -> if equals a1 b1 then equals a2 b2 else False",
+              unsafeParseMemptyExpr "\\a -> \\b -> case (a,b) of ((a1, a2), (b1, b2)) -> if equals a1 b1 then equals a2 b2 else False",
             inConstraints =
               [ Constraint "Eq" [tcVar "a"],
                 Constraint "Eq" [tcVar "b"]

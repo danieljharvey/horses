@@ -18,6 +18,6 @@ data TCEnv ann = TCEnv
   { tceVars :: Map (ResolvedDep Identifier) ([Constraint ann], ResolvedType ann),
     tceDataTypes :: Map (ResolvedDep TypeName) (DataType ResolvedDep ann),
     tceClasses :: Map TypeclassName (Typeclass ann),
-    tceInstances :: Map (Constraint ann) (Instance ann),
+    tceInstances :: Map (Constraint ann) (Instance ResolvedDep ann),
     tceConstraints :: [Constraint ann]
   }
