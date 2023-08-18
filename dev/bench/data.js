@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1689889989545,
+  "lastUpdate": 1692394373565,
   "repoUrl": "https://github.com/danieljharvey/mimsa",
   "entries": {
     "Store benchmarks in Github Pages": [
@@ -2811,6 +2811,50 @@ window.BENCHMARK_DATA = {
           {
             "name": "evaluate/evaluate parsing 2",
             "value": 0.282793460299996,
+            "unit": "Time (ms)"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "danieljamesharvey@gmail.com",
+            "name": "Daniel Harvey",
+            "username": "danieljharvey"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "ea9fde783b4bc63763ec462ca62eab6c2527be60",
+          "message": "Fuck it (#1000)\n\n* Well\r\n\r\n* Typecheck instances\r\n\r\n* Next, we look up instances by type\r\n\r\n* Lookup function names in typeclasses\r\n\r\n* Move types around\r\n\r\n* Create TCWrite, we should use it\r\n\r\n* Next, we'll make the code run\r\n\r\n* Next run it\r\n\r\n* Label each typeclass use ready to inject it into Expr\r\n\r\n* A basic Eq Int works with built-in interpreter\r\n\r\n* It works in interpreter test, next make it work in actual LLVM backend etc\r\n\r\n* Fix linty bums\r\n\r\n* Add broken tests for raising polymorphic constraints\r\n\r\n* OK, found the next good problem\r\n\r\n* Oh well\r\n\r\n* Start matching nested instances\r\n\r\n* Lookup polymorphic instances\r\n\r\n* Rename TypeclassHead to Constraint\r\n\r\n* Create those functions\r\n\r\n* Nicer inlining tests\r\n\r\n* Something something internet yes\r\n\r\n* Goddammit, nearly\r\n\r\n* Can't do map look up of constraints anymore\r\n\r\n* WIP\r\n\r\n* Plumb in dictionaries correctly, now we need to pass the functions in\r\n\r\n* Ready to pass those sweet instances to those hungry dictionary functions\r\n\r\n* Ok, let's actually smash those dictionaries and see if we can interpret the shittiest possible function\r\n\r\n* Yet more fucking around\r\n\r\n* Need to parse constraints\r\n\r\n* Set up failure\r\n\r\n* Well\r\n\r\n* OK, let's smash\r\n\r\n* What the hell man\r\n\r\n* Oh no\r\n\r\n* Well we can't find constraints now\r\n\r\n* Well\r\n\r\n* Dear diary, wow\r\n\r\n* Should not error if we can't find a non-concrete typeclass instance, leave it ready for later application\r\n\r\n* Next we need to pass instances through\r\n\r\n* It is now time to pipe instances through from parent to child functions\r\n\r\n* Non empty constraints pls\r\n\r\n* OK we have the next test\r\n\r\n* Something somewhat working\r\n\r\n* Dear diary, wow\r\n\r\n* Now just to let the user define them I suppose\r\n\r\n* Parse instances\r\n\r\n* Start all the hellish resolving nonsense for instances\r\n\r\n* Well, shit\r\n\r\n* Nice new interpreting\r\n\r\n* Fix linties\r\n\r\n* Fix backend\r\n\r\n* Define and use classes in module",
+          "timestamp": "2023-08-18T22:28:17+01:00",
+          "tree_id": "7e11b4048abbca3e9c03b6182b19b0501cf90658",
+          "url": "https://github.com/danieljharvey/mimsa/commit/ea9fde783b4bc63763ec462ca62eab6c2527be60"
+        },
+        "date": 1692394373146,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "build stdlib/allFns",
+            "value": 0.101078362749997,
+            "unit": "Time (ms)"
+          },
+          {
+            "name": "evaluate/evaluate big looping thing",
+            "value": 0.09324789305000529,
+            "unit": "Time (ms)"
+          },
+          {
+            "name": "evaluate/evaluate parsing",
+            "value": 0.032247600718137585,
+            "unit": "Time (ms)"
+          },
+          {
+            "name": "evaluate/evaluate parsing 2",
+            "value": 0.22926319797143152,
             "unit": "Time (ms)"
           }
         ]
