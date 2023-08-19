@@ -49,7 +49,7 @@ parseExprAndFormatError = parseAndFormat (space *> expressionParser <* eof)
 parseModule :: Text -> Either ParseErrorType [ModuleItem Annotation]
 parseModule = parse (space *> moduleParser <* eof) "repl"
 
-parseConstraint :: Text -> Either ParseErrorType (Constraint Annotation)
+parseConstraint :: Text -> Either ParseErrorType (Constraint ParseDep Annotation)
 parseConstraint = parse (space *> constraintParser <* eof) "repl"
 
 parseModuleAndFormatError :: Text -> Either Text [ModuleItem Annotation]
@@ -58,5 +58,5 @@ parseModuleAndFormatError = parseAndFormat (space *> moduleParser <* eof)
 parseDataTypeAndFormatError :: Text -> Either Text (DataType ParseDep Annotation)
 parseDataTypeAndFormatError = parseAndFormat (space *> dataTypeParser <* eof)
 
-parseConstraintAndFormatError :: Text -> Either Text (Constraint Annotation)
+parseConstraintAndFormatError :: Text -> Either Text (Constraint ParseDep Annotation)
 parseConstraintAndFormatError = parseAndFormat (space *> constraintParser <* eof)

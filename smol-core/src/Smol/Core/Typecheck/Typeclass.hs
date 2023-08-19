@@ -84,7 +84,7 @@ checkInstance ::
   TCEnv ann ->
   Typeclass ann ->
   Constraint ann ->
-  Instance ann ->
+  Instance ResolvedDep ann ->
   m (Identifier, [Constraint ann], Expr ResolvedDep (Type ResolvedDep ann))
 checkInstance tcEnv typeclass constraint (Instance constraints expr) =
   do
@@ -94,7 +94,7 @@ checkInstance tcEnv typeclass constraint (Instance constraints expr) =
     let -- we add the instance's constraints (so typechecker forgives a missing `Eq a` etc)
         typecheckEnv = tcEnv {tceConstraints = constraints}
 
-        annotatedExpr = EAnn (getExprAnnotation expr) subbedType expr
+        annotatedExpr = EAnn (getExprAnnotation expr) subbedType undefined --expr
 
         -- let's get all the method names from the Typeclasses
         -- mentioned in the instance constraints
@@ -107,7 +107,7 @@ checkInstance tcEnv typeclass constraint (Instance constraints expr) =
               )
               constraints
 
-    case resolveExprDeps (toParseExpr annotatedExpr) typeclassMethodNames mempty of
+    case resolveExprDeps annotatedExpr typeclassMethodNames mempty of
       Left resolveErr -> error $ "Resolve error: " <> show resolveErr
       Right resolvedExpr -> do
         (newConstraints, typedExpr) <- typecheck typecheckEnv resolvedExpr

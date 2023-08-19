@@ -32,7 +32,7 @@ resolveExprDeps ::
   (Show ann, MonadError ResolveDepsError m) =>
   Expr ParseDep ann ->
   Set Identifier ->
-  Set DefIdentifier ->
+  Set (DefIdentifier ParseDep) ->
   m (Expr ResolvedDep ann)
 resolveExprDeps expr typeclassMethods localDefs =
   evalStateT (resolveExpr expr typeclassMethods localDefs mempty) (ResolveState 0)
@@ -41,7 +41,7 @@ resolveExpr ::
   (Show ann, MonadError ResolveDepsError m, MonadState ResolveState m) =>
   Expr ParseDep ann ->
   Set Identifier ->
-  Set DefIdentifier ->
+  Set (DefIdentifier ParseDep) ->
   Set Constructor ->
   m (Expr ResolvedDep ann)
 resolveExpr expr typeclassMethods localDefs localTypes =
@@ -55,15 +55,17 @@ resolveModuleDeps ::
   (Show ann, Eq ann, MonadError ResolveDepsError m) =>
   Set Identifier ->
   Module ParseDep ann ->
-  m (Module ResolvedDep ann, Map DefIdentifier (Set DefIdentifier))
+  m (Module ResolvedDep ann, Map (DefIdentifier ResolvedDep) (Set (DefIdentifier ResolvedDep)))
 resolveModuleDeps typeclassMethods parsedModule = do
   map' <- getDependencies extractUses parsedModule
   let resolveIt (DTData dt, _, _) =
         pure (DTData (resolveDataType dt))
       resolveIt (DTExpr expr, defIds, _entities) =
         DTExpr <$> resolveTopLevelExpression expr typeclassMethods defIds (allConstructors parsedModule)
-      resolveIt (DTInstance inst, _defIds, _entities) =
-        pure (DTInstance inst)
+      resolveIt (DTInstance inst, defIds, _entities) = do
+        resolvedExpr <- resolveExpr (inExpr inst) typeclassMethods defIds (allConstructors parsedModule)
+        pure (DTInstance (Instance {inConstraints = resolveConstraint <$> inConstraints inst,
+            inExpr = resolvedExpr}))
 
   resolvedMap <- evalStateT (traverse resolveIt map') (ResolveState 0)
 
@@ -93,13 +95,14 @@ resolveModuleDeps typeclassMethods parsedModule = do
 
       dependencies = (\(_, b, _) -> b) <$> map'
    in pure
-        ( parsedModule
+        ( Module
             { moExpressions = resolvedExpressions,
               moDataTypes = resolvedDataTypes,
-              moInstances = resolvedInstances,
-              moClasses = moClasses parsedModule
+              moTests = moTests parsedModule,
+              moInstances = M.mapKeys resolveConstraint resolvedInstances,
+              moClasses = resolveTypeclass <$> moClasses parsedModule
             },
-          dependencies
+          dependencies -- TODO: need to resolve the DefIdentifiers here
         )
 
 mapMaybeWithKey :: (Ord k2) => (k -> a -> Maybe (k2, b)) -> Map k a -> Map k2 b
@@ -109,12 +112,22 @@ allConstructors :: Module dep ann -> Set Constructor
 allConstructors Module {moDataTypes} =
   foldMap (\(DataType {dtConstructors}) -> M.keysSet dtConstructors) moDataTypes
 
+
+
+resolveTypeclass :: Typeclass ParseDep ann -> Typeclass ResolvedDep ann
+resolveTypeclass (Typeclass {} )
+  = Typeclass {}
+
 resolveDataType :: DataType ParseDep ann -> DataType ResolvedDep ann
 resolveDataType (DataType {dtName, dtVars, dtConstructors}) =
   DataType dtName dtVars (resolveDataConstructor <$> dtConstructors)
   where
     resolveDataConstructor tys =
       resolveType <$> tys
+
+resolveConstraint :: Constraint ParseDep ann -> Constraint ResolvedDep ann
+resolveConstraint (Constraint tcn tys)
+  = Constraint tcn (resolveType <$> tys)
 
 resolveType :: Type ParseDep ann -> Type ResolvedDep ann
 resolveType (TVar ann (ParseDep v _)) = TVar ann (LocalDefinition v)
@@ -138,7 +151,7 @@ resolveTopLevelExpression ::
   (Show ann, MonadState ResolveState m, MonadError ResolveDepsError m) =>
   TopLevelExpression ParseDep ann ->
   Set Identifier ->
-  Set DefIdentifier ->
+  Set (DefIdentifier ParseDep) ->
   Set Constructor ->
   m (TopLevelExpression ResolvedDep ann)
 resolveTopLevelExpression tle typeclassMethods localDefs localTypes = flip runReaderT initialEnv $ do
@@ -147,7 +160,7 @@ resolveTopLevelExpression tle typeclassMethods localDefs localTypes = flip runRe
 
   pure
     ( TopLevelExpression
-        { tleConstraints = tleConstraints tle,
+        { tleConstraints = resolveConstraint <$> tleConstraints tle,
           tleExpr = resolvedExpr,
           tleType = resolvedType
         }
@@ -241,7 +254,7 @@ withNewIdentifiers resolvedIdentifiers =
 
 data ResolveEnv = ResolveEnv
   { reExisting :: Map Identifier Int,
-    reLocal :: Set DefIdentifier,
+    reLocal :: Set (DefIdentifier ParseDep),
     reLocalConstructor :: Set Constructor,
     reTypeclassMethods :: Set Identifier
   }

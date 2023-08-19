@@ -6,31 +6,25 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE StandaloneDeriving #-}
 
-module Smol.Core.Typecheck.Typeclass.Types
-  ( Typeclass (..),
-    module Smol.Core.Typecheck.Typeclass.Types.Constraint,
-    module Smol.Core.Typecheck.Typeclass.Types.Instance,
-    module Smol.Core.Typecheck.Typeclass.Types.TypeclassName,
+module Smol.Core.Typecheck.Typeclass.Types.Instance
+  (
+
+    Instance (..),
   )
 where
 
+import Smol.Core.Typecheck.Typeclass.Types.Constraint
 import Data.Aeson (FromJSON, FromJSONKey, ToJSON, ToJSONKey)
 import GHC.Generics (Generic)
-import Smol.Core.Typecheck.Typeclass.Types.Constraint
-import Smol.Core.Typecheck.Typeclass.Types.Instance
-import Smol.Core.Typecheck.Typeclass.Types.TypeclassName
+import qualified Prettyprinter as PP
+import Smol.Core.Printer
 import Smol.Core.Types
 
--- | the typeclass described in it's most general form, ie
--- class Show a where show :: a -> String
-data Typeclass dep ann = Typeclass
-  { tcName :: TypeclassName,
-    tcArgs :: [Identifier],
-    tcFuncName :: Identifier,
-    tcFuncType :: Type dep ann
+data Instance dep ann = Instance
+  { inConstraints :: [Constraint dep ann],
+    inExpr :: Expr dep ann
   }
   deriving stock (Functor, Generic)
-
 
 deriving stock instance
   ( Eq ann,
@@ -38,7 +32,7 @@ deriving stock instance
     Eq (dep TypeName),
     Eq (dep Identifier)
   ) =>
-  Eq (Typeclass dep ann)
+  Eq (Instance dep ann)
 
 deriving stock instance
   ( Ord ann,
@@ -46,7 +40,7 @@ deriving stock instance
     Ord (dep TypeName),
     Ord (dep Identifier)
   ) =>
-  Ord (Typeclass dep ann)
+  Ord (Instance dep ann)
 
 deriving stock instance
   ( Show ann,
@@ -54,7 +48,7 @@ deriving stock instance
     Show (dep TypeName),
     Show (dep Identifier)
   ) =>
-  Show (Typeclass dep ann)
+  Show (Instance dep ann)
 
 deriving anyclass instance
   ( ToJSONKey (dep Identifier),
@@ -63,7 +57,7 @@ deriving anyclass instance
     ToJSON (dep Constructor),
     ToJSON (dep TypeName)
   ) =>
-  ToJSON (Typeclass dep ann)
+  ToJSON (Instance dep ann)
 
 deriving anyclass instance
   ( FromJSON ann,
@@ -73,6 +67,15 @@ deriving anyclass instance
     Ord (dep Identifier),
     FromJSON (dep TypeName)
   ) =>
-  FromJSON (Typeclass dep ann)
+  FromJSON (Instance dep ann)
 
-
+instance
+  ( Printer (dep Constructor),
+    Printer (dep TypeName),
+    Printer (dep Identifier)
+  ) =>
+  Printer (Instance dep ann)
+  where
+  prettyDoc (Instance [] expr) = prettyDoc expr
+  prettyDoc (Instance constraints expr) =
+    "(" <> PP.concatWith (\a b -> a <> ", " <> b) (prettyDoc <$> constraints) <> ") => " <> prettyDoc expr

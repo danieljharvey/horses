@@ -32,7 +32,6 @@ module Smol.Core.Typecheck.Shared
 where
 
 import Control.Monad.Except
-import Control.Monad.Identity
 import Control.Monad.Reader
 import Control.Monad.State
 import Control.Monad.Writer
@@ -42,7 +41,6 @@ import qualified Data.Map.Strict as M
 import Data.Maybe (listToMaybe, mapMaybe)
 import qualified Data.Set as S
 import qualified Data.Set.NonEmpty as NES
-import Smol.Core.ExprUtils (mapTypeDep)
 import Smol.Core.Helpers
 import Smol.Core.Typecheck.FreeVars
 import Smol.Core.Typecheck.Substitute
@@ -241,7 +239,7 @@ lookupVar ann ident = do
       case listToMaybe $ M.elems $ M.filter (\tc -> Just (tcFuncName tc) == getInnerIdent ident) classes of
         -- need to turn Type Identity ann into Type ResolvedDep ann
         Just tc -> do
-          (newType, undoSubs) <- freshen (resolve $ tcFuncType tc)
+          (newType, undoSubs) <- freshen (tcFuncType tc)
           tell [TCWTypeclassUse ident (tcName tc) (pairFromSubs undoSubs)]
           pure newType
         Nothing -> throwError (TCCouldNotFindVar ann ident)
@@ -253,11 +251,6 @@ pairFromSubs =
         (Substitution (SubUnknown i) (TVar _ (LocalDefinition var))) -> Just (var, i)
         _ -> Nothing
     )
-
-resolve :: Type Identity ann -> Type ResolvedDep ann
-resolve = mapTypeDep r
-  where
-    r (Identity a) = LocalDefinition a
 
 withVar ::
   (MonadReader (TCEnv ann) m) =>

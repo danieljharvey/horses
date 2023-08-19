@@ -40,7 +40,7 @@ elaborate ::
   ) =>
   TCEnv ann ->
   ResolvedExpr ann ->
-  m (ResolvedExpr (ResolvedType ann), M.Map (ResolvedDep Identifier) (Constraint ann))
+  m (ResolvedExpr (ResolvedType ann), M.Map (ResolvedDep Identifier) (Constraint ResolvedDep ann))
 elaborate env expr =
   runReaderT
     ( runWriterT

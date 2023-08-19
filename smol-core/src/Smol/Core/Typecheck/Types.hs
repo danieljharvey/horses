@@ -15,9 +15,9 @@ import Smol.Core.Typecheck.Types.TCWrite
 import Smol.Core.Types
 
 data TCEnv ann = TCEnv
-  { tceVars :: Map (ResolvedDep Identifier) ([Constraint ann], ResolvedType ann),
+  { tceVars :: Map (ResolvedDep Identifier) ([Constraint ResolvedDep ann], ResolvedType ann),
     tceDataTypes :: Map (ResolvedDep TypeName) (DataType ResolvedDep ann),
-    tceClasses :: Map TypeclassName (Typeclass ann),
-    tceInstances :: Map (Constraint ann) (Instance ResolvedDep ann),
-    tceConstraints :: [Constraint ann]
+    tceClasses :: Map TypeclassName (Typeclass ResolvedDep ann),
+    tceInstances :: Map (Constraint ResolvedDep ann) (Instance ResolvedDep ann),
+    tceConstraints :: [Constraint ResolvedDep ann]
   }

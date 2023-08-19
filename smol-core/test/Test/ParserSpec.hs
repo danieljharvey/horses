@@ -32,7 +32,7 @@ spec = do
                 Constraint "Eq" [tyInt]
               ),
               ( "Eq (a,b)",
-                Constraint "Eq" [tyTuple (tcVar "a") [tcVar "b"]]
+                Constraint "Eq" [tyTuple (tyVar "a") [tyVar "b"]]
               )
             ]
       traverse_

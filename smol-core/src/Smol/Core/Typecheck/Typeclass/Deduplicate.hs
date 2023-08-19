@@ -19,9 +19,9 @@ import Smol.Core.Types
 -- | find deduplicated constraints and apply them to expr
 deduplicateConstraints ::
   (Ord ann) =>
-  M.Map (ResolvedDep Identifier) (Constraint ann) ->
+  M.Map (ResolvedDep Identifier) (Constraint ResolvedDep ann) ->
   Expr ResolvedDep (Type ResolvedDep ann) ->
-  ([Constraint ann], Expr ResolvedDep (Type ResolvedDep ann))
+  ([Constraint ResolvedDep ann], Expr ResolvedDep (Type ResolvedDep ann))
 deduplicateConstraints constraints expr = do
   let (dedupedConstraints, nameSwaps) = findDedupedConstraints constraints
    in (dedupedConstraints, swapExprVarnames nameSwaps expr)
@@ -35,8 +35,8 @@ identForConstraint = TypeclassCall "valuefromdictionary" . fromIntegral
 -- work
 findDedupedConstraints ::
   (Ord ann) =>
-  M.Map (ResolvedDep Identifier) (Constraint ann) ->
-  ([Constraint ann], M.Map (ResolvedDep Identifier) (ResolvedDep Identifier))
+  M.Map (ResolvedDep Identifier) (Constraint ResolvedDep ann) ->
+  ([Constraint ResolvedDep ann], M.Map (ResolvedDep Identifier) (ResolvedDep Identifier))
 findDedupedConstraints dupes =
   let initial = (mempty, mempty, 0)
       deduped =

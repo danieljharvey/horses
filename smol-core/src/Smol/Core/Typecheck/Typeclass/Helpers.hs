@@ -17,7 +17,6 @@ where
 
 import Control.Monad (unless, void, zipWithM)
 import Control.Monad.Except
-import Control.Monad.Identity
 import Control.Monad.Writer
 import Data.Foldable (traverse_)
 import Data.Functor (($>))
@@ -25,7 +24,6 @@ import qualified Data.List.NonEmpty as NE
 import qualified Data.Map.Strict as M
 import Data.Maybe (listToMaybe, mapMaybe)
 import Data.Monoid
-import Smol.Core.ExprUtils
 import Smol.Core.Helpers (mapKey)
 import Smol.Core.Modules.Types
 import Smol.Core.TypeUtils
@@ -36,21 +34,14 @@ import Smol.Core.Typecheck.Typeclass.BuiltIns
 import Smol.Core.Typecheck.Types
 import Smol.Core.Types
 
-unresolveType :: Type ResolvedDep ann -> Type Identity ann
-unresolveType = mapTypeDep resolve
-  where
-    resolve (LocalDefinition a) = Identity a
-    resolve (UniqueDefinition a _) = Identity a
-    resolve (TypeclassCall a _) = Identity a
-
 -- this just chucks types in any order and will break on multi-parameter type
 -- classes
-recoverTypeclassUses :: (Monoid ann) => [TCWrite ann] -> M.Map (ResolvedDep Identifier) (Constraint ann)
+recoverTypeclassUses :: (Monoid ann) => [TCWrite ann] -> M.Map (ResolvedDep Identifier) (Constraint ResolvedDep ann)
 recoverTypeclassUses events =
   let allSubs = filterSubstitutions events
       allTCs = filterTypeclassUses events
       substituteMatch (ident, unknownId) =
-        (ident, unresolveType $ substituteMany allSubs (TUnknown mempty unknownId))
+        (ident, substituteMany allSubs (TUnknown mempty unknownId))
       fixTC (identifier, name, matches) =
         (identifier, name, substituteMatch <$> matches)
       toConstraint (identifier, name, fixedMatches) =
@@ -59,11 +50,11 @@ recoverTypeclassUses events =
 
 -- thing we're matching, typeclass we're checking
 matchType ::
-  Type Identity ann ->
-  Type Identity ann ->
+  Type dep ann ->
+  Type dep ann ->
   Either
-    (Type Identity ann, Type Identity ann)
-    [Substitution Identity ann]
+    (Type dep ann, Type dep ann)
+    [Substitution dep ann]
 matchType ty (TVar _ ident) =
   Right [Substitution (SubId ident) ty]
 matchType (TTuple _ a as) (TTuple _ b bs) = do
@@ -73,11 +64,11 @@ matchType (TTuple _ a as) (TTuple _ b bs) = do
 matchType a b = Left (a, b)
 
 instanceMatchesType ::
-  [Type Identity ann] ->
-  [Type Identity ann] ->
+  [Type dep ann] ->
+  [Type dep ann] ->
   Either
-    (Type Identity ann, Type Identity ann)
-    [Substitution Identity ann]
+    (Type dep ann, Type dep ann)
+    [Substitution dep ann]
 instanceMatchesType needleTys haystackTys =
   mconcat <$> zipWithM matchType needleTys haystackTys
 
@@ -87,7 +78,7 @@ instanceMatchesType needleTys haystackTys =
 lookupConcreteInstance ::
   (Monoid ann, Ord ann) =>
   TCEnv ann ->
-  Constraint ann ->
+  Constraint ResolvedDep ann ->
   Maybe (Instance ResolvedDep ann)
 lookupConcreteInstance env constraint =
   M.lookup (constraint $> mempty) (tceInstances env)
@@ -98,7 +89,7 @@ lookupConcreteInstance env constraint =
 lookupTypeclassInstance ::
   (MonadError (TCError ann) m, Monoid ann, Ord ann, Show ann) =>
   TCEnv ann ->
-  Constraint ann ->
+  Constraint ResolvedDep ann ->
   m (Instance ResolvedDep ann)
 lookupTypeclassInstance env constraint@(Constraint name tys) = do
   -- first, do we have a concrete instance?
@@ -131,9 +122,10 @@ lookupTypeclassInstance env constraint@(Constraint name tys) = do
           throwError (TCConflictingTypeclassInstancesFound (fst <$> multiple))
 
 substituteConstraint ::
-  [Substitution Identity ann] ->
-  Constraint ann ->
-  Constraint ann
+  (Eq (dep Identifier)) =>
+  [Substitution dep ann] ->
+  Constraint dep ann ->
+  Constraint dep ann
 substituteConstraint subs (Constraint name tys) =
   Constraint name (substituteMany subs <$> tys)
 
@@ -144,7 +136,7 @@ substituteConstraint subs (Constraint name tys) =
 lookupTypeclassConstraint ::
   (MonadError (TCError ann) m, Ord ann, Monoid ann, Show ann) =>
   TCEnv ann ->
-  Constraint ann ->
+  Constraint ResolvedDep ann ->
   m ()
 lookupTypeclassConstraint env constraint@(Constraint name tys) = do
   -- see if this is a valid instance first?
@@ -157,17 +149,12 @@ lookupTypeclassConstraint env constraint@(Constraint name tys) = do
   pure ()
 
 -- look for vars, if no, then it's concrete
-isConcrete :: Constraint ann -> Bool
+isConcrete :: Constraint ResolvedDep ann -> Bool
 isConcrete (Constraint _ tys) =
   not $ getAny $ foldMap containsVars tys
   where
     containsVars (TVar {}) = Any True
     containsVars other = monoidType containsVars other
-
-resolveType :: Type Identity ann -> Type ResolvedDep ann
-resolveType = mapTypeDep r
-  where
-    r (Identity a) = LocalDefinition a
 
 -- given a func name and type, find the typeclass instance (if applicable)
 recoverInstance ::
@@ -175,7 +162,7 @@ recoverInstance ::
   TCEnv ann ->
   ResolvedDep Identifier ->
   Type ResolvedDep ann ->
-  m (Maybe (Constraint ann))
+  m (Maybe (Constraint ResolvedDep ann))
 recoverInstance env ident ty = do
   let getInnerIdent (TypeclassCall i _) = Just i
       getInnerIdent (LocalDefinition i) = Just i -- not sure if this should happen but it makes testing waaaay easier
@@ -192,7 +179,7 @@ lookupTypeclass ::
   (MonadError (TCError ann) m) =>
   TCEnv ann ->
   TypeclassName ->
-  m (Typeclass ann)
+  m (Typeclass ResolvedDep ann)
 lookupTypeclass env tcn =
   case M.lookup tcn (tceClasses env) of
     Just tc -> pure tc
@@ -202,12 +189,12 @@ lookupTypeclass env tcn =
 -- Bool`), recover the instance we want, `Eq Int`.
 applyTypeToConstraint ::
   (Monoid ann, Show ann, Eq ann, MonadError (TCError ann) m) =>
-  Typeclass ann ->
+  Typeclass ResolvedDep ann ->
   Type ResolvedDep ann ->
-  m (Constraint ann)
+  m (Constraint ResolvedDep ann)
 applyTypeToConstraint tc ty = do
-  (_, subs) <- runWriterT $ isSubtypeOf (resolveType $ tcFuncType tc) ty
-  let applySubs = unresolveType . substituteMany (filterSubstitutions subs) . TVar mempty . emptyResolvedDep
+  (_, subs) <- runWriterT $ isSubtypeOf (tcFuncType tc) ty
+  let applySubs = substituteMany (filterSubstitutions subs) . TVar mempty . emptyResolvedDep
   pure $ Constraint (tcName tc) (applySubs <$> tcArgs tc)
 
 -- given I have a constraint and a type for it's callsite
@@ -220,8 +207,8 @@ specialiseConstraint ::
   (MonadError (TCError ann) m, Eq ann, Show ann, Monoid ann) =>
   TCEnv ann ->
   Type ResolvedDep ann ->
-  Constraint ann ->
-  m (Constraint ann)
+  Constraint ResolvedDep ann ->
+  m (Constraint ResolvedDep ann)
 specialiseConstraint env ty (Constraint tcn _tys) = do
   -- lookup typeclass
   tc <- lookupTypeclass env tcn
@@ -230,14 +217,14 @@ specialiseConstraint env ty (Constraint tcn _tys) = do
 
 constraintsFromTLE ::
   TopLevelExpression ResolvedDep (Type ResolvedDep ann) ->
-  [Constraint ann]
+  [Constraint ResolvedDep ann]
 constraintsFromTLE tle =
   (fmap . fmap) getTypeAnnotation (tleConstraints tle)
 
 -- get input for typechecker from module
 getVarsInScope ::
   Module ResolvedDep (Type ResolvedDep ann) ->
-  M.Map (ResolvedDep Identifier) ([Constraint ann], ResolvedType ann)
+  M.Map (ResolvedDep Identifier) ([Constraint ResolvedDep ann], ResolvedType ann)
 getVarsInScope =
   M.fromList
     . fmap go

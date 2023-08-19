@@ -131,7 +131,7 @@ findExpression ident moduleItems =
 expressionExists :: (Monoid ann) => Identifier -> [ModuleItem ann] -> Bool
 expressionExists ident moduleItems = isJust (findExpression ident moduleItems)
 
-findTypeExpression :: Identifier -> [ModuleItem ann] -> Maybe ([Constraint ann], Type ParseDep ann)
+findTypeExpression :: Identifier -> [ModuleItem ann] -> Maybe ([Constraint ParseDep ann], Type ParseDep ann)
 findTypeExpression ident moduleItems =
   case mapMaybe
     ( \case
