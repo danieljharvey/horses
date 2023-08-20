@@ -7,17 +7,15 @@
 {-# LANGUAGE StandaloneDeriving #-}
 
 module Smol.Core.Typecheck.Typeclass.Types.Instance
-  (
-
-    Instance (..),
+  ( Instance (..),
   )
 where
 
-import Smol.Core.Typecheck.Typeclass.Types.Constraint
 import Data.Aeson (FromJSON, FromJSONKey, ToJSON, ToJSONKey)
 import GHC.Generics (Generic)
 import qualified Prettyprinter as PP
 import Smol.Core.Printer
+import Smol.Core.Typecheck.Typeclass.Types.Constraint
 import Smol.Core.Types
 
 data Instance dep ann = Instance

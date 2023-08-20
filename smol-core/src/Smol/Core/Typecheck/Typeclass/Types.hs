@@ -31,7 +31,6 @@ data Typeclass dep ann = Typeclass
   }
   deriving stock (Functor, Generic)
 
-
 deriving stock instance
   ( Eq ann,
     Eq (dep Constructor),
@@ -74,5 +73,3 @@ deriving anyclass instance
     FromJSON (dep TypeName)
   ) =>
   FromJSON (Typeclass dep ann)
-
-

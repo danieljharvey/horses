@@ -3,7 +3,8 @@
 {-# LANGUAGE DerivingStrategies #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE StandaloneDeriving #-}
-  {-# LANGUAGE UndecidableInstances #-}
+{-# LANGUAGE UndecidableInstances #-}
+
 module Smol.Core.Modules.Types.DefIdentifier
   ( DefIdentifier (..),
   )
@@ -23,19 +24,19 @@ data DefIdentifier dep
   | DIType TypeName
   | DITest TestName
   | DIInstance (Constraint dep ())
-  deriving stock (  Generic)
+  deriving stock (Generic)
 
-deriving stock instance (Eq (dep Constructor), Eq (dep TypeName), Eq (dep Identifier)) =>
+deriving stock instance
+  (Eq (dep Constructor), Eq (dep TypeName), Eq (dep Identifier)) =>
   Eq (DefIdentifier dep)
 
-deriving stock instance (Ord (dep Constructor), Ord ( dep TypeName), Ord (dep Identifier)) =>
+deriving stock instance
+  (Ord (dep Constructor), Ord (dep TypeName), Ord (dep Identifier)) =>
   Ord (DefIdentifier dep)
 
-
-deriving stock instance (Show (dep Constructor), Show (dep TypeName), Show (dep Identifier)) =>
+deriving stock instance
+  (Show (dep Constructor), Show (dep TypeName), Show (dep Identifier)) =>
   Show (DefIdentifier dep)
-
-
 
 instance (Printer (dep Identifier), Printer (dep TypeName)) => Printer (DefIdentifier dep) where
   prettyDoc (DIName name) = prettyDoc name

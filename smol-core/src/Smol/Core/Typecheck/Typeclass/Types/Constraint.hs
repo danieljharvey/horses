@@ -7,9 +7,7 @@
 {-# LANGUAGE StandaloneDeriving #-}
 
 module Smol.Core.Typecheck.Typeclass.Types.Constraint
-  (
-    Constraint (..),
-
+  ( Constraint (..),
   )
 where
 
@@ -68,7 +66,6 @@ deriving anyclass instance
   ) =>
   ToJSONKey (Constraint dep ann)
 
-
 deriving anyclass instance
   ( FromJSON ann,
     FromJSON (dep Constructor),
@@ -90,12 +87,14 @@ deriving anyclass instance
   ) =>
   FromJSONKey (Constraint dep ann)
 
-
-instance (Printer (dep Identifier),
-  Printer (dep TypeName)) => Printer (Constraint dep ann) where
+instance
+  ( Printer (dep Identifier),
+    Printer (dep TypeName)
+  ) =>
+  Printer (Constraint dep ann)
+  where
   prettyDoc (Constraint tcn tys) =
     prettyDoc tcn
       PP.<+> PP.concatWith
         (\a b -> a <> " " <> b)
         (prettyDoc <$> tys)
-

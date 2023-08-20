@@ -22,7 +22,7 @@ import Smol.Core.Modules.Types
 import Smol.Core.Modules.Types.DepType
 import Smol.Core.Modules.Types.ModuleError
 import Smol.Core.Typecheck.Typecheck (typecheck)
-import Smol.Core.Typecheck.Typeclass (checkInstance, lookupTypeclass )
+import Smol.Core.Typecheck.Typeclass (checkInstance, lookupTypeclass)
 import Smol.Core.Typecheck.Typeclass.BuiltIns
 
 -- go through the module, and wrap all the items in DefIdentifier keys and
@@ -31,7 +31,7 @@ getModuleDefIdentifiers ::
   (Ord (dep Constructor), Ord (dep TypeName), Ord (dep Identifier)) =>
   Map (DefIdentifier dep) (Set (DefIdentifier dep)) ->
   Module dep ann ->
-  Map (DefIdentifier dep) (DefIdentifier dep , DepType dep ann, Set (DefIdentifier dep))
+  Map (DefIdentifier dep) (DefIdentifier dep, DepType dep ann, Set (DefIdentifier dep))
 getModuleDefIdentifiers depMap inputModule =
   let getDeps di = fromMaybe mempty (M.lookup di depMap)
       exprs =
@@ -93,7 +93,6 @@ moduleFromDepTypes oldModule definitions =
       typedClasses =
         (\tc -> tc $> tcFuncType tc)
           <$> moClasses oldModule
-
    in -- replace input module with typechecked versions
 
       oldModule

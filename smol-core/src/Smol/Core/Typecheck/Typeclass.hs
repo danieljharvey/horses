@@ -48,8 +48,10 @@ lookupInstanceAndCheck env tch@(Constraint typeclassName _) = do
     Nothing -> error "fuck"
   checkInstance env typeclass tch tcInstance
 
-applyConstraintTypes :: Typeclass ResolvedDep ann ->
-    Constraint ResolvedDep ann -> Type ResolvedDep ann
+applyConstraintTypes ::
+  Typeclass ResolvedDep ann ->
+  Constraint ResolvedDep ann ->
+  Type ResolvedDep ann
 applyConstraintTypes (Typeclass _ args _ ty) (Constraint _ tys) =
   let subs =
         ( \(ident, tySub) ->
@@ -158,7 +160,7 @@ convertExprToUseTypeclassDictionary env constraints expr = do
 createTypeclassDict ::
   (Show ann, Ord ann, Monoid ann, MonadError (TCError ann) m) =>
   TCEnv ann ->
-  NE.NonEmpty (Constraint ResolvedDep  ann) ->
+  NE.NonEmpty (Constraint ResolvedDep ann) ->
   m (Expr ResolvedDep (Type ResolvedDep ann))
 createTypeclassDict env constraints = do
   instances <-

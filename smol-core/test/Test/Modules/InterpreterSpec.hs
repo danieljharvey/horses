@@ -104,7 +104,7 @@ spec = do
               ),
               ( [ "type Pet = Dog | Cat | Rat",
                   "def main : Bool",
-                  "def main = let eqPet = \\a -> \\b -> case (a,b) of (Dog, Dog) -> True | (Cat, Cat) -> True | (Rat, Rat) -> True | _ -> False; eqPet Dog Cat"
+                  "def main = case (Cat,Rat) of (Dog, Dog) -> True | (Cat, Cat) -> True | (Rat, Rat) -> True | _ -> False"
                 ],
                 "False"
               ),
@@ -114,7 +114,14 @@ spec = do
                   "def main = equals Dog Rat"
                 ],
                 "False"
-              )
+              ) {-,
+                ( [ "type Maybe a = Just a | Nothing",
+                    "instance (Eq a) => Eq (Maybe a) = \\ma -> \\mb -> case (ma, mb) of (Just a, Just b) -> equals a b | (Nothing, Nothing) -> True | _ -> False",
+                    "def main : Bool",
+                    "def main = equals (Just (1: Int)) Nothing"
+                  ],
+                  "False"
+                )-}
             ]
       traverse_
         ( \(parts, expect) ->

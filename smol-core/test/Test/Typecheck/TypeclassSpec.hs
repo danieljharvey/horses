@@ -101,7 +101,7 @@ spec :: Spec
 spec = do
   describe "recoverTypeclassUses" $ do
     it "No classes, nothing to find" $ do
-      recoverTypeclassUses @()  [] `shouldBe` mempty
+      recoverTypeclassUses @() [] `shouldBe` mempty
     it "Uses Eq Int" $ do
       recoverTypeclassUses @()
         [ TCWTypeclassUse (UniqueDefinition "a" 123) "Eq" [("a", 10)],
@@ -257,17 +257,38 @@ spec = do
                        ]
                    )
 
+  describe "matchType" $ do
+    it "(Int, Bool) matches (a,b)" $ do
+      let tyMatch = unsafeParseType "(Int, Bool)"
+          tyTypeclass = unsafeParseType "(a,b)"
+      matchType tyMatch tyTypeclass `shouldSatisfy` isRight
+
+    it "[Int] matches [a]" $ do
+      let tyMatch = unsafeParseType "[Int]"
+          tyTypeclass = unsafeParseType "[a]"
+      matchType tyMatch tyTypeclass `shouldSatisfy` isRight
+
+    it "Horse matches Horse" $ do
+      let tyMatch = unsafeParseType "Horse"
+          tyTypeclass = unsafeParseType "Horse"
+      matchType tyMatch tyTypeclass `shouldSatisfy` isRight
+
+    it "Maybe Int matches Maybe a" $ do
+      let tyMatch = unsafeParseType "Maybe Int"
+          tyTypeclass = unsafeParseType "Maybe a"
+      matchType tyMatch tyTypeclass `shouldSatisfy` isRight
+
   describe "Get dictionaries" $ do
     it "Single item dictionary for single constraint" $ do
       let constraints = NE.fromList [Constraint "Eq" [tyInt]]
-          expected = evalExprUnsafe mempty "(\\a1 -> \\b2 -> a1 == b2 : Int -> Int -> Bool)"
+          expected = evalExprUnsafe mempty "(\\a -> \\b -> a == b : Int -> Int -> Bool)"
 
       fmap simplify (createTypeclassDict typecheckEnv constraints)
         `shouldBe` simplify <$> expected
 
     it "Tuple for two constraints" $ do
       let constraints = NE.fromList [Constraint "Eq" [tyInt], Constraint "Eq" [tyInt]]
-          expected = evalExprUnsafe mempty "((\\a1 -> \\b2 -> a1 == b2 : Int -> Int -> Bool), (\\a1 -> \\b2 -> a1 == b2 : Int -> Int -> Bool))"
+          expected = evalExprUnsafe mempty "((\\a -> \\b -> a == b : Int -> Int -> Bool), (\\a -> \\b -> a == b : Int -> Int -> Bool))"
 
       fmap simplify (createTypeclassDict typecheckEnv constraints)
         `shouldBe` simplify <$> expected
@@ -284,7 +305,7 @@ spec = do
       ( \(constraints, parts, expectedConstraints, expectedParts) ->
           let input = joinText parts
               expected = joinText expectedParts
-           in it ("Successfully inlined " <> show input) $ do
+           in it ("Successfully converted " <> show input) $ do
                 let (expr, typeclassUses) = getRight $ evalExpr constraints mempty input
                     env = typecheckEnv {tceConstraints = constraints}
 
@@ -333,15 +354,15 @@ spec = do
         ( mempty,
           mempty,
           ["equals (1: Int) (2: Int)"],
-          [ "(\\a1 -> \\b2 -> a1 == b2 : Int -> Int -> Bool) (1 : Int) (2: Int)"
+          [ "(\\a -> \\b -> a == b : Int -> Int -> Bool) (1 : Int) (2: Int)"
           ]
         ),
         ( mempty,
           mempty,
           ["equals ((1: Int), (2: Int)) ((2: Int), (3: Int))"],
-          [ "(\\a1 -> \\b2 -> case (a1,b2) of ((a13, a24), (b15, b26)) ->",
-            "if (\\a1 -> \\b2 -> a1 == b2 : Int -> Int -> Bool) a13 b15 ",
-            "then (\\a1 -> \\b2 -> a1 == b2 : Int -> Int -> Bool) a24 b26",
+          [ "(\\a -> \\b -> case (a,b) of ((a1, a2), (b1, b2)) ->",
+            "if (\\a -> \\b -> a == b : Int -> Int -> Bool) a1 b1 ",
+            "then (\\a -> \\b -> a == b : Int -> Int -> Bool) a2 b2",
             "else False : (Int,Int) -> (Int,Int) -> Bool)",
             "((1: Int), (2: Int)) ((2: Int), (3: Int))"
           ]

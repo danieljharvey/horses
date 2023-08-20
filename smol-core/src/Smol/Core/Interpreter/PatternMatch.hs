@@ -54,7 +54,7 @@ patternMatches (PTuple _ pA pAs) (ETuple _ a as) = do
   pure $ matchA <> mconcat matchAs
 patternMatches (PLiteral _ pB) (EPrim _ b)
   | pB == b = pure mempty
-patternMatches (PConstructor _ _pTyCon []) (EConstructor _ _tyCon) =
+patternMatches (PConstructor _ pTyCon []) (EConstructor _ tyCon) | pTyCon == tyCon = do
   pure mempty
 patternMatches (PConstructor _ pTyCon pArgs) (EApp ann fn val) = do
   (tyCon, args) <- consAppToPattern (EApp ann fn val)

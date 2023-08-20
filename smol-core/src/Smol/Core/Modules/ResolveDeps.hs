@@ -7,7 +7,7 @@
 module Smol.Core.Modules.ResolveDeps
   ( resolveModuleDeps,
     resolveExprDeps,
-    resolveTypeclass
+    resolveTypeclass,
   )
 where
 
@@ -65,8 +65,14 @@ resolveModuleDeps typeclassMethods parsedModule = do
         DTExpr <$> resolveTopLevelExpression expr typeclassMethods defIds (allConstructors parsedModule)
       resolveIt (DTInstance inst, defIds, _entities) = do
         resolvedExpr <- resolveExpr (inExpr inst) typeclassMethods defIds (allConstructors parsedModule)
-        pure (DTInstance (Instance {inConstraints = resolveConstraint <$> inConstraints inst,
-            inExpr = resolvedExpr}))
+        pure
+          ( DTInstance
+              ( Instance
+                  { inConstraints = resolveConstraint <$> inConstraints inst,
+                    inExpr = resolvedExpr
+                  }
+              )
+          )
 
   resolvedMap <- evalStateT (traverse resolveIt map') (ResolveState 0)
 
@@ -95,10 +101,9 @@ resolveModuleDeps typeclassMethods parsedModule = do
           resolvedMap
 
       dependencies =
-          M.fromList $
-              (\(k,(_, b, _)) -> (resolveDefIdentifier k, S.map resolveDefIdentifier b)) <$>
-                  M.toList map'
-
+        M.fromList $
+          (\(k, (_, b, _)) -> (resolveDefIdentifier k, S.map resolveDefIdentifier b))
+            <$> M.toList map'
    in pure
         ( Module
             { moExpressions = resolvedExpressions,
@@ -124,10 +129,13 @@ resolveDefIdentifier (DIType ty) = DIType ty
 resolveDefIdentifier (DIInstance inst) = DIInstance (resolveConstraint inst)
 
 resolveTypeclass :: Typeclass ParseDep ann -> Typeclass ResolvedDep ann
-resolveTypeclass (Typeclass {tcName,tcArgs,tcFuncName,tcFuncType} )
-  = Typeclass {
-    tcName, tcArgs, tcFuncName, tcFuncType = resolveType tcFuncType
-              }
+resolveTypeclass (Typeclass {tcName, tcArgs, tcFuncName, tcFuncType}) =
+  Typeclass
+    { tcName,
+      tcArgs,
+      tcFuncName,
+      tcFuncType = resolveType tcFuncType
+    }
 
 resolveDataType :: DataType ParseDep ann -> DataType ResolvedDep ann
 resolveDataType (DataType {dtName, dtVars, dtConstructors}) =
@@ -137,8 +145,8 @@ resolveDataType (DataType {dtName, dtVars, dtConstructors}) =
       resolveType <$> tys
 
 resolveConstraint :: Constraint ParseDep ann -> Constraint ResolvedDep ann
-resolveConstraint (Constraint tcn tys)
-  = Constraint tcn (resolveType <$> tys)
+resolveConstraint (Constraint tcn tys) =
+  Constraint tcn (resolveType <$> tys)
 
 resolveType :: Type ParseDep ann -> Type ResolvedDep ann
 resolveType (TVar ann (ParseDep v _)) = TVar ann (LocalDefinition v)

@@ -63,14 +63,14 @@ addModulePart allParts part mod' =
     ModuleClass tc ->
       -- TODO: check duplicates and explode
       pure $ mod' {moClasses = M.singleton (tcName tc) tc <> moClasses mod'}
-    ModuleInstance constraint expr ->
+    ModuleInstance constraints constraint expr ->
       pure $
         mod'
           { moInstances =
               M.singleton
                 (void constraint)
                 ( Instance
-                    { inConstraints = mempty,
+                    { inConstraints = constraints,
                       inExpr = expr
                     }
                 )

@@ -6,6 +6,7 @@ module Smol.Core.Typecheck.Typeclass.Helpers
     constraintsFromTLE,
     lookupTypeclassConstraint,
     lookupTypeclassInstance,
+    matchType,
     lookupTypeclass,
     instanceMatchesType,
     isConcrete,
@@ -24,7 +25,7 @@ import qualified Data.List.NonEmpty as NE
 import qualified Data.Map.Strict as M
 import Data.Maybe (listToMaybe, mapMaybe)
 import Data.Monoid
-import Smol.Core.Helpers (mapKey)
+import Smol.Core.Helpers
 import Smol.Core.Modules.Types
 import Smol.Core.TypeUtils
 import Smol.Core.Typecheck.Shared
@@ -36,8 +37,10 @@ import Smol.Core.Types
 
 -- this just chucks types in any order and will break on multi-parameter type
 -- classes
-recoverTypeclassUses :: (Monoid ann) =>
-    [TCWrite ann] -> M.Map (ResolvedDep Identifier) (Constraint ResolvedDep ann)
+recoverTypeclassUses ::
+  (Monoid ann) =>
+  [TCWrite ann] ->
+  M.Map (ResolvedDep Identifier) (Constraint ResolvedDep ann)
 recoverTypeclassUses events =
   let allSubs = filterSubstitutions events
       allTCs = filterTypeclassUses events
@@ -50,7 +53,9 @@ recoverTypeclassUses events =
    in mconcat $ toConstraint . fixTC <$> allTCs
 
 -- thing we're matching, typeclass we're checking
+-- pretty sure this is still incomplete
 matchType ::
+  (Eq (dep TypeName)) =>
   Type dep ann ->
   Type dep ann ->
   Either
@@ -62,9 +67,18 @@ matchType (TTuple _ a as) (TTuple _ b bs) = do
   match <- matchType a b
   matches <- zipWithM matchType (NE.toList as) (NE.toList bs)
   pure (match <> mconcat matches)
+matchType (TConstructor _ conA) (TConstructor _ conB) | conA == conB = do
+  pure mempty
+matchType (TApp _ lFn lArg) (TApp _ rFn rArg) = do
+  matchA <- matchType lFn rFn
+  matchB <- matchType lArg rArg
+  pure (matchA <> matchB)
+matchType (TArray _ _ a) (TArray _ _ b) =
+  matchType a b
 matchType a b = Left (a, b)
 
 instanceMatchesType ::
+  (Eq (dep TypeName)) =>
   [Type dep ann] ->
   [Type dep ann] ->
   Either

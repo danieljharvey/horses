@@ -101,9 +101,10 @@ parseTest = do
 parseInstance :: Parser (ModuleItem Annotation)
 parseInstance = do
   myString "instance"
-  constraint <- constraintParser
+  constraints <- try typeConstraintParser <|> pure mempty
+  mainConstraint <- constraintParser
   myString "="
-  ModuleInstance constraint <$> expressionParser
+  ModuleInstance constraints mainConstraint <$> expressionParser
 
 parseClass :: Parser (ModuleItem Annotation)
 parseClass = do

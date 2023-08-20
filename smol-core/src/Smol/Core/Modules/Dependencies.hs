@@ -118,8 +118,11 @@ getTypeDependencies mod' dt = do
   pure (DTData dt, typeDefIds <> exprDefIds, allUses)
 
 getTypeUses ::
-  (MonadError ResolveDepsError m, Ord (dep Constructor), Ord (dep TypeName),
-    Ord (dep Identifier)) =>
+  ( MonadError ResolveDepsError m,
+    Ord (dep Constructor),
+    Ord (dep TypeName),
+    Ord (dep Identifier)
+  ) =>
   Module dep ann ->
   Set E.Entity ->
   m (Set (DefIdentifier dep))
@@ -164,8 +167,11 @@ findTypesForConstructors mod' =
   S.fromList . mapMaybe (findTypenameInModule mod') . S.toList
 
 getConstructorUses ::
-  (MonadError ResolveDepsError m, Ord (dep Constructor), Ord (dep Identifier),
-    Ord (dep TypeName)) =>
+  ( MonadError ResolveDepsError m,
+    Ord (dep Constructor),
+    Ord (dep Identifier),
+    Ord (dep TypeName)
+  ) =>
   Module dep ann ->
   Set E.Entity ->
   m (Set (DefIdentifier dep))
@@ -189,7 +195,7 @@ getConstructorUses mod' uses = do
         else throwError (CannotFindTypes unknownTypeDeps)
 
 getExprDependencies ::
-  (MonadError ResolveDepsError m, Ord (dep Constructor), Ord (dep TypeName),Ord (dep Identifier)) =>
+  (MonadError ResolveDepsError m, Ord (dep Constructor), Ord (dep TypeName), Ord (dep Identifier)) =>
   (Expr dep ann -> Set E.Entity) ->
   Module dep ann ->
   TopLevelExpression dep ann ->
@@ -202,8 +208,7 @@ getExprDependencies getUses mod' expr = do
   pure (DTExpr expr, exprDefIds <> typeDefIds <> consDefIds, allUses)
 
 getInstanceDependencies ::
-  (MonadError ResolveDepsError m, Ord (dep Constructor), Ord (dep TypeName),Ord (dep Identifier)) =>
-
+  (MonadError ResolveDepsError m, Ord (dep Constructor), Ord (dep TypeName), Ord (dep Identifier)) =>
   (Expr dep ann -> Set E.Entity) ->
   Module dep ann ->
   Instance dep ann ->
