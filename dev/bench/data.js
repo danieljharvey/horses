@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1692394373565,
+  "lastUpdate": 1692568572179,
   "repoUrl": "https://github.com/danieljharvey/mimsa",
   "entries": {
     "Store benchmarks in Github Pages": [
@@ -2855,6 +2855,50 @@ window.BENCHMARK_DATA = {
           {
             "name": "evaluate/evaluate parsing 2",
             "value": 0.22926319797143152,
+            "unit": "Time (ms)"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "danieljamesharvey@gmail.com",
+            "name": "Daniel Harvey",
+            "username": "danieljharvey"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "154af97c7c6efa163d3f66088fb7d45609b48a8d",
+          "message": "Instances should track dependencies like expressions do (#1007)\n\n* Put dep back into Instance\r\n\r\n* Thread dep everywhere, oh no\r\n\r\n* Nice, just fix the tests and the weird bug now\r\n\r\n* Yeah\r\n\r\n* Link fixes\r\n\r\n* Yesh",
+          "timestamp": "2023-08-20T22:51:38+01:00",
+          "tree_id": "a56a764397a241dcb71486fffced0da24a1e3e8b",
+          "url": "https://github.com/danieljharvey/mimsa/commit/154af97c7c6efa163d3f66088fb7d45609b48a8d"
+        },
+        "date": 1692568571383,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "build stdlib/allFns",
+            "value": 0.12242773686904826,
+            "unit": "Time (ms)"
+          },
+          {
+            "name": "evaluate/evaluate big looping thing",
+            "value": 0.11369311939999883,
+            "unit": "Time (ms)"
+          },
+          {
+            "name": "evaluate/evaluate parsing",
+            "value": 0.036427021217648604,
+            "unit": "Time (ms)"
+          },
+          {
+            "name": "evaluate/evaluate parsing 2",
+            "value": 0.26103088799999913,
             "unit": "Time (ms)"
           }
         ]
