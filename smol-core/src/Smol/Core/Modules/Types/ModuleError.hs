@@ -57,10 +57,8 @@ data ModuleError ann
   | CannotFindValues (Set Identifier)
   | CannotFindConstructors (Set Constructor)
   | ErrorInResolveDeps ResolveDepsError
-  | DefDoesNotTypeCheck Text DefIdentifier (TCError ann)
+  | DefDoesNotTypeCheck Text (DefIdentifier ResolvedDep) (TCError ann)
   | NamedImportNotFound (Set ModuleName) ModuleName
-  | DefMissingReturnType DefIdentifier
-  | DefMissingTypeAnnotation DefIdentifier Identifier
   | EmptyTestName Identifier
   | ErrorInTest TestName (TestError ann)
   | ErrorInInterpreter (InterpreterError ann)

@@ -42,12 +42,12 @@ import Smol.Core.Types.TypeName
 -- TODO: add more annotations to everything so we can produce clearer errors
 -- when things don't make sense (duplicate defs etc)
 data ModuleItem ann
-  = ModuleExpression Identifier [Identifier] (ParsedExpr ann)
-  | ModuleExpressionType Identifier [Constraint ann] (Type ParseDep ann)
+  = ModuleExpression Identifier [Identifier] (Expr ParseDep ann)
+  | ModuleExpressionType Identifier [Constraint ParseDep ann] (Type ParseDep ann)
   | ModuleDataType (DataType ParseDep ann)
   | ModuleTest TestName Identifier
-  | ModuleInstance (Constraint ann) (ParsedExpr ann)
-  | ModuleClass (Typeclass ann)
+  | ModuleInstance [Constraint ParseDep ann] (Constraint ParseDep ann) (Expr ParseDep ann)
+  | ModuleClass (Typeclass ParseDep ann)
   deriving stock (Eq, Ord, Functor)
 
 deriving stock instance

@@ -31,7 +31,7 @@ checkModule ::
 checkModule input moduleItems = do
   myModule <- moduleFromModuleParts moduleItems
 
-  let classes = builtInClasses @Annotation <> moClasses myModule
+  let classes = builtInClasses @Annotation <> (resolveTypeclass <$> moClasses myModule)
       typeclassMethods = S.fromList . M.elems . fmap tcFuncName $ classes
 
   (resolvedModule, deps) <-

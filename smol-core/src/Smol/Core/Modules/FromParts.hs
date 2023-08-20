@@ -7,7 +7,6 @@
 module Smol.Core.Modules.FromParts (addModulePart, moduleFromModuleParts, exprAndTypeFromParts) where
 
 import Control.Monad.Except
-import Control.Monad.Identity
 import Data.Coerce
 import Data.Functor (void)
 import qualified Data.Map.Strict as M
@@ -31,9 +30,6 @@ moduleFromModuleParts parts =
         mod' <- output
         addModulePart parts part mod'
    in foldr addPart (pure mempty) parts
-
-identityFromParseDep :: Expr ParseDep ann -> Expr Identity ann
-identityFromParseDep = mapExprDep (Identity . pdIdentifier)
 
 addModulePart ::
   (MonadError (ModuleError ann) m, Monoid ann) =>
@@ -67,15 +63,15 @@ addModulePart allParts part mod' =
     ModuleClass tc ->
       -- TODO: check duplicates and explode
       pure $ mod' {moClasses = M.singleton (tcName tc) tc <> moClasses mod'}
-    ModuleInstance constraint expr ->
+    ModuleInstance constraints constraint expr ->
       pure $
         mod'
           { moInstances =
               M.singleton
                 (void constraint)
                 ( Instance
-                    { inConstraints = mempty,
-                      inExpr = identityFromParseDep expr
+                    { inConstraints = constraints,
+                      inExpr = expr
                     }
                 )
                 <> moInstances mod'
@@ -135,7 +131,7 @@ findExpression ident moduleItems =
 expressionExists :: (Monoid ann) => Identifier -> [ModuleItem ann] -> Bool
 expressionExists ident moduleItems = isJust (findExpression ident moduleItems)
 
-findTypeExpression :: Identifier -> [ModuleItem ann] -> Maybe ([Constraint ann], Type ParseDep ann)
+findTypeExpression :: Identifier -> [ModuleItem ann] -> Maybe ([Constraint ParseDep ann], Type ParseDep ann)
 findTypeExpression ident moduleItems =
   case mapMaybe
     ( \case

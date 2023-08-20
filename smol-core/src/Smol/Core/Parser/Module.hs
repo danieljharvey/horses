@@ -6,11 +6,9 @@ module Smol.Core.Parser.Module
   )
 where
 
-import Control.Monad.Identity
 import qualified Data.List.NonEmpty as NE
 import Data.Text (Text)
 import Data.Void
-import Smol.Core.ExprUtils
 import Smol.Core.Modules.Types.ModuleItem
 import Smol.Core.Parser.DataType (dataTypeParser)
 import Smol.Core.Parser.Expr
@@ -83,7 +81,7 @@ moduleTypeDefinitionParser = do
   constraints <- try typeConstraintParser <|> pure mempty
   ModuleExpressionType name constraints <$> typeParser
 
-typeConstraintParser :: Parser [Constraint Annotation]
+typeConstraintParser :: Parser [Constraint ParseDep Annotation]
 typeConstraintParser = do
   myString "("
   constraints <- commaSep constraintParser
@@ -103,9 +101,10 @@ parseTest = do
 parseInstance :: Parser (ModuleItem Annotation)
 parseInstance = do
   myString "instance"
-  constraint <- constraintParser
+  constraints <- try typeConstraintParser <|> pure mempty
+  mainConstraint <- constraintParser
   myString "="
-  ModuleInstance constraint <$> expressionParser
+  ModuleInstance constraints mainConstraint <$> expressionParser
 
 parseClass :: Parser (ModuleItem Annotation)
 parseClass = do
@@ -117,8 +116,7 @@ parseClass = do
   myString "{"
   fnName <- identifierParser
   myString ":"
-  let resolve (ParseDep a _) = Identity a
-  ty <- mapTypeDep resolve <$> typeParser
+  ty <- typeParser
   myString "}"
 
   pure $

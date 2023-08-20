@@ -1,11 +1,8 @@
 {-# LANGUAGE FlexibleContexts #-}
-{-# LANGUAGE NamedFieldPuns #-}
 {-# LANGUAGE OverloadedStrings #-}
 
 module Smol.Core.Typecheck.Typeclass
   ( checkInstance,
-    resolveType,
-    toIdentityExpr,
     lookupInstanceAndCheck,
     convertExprToUseTypeclassDictionary,
     getTypeclassMethodNames,
@@ -19,16 +16,13 @@ where
 
 import Control.Monad
 import Control.Monad.Except
-import Control.Monad.Identity
 import Data.Functor
 import Data.List (elemIndex)
 import qualified Data.List.NonEmpty as NE
 import qualified Data.Map.Strict as M
-import Data.Maybe (mapMaybe)
 import qualified Data.Set as S
 import Smol.Core.ExprUtils
 import Smol.Core.Helpers
-import Smol.Core.Modules.ResolveDeps
 import Smol.Core.Typecheck.Shared
 import Smol.Core.Typecheck.Substitute
 import Smol.Core.Typecheck.Typecheck (typecheck)
@@ -37,30 +31,13 @@ import Smol.Core.Typecheck.Typeclass.Helpers
 import Smol.Core.Typecheck.Types
 import Smol.Core.Types
 
-toParseExpr :: Expr Identity ann -> Expr ParseDep ann
-toParseExpr = mapExprDep resolve
-  where
-    resolve (Identity a) = emptyParseDep a
-
-toIdentityExpr :: Expr ResolvedDep ann -> Expr Identity ann
-toIdentityExpr = mapExprDep resolve
-  where
-    resolve (LocalDefinition a) = Identity a
-    resolve (UniqueDefinition a _) = Identity a
-    resolve (TypeclassCall a _) = Identity a
-
-resolveType :: Type Identity ann -> Type ResolvedDep ann
-resolveType = mapTypeDep resolve
-  where
-    resolve (Identity a) = emptyResolvedDep a
-
 lookupInstanceAndCheck ::
   (Ord ann, Monoid ann, Show ann, MonadError (TCError ann) m) =>
   TCEnv ann ->
-  Constraint ann ->
+  Constraint ResolvedDep ann ->
   m
     ( Identifier,
-      [Constraint ann],
+      [Constraint ResolvedDep ann],
       Expr ResolvedDep (Type ResolvedDep ann)
     )
 lookupInstanceAndCheck env tch@(Constraint typeclassName _) = do
@@ -70,11 +47,14 @@ lookupInstanceAndCheck env tch@(Constraint typeclassName _) = do
     Nothing -> error "fuck"
   checkInstance env typeclass tch tcInstance
 
-applyConstraintTypes :: Typeclass ann -> Constraint ann -> Type Identity ann
+applyConstraintTypes ::
+  Typeclass ResolvedDep ann ->
+  Constraint ResolvedDep ann ->
+  Type ResolvedDep ann
 applyConstraintTypes (Typeclass _ args _ ty) (Constraint _ tys) =
   let subs =
         ( \(ident, tySub) ->
-            Substitution (SubId $ Identity ident) tySub
+            Substitution (SubId $ LocalDefinition ident) tySub
         )
           <$> zip args tys
    in substituteMany subs ty
@@ -82,37 +62,22 @@ applyConstraintTypes (Typeclass _ args _ ty) (Constraint _ tys) =
 checkInstance ::
   (MonadError (TCError ann) m, Monoid ann, Ord ann, Show ann) =>
   TCEnv ann ->
-  Typeclass ann ->
-  Constraint ann ->
-  Instance ann ->
-  m (Identifier, [Constraint ann], Expr ResolvedDep (Type ResolvedDep ann))
+  Typeclass ResolvedDep ann ->
+  Constraint ResolvedDep ann ->
+  Instance ResolvedDep ann ->
+  m (Identifier, [Constraint ResolvedDep ann], Expr ResolvedDep (Type ResolvedDep ann))
 checkInstance tcEnv typeclass constraint (Instance constraints expr) =
   do
     let subbedType = applyConstraintTypes typeclass constraint
         funcName = tcFuncName typeclass
 
-    let -- we add the instance's constraints (so typechecker forgives a missing `Eq a` etc)
-        typecheckEnv = tcEnv {tceConstraints = constraints}
-
+    -- we add the instance's constraints (so typechecker forgives a missing `Eq a` etc)
+    let typecheckEnv = tcEnv {tceConstraints = constraints}
         annotatedExpr = EAnn (getExprAnnotation expr) subbedType expr
 
-        -- let's get all the method names from the Typeclasses
-        -- mentioned in the instance constraints
-        typeclassMethodNames =
-          S.fromList $
-            mapMaybe
-              ( \(Constraint tcn _) -> case M.lookup tcn (tceClasses tcEnv) of
-                  Just (Typeclass {tcFuncName}) -> Just tcFuncName
-                  _ -> Nothing
-              )
-              constraints
+    (newConstraints, typedExpr) <- typecheck typecheckEnv annotatedExpr
 
-    case resolveExprDeps (toParseExpr annotatedExpr) typeclassMethodNames mempty of
-      Left resolveErr -> error $ "Resolve error: " <> show resolveErr
-      Right resolvedExpr -> do
-        (newConstraints, typedExpr) <- typecheck typecheckEnv resolvedExpr
-
-        pure (funcName, newConstraints, typedExpr)
+    pure (funcName, newConstraints, typedExpr)
 
 -- let's get all the method names from the Typeclasses
 -- mentioned in the instance constraints
@@ -128,7 +93,7 @@ getTypeForDictionary ::
     Monoid ann
   ) =>
   TCEnv ann ->
-  [Constraint ann] ->
+  [Constraint ResolvedDep ann] ->
   m (Maybe (Pattern ResolvedDep (Type ResolvedDep ann)))
 getTypeForDictionary env constraints = do
   let getConstraintPattern constraint i = do
@@ -140,7 +105,7 @@ getTypeForDictionary env constraints = do
           -- we didn't find an instance, but we can get the type from the
           -- constraint
           Left e -> case typeForConstraint env constraint of
-            Just ty -> pure (resolveType ty)
+            Just ty -> pure ty
             Nothing -> throwError e
         pure (PVar ty ident)
   case constraints of
@@ -156,7 +121,7 @@ getTypeForDictionary env constraints = do
 -- them, however for constraints we don't have concrete code yet
 -- however, we can just substitute the types from the Constraint to the Typeclass
 -- to see what type we should get
-typeForConstraint :: TCEnv ann -> Constraint ann -> Maybe (Type Identity ann)
+typeForConstraint :: TCEnv ann -> Constraint ResolvedDep ann -> Maybe (Type ResolvedDep ann)
 typeForConstraint env constraint@(Constraint tcn _) = do
   M.lookup tcn (tceClasses env)
     <&> \typeclass -> applyConstraintTypes typeclass constraint
@@ -167,7 +132,7 @@ typeForConstraint env constraint@(Constraint tcn _) = do
 convertExprToUseTypeclassDictionary ::
   (MonadError (TCError ann) m, Ord ann, Show ann, Monoid ann) =>
   TCEnv ann ->
-  [Constraint ann] ->
+  [Constraint ResolvedDep ann] ->
   Expr ResolvedDep (Type ResolvedDep ann) ->
   m (Expr ResolvedDep (Type ResolvedDep ann))
 convertExprToUseTypeclassDictionary env constraints expr = do
@@ -194,7 +159,7 @@ convertExprToUseTypeclassDictionary env constraints expr = do
 createTypeclassDict ::
   (Show ann, Ord ann, Monoid ann, MonadError (TCError ann) m) =>
   TCEnv ann ->
-  NE.NonEmpty (Constraint ann) ->
+  NE.NonEmpty (Constraint ResolvedDep ann) ->
   m (Expr ResolvedDep (Type ResolvedDep ann))
 createTypeclassDict env constraints = do
   instances <-
@@ -209,7 +174,7 @@ createTypeclassDict env constraints = do
               -- no concrete instance, maybe we can pass through a constraint
               -- from the current function
               case (,) <$> elemIndex constraint (tceConstraints env) <*> typeForConstraint env constraint of
-                Just (index, ty) -> pure (EVar (resolveType ty) (identForConstraint $ fromIntegral index))
+                Just (index, ty) -> pure (EVar ty (identForConstraint $ fromIntegral index))
                 Nothing -> throwError e
       )
       constraints
@@ -219,7 +184,7 @@ createTypeclassDict env constraints = do
       let ty = TTuple mempty (getExprAnnotation theFirst) (getExprAnnotation <$> theRest)
        in pure $ ETuple ty theFirst theRest
 
-filterNotConcrete :: [Constraint ann] -> [Constraint ann]
+filterNotConcrete :: [Constraint ResolvedDep ann] -> [Constraint ResolvedDep ann]
 filterNotConcrete = filter (not . isConcrete)
 
 -- given we know the types of all our deps
@@ -257,7 +222,7 @@ passDictionaries env =
 toDictionaryPassing ::
   (MonadError (TCError ann) m, Show ann, Ord ann, Monoid ann) =>
   TCEnv ann ->
-  [Constraint ann] ->
+  [Constraint ResolvedDep ann] ->
   Expr ResolvedDep (Type ResolvedDep ann) ->
   m (Expr ResolvedDep (Type ResolvedDep ann))
 toDictionaryPassing env constraints expr = do

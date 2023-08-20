@@ -6,7 +6,6 @@ module Smol.Core.Typecheck.Types.TCError
   )
 where
 
-import Control.Monad.Identity
 import Data.Set (Set)
 import Smol.Core.Typecheck.Typeclass.Types
 import Smol.Core.Types
@@ -29,6 +28,6 @@ data TCError ann
   | TCCompoundTypeInEquality (ResolvedType ann) -- for now we only do primitive equality
   | TCPatternMatchError (PatternMatchError (ResolvedType ann))
   | TCTypeclassNotFound TypeclassName
-  | TCTypeclassInstanceNotFound TypeclassName [Type Identity ann] [Constraint ann]
-  | TCConflictingTypeclassInstancesFound [Constraint ann]
+  | TCTypeclassInstanceNotFound TypeclassName [Type ResolvedDep ann] [Constraint ResolvedDep ann]
+  | TCConflictingTypeclassInstancesFound [Constraint ResolvedDep ann]
   deriving stock (Eq, Ord, Show, Foldable)

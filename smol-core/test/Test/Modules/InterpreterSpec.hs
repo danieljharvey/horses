@@ -101,17 +101,27 @@ spec = do
                   "def main = equals (mappend (20 : Int) (22 : Int)) (42 : Int)"
                 ],
                 "True"
-              )
-              {-
-                  -- next we need to work out the dependencies of our typeclass
-                  -- functions
-              ( ["type Pet = Dog | Cat | Rat",
-                  "instance Eq Pet = \\a -> \\b -> case (a,b) of (Dog,Dog) -> True | (Cat, Cat) -> True | (Rat,Rat) -> True | _ -> False",
+              ),
+              ( [ "type Pet = Dog | Cat | Rat",
                   "def main : Bool",
-                  "def main = equals Dog Cat"],
+                  "def main = case (Cat,Rat) of (Dog, Dog) -> True | (Cat, Cat) -> True | (Rat, Rat) -> True | _ -> False"
+                ],
+                "False"
+              ),
+              ( [ "type Pet = Dog | Cat | Rat",
+                  "instance Eq Pet = \\a -> \\b -> case (a,b) of (Dog, Dog) -> True | (Cat, Cat) -> True | (Rat, Rat) -> True | _ -> False",
+                  "def main : Bool",
+                  "def main = equals Dog Rat"
+                ],
+                "False"
+              ) {-,
+                ( [ "type Maybe a = Just a | Nothing",
+                    "instance (Eq a) => Eq (Maybe a) = \\ma -> \\mb -> case (ma, mb) of (Just a, Just b) -> equals a b | (Nothing, Nothing) -> True | _ -> False",
+                    "def main : Bool",
+                    "def main = equals (Just (1: Int)) Nothing"
+                  ],
                   "False"
-
-              ) -}
+                )-}
             ]
       traverse_
         ( \(parts, expect) ->

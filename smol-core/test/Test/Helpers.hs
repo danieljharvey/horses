@@ -38,7 +38,6 @@ module Test.Helpers
   )
 where
 
-import Control.Monad.Identity
 import Control.Monad.Reader
 import Control.Monad.State
 import Control.Monad.Writer
@@ -193,15 +192,10 @@ runTypecheckM env action =
 
 ------
 
-tcVar :: (Monoid ann) => Identifier -> Type Identity ann
-tcVar = TVar mempty . Identity
+tcVar :: (Monoid ann) => Identifier -> Type ResolvedDep ann
+tcVar = TVar mempty . LocalDefinition
 
-identityFromParsedExpr :: Expr ParseDep ann -> Expr Identity ann
-identityFromParsedExpr = mapExprDep resolve
-  where
-    resolve (ParseDep a _) = Identity a
-
-showTypeclass :: (Monoid ann) => Typeclass ann
+showTypeclass :: (Monoid ann) => Typeclass ResolvedDep ann
 showTypeclass =
   Typeclass
     { tcName = "Show",
@@ -210,7 +204,7 @@ showTypeclass =
       tcFuncType = tyFunc (tcVar "a") tyString
     }
 
-eqTypeclass :: (Monoid ann) => Typeclass ann
+eqTypeclass :: (Monoid ann) => Typeclass ResolvedDep ann
 eqTypeclass =
   Typeclass
     { tcName = "Eq",
@@ -219,18 +213,18 @@ eqTypeclass =
       tcFuncType = tyFunc (tcVar "a") (tyFunc (tcVar "a") tyBool)
     }
 
-classes :: (Monoid ann) => M.Map TypeclassName (Typeclass ann)
+classes :: (Monoid ann) => M.Map TypeclassName (Typeclass ResolvedDep ann)
 classes =
   M.fromList
     [ ("Eq", eqTypeclass),
       ("Show", showTypeclass)
     ]
 
-unsafeParseInstanceExpr :: (Monoid ann) => Text -> Expr Identity ann
+unsafeParseInstanceExpr :: (Monoid ann) => Text -> Expr ResolvedDep ann
 unsafeParseInstanceExpr =
-  fmap (const mempty) . identityFromParsedExpr . unsafeParseExpr
+  fmap (const mempty) . fromParsedExpr . unsafeParseExpr
 
-instances :: (Ord ann, Monoid ann) => M.Map (Constraint ann) (Instance ann)
+instances :: (Ord ann, Monoid ann) => M.Map (Constraint ResolvedDep ann) (Instance ResolvedDep ann)
 instances =
   M.fromList
     [ ( Constraint "Eq" [tyInt],

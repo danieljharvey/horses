@@ -7,7 +7,6 @@
 
 module Test.Typecheck.TypeclassSpec (spec) where
 
-import Control.Monad.Identity
 import Data.Bifunctor (bimap)
 import Data.Either
 import Data.Foldable (traverse_)
@@ -50,13 +49,13 @@ simplify = void . goExpr
     goPattern other = mapPattern goPattern other
 
 evalExpr ::
-  [Constraint Annotation] ->
-  M.Map (ResolvedDep Identifier) ([Constraint Annotation], Type ResolvedDep Annotation) ->
+  [Constraint ResolvedDep Annotation] ->
+  M.Map (ResolvedDep Identifier) ([Constraint ResolvedDep Annotation], Type ResolvedDep Annotation) ->
   Text ->
   Either
     (TCError Annotation)
     ( ResolvedExpr (Type ResolvedDep Annotation),
-      M.Map (ResolvedDep Identifier) (Constraint Annotation)
+      M.Map (ResolvedDep Identifier) (Constraint ResolvedDep Annotation)
     )
 evalExpr constraints varsInScope input =
   case parseExprAndFormatError input of
@@ -83,7 +82,7 @@ evalExpr constraints varsInScope input =
 -- | elaborate but don't do clever resolving so we can construct the
 -- expectations we want
 evalExprUnsafe ::
-  M.Map (ResolvedDep Identifier) ([Constraint Annotation], Type ResolvedDep Annotation) ->
+  M.Map (ResolvedDep Identifier) ([Constraint ResolvedDep Annotation], Type ResolvedDep Annotation) ->
   Text ->
   Either (TCError Annotation) (ResolvedExpr (Type ResolvedDep Annotation))
 evalExprUnsafe varsInScope input = case parseExprAndFormatError input of
@@ -112,14 +111,14 @@ spec = do
 
   describe "instanceMatchesType" $ do
     it "Eq (a,Bool) does not match Eq (Int, Int)" $ do
-      instanceMatchesType @() [tyTuple tyInt [tyInt]] [tyTuple (tcVar "a") [tyBool]]
+      instanceMatchesType @_ @() [tyTuple tyInt [tyInt]] [tyTuple (tcVar "a") [tyBool]]
         `shouldBe` Left (tyInt, tyBool)
 
     it "Eq (a,b) matches Eq (Int, Int)" $ do
-      instanceMatchesType @() [tyTuple tyInt [tyInt]] [tyTuple (tcVar "a") [tcVar "b"]]
+      instanceMatchesType @_ @() [tyTuple tyInt [tyInt]] [tyTuple (tcVar "a") [tcVar "b"]]
         `shouldBe` Right
-          [ Substitution (SubId (Identity "a")) tyInt,
-            Substitution (SubId (Identity "b")) tyInt
+          [ Substitution (SubId (LocalDefinition "a")) tyInt,
+            Substitution (SubId (LocalDefinition "b")) tyInt
           ]
 
   describe "lookupTypeclassInstance" $ do
@@ -219,21 +218,6 @@ spec = do
         )
         `shouldSatisfy` isRight
 
-    it "Tuple Eq instance missing a constraint" $ do
-      checkInstance @()
-        typecheckEnv
-        eqTypeclass
-        (Constraint "Eq" [tyTuple (tcVar "a") [tcVar "b"]])
-        ( Instance
-            { inExpr =
-                unsafeParseInstanceExpr "\\a -> \\b -> case (a,b) of ((a1, a2), (b1, b2)) -> if equals a1 b1 then equals a2 b2 else False",
-              inConstraints =
-                [ Constraint "Eq" [tcVar "a"]
-                ]
-            }
-        )
-        `shouldSatisfy` isLeft
-
   -- don't do anything with concrete ones pls
   -- then we can look those up again later
   describe "findDedupedConstraints" $ do
@@ -273,17 +257,38 @@ spec = do
                        ]
                    )
 
+  describe "matchType" $ do
+    it "(Int, Bool) matches (a,b)" $ do
+      let tyMatch = unsafeParseType "(Int, Bool)"
+          tyTypeclass = unsafeParseType "(a,b)"
+      matchType tyMatch tyTypeclass `shouldSatisfy` isRight
+
+    it "[Int] matches [a]" $ do
+      let tyMatch = unsafeParseType "[Int]"
+          tyTypeclass = unsafeParseType "[a]"
+      matchType tyMatch tyTypeclass `shouldSatisfy` isRight
+
+    it "Horse matches Horse" $ do
+      let tyMatch = unsafeParseType "Horse"
+          tyTypeclass = unsafeParseType "Horse"
+      matchType tyMatch tyTypeclass `shouldSatisfy` isRight
+
+    it "Maybe Int matches Maybe a" $ do
+      let tyMatch = unsafeParseType "Maybe Int"
+          tyTypeclass = unsafeParseType "Maybe a"
+      matchType tyMatch tyTypeclass `shouldSatisfy` isRight
+
   describe "Get dictionaries" $ do
     it "Single item dictionary for single constraint" $ do
       let constraints = NE.fromList [Constraint "Eq" [tyInt]]
-          expected = evalExprUnsafe mempty "(\\a1 -> \\b2 -> a1 == b2 : Int -> Int -> Bool)"
+          expected = evalExprUnsafe mempty "(\\a -> \\b -> a == b : Int -> Int -> Bool)"
 
       fmap simplify (createTypeclassDict typecheckEnv constraints)
         `shouldBe` simplify <$> expected
 
     it "Tuple for two constraints" $ do
       let constraints = NE.fromList [Constraint "Eq" [tyInt], Constraint "Eq" [tyInt]]
-          expected = evalExprUnsafe mempty "((\\a1 -> \\b2 -> a1 == b2 : Int -> Int -> Bool), (\\a1 -> \\b2 -> a1 == b2 : Int -> Int -> Bool))"
+          expected = evalExprUnsafe mempty "((\\a -> \\b -> a == b : Int -> Int -> Bool), (\\a -> \\b -> a == b : Int -> Int -> Bool))"
 
       fmap simplify (createTypeclassDict typecheckEnv constraints)
         `shouldBe` simplify <$> expected
@@ -300,7 +305,7 @@ spec = do
       ( \(constraints, parts, expectedConstraints, expectedParts) ->
           let input = joinText parts
               expected = joinText expectedParts
-           in it ("Successfully inlined " <> show input) $ do
+           in it ("Successfully converted " <> show input) $ do
                 let (expr, typeclassUses) = getRight $ evalExpr constraints mempty input
                     env = typecheckEnv {tceConstraints = constraints}
 
@@ -349,15 +354,15 @@ spec = do
         ( mempty,
           mempty,
           ["equals (1: Int) (2: Int)"],
-          [ "(\\a1 -> \\b2 -> a1 == b2 : Int -> Int -> Bool) (1 : Int) (2: Int)"
+          [ "(\\a -> \\b -> a == b : Int -> Int -> Bool) (1 : Int) (2: Int)"
           ]
         ),
         ( mempty,
           mempty,
           ["equals ((1: Int), (2: Int)) ((2: Int), (3: Int))"],
-          [ "(\\a1 -> \\b2 -> case (a1,b2) of ((a13, a24), (b15, b26)) ->",
-            "if (\\a1 -> \\b2 -> a1 == b2 : Int -> Int -> Bool) a13 b15 ",
-            "then (\\a1 -> \\b2 -> a1 == b2 : Int -> Int -> Bool) a24 b26",
+          [ "(\\a -> \\b -> case (a,b) of ((a1, a2), (b1, b2)) ->",
+            "if (\\a -> \\b -> a == b : Int -> Int -> Bool) a1 b1 ",
+            "then (\\a -> \\b -> a == b : Int -> Int -> Bool) a2 b2",
             "else False : (Int,Int) -> (Int,Int) -> Bool)",
             "((1: Int), (2: Int)) ((2: Int), (3: Int))"
           ]

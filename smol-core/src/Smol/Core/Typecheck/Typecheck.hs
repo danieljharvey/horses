@@ -17,7 +17,7 @@ typecheck ::
   (MonadError (TCError ann) m, Monoid ann, Show ann, Ord ann) =>
   TCEnv ann ->
   ResolvedExpr ann ->
-  m ([Constraint ann], ResolvedExpr (ResolvedType ann))
+  m ([Constraint ResolvedDep ann], ResolvedExpr (ResolvedType ann))
 typecheck env expr = do
   (typedExpr, typeclassUses) <- elaborate env expr
 

@@ -32,7 +32,7 @@ spec = do
                 Constraint "Eq" [tyInt]
               ),
               ( "Eq (a,b)",
-                Constraint "Eq" [tyTuple (tcVar "a") [tcVar "b"]]
+                Constraint "Eq" [tyTuple (tyVar "a") [tyVar "b"]]
               )
             ]
       traverse_
@@ -53,7 +53,8 @@ spec = do
               "test \"one plus one equals two\" using onePlusOneEqualsTwo",
               "def usesEquals : (Eq (a,b)) => (a,b) -> (a,b) -> Bool",
               "class Eq a { equals: a -> a -> Bool }",
-              "instance Eq Int = eqInt"
+              "instance Eq Int = eqInt",
+              "instance (Eq a) => Eq (Maybe a) = eqMaybeA"
             ]
 
       it "All defs" $ do
