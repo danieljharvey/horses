@@ -121,6 +121,8 @@ library
     Smol.Core.Typecheck.Typeclass.Deduplicate
     Smol.Core.Typecheck.Typeclass.Helpers
     Smol.Core.Typecheck.Typeclass.Types
+    Smol.Core.Typecheck.Typeclass.Types.Constraint
+    Smol.Core.Typecheck.Typeclass.Types.Instance
     Smol.Core.Typecheck.Typeclass.Types.TypeclassName
     Smol.Core.Typecheck.Types
     Smol.Core.Typecheck.Types.Substitution
