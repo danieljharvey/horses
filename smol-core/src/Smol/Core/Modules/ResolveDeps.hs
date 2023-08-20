@@ -7,6 +7,7 @@
 module Smol.Core.Modules.ResolveDeps
   ( resolveModuleDeps,
     resolveExprDeps,
+    resolveTypeclass
   )
 where
 
@@ -93,7 +94,11 @@ resolveModuleDeps typeclassMethods parsedModule = do
           )
           resolvedMap
 
-      dependencies = (\(_, b, _) -> b) <$> map'
+      dependencies =
+          M.fromList $
+              (\(k,(_, b, _)) -> (resolveDefIdentifier k, S.map resolveDefIdentifier b)) <$>
+                  M.toList map'
+
    in pure
         ( Module
             { moExpressions = resolvedExpressions,
@@ -102,7 +107,7 @@ resolveModuleDeps typeclassMethods parsedModule = do
               moInstances = M.mapKeys resolveConstraint resolvedInstances,
               moClasses = resolveTypeclass <$> moClasses parsedModule
             },
-          dependencies -- TODO: need to resolve the DefIdentifiers here
+          dependencies
         )
 
 mapMaybeWithKey :: (Ord k2) => (k -> a -> Maybe (k2, b)) -> Map k a -> Map k2 b
@@ -112,11 +117,17 @@ allConstructors :: Module dep ann -> Set Constructor
 allConstructors Module {moDataTypes} =
   foldMap (\(DataType {dtConstructors}) -> M.keysSet dtConstructors) moDataTypes
 
-
+resolveDefIdentifier :: DefIdentifier ParseDep -> DefIdentifier ResolvedDep
+resolveDefIdentifier (DIName name) = DIName name
+resolveDefIdentifier (DITest test) = DITest test
+resolveDefIdentifier (DIType ty) = DIType ty
+resolveDefIdentifier (DIInstance inst) = DIInstance (resolveConstraint inst)
 
 resolveTypeclass :: Typeclass ParseDep ann -> Typeclass ResolvedDep ann
-resolveTypeclass (Typeclass {} )
-  = Typeclass {}
+resolveTypeclass (Typeclass {tcName,tcArgs,tcFuncName,tcFuncType} )
+  = Typeclass {
+    tcName, tcArgs, tcFuncName, tcFuncType = resolveType tcFuncType
+              }
 
 resolveDataType :: DataType ParseDep ann -> DataType ResolvedDep ann
 resolveDataType (DataType {dtName, dtVars, dtConstructors}) =

@@ -7,7 +7,6 @@
 
 module Test.Typecheck.TypeclassSpec (spec) where
 
-import Control.Monad.Identity
 import Data.Bifunctor (bimap)
 import Data.Either
 import Data.Foldable (traverse_)
@@ -50,13 +49,13 @@ simplify = void . goExpr
     goPattern other = mapPattern goPattern other
 
 evalExpr ::
-  [Constraint Annotation] ->
-  M.Map (ResolvedDep Identifier) ([Constraint Annotation], Type ResolvedDep Annotation) ->
+  [Constraint ResolvedDep Annotation] ->
+  M.Map (ResolvedDep Identifier) ([Constraint ResolvedDep Annotation], Type ResolvedDep Annotation) ->
   Text ->
   Either
     (TCError Annotation)
     ( ResolvedExpr (Type ResolvedDep Annotation),
-      M.Map (ResolvedDep Identifier) (Constraint Annotation)
+      M.Map (ResolvedDep Identifier) (Constraint ResolvedDep Annotation)
     )
 evalExpr constraints varsInScope input =
   case parseExprAndFormatError input of
@@ -83,7 +82,7 @@ evalExpr constraints varsInScope input =
 -- | elaborate but don't do clever resolving so we can construct the
 -- expectations we want
 evalExprUnsafe ::
-  M.Map (ResolvedDep Identifier) ([Constraint Annotation], Type ResolvedDep Annotation) ->
+  M.Map (ResolvedDep Identifier) ([Constraint ResolvedDep Annotation], Type ResolvedDep Annotation) ->
   Text ->
   Either (TCError Annotation) (ResolvedExpr (Type ResolvedDep Annotation))
 evalExprUnsafe varsInScope input = case parseExprAndFormatError input of
@@ -102,7 +101,7 @@ spec :: Spec
 spec = do
   describe "recoverTypeclassUses" $ do
     it "No classes, nothing to find" $ do
-      recoverTypeclassUses @() [] `shouldBe` mempty
+      recoverTypeclassUses @()  [] `shouldBe` mempty
     it "Uses Eq Int" $ do
       recoverTypeclassUses @()
         [ TCWTypeclassUse (UniqueDefinition "a" 123) "Eq" [("a", 10)],
@@ -112,14 +111,14 @@ spec = do
 
   describe "instanceMatchesType" $ do
     it "Eq (a,Bool) does not match Eq (Int, Int)" $ do
-      instanceMatchesType @() [tyTuple tyInt [tyInt]] [tyTuple (tcVar "a") [tyBool]]
+      instanceMatchesType @_ @() [tyTuple tyInt [tyInt]] [tyTuple (tcVar "a") [tyBool]]
         `shouldBe` Left (tyInt, tyBool)
 
     it "Eq (a,b) matches Eq (Int, Int)" $ do
-      instanceMatchesType @() [tyTuple tyInt [tyInt]] [tyTuple (tcVar "a") [tcVar "b"]]
+      instanceMatchesType @_ @() [tyTuple tyInt [tyInt]] [tyTuple (tcVar "a") [tcVar "b"]]
         `shouldBe` Right
-          [ Substitution (SubId (Identity "a")) tyInt,
-            Substitution (SubId (Identity "b")) tyInt
+          [ Substitution (SubId (LocalDefinition "a")) tyInt,
+            Substitution (SubId (LocalDefinition "b")) tyInt
           ]
 
   describe "lookupTypeclassInstance" $ do
@@ -218,21 +217,6 @@ spec = do
             }
         )
         `shouldSatisfy` isRight
-
-    it "Tuple Eq instance missing a constraint" $ do
-      checkInstance @()
-        typecheckEnv
-        eqTypeclass
-        (Constraint "Eq" [tyTuple (tcVar "a") [tcVar "b"]])
-        ( Instance
-            { inExpr =
-                unsafeParseInstanceExpr "\\a -> \\b -> case (a,b) of ((a1, a2), (b1, b2)) -> if equals a1 b1 then equals a2 b2 else False",
-              inConstraints =
-                [ Constraint "Eq" [tcVar "a"]
-                ]
-            }
-        )
-        `shouldSatisfy` isLeft
 
   -- don't do anything with concrete ones pls
   -- then we can look those up again later

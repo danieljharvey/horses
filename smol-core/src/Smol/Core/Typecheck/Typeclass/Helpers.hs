@@ -36,7 +36,8 @@ import Smol.Core.Types
 
 -- this just chucks types in any order and will break on multi-parameter type
 -- classes
-recoverTypeclassUses :: (Monoid ann) => [TCWrite ann] -> M.Map (ResolvedDep Identifier) (Constraint ResolvedDep ann)
+recoverTypeclassUses :: (Monoid ann) =>
+    [TCWrite ann] -> M.Map (ResolvedDep Identifier) (Constraint ResolvedDep ann)
 recoverTypeclassUses events =
   let allSubs = filterSubstitutions events
       allTCs = filterTypeclassUses events

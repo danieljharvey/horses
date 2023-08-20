@@ -13,7 +13,7 @@ import Smol.Core
 import Smol.Core.Helpers (filterMapKeys)
 import Smol.Core.Modules.Types.DefIdentifier
 
-filterNameDefs :: Map DefIdentifier a -> Map Identifier a
+filterNameDefs :: Map (DefIdentifier dep) a -> Map Identifier a
 filterNameDefs =
   filterMapKeys
     ( \case
@@ -21,7 +21,7 @@ filterNameDefs =
         _ -> Nothing
     )
 
-filterTypeDefs :: Map DefIdentifier a -> Map TypeName a
+filterTypeDefs :: Map (DefIdentifier dep) a -> Map TypeName a
 filterTypeDefs =
   filterMapKeys
     ( \case

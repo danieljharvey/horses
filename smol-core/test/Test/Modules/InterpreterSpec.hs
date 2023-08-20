@@ -103,9 +103,15 @@ spec = do
                 "True"
               ),
               ( [ "type Pet = Dog | Cat | Rat",
-                  "instance Eq Pet = \\a -> \\b -> case (a,b) of (Dog,Dog) -> True | (Cat, Cat) -> True | (Rat,Rat) -> True | _ -> False",
                   "def main : Bool",
-                  "def main = equals Dog Cat"
+                  "def main = let eqPet = \\a -> \\b -> case (a,b) of (Dog, Dog) -> True | (Cat, Cat) -> True | (Rat, Rat) -> True | _ -> False; eqPet Dog Cat"
+                ],
+                "False"
+              ),
+              ( [ "type Pet = Dog | Cat | Rat",
+                  "instance Eq Pet = \\a -> \\b -> case (a,b) of (Dog, Dog) -> True | (Cat, Cat) -> True | (Rat, Rat) -> True | _ -> False",
+                  "def main : Bool",
+                  "def main = equals Dog Rat"
                 ],
                 "False"
               )
