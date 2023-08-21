@@ -38,10 +38,11 @@ data TypeclassEnv ann = TypeclassEnv {
 substituteConstraint ::
   (Eq (dep Identifier)) =>
   [Substitution dep ann] ->
-  Constraint dep (Type ResolvedDep ann) ->
-  Constraint dep (Type ResolvedDep ann)
+  Constraint dep (Type dep ann) ->
+  Constraint dep (Type dep ann)
 substituteConstraint subs (Constraint name tys) =
-  Constraint name (substituteMany subs <$> tys)
+  let typelessTys = getTypeAnnotation <$> tys
+   in Constraint name (substituteMany subs <$> typelessTys)
 
 applyConstraintTypes ::
   Typeclass ResolvedDep ann ->
@@ -70,7 +71,7 @@ getTypeForDictionary ::
   TypeclassEnv ann ->
   [Constraint ResolvedDep ann] ->
   m (Maybe (Pattern ResolvedDep (Type ResolvedDep ann)))
-getTypeForDictionary env typeclassEnv constraints = do
+getTypeForDictionary env _typeclassEnv constraints = do
   let getConstraintPattern constraint i = do
         let ident = identForConstraint (i + 1)
         result <- runExceptT $ undefined -- lookupInstanceAndCheck env constraint
@@ -142,7 +143,7 @@ createTypeclassDict env typeclassEnv constraints = do
   instances <-
     traverse
       ( \constraint -> do
-          result <- runExceptT undefined -- (lookupInstanceAndCheck env constraint)
+          result <- runExceptT (lookupInstance typeclassEnv constraint)
           case result of
             Right (_, newConstraints, expr) ->
               -- found a concrete instance
@@ -188,8 +189,8 @@ passDictionaries env typeclassEnv  =
         Nothing -> do
           result <- recoverInstance env ident ann
           case result of
-            Just _constraint -> do
-              (_, fnConstraints, fnExpr) <- undefined -- lookupInstanceAndCheck env constraint
+            Just constraint -> do
+              (_, fnConstraints, fnExpr) <- lookupInstance typeclassEnv constraint
               -- convert instance to dictionary passing then return it inlined
               toDictionaryPassing env typeclassEnv fnConstraints fnExpr
             Nothing ->
@@ -204,7 +205,7 @@ lookupInstance ::
   (MonadError (TCError ann) m, Monoid ann, Ord ann, Show ann) =>
   TypeclassEnv ann ->
   Constraint ResolvedDep ann ->
-  m (Instance ResolvedDep ann)
+  m (Instance ResolvedDep (Type ResolvedDep ann))
 lookupInstance typeclassEnv constraint@(Constraint name tys) = do
   -- first, do we have a concrete instance?
   case lookupConcreteInstance typeclassEnv constraint of
@@ -231,7 +232,7 @@ lookupInstance typeclassEnv constraint@(Constraint name tys) = do
             Nothing ->
               throwError (TCTypeclassInstanceNotFound name tys (M.keys $ teInstances typeclassEnv))
         [] ->
-          throwError (TCTypeclassInstanceNotFound name tys (M.keys $ tcInstances typeclassEnv))
+          throwError (TCTypeclassInstanceNotFound name tys (M.keys $ teInstances typeclassEnv))
         multiple ->
           throwError (TCConflictingTypeclassInstancesFound (fst <$> multiple))
 
@@ -243,10 +244,8 @@ lookupConcreteInstance ::
   TypeclassEnv ann ->
   Constraint ResolvedDep ann ->
   Maybe (Instance ResolvedDep (Type ResolvedDep ann))
-lookupConcreteInstance typeclassenv constraint =
-  M.lookup (constraint $> mempty) (teInstances env)
-
-
+lookupConcreteInstance typeclassEnv constraint =
+  M.lookup (constraint $> mempty) (teInstances typeclassEnv)
 
 -- | well well well lets put it all together
 toDictionaryPassing ::
