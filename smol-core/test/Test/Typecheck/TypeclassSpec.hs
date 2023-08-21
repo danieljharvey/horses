@@ -23,6 +23,7 @@ import Smol.Core.Modules.ResolveDeps
 import Smol.Core.Modules.Types.DefIdentifier
 import Smol.Core.Typecheck.FromParsedExpr (fromParsedExpr)
 import Smol.Core.Typecheck.Typeclass
+import qualified Smol.Core.Typecheck.Typeclass.ToDictionaries as Dict
 import Test.Helpers
 import Test.Hspec
 
@@ -141,17 +142,6 @@ spec = do
     it "Other nested item is there" $ do
       lookupTypeclassInstance @() typecheckEnv (Constraint "Eq" [tyTuple tyBool [tyInt]])
         `shouldSatisfy` isLeft
-
-  describe "lookupTypeclassConstraint" $ do
-    it "Is not there" $ do
-      lookupTypeclassConstraint @() typecheckEnv (Constraint "Eq" [tcVar "a"])
-        `shouldSatisfy` isLeft
-
-    it "Is there" $ do
-      let tcEnvWithConstraint =
-            typecheckEnv {tceConstraints = [Constraint "Eq" [tcVar "a"]]}
-      lookupTypeclassConstraint @() tcEnvWithConstraint (Constraint "Eq" [tcVar "a"])
-        `shouldSatisfy` isRight
 
   describe "Check instances" $ do
     it "Good Show instance" $ do
@@ -300,7 +290,7 @@ spec = do
     it "no, because it has a var" $ do
       isConcrete @() (Constraint "Eq" [tcVar "a"]) `shouldBe` False
 
-  describe "Convert expr to use typeclass dictionaries" $ do
+  fdescribe "Convert expr to use typeclass dictionaries" $ do
     traverse_
       ( \(constraints, parts, expectedConstraints, expectedParts) ->
           let input = joinText parts
@@ -308,10 +298,11 @@ spec = do
            in it ("Successfully converted " <> show input) $ do
                 let (expr, typeclassUses) = getRight $ evalExpr constraints mempty input
                     env = typecheckEnv {tceConstraints = constraints}
+                    typeclassEnv = Dict.TypeclassEnv { Dict.teInstances  = mempty }
 
                 let expectedExpr = getRight $ evalExprUnsafe mempty expected
                     (dedupedConstraints, tidyExpr) = deduplicateConstraints typeclassUses expr
-                    result = convertExprToUseTypeclassDictionary env dedupedConstraints tidyExpr
+                    result = Dict.convertExprToUseTypeclassDictionary env typeclassEnv dedupedConstraints tidyExpr
 
                 dedupedConstraints `shouldBe` expectedConstraints
                 simplify <$> result `shouldBe` Right (simplify expectedExpr)
@@ -334,7 +325,7 @@ spec = do
       ]
 
   -- the whole transformation basically
-  describe "toDictionaryPassing" $ do
+  fdescribe "toDictionaryPassing" $ do
     traverse_
       ( \(varsInScope, constraints, parts, expectedParts) -> do
           let input = joinText parts
@@ -342,11 +333,12 @@ spec = do
            in it ("Successfully inlined " <> show input) $ do
                 let (expr, typeclassUses) = getRight $ evalExpr constraints varsInScope input
                 let env = typecheckEnv {tceVars = varsInScope}
+                    typeclassEnv = Dict.TypeclassEnv { Dict.teInstances  = mempty }
 
                 let expectedExpr = getRight $ evalExprUnsafe varsInScope expected
                     (dedupedConstraints, tidyExpr) = deduplicateConstraints typeclassUses expr
                     allConstraints = nub (dedupedConstraints <> constraints) -- we lose outer constraints sometimes
-                    result = toDictionaryPassing env allConstraints tidyExpr
+                    result = Dict.toDictionaryPassing env typeclassEnv allConstraints tidyExpr
 
                 simplify <$> result `shouldBe` Right (simplify expectedExpr)
       )

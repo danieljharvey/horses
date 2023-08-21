@@ -4,7 +4,6 @@
 module Smol.Core.Typecheck.Typeclass.Helpers
   ( recoverTypeclassUses,
     constraintsFromTLE,
-    lookupTypeclassConstraint,
     lookupTypeclassInstance,
     matchType,
     lookupTypeclass,
@@ -16,7 +15,7 @@ module Smol.Core.Typecheck.Typeclass.Helpers
   )
 where
 
-import Control.Monad (unless, void, zipWithM)
+import Control.Monad (zipWithM)
 import Control.Monad.Except
 import Control.Monad.Writer
 import Data.Foldable (traverse_)
@@ -142,25 +141,6 @@ substituteConstraint ::
   Constraint dep ann
 substituteConstraint subs (Constraint name tys) =
   Constraint name (substituteMany subs <$> tys)
-
--- | do we have a matching constraint?
--- first look for a concrete instance
--- if one is not there, see if we already have a matching constraint
--- in TCEnv (ie, the function has declared `Eq a`)
-lookupTypeclassConstraint ::
-  (MonadError (TCError ann) m, Ord ann, Monoid ann, Show ann) =>
-  TCEnv ann ->
-  Constraint ResolvedDep ann ->
-  m ()
-lookupTypeclassConstraint env constraint@(Constraint name tys) = do
-  -- see if this is a valid instance first?
-  _ <-
-    void (lookupTypeclassInstance env constraint) `catchError` \_ -> do
-      -- maybe it's a constraint, look there
-      unless
-        (constraint `elem` tceConstraints env)
-        (throwError (TCTypeclassInstanceNotFound name tys (M.keys $ tceInstances env)))
-  pure ()
 
 -- look for vars, if no, then it's concrete
 isConcrete :: Constraint ResolvedDep ann -> Bool

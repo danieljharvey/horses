@@ -119,6 +119,7 @@ library
     Smol.Core.Typecheck.Typeclass
     Smol.Core.Typecheck.Typeclass.Deduplicate
     Smol.Core.Typecheck.Typeclass.Helpers
+    Smol.Core.Typecheck.Typeclass.ToDictionaries
     Smol.Core.Typecheck.Typeclass.Types
     Smol.Core.Typecheck.Typeclass.Types.Constraint
     Smol.Core.Typecheck.Typeclass.Types.Instance
