@@ -47,40 +47,56 @@ spec = do
                 ],
                 "100"
               ),
-              ( [ "def main = equals (1: Int) (2: Int)"
+              ( [ "class Eq a { equals: a -> a -> Bool }",
+                  "instance Eq Int = \\a -> \\b -> a == b",
+                  "def main = equals (1: Int) (2: Int)"
                 ],
                 "False"
               ),
-              ( [ "def useEquals = equals (1: Int) (2: Int)",
+              ( [ "class Eq a { equals: a -> a -> Bool }",
+                  "instance Eq Int = \\a -> \\b -> a == b",
+                  "def useEquals = equals (1: Int) (2: Int)",
                   "def main = useEquals"
                 ],
                 "False"
               ),
-              ( [ "def useEquals : Int -> Bool",
+              ( [ "class Eq a { equals: a -> a -> Bool }",
+                  "instance Eq Int = \\a -> \\b -> a == b",
+                  "def useEquals : Int -> Bool",
                   "def useEquals a = equals a (1: Int)",
                   "def main : Bool",
                   "def main = useEquals 2"
                 ],
                 "False"
               ),
-              ( [ "def useEquals : Bool -> Bool",
+              ( [ "class Eq a { equals: a -> a -> Bool }",
+                  "instance Eq Int = \\a -> \\b -> a == b",
+                  "def useEquals : Bool -> Bool",
                   "def useEquals a = equals (2: Int) (1: Int)",
                   "def main : Bool",
                   "def main = useEquals True"
                 ],
                 "False"
               ),
-              ( ["def main = equals ((1:Int), (2: Int)) ((1: Int), (2: Int))"],
+              ( [ "class Eq a { equals: a -> a -> Bool }",
+                  "instance Eq Int = \\a -> \\b -> a == b",
+                  "instance (Eq a, Eq b) => Eq (a,b) = \\a -> \\b -> case (a,b) of ((a1, b1), (a2, b2)) -> if equals a1 a2 then equals b1 b2 else False",
+                  "def main = equals ((1:Int), (2: Int)) ((1: Int), (2: Int))"
+                ],
                 "True"
               ),
-              ( [ "def main : Bool",
+              ( [ "class Eq a { equals: a -> a -> Bool }",
+                  "instance Eq Int = \\a -> \\b -> a == b",
+                  "def main : Bool",
                   "def main = useEquals (1: Int) (2: Int)",
                   "def useEquals : (Eq a) => a -> a -> Bool",
                   "def useEquals a b = equals a b"
                 ],
                 "False"
               ),
-              ( [ "def main : Bool",
+              ( [ "class Eq a { equals: a -> a -> Bool }",
+                  "instance Eq Int = \\a -> \\b -> a == b",
+                  "def main : Bool",
                   "def main = notEquals (1: Int) (2: Int)",
                   "def notEquals : (Eq a) => a -> a -> Bool",
                   "def notEquals a b = if isEquals a b then False else True",
@@ -89,13 +105,16 @@ spec = do
                 ],
                 "True"
               ),
-              ( [ "instance Eq String = \\a -> \\b -> a == b",
+              ( [ "class Eq a { equals: a -> a -> Bool }",
+                  "instance Eq String = \\a -> \\b -> a == b",
                   "def main : Bool",
                   "def main = equals (\"cat\" : String) (\"cat\" : String)"
                 ],
                 "True"
               ),
-              ( [ "class Semigroup a { mappend: a -> a -> a }",
+              ( [ "class Eq a { equals: a -> a -> Bool }",
+                  "instance Eq Int = \\a -> \\b -> a == b",
+                  "class Semigroup a { mappend: a -> a -> a }",
                   "instance Semigroup Int = \\a -> \\b -> a + b",
                   "def main : Bool",
                   "def main = equals (mappend (20 : Int) (22 : Int)) (42 : Int)"
@@ -103,25 +122,22 @@ spec = do
                 "True"
               ),
               ( [ "type Pet = Dog | Cat | Rat",
-                  "def main : Bool",
-                  "def main = case (Cat,Rat) of (Dog, Dog) -> True | (Cat, Cat) -> True | (Rat, Rat) -> True | _ -> False"
-                ],
-                "False"
-              ),
-              ( [ "type Pet = Dog | Cat | Rat",
+                  "class Eq a { equals: a -> a -> Bool }",
                   "instance Eq Pet = \\a -> \\b -> case (a,b) of (Dog, Dog) -> True | (Cat, Cat) -> True | (Rat, Rat) -> True | _ -> False",
                   "def main : Bool",
                   "def main = equals Dog Rat"
                 ],
                 "False"
-              ) {-,
-                ( [ "type Maybe a = Just a | Nothing",
-                    "instance (Eq a) => Eq (Maybe a) = \\ma -> \\mb -> case (ma, mb) of (Just a, Just b) -> equals a b | (Nothing, Nothing) -> True | _ -> False",
-                    "def main : Bool",
-                    "def main = equals (Just (1: Int)) Nothing"
-                  ],
-                  "False"
-                )-}
+              ),
+              ( [ "class Eq a { equals: a -> a -> Bool }",
+                  "instance Eq Int = \\a -> \\b -> a == b",
+                  "type Maybe a = Just a | Nothing",
+                  "instance (Eq a) => Eq (Maybe a) = \\ma -> \\mb -> case (ma, mb) of (Just a, Just b) -> equals a b | (Nothing, Nothing) -> True | _ -> False",
+                  "def main : Bool",
+                  "def main = equals (Just (1: Int)) Nothing"
+                ],
+                "False"
+              )
             ]
       traverse_
         ( \(parts, expect) ->

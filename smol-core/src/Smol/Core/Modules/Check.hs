@@ -20,7 +20,6 @@ import Smol.Core.Modules.Types.ModuleError
 import Smol.Core.Modules.Types.ModuleItem
 import Smol.Core.Modules.Types.TopLevelExpression
 import Smol.Core.Typecheck.Typeclass
-import Smol.Core.Typecheck.Typeclass.BuiltIns
 
 -- this is the front door as such
 checkModule ::
@@ -31,7 +30,7 @@ checkModule ::
 checkModule input moduleItems = do
   myModule <- moduleFromModuleParts moduleItems
 
-  let classes = builtInClasses @Annotation <> (resolveTypeclass <$> moClasses myModule)
+  let classes = resolveTypeclass <$> moClasses myModule
       typeclassMethods = S.fromList . M.elems . fmap tcFuncName $ classes
 
   (resolvedModule, deps) <-

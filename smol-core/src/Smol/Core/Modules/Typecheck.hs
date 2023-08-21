@@ -23,7 +23,6 @@ import Smol.Core.Modules.Types.DepType
 import Smol.Core.Modules.Types.ModuleError
 import Smol.Core.Typecheck.Typecheck (typecheck)
 import Smol.Core.Typecheck.Typeclass (checkInstance, lookupTypeclass)
-import Smol.Core.Typecheck.Typeclass.BuiltIns
 
 -- go through the module, and wrap all the items in DefIdentifier keys and
 -- DepType for items
@@ -219,9 +218,9 @@ typecheckInstance input inputModule deps def inst = do
         TCEnv
           { tceVars = exprTypeMap,
             tceDataTypes = getDataTypeMap deps,
-            tceClasses = builtInClasses <> classes,
-            tceInstances = builtInInstances <> instances,
-            tceConstraints = mempty
+            tceClasses = classes,
+            tceInstances = instances,
+            tceConstraints = inConstraints inst
           }
 
   typeclass <-
@@ -313,8 +312,8 @@ typecheckExprDef input inputModule deps (def, tle) = do
         TCEnv
           { tceVars = exprTypeMap,
             tceDataTypes = getDataTypeMap deps,
-            tceClasses = builtInClasses <> classes,
-            tceInstances = builtInInstances <> instances,
+            tceClasses = classes,
+            tceInstances = instances,
             tceConstraints = tleConstraints tle
           }
 

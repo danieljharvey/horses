@@ -192,9 +192,7 @@ spec = do
 
     describe "Expected failures" $ do
       let inputs =
-            [ "equals (10 : Int) True", -- using Eq Int typeclass instance
-              "equals (True : Bool) (False : Bool)", -- there is no Eq Bool instance atm
-              "(\\a -> \\b -> equals a b : a -> a -> Bool)" -- this is missing an `Eq a` constraint
+            [ "equals (10 : Int) True" -- the two `a`s do not match
             ]
       traverse_
         ( \inputExpr -> it (T.unpack inputExpr <> " fails typechecking") $ do

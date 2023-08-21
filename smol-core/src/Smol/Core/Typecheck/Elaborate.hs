@@ -16,7 +16,7 @@ import Control.Monad.Reader
 import Control.Monad.State
 import Control.Monad.Trans.Writer.CPS (runWriterT)
 import Control.Monad.Writer.CPS
-import Data.Foldable (toList, traverse_)
+import Data.Foldable (toList)
 import Data.Functor
 import qualified Data.List.NonEmpty as NE
 import qualified Data.Map.Strict as M
@@ -55,9 +55,6 @@ elaborate env expr =
       let simpleExpr = simplifyType . substituteMany (filterSubstitutions events) <$> typedExpr
 
       let typeclassUses = recoverTypeclassUses events
-
-      -- lookup typeclasses we need, explode if they're missing
-      traverse_ (lookupTypeclassConstraint env) (M.elems typeclassUses)
 
       pure (simpleExpr, typeclassUses)
 

@@ -25,7 +25,7 @@ import Smol.Core.ExprUtils
 import Smol.Core.Helpers
 import Smol.Core.Typecheck.Shared
 import Smol.Core.Typecheck.Substitute
-import Smol.Core.Typecheck.Typecheck (typecheck)
+import Smol.Core.Typecheck.Elaborate (elaborate)
 import Smol.Core.Typecheck.Typeclass.Deduplicate
 import Smol.Core.Typecheck.Typeclass.Helpers
 import Smol.Core.Typecheck.Types
@@ -71,13 +71,26 @@ checkInstance tcEnv typeclass constraint (Instance constraints expr) =
     let subbedType = applyConstraintTypes typeclass constraint
         funcName = tcFuncName typeclass
 
+    tracePrettyM "checkInstance" constraints
+    tracePrettyM "expr" expr
+    
+    -- need to synthesize types for our constraints
+    tracePrettyM "tceVars" (tceVars tcEnv)
+
     -- we add the instance's constraints (so typechecker forgives a missing `Eq a` etc)
     let typecheckEnv = tcEnv {tceConstraints = constraints}
         annotatedExpr = EAnn (getExprAnnotation expr) subbedType expr
 
-    (newConstraints, typedExpr) <- typecheck typecheckEnv annotatedExpr
+    tracePrettyM "annotatedExpr" annotatedExpr
 
-    pure (funcName, newConstraints, typedExpr)
+    -- we `elaborate` rather than `typecheck` as we don't want the names
+    -- mangled
+    (typedExpr, _constraints) <- elaborate typecheckEnv annotatedExpr
+
+    tracePrettyM "typedExpr" typedExpr
+
+    let allConstraints = constraints -- nub (constraints <> newConstraints)
+    pure (funcName, allConstraints, typedExpr)
 
 -- let's get all the method names from the Typeclasses
 -- mentioned in the instance constraints

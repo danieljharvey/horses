@@ -31,7 +31,6 @@ import Smol.Core.TypeUtils
 import Smol.Core.Typecheck.Shared
 import Smol.Core.Typecheck.Substitute
 import Smol.Core.Typecheck.Subtype
-import Smol.Core.Typecheck.Typeclass.BuiltIns
 import Smol.Core.Typecheck.Types
 import Smol.Core.Types
 
@@ -251,6 +250,8 @@ getVarsInScope =
         (constraintsFromTLE tle, getExprAnnotation (tleExpr tle))
       )
 
+-- make a typechecking env from a module
+-- this means throwing away all the types which seems silly
 envFromTypecheckedModule :: (Ord ann, Monoid ann) => Module ResolvedDep (Type ResolvedDep ann) -> TCEnv ann
 envFromTypecheckedModule inputModule =
   let instances =
@@ -268,7 +269,7 @@ envFromTypecheckedModule inputModule =
    in TCEnv
         { tceVars = getVarsInScope inputModule,
           tceDataTypes = dataTypes,
-          tceInstances = builtInInstances <> instances,
-          tceClasses = builtInClasses <> classes,
+          tceInstances = instances,
+          tceClasses = classes,
           tceConstraints = mempty
         }
