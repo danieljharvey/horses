@@ -230,14 +230,7 @@ typecheckInstance input inputModule deps def inst = do
 
   let typedConstraint = addTypesToConstraint (constraint $> mempty)
 
-  (_fnName, constraints, typedExpr) <-
-    modifyError (DefDoesNotTypeCheck input def) (checkInstance env typeclass typedConstraint inst)
-
-  pure $
-    Instance
-      { inExpr = typedExpr,
-        inConstraints = constraints
-      }
+  modifyError (DefDoesNotTypeCheck input def) (checkInstance env typeclass typedConstraint inst)
 
 -- typechecking in this context means "does this data type make sense"
 -- and "do we know about all external datatypes it mentions"

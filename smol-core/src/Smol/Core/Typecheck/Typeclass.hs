@@ -36,11 +36,7 @@ lookupInstanceAndCheck ::
   (Ord ann, Monoid ann, Show ann, MonadError (TCError ann) m) =>
   TCEnv ann ->
   Constraint ResolvedDep (Type ResolvedDep ann) ->
-  m
-    ( Identifier,
-      [Constraint ResolvedDep (Type ResolvedDep ann)],
-      Expr ResolvedDep (Type ResolvedDep ann)
-    )
+  m ( Instance ResolvedDep (Type ResolvedDep ann))
 lookupInstanceAndCheck env constraint@(Constraint typeclassName _) = do
   tcInstance <- lookupTypeclassInstance env (removeTypesFromConstraint constraint)
   typeclass <- case M.lookup typeclassName (tceClasses env) of
@@ -67,11 +63,10 @@ checkInstance ::
   Typeclass ResolvedDep ann ->
   Constraint ResolvedDep (Type ResolvedDep ann) ->
   Instance ResolvedDep ann ->
-  m (Identifier, [Constraint ResolvedDep (Type ResolvedDep ann)], Expr ResolvedDep (Type ResolvedDep ann))
+  m (Instance ResolvedDep (Type ResolvedDep ann))
 checkInstance tcEnv typeclass constraint (Instance constraints expr) =
   do
     let subbedType = applyConstraintTypes typeclass constraint
-        funcName = tcFuncName typeclass
 
     tracePrettyM "checkInstance" constraints
     tracePrettyM "expr" expr
@@ -92,7 +87,7 @@ checkInstance tcEnv typeclass constraint (Instance constraints expr) =
     tracePrettyM "typedExpr" typedExpr
 
     let allConstraints = constraints -- nub (constraints <> newConstraints)
-    pure (funcName, addTypesToConstraint <$> allConstraints, typedExpr)
+    pure $ Instance (addTypesToConstraint <$> allConstraints) typedExpr
 
 -- let's get all the method names from the Typeclasses
 -- mentioned in the instance constraints
@@ -116,7 +111,7 @@ getTypeForDictionary lookupInstance env constraints = do
         let ident = identForConstraint (i + 1)
         ty <- case lookupInstance constraint of
           -- we found the instance, return it's type
-          Right (_, _, instanceExpr) -> pure (getExprAnnotation instanceExpr)
+          Right (Instance _ instanceExpr) -> pure (getExprAnnotation instanceExpr)
           -- we didn't find an instance, but we can get the type from the
           -- constraint
           Left e -> case typeForConstraint env constraint of
@@ -187,10 +182,7 @@ removeTypesFromConstraint (Constraint tcn tys)
 type LookupInstance ann =
   Constraint ResolvedDep (Type ResolvedDep ann) ->
     Either (TCError ann)
-    ( Identifier,
-      [Constraint ResolvedDep (Type ResolvedDep ann)],
-      Expr ResolvedDep (Type ResolvedDep ann)
-    )
+    (Instance ResolvedDep (Type ResolvedDep ann))
 
 -- | create a typeclass dictionary
 -- return either solid instances or use vars from constraints if not available
@@ -206,7 +198,7 @@ createTypeclassDict lookupInstance env constraints = do
     traverse
       ( \constraint -> do
           case lookupInstance constraint of
-            Right (_, newConstraints, expr) ->
+            Right (Instance newConstraints expr) ->
               -- found a concrete instance
               toDictionaryPassing lookupInstance env newConstraints expr
             Left e -> do
@@ -251,7 +243,7 @@ passDictionaries lookupInstance env =
           result <- recoverInstance env ident ann
           case result of
             Just constraint -> do
-              (_, fnConstraints, fnExpr) <- liftEither (lookupInstance (addTypesToConstraint constraint))
+              (Instance fnConstraints fnExpr) <- liftEither (lookupInstance (addTypesToConstraint constraint))
               -- convert instance to dictionary passing then return it inlined
               toDictionaryPassing lookupInstance env fnConstraints fnExpr
             Nothing ->
