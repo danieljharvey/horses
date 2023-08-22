@@ -38,7 +38,7 @@ doInterpret input =
         . addEmptyStackFrames
         . void
         . discardLeft
-        . passDictionaries typecheckEnv
+        . passDictionaries (lookupInstanceAndCheck typecheckEnv) typecheckEnv
         $ typedExpr
     Left e -> error (show e)
 

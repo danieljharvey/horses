@@ -56,10 +56,14 @@ passModuleDictionaries inputModule = do
                 { tceConstraints = constraints
                 }
 
+        let typedConstraints = addTypesToConstraint <$> constraints
+
+        let lookupInstance = undefined
+
         newExpr <-
           modifyError
             (DefDoesNotTypeCheck mempty (DIName ident))
-            (toDictionaryPassing thisEnv constraints expr)
+            (toDictionaryPassing lookupInstance thisEnv typedConstraints expr)
 
         pure (ident, tle {tleExpr = newExpr})
 

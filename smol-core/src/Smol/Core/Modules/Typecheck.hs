@@ -22,7 +22,7 @@ import Smol.Core.Modules.Types
 import Smol.Core.Modules.Types.DepType
 import Smol.Core.Modules.Types.ModuleError
 import Smol.Core.Typecheck.Typecheck (typecheck)
-import Smol.Core.Typecheck.Typeclass (checkInstance, lookupTypeclass)
+import Smol.Core.Typecheck.Typeclass (checkInstance, lookupTypeclass, addTypesToConstraint)
 
 -- go through the module, and wrap all the items in DefIdentifier keys and
 -- DepType for items
@@ -228,13 +228,15 @@ typecheckInstance input inputModule deps def inst = do
       (DefDoesNotTypeCheck input def)
       (lookupTypeclass env (conTypeclass constraint))
 
+  let typedConstraint = addTypesToConstraint (constraint $> mempty)
+
   (_fnName, constraints, typedExpr) <-
-    modifyError (DefDoesNotTypeCheck input def) (checkInstance env typeclass (constraint $> mempty) inst)
+    modifyError (DefDoesNotTypeCheck input def) (checkInstance env typeclass typedConstraint inst)
 
   pure $
     Instance
       { inExpr = typedExpr,
-        inConstraints = typeForConstraint <$> constraints
+        inConstraints = constraints
       }
 
 -- typechecking in this context means "does this data type make sense"
@@ -282,10 +284,6 @@ resolveConstraint (Constraint tcn tys) =
   Constraint tcn (resolveTy <$> tys)
   where
     resolveTy ty = ty $> ty
-
-typeForConstraint :: Constraint ResolvedDep ann -> Constraint ResolvedDep (Type ResolvedDep ann)
-typeForConstraint (Constraint tc tys) =
-  Constraint tc $ fmap (\ty -> ty $> ty) tys
 
 -- given types for other required definition, typecheck a definition
 typecheckExprDef ::

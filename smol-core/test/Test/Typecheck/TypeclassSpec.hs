@@ -23,7 +23,6 @@ import Smol.Core.Modules.ResolveDeps
 import Smol.Core.Modules.Types.DefIdentifier
 import Smol.Core.Typecheck.FromParsedExpr (fromParsedExpr)
 import Smol.Core.Typecheck.Typeclass
-import qualified Smol.Core.Typecheck.Typeclass.ToDictionaries as Dict
 import Test.Helpers
 import Test.Hspec
 
@@ -148,7 +147,7 @@ spec = do
       checkInstance @()
         typecheckEnv
         showTypeclass
-        (Constraint "Show" [tyUnit])
+        (addTypesToConstraint (Constraint "Show" [tyUnit]))
         ( Instance
             { inExpr = unsafeParseInstanceExpr "\\a -> \"Unit\"",
               inConstraints = []
@@ -160,7 +159,7 @@ spec = do
       checkInstance @()
         typecheckEnv
         showTypeclass
-        (Constraint "Show" [tyUnit])
+        (addTypesToConstraint (Constraint "Show" [tyUnit]))
         ( Instance
             { inExpr = unsafeParseInstanceExpr "\\a -> 123",
               inConstraints = []
@@ -172,7 +171,7 @@ spec = do
       checkInstance @()
         typecheckEnv
         eqTypeclass
-        (Constraint "Eq" [tyInt])
+        (addTypesToConstraint (Constraint "Eq" [tyInt]))
         ( Instance
             { inExpr = unsafeParseInstanceExpr "\\a -> \\b -> a == b",
               inConstraints = []
@@ -184,7 +183,7 @@ spec = do
       checkInstance @()
         typecheckEnv
         eqTypeclass
-        (Constraint "Show" [tyUnit])
+        (addTypesToConstraint (Constraint "Show" [tyUnit]))
         ( Instance
             { inExpr = unsafeParseInstanceExpr "\\a -> \\b -> 123",
               inConstraints = []
@@ -196,7 +195,7 @@ spec = do
       checkInstance @()
         typecheckEnv
         eqTypeclass
-        (Constraint "Eq" [tyTuple (tcVar "a") [tcVar "b"]])
+        (addTypesToConstraint (Constraint "Eq" [tyTuple (tcVar "a") [tcVar "b"]]))
         ( Instance
             { inExpr =
                 unsafeParseInstanceExpr "\\a -> \\b -> case (a,b) of ((a1, a2), (b1, b2)) -> if equals a1 b1 then equals a2 b2 else False",
@@ -270,27 +269,27 @@ spec = do
 
   describe "Get dictionaries" $ do
     it "Single item dictionary for single constraint" $ do
-      let constraints = NE.fromList [Constraint "Eq" [tyInt]]
+      let constraints = addTypesToConstraint <$> NE.fromList [Constraint "Eq" [tyInt]]
           expected = evalExprUnsafe mempty "(\\a -> \\b -> a == b : Int -> Int -> Bool)"
 
-      fmap simplify (createTypeclassDict typecheckEnv constraints)
+      fmap simplify (createTypeclassDict (lookupInstanceAndCheck typecheckEnv) typecheckEnv constraints)
         `shouldBe` simplify <$> expected
 
     it "Tuple for two constraints" $ do
-      let constraints = NE.fromList [Constraint "Eq" [tyInt], Constraint "Eq" [tyInt]]
+      let constraints = addTypesToConstraint <$> NE.fromList [Constraint "Eq" [tyInt], Constraint "Eq" [tyInt]]
           expected = evalExprUnsafe mempty "((\\a -> \\b -> a == b : Int -> Int -> Bool), (\\a -> \\b -> a == b : Int -> Int -> Bool))"
 
-      fmap simplify (createTypeclassDict typecheckEnv constraints)
+      fmap simplify (createTypeclassDict (lookupInstanceAndCheck typecheckEnv) typecheckEnv constraints)
         `shouldBe` simplify <$> expected
 
   describe "isConcrete" $ do
     it "yes, because it has no vars" $ do
-      isConcrete @() (Constraint "Eq" [tyInt]) `shouldBe` True
+      isConcrete @_ @() (Constraint "Eq" [tyInt]) `shouldBe` True
 
     it "no, because it has a var" $ do
-      isConcrete @() (Constraint "Eq" [tcVar "a"]) `shouldBe` False
+      isConcrete @_ @() (Constraint "Eq" [tcVar "a"]) `shouldBe` False
 
-  fdescribe "Convert expr to use typeclass dictionaries" $ do
+  describe "Convert expr to use typeclass dictionaries" $ do
     traverse_
       ( \(constraints, parts, expectedConstraints, expectedParts) ->
           let input = joinText parts
@@ -298,11 +297,10 @@ spec = do
            in it ("Successfully converted " <> show input) $ do
                 let (expr, typeclassUses) = getRight $ evalExpr constraints mempty input
                     env = typecheckEnv {tceConstraints = constraints}
-                    typeclassEnv = Dict.TypeclassEnv { Dict.teInstances  = mempty }
 
                 let expectedExpr = getRight $ evalExprUnsafe mempty expected
                     (dedupedConstraints, tidyExpr) = deduplicateConstraints typeclassUses expr
-                    result = Dict.convertExprToUseTypeclassDictionary env typeclassEnv dedupedConstraints tidyExpr
+                    result = convertExprToUseTypeclassDictionary (lookupInstanceAndCheck env) env (addTypesToConstraint <$> dedupedConstraints) tidyExpr
 
                 dedupedConstraints `shouldBe` expectedConstraints
                 simplify <$> result `shouldBe` Right (simplify expectedExpr)
@@ -325,7 +323,7 @@ spec = do
       ]
 
   -- the whole transformation basically
-  fdescribe "toDictionaryPassing" $ do
+  describe "toDictionaryPassing" $ do
     traverse_
       ( \(varsInScope, constraints, parts, expectedParts) -> do
           let input = joinText parts
@@ -333,12 +331,11 @@ spec = do
            in it ("Successfully inlined " <> show input) $ do
                 let (expr, typeclassUses) = getRight $ evalExpr constraints varsInScope input
                 let env = typecheckEnv {tceVars = varsInScope}
-                    typeclassEnv = Dict.TypeclassEnv { Dict.teInstances  = mempty }
 
                 let expectedExpr = getRight $ evalExprUnsafe varsInScope expected
                     (dedupedConstraints, tidyExpr) = deduplicateConstraints typeclassUses expr
                     allConstraints = nub (dedupedConstraints <> constraints) -- we lose outer constraints sometimes
-                    result = Dict.toDictionaryPassing env typeclassEnv allConstraints tidyExpr
+                    result = toDictionaryPassing (lookupInstanceAndCheck env) env (addTypesToConstraint <$> allConstraints) tidyExpr
 
                 simplify <$> result `shouldBe` Right (simplify expectedExpr)
       )
