@@ -143,7 +143,7 @@ substituteConstraint subs (Constraint name tys) =
   Constraint name (substituteMany subs <$> tys)
 
 -- look for vars, if no, then it's concrete
-isConcrete :: Constraint ResolvedDep ann -> Bool
+isConcrete :: Constraint dep ann -> Bool
 isConcrete (Constraint _ tys) =
   not $ getAny $ foldMap containsVars tys
   where
