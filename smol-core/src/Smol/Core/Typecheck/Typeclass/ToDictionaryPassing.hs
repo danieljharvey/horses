@@ -36,14 +36,14 @@ lookupTypecheckedTypeclassInstance ::
   (MonadError (TCError ann) m, Monoid ann, Ord ann, Show ann) =>
   TCEnv ann ->
   M.Map (Constraint ResolvedDep ()) (Instance ResolvedDep (Type ResolvedDep ann)) ->
-  Constraint ResolvedDep ann ->
+  Constraint ResolvedDep (Type ResolvedDep ann) ->
   m (Instance ResolvedDep (Type ResolvedDep ann))
 lookupTypecheckedTypeclassInstance env instances constraint = do
   tracePrettyM "lookupTypecheckedTypeclassInstance" constraint
   case M.lookup (void constraint) instances of
     Just tcInstance -> pure tcInstance
     Nothing -> do
-      (foundConstraint, subs) <- findMatchingConstraint (M.keys instances) constraint
+      (foundConstraint, subs) <- findMatchingConstraint (M.keys instances) (removeTypesFromConstraint constraint)
       tracePrettyM "foundConstraint" foundConstraint
       tracePrettyM "subs" subs
 
@@ -53,12 +53,13 @@ lookupTypecheckedTypeclassInstance env instances constraint = do
         Just (Instance {inConstraints, inExpr}) -> do
           tracePrettyM "found concrete generalised instance" (inConstraints, inExpr)
           -- specialise contraints to found types
-          let subbedConstraints = substituteConstraint subs <$> (removeTypesFromConstraint <$> inConstraints)
+          let subbedConstraints = substituteConstraint subs . 
+                      removeTypesFromConstraint <$> inConstraints
 
           tracePrettyM "subbed constraints" subbedConstraints
 
           -- see if found types exist
-          traverse_ (lookupTypecheckedTypeclassInstance env instances) subbedConstraints
+          traverse_ (lookupTypecheckedTypeclassInstance env instances) (addTypesToConstraint <$> subbedConstraints)
 
           -- return new instance
           pure
@@ -70,7 +71,7 @@ lookupTypecheckedTypeclassInstance env instances constraint = do
         Nothing ->
           let constraintsWithAnn = (fmap . fmap) (const mempty) (M.keys instances)
               (Constraint name tys) = constraint
-           in throwError (TCTypeclassInstanceNotFound name tys constraintsWithAnn)
+           in throwError (TCTypeclassInstanceNotFound name (getTypeAnnotation <$> tys) constraintsWithAnn)
 
 -- | given a pile of constraints, find the matching one and return
 -- substitutions required to make it match
