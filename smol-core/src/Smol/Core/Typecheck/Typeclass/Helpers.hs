@@ -11,6 +11,7 @@ module Smol.Core.Typecheck.Typeclass.Helpers
     isConcrete,
     recoverInstance,
     specialiseConstraint,
+    substituteConstraint,
     envFromTypecheckedModule,
   )
 where
@@ -110,7 +111,8 @@ lookupTypeclassInstance env constraint@(Constraint name tys) = do
     Just tcInstance -> pure tcInstance
     Nothing -> do
       case mapMaybe
-        ( \(Constraint innerName innerTys) ->
+        ( \(Constraint innerName innerTys) -> do
+            tracePrettyM "instance match?" (tys, innerTys)
             case (innerName == name, instanceMatchesType tys innerTys) of
               (True, Right matches) -> Just (Constraint innerName innerTys, matches)
               _ -> Nothing

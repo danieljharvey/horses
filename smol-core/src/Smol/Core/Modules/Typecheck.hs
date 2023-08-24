@@ -22,7 +22,7 @@ import Smol.Core.Modules.Types
 import Smol.Core.Modules.Types.DepType
 import Smol.Core.Modules.Types.ModuleError
 import Smol.Core.Typecheck.Typecheck (typecheck)
-import Smol.Core.Typecheck.Typeclass (checkInstance, lookupTypeclass, addTypesToConstraint)
+import Smol.Core.Typecheck.Typeclass (addTypesToConstraint, checkInstance, lookupTypeclass)
 
 -- go through the module, and wrap all the items in DefIdentifier keys and
 -- DepType for items
@@ -198,6 +198,8 @@ typecheckInstance ::
   Instance ResolvedDep Annotation ->
   m (Instance ResolvedDep (Type ResolvedDep Annotation))
 typecheckInstance input inputModule deps def inst = do
+  tracePrettyM "typecheck instance" def
+
   -- where are we getting constraints from?
   let exprTypeMap =
         mapKey LocalDefinition $
@@ -287,6 +289,8 @@ typecheckExprDef ::
   (DefIdentifier ResolvedDep, TopLevelExpression ResolvedDep Annotation) ->
   m (TopLevelExpression ResolvedDep (Type ResolvedDep Annotation))
 typecheckExprDef input inputModule deps (def, tle) = do
+  tracePrettyM "typecheck expr" def
+
   -- where are we getting constraints from?
   let exprTypeMap =
         mapKey LocalDefinition $
@@ -319,6 +323,8 @@ typecheckExprDef input inputModule deps (def, tle) = do
       first
         (DefDoesNotTypeCheck input def)
         (typecheck env actualExpr)
+
+  tracePrettyM "post-typecheck" newExpr
 
   -- split the type out again
   let (typedType, typedExpr) = case newExpr of
