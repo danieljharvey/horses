@@ -272,14 +272,14 @@ spec = do
       let constraints = addTypesToConstraint <$> NE.fromList [Constraint "Eq" [tyInt]]
           expected = evalExprUnsafe mempty "(\\a -> \\b -> a == b : Int -> Int -> Bool)"
 
-      fmap simplify (createTypeclassDict (lookupInstanceAndCheck typecheckEnv) typecheckEnv constraints)
+      fmap simplify (createTypeclassDict lookupInstanceAndCheck  typecheckEnv constraints)
         `shouldBe` simplify <$> expected
 
     it "Tuple for two constraints" $ do
       let constraints = addTypesToConstraint <$> NE.fromList [Constraint "Eq" [tyInt], Constraint "Eq" [tyInt]]
           expected = evalExprUnsafe mempty "((\\a -> \\b -> a == b : Int -> Int -> Bool), (\\a -> \\b -> a == b : Int -> Int -> Bool))"
 
-      fmap simplify (createTypeclassDict (lookupInstanceAndCheck typecheckEnv) typecheckEnv constraints)
+      fmap simplify (createTypeclassDict lookupInstanceAndCheck  typecheckEnv constraints)
         `shouldBe` simplify <$> expected
 
   describe "isConcrete" $ do
@@ -300,7 +300,7 @@ spec = do
 
                 let expectedExpr = getRight $ evalExprUnsafe mempty expected
                     (dedupedConstraints, tidyExpr) = deduplicateConstraints typeclassUses expr
-                    result = convertExprToUseTypeclassDictionary (lookupInstanceAndCheck env) env (addTypesToConstraint <$> dedupedConstraints) tidyExpr
+                    result = convertExprToUseTypeclassDictionary lookupInstanceAndCheck  env (addTypesToConstraint <$> dedupedConstraints) tidyExpr
 
                 dedupedConstraints `shouldBe` expectedConstraints
                 simplify <$> result `shouldBe` Right (simplify expectedExpr)
@@ -335,7 +335,7 @@ spec = do
                 let expectedExpr = getRight $ evalExprUnsafe varsInScope expected
                     (dedupedConstraints, tidyExpr) = deduplicateConstraints typeclassUses expr
                     allConstraints = nub (dedupedConstraints <> constraints) -- we lose outer constraints sometimes
-                    result = toDictionaryPassing (lookupInstanceAndCheck env) env (addTypesToConstraint <$> allConstraints) tidyExpr
+                    result = toDictionaryPassing lookupInstanceAndCheck  env (addTypesToConstraint <$> allConstraints) tidyExpr
 
                 simplify <$> result `shouldBe` Right (simplify expectedExpr)
       )

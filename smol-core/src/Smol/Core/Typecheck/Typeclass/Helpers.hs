@@ -13,9 +13,14 @@ module Smol.Core.Typecheck.Typeclass.Helpers
     specialiseConstraint,
     substituteConstraint,
     envFromTypecheckedModule,
+    addTypesToConstraint,
+    removeTypesFromConstraint,
+    applyConstraintTypes,
+    getTypeclassMethodNames
   )
 where
 
+import qualified Data.Set as S
 import Control.Monad (zipWithM)
 import Control.Monad.Except
 import Control.Monad.Writer
@@ -33,6 +38,14 @@ import Smol.Core.Typecheck.Substitute
 import Smol.Core.Typecheck.Subtype
 import Smol.Core.Typecheck.Types
 import Smol.Core.Types
+
+-- let's get all the method names from the Typeclasses
+-- mentioned in the instance constraints
+getTypeclassMethodNames :: TCEnv ann -> S.Set Identifier
+getTypeclassMethodNames tcEnv =
+  S.fromList $
+    tcFuncName <$> M.elems (tceClasses tcEnv)
+
 
 -- this just chucks types in any order and will break on multi-parameter type
 -- classes
@@ -255,3 +268,30 @@ envFromTypecheckedModule inputModule =
           tceClasses = classes,
           tceConstraints = mempty
         }
+
+
+addTypesToConstraint :: Constraint dep ann -> Constraint dep (Type dep ann)
+addTypesToConstraint (Constraint tcn tys) =
+  Constraint tcn (f <$> tys)
+  where
+    f ty = ty $> ty
+
+removeTypesFromConstraint :: Constraint dep (Type dep ann) -> Constraint dep ann
+removeTypesFromConstraint (Constraint tcn tys) =
+  Constraint tcn (getTypeAnnotation <$> tys)
+
+
+applyConstraintTypes ::
+  Typeclass ResolvedDep ann ->
+  Constraint ResolvedDep (Type ResolvedDep ann) ->
+  Type ResolvedDep ann
+applyConstraintTypes (Typeclass _ args _ ty) constraint =
+  let (Constraint _ tys) = removeTypesFromConstraint constraint
+      subs =
+        ( \(ident, tySub) ->
+            Substitution (SubId $ LocalDefinition ident) tySub
+        )
+          <$> zip args tys
+   in substituteMany subs ty
+
+
