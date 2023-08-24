@@ -272,14 +272,17 @@ spec = do
       let constraints = addTypesToConstraint <$> NE.fromList [Constraint "Eq" [tyInt]]
           expected = evalExprUnsafe mempty "(\\a -> \\b -> a == b : Int -> Int -> Bool)"
 
-      fmap simplify (createTypeclassDict lookupInstanceAndCheck  typecheckEnv constraints)
+          instances = mempty
+
+      fmap simplify (createTypeclassDict lookupInstanceAndCheck  typecheckEnv instances constraints)
         `shouldBe` simplify <$> expected
 
     it "Tuple for two constraints" $ do
       let constraints = addTypesToConstraint <$> NE.fromList [Constraint "Eq" [tyInt], Constraint "Eq" [tyInt]]
           expected = evalExprUnsafe mempty "((\\a -> \\b -> a == b : Int -> Int -> Bool), (\\a -> \\b -> a == b : Int -> Int -> Bool))"
+          instances = mempty
 
-      fmap simplify (createTypeclassDict lookupInstanceAndCheck  typecheckEnv constraints)
+      fmap simplify (createTypeclassDict lookupInstanceAndCheck  typecheckEnv instances constraints)
         `shouldBe` simplify <$> expected
 
   describe "isConcrete" $ do
@@ -297,10 +300,11 @@ spec = do
            in it ("Successfully converted " <> show input) $ do
                 let (expr, typeclassUses) = getRight $ evalExpr constraints mempty input
                     env = typecheckEnv {tceConstraints = constraints}
+                    instances = mempty
 
                 let expectedExpr = getRight $ evalExprUnsafe mempty expected
                     (dedupedConstraints, tidyExpr) = deduplicateConstraints typeclassUses expr
-                    result = convertExprToUseTypeclassDictionary lookupInstanceAndCheck  env (addTypesToConstraint <$> dedupedConstraints) tidyExpr
+                    result = convertExprToUseTypeclassDictionary lookupInstanceAndCheck  env instances (addTypesToConstraint <$> dedupedConstraints) tidyExpr
 
                 dedupedConstraints `shouldBe` expectedConstraints
                 simplify <$> result `shouldBe` Right (simplify expectedExpr)
@@ -331,11 +335,12 @@ spec = do
            in it ("Successfully inlined " <> show input) $ do
                 let (expr, typeclassUses) = getRight $ evalExpr constraints varsInScope input
                 let env = typecheckEnv {tceVars = varsInScope}
+                    instances = mempty
 
                 let expectedExpr = getRight $ evalExprUnsafe varsInScope expected
                     (dedupedConstraints, tidyExpr) = deduplicateConstraints typeclassUses expr
                     allConstraints = nub (dedupedConstraints <> constraints) -- we lose outer constraints sometimes
-                    result = toDictionaryPassing lookupInstanceAndCheck  env (addTypesToConstraint <$> allConstraints) tidyExpr
+                    result = toDictionaryPassing lookupInstanceAndCheck  env instances (addTypesToConstraint <$> allConstraints) tidyExpr
 
                 simplify <$> result `shouldBe` Right (simplify expectedExpr)
       )

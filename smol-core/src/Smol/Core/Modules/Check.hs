@@ -70,7 +70,7 @@ passModuleDictionaries input inputModule = do
         newExpr <-
           modifyError
             (DictionaryPassingError input)
-            (toDictionaryPassing lookupInstance thisEnv typedConstraints expr)
+            (toDictionaryPassing lookupInstance thisEnv (moInstances inputModule) typedConstraints expr)
 
         pure (ident, tle {tleExpr = newExpr})
 

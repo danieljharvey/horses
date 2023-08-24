@@ -92,7 +92,6 @@ findMatchingConstraint constraints (Constraint name tys) =
           (True, Right matches) -> Just (Constraint innerName innerTys, matches)
           _ -> Nothing
 
-
    in case mapMaybe lookupConstraint constraintsWithAnn of
         -- we deliberately fail if we find more than one matching instance
         [(foundConstraint, subs)] -> pure (foundConstraint, subs)
@@ -107,11 +106,11 @@ getTypeForDictionary ::
   ) =>
   LookupInstance ann ->
   TCEnv ann ->
+  M.Map (Constraint ResolvedDep ()) (Instance ResolvedDep (Type ResolvedDep ann)) ->
   [Constraint ResolvedDep (Type ResolvedDep ann)] ->
   m (Maybe (Pattern ResolvedDep (Type ResolvedDep ann)))
-getTypeForDictionary lookupInstance env constraints = do
-  let
-      getConstraintPattern constraint i = do
+getTypeForDictionary lookupInstance env _instances constraints = do
+  let getConstraintPattern constraint i = do
         let ident = identForConstraint (i + 1)
         ty <- case lookupInstance env constraint of
           -- we found the instance, return it's type
@@ -148,13 +147,14 @@ convertExprToUseTypeclassDictionary ::
   (MonadError (TCError ann) m, Monoid ann) =>
   LookupInstance ann ->
   TCEnv ann ->
+  M.Map (Constraint ResolvedDep ()) (Instance ResolvedDep (Type ResolvedDep ann)) ->
   [Constraint ResolvedDep (Type ResolvedDep ann)] ->
   Expr ResolvedDep (Type ResolvedDep ann) ->
   m (Expr ResolvedDep (Type ResolvedDep ann))
-convertExprToUseTypeclassDictionary lookupInstance env constraints expr = do
+convertExprToUseTypeclassDictionary lookupInstance env instances constraints expr = do
   tracePrettyM "convertExprToUseTypeclassDictionary" (constraints, expr)
 
-  maybePattern <- getTypeForDictionary lookupInstance env (filterNotConcrete constraints)
+  maybePattern <- getTypeForDictionary lookupInstance env instances (filterNotConcrete constraints)
 
   case maybePattern of
     Just pat -> do
@@ -188,10 +188,11 @@ createTypeclassDict ::
   (Show ann, Ord ann, Monoid ann, MonadError (TCError ann) m) =>
   LookupInstance ann ->
   TCEnv ann ->
+  M.Map (Constraint ResolvedDep ()) (Instance ResolvedDep (Type ResolvedDep ann)) ->
   NE.NonEmpty (Constraint ResolvedDep (Type ResolvedDep ann)) ->
   m (Expr ResolvedDep (Type ResolvedDep ann))
-createTypeclassDict lookupInstance env constraints = do
-  instances <-
+createTypeclassDict lookupInstance env instances constraints = do
+  foundInstances <-
     traverse
       ( \constraint -> do
           case lookupInstance env constraint of
@@ -200,7 +201,7 @@ createTypeclassDict lookupInstance env constraints = do
               -- add instance contraints to typecheck env
               let newEnv = env { tceConstraints = removeTypesFromConstraint <$> newConstraints }
               -- found a concrete instance
-              toDictionaryPassing lookupInstance newEnv newConstraints expr
+              toDictionaryPassing lookupInstance newEnv instances newConstraints expr
             Left e -> do
               -- no concrete instance, maybe we can pass through a constraint
               -- from the current function
@@ -209,7 +210,7 @@ createTypeclassDict lookupInstance env constraints = do
                 Nothing -> throwError e
       )
       constraints
-  case NE.uncons instances of
+  case NE.uncons foundInstances of
     (one, Nothing) -> pure one
     (theFirst, Just theRest) ->
       let ty = TTuple mempty (getExprAnnotation theFirst) (getExprAnnotation <$> theRest)
@@ -224,9 +225,10 @@ passDictionaries ::
   (Monoid ann, Ord ann, Show ann, MonadError (TCError ann) m) =>
   LookupInstance ann ->
   TCEnv ann ->
+  M.Map (Constraint ResolvedDep ()) (Instance ResolvedDep (Type ResolvedDep ann)) ->
   Expr ResolvedDep (Type ResolvedDep ann) ->
   m (Expr ResolvedDep (Type ResolvedDep ann))
-passDictionaries lookupInstance env =
+passDictionaries lookupInstance env instances =
   go
   where
     go (EVar ann ident) = do
@@ -240,7 +242,7 @@ passDictionaries lookupInstance env =
             Just neConstraints -> do
               -- use the call type to specialise to the instance we need
               specialisedConstraints <- traverse (specialiseConstraint env ann) neConstraints
-              EApp ann (EVar ann ident) <$> createTypeclassDict lookupInstance env (addTypesToConstraint <$> specialisedConstraints)
+              EApp ann (EVar ann ident) <$> createTypeclassDict lookupInstance env instances (addTypesToConstraint <$> specialisedConstraints)
             Nothing -> pure (EVar ann ident)
         Nothing -> do
           tracePrettyM "not found in vars" ident
@@ -252,7 +254,7 @@ passDictionaries lookupInstance env =
               (Instance fnConstraints fnExpr) <- liftEither (lookupInstance env (addTypesToConstraint constraint))
               tracePrettyM "found instance" (fnConstraints, fnExpr)
               -- convert instance to dictionary passing then return it inlined
-              toDictionaryPassing lookupInstance env fnConstraints fnExpr
+              toDictionaryPassing lookupInstance env instances fnConstraints fnExpr
             Nothing ->
               pure (EVar ann ident)
     go other = bindExpr go other
@@ -262,10 +264,11 @@ toDictionaryPassing ::
   (MonadError (TCError ann) m, Show ann, Ord ann, Monoid ann) =>
   LookupInstance ann ->
   TCEnv ann ->
+  M.Map (Constraint ResolvedDep ()) (Instance ResolvedDep (Type ResolvedDep ann)) ->
   [Constraint ResolvedDep (Type ResolvedDep ann)] ->
   Expr ResolvedDep (Type ResolvedDep ann) ->
   m (Expr ResolvedDep (Type ResolvedDep ann))
-toDictionaryPassing lookupInstance env constraints expr = do
+toDictionaryPassing lookupInstance env instances constraints expr = do
   tracePrettyM "toDictionaryPassing" (tceConstraints env, constraints, expr)
 
   -- initial typechecking environment
@@ -276,6 +279,6 @@ toDictionaryPassing lookupInstance env constraints expr = do
 
   tracePrettyM "toDictionaryPassing env constraints" (tceConstraints typecheckEnv)
 
-  passDictionaries lookupInstance typecheckEnv
-    <=< convertExprToUseTypeclassDictionary lookupInstance typecheckEnv constraints
+  passDictionaries lookupInstance typecheckEnv instances
+    <=< convertExprToUseTypeclassDictionary lookupInstance typecheckEnv instances constraints
     $ expr
