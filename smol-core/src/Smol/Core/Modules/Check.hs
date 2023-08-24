@@ -63,17 +63,12 @@ passModuleDictionaries input inputModule = do
 
         let typedConstraints = addTypesToConstraint <$> constraints
 
-        let lookupInstance env' =
-              lookupTypecheckedTypeclassInstance env' (moInstances inputModule)
-                . removeTypesFromConstraint
-
         newExpr <-
           modifyError
             (DictionaryPassingError input)
-            (toDictionaryPassing lookupInstance thisEnv (moInstances inputModule) typedConstraints expr)
+            (toDictionaryPassing thisEnv (moInstances inputModule) typedConstraints expr)
 
         pure (ident, tle {tleExpr = newExpr})
 
   newExpressions <- M.fromList <$> traverse passDictToTopLevelExpression (M.toList $ moExpressions inputModule)
   pure $ inputModule {moExpressions = newExpressions}
-

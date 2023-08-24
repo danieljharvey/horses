@@ -274,7 +274,7 @@ spec = do
 
           instances = mempty
 
-      fmap simplify (createTypeclassDict lookupInstanceAndCheck  typecheckEnv instances constraints)
+      fmap simplify (createTypeclassDict typecheckEnv instances constraints)
         `shouldBe` simplify <$> expected
 
     it "Tuple for two constraints" $ do
@@ -282,7 +282,7 @@ spec = do
           expected = evalExprUnsafe mempty "((\\a -> \\b -> a == b : Int -> Int -> Bool), (\\a -> \\b -> a == b : Int -> Int -> Bool))"
           instances = mempty
 
-      fmap simplify (createTypeclassDict lookupInstanceAndCheck  typecheckEnv instances constraints)
+      fmap simplify (createTypeclassDict typecheckEnv instances constraints)
         `shouldBe` simplify <$> expected
 
   describe "isConcrete" $ do
@@ -304,7 +304,7 @@ spec = do
 
                 let expectedExpr = getRight $ evalExprUnsafe mempty expected
                     (dedupedConstraints, tidyExpr) = deduplicateConstraints typeclassUses expr
-                    result = convertExprToUseTypeclassDictionary lookupInstanceAndCheck  env instances (addTypesToConstraint <$> dedupedConstraints) tidyExpr
+                    result = convertExprToUseTypeclassDictionary env instances (addTypesToConstraint <$> dedupedConstraints) tidyExpr
 
                 dedupedConstraints `shouldBe` expectedConstraints
                 simplify <$> result `shouldBe` Right (simplify expectedExpr)
@@ -340,7 +340,7 @@ spec = do
                 let expectedExpr = getRight $ evalExprUnsafe varsInScope expected
                     (dedupedConstraints, tidyExpr) = deduplicateConstraints typeclassUses expr
                     allConstraints = nub (dedupedConstraints <> constraints) -- we lose outer constraints sometimes
-                    result = toDictionaryPassing lookupInstanceAndCheck  env instances (addTypesToConstraint <$> allConstraints) tidyExpr
+                    result = toDictionaryPassing env instances (addTypesToConstraint <$> allConstraints) tidyExpr
 
                 simplify <$> result `shouldBe` Right (simplify expectedExpr)
       )

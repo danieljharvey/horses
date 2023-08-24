@@ -63,4 +63,3 @@ checkInstance tcEnv typeclass constraint (Instance constraints expr) =
 
     let allConstraints = constraints -- nub (constraints <> newConstraints)
     pure $ Instance (addTypesToConstraint <$> allConstraints) typedExpr
-

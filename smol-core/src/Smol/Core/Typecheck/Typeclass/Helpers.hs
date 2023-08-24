@@ -16,11 +16,10 @@ module Smol.Core.Typecheck.Typeclass.Helpers
     addTypesToConstraint,
     removeTypesFromConstraint,
     applyConstraintTypes,
-    getTypeclassMethodNames
+    getTypeclassMethodNames,
   )
 where
 
-import qualified Data.Set as S
 import Control.Monad (zipWithM)
 import Control.Monad.Except
 import Control.Monad.Writer
@@ -30,6 +29,7 @@ import qualified Data.List.NonEmpty as NE
 import qualified Data.Map.Strict as M
 import Data.Maybe (listToMaybe, mapMaybe)
 import Data.Monoid
+import qualified Data.Set as S
 import Smol.Core.Helpers
 import Smol.Core.Modules.Types
 import Smol.Core.TypeUtils
@@ -45,7 +45,6 @@ getTypeclassMethodNames :: TCEnv ann -> S.Set Identifier
 getTypeclassMethodNames tcEnv =
   S.fromList $
     tcFuncName <$> M.elems (tceClasses tcEnv)
-
 
 -- this just chucks types in any order and will break on multi-parameter type
 -- classes
@@ -269,7 +268,6 @@ envFromTypecheckedModule inputModule =
           tceConstraints = mempty
         }
 
-
 addTypesToConstraint :: Constraint dep ann -> Constraint dep (Type dep ann)
 addTypesToConstraint (Constraint tcn tys) =
   Constraint tcn (f <$> tys)
@@ -279,7 +277,6 @@ addTypesToConstraint (Constraint tcn tys) =
 removeTypesFromConstraint :: Constraint dep (Type dep ann) -> Constraint dep ann
 removeTypesFromConstraint (Constraint tcn tys) =
   Constraint tcn (getTypeAnnotation <$> tys)
-
 
 applyConstraintTypes ::
   Typeclass ResolvedDep ann ->
@@ -293,5 +290,3 @@ applyConstraintTypes (Typeclass _ args _ ty) constraint =
         )
           <$> zip args tys
    in substituteMany subs ty
-
-
