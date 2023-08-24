@@ -100,6 +100,7 @@ findMatchingConstraint constraints (Constraint name tys) =
             throwError (TCTypeclassInstanceNotFound name tys constraintsWithAnn)
         multiple ->
           throwError (TCConflictingTypeclassInstancesFound (fst <$> multiple))
+
 getTypeForDictionary ::
   ( MonadError (TCError ann) m,
     Monoid ann
@@ -230,6 +231,7 @@ passDictionaries lookupInstance env =
   where
     go (EVar ann ident) = do
       tracePrettyM "passDictionaries to " ident
+      tracePrettyM "tce vars" (tceVars env)
       case M.lookup ident (tceVars env) of
         Just (constraints, _defExpr) -> do
           tracePrettyM "found in vars" (constraints, ident)
