@@ -222,31 +222,17 @@ passDictionaries env instances =
   go
   where
     go (EVar ann ident) = do
-      tracePrettyM "passDictionaries to " ident
-      tracePrettyM "tce vars" (tceVars env)
-      case M.lookup ident (tceVars env) of
-        Just (constraints, _defExpr) -> do
-          tracePrettyM "found in vars" (constraints, ident)
-          -- need to specialise constraint to actual type here
-          case NE.nonEmpty constraints of
-            Just neConstraints -> do
-              -- use the call type to specialise to the instance we need
-              specialisedConstraints <- traverse (specialiseConstraint env ann) neConstraints
-              EApp ann (EVar ann ident) <$> createTypeclassDict env instances (addTypesToConstraint <$> specialisedConstraints)
-            Nothing -> pure (EVar ann ident)
-        Nothing -> do
-          tracePrettyM "not found in vars" ident
-          result <- recoverInstance env ident ann
-          case result of
-            Just constraint -> do
-              tracePrettyM "recovered an instance" constraint
-              tracePrettyM "constraints in env" (tceConstraints env)
-              (Instance fnConstraints fnExpr) <- liftEither (lookupTypecheckedTypeclassInstance env instances (addTypesToConstraint constraint))
-              tracePrettyM "found instance" (fnConstraints, fnExpr)
-              -- convert instance to dictionary passing then return it inlined
-              toDictionaryPassing env instances fnConstraints fnExpr
-            Nothing ->
-              pure (EVar ann ident)
+      result <- recoverInstance env ident ann
+      case result of
+        Just constraint -> do
+          tracePrettyM "recovered an instance" constraint
+          tracePrettyM "constraints in env" (tceConstraints env)
+          (Instance fnConstraints fnExpr) <- liftEither (lookupTypecheckedTypeclassInstance env instances (addTypesToConstraint constraint))
+          tracePrettyM "found instance" (fnConstraints, fnExpr)
+          -- convert instance to dictionary passing then return it inlined
+          toDictionaryPassing env instances fnConstraints fnExpr
+        Nothing ->
+          pure (EVar ann ident)
     go other = bindExpr go other
 
 -- | well well well lets put it all together

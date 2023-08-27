@@ -15,7 +15,6 @@ import Data.Functor
 import Data.List (nub)
 import qualified Data.List.NonEmpty as NE
 import qualified Data.Map.Strict as M
-import Data.Maybe (mapMaybe)
 import qualified Data.Set as S
 import Data.String (fromString)
 import qualified Data.Text as T
@@ -23,7 +22,6 @@ import Smol.Core
 import Smol.Core.Modules.FromParts
 import Smol.Core.Modules.ResolveDeps
 import Smol.Core.Modules.Typecheck
-import Smol.Core.Modules.Types.DefIdentifier
 import Smol.Core.Modules.Types.Module
 import Smol.Core.Modules.Types.ModuleError
 import Smol.Core.Typecheck.FromParsedExpr (fromParsedExpr)
@@ -73,48 +71,36 @@ simplify = void . goExpr
 
 evalExpr ::
   [Constraint ResolvedDep Annotation] ->
-  M.Map (ResolvedDep Identifier) ([Constraint ResolvedDep Annotation], Type ResolvedDep Annotation) ->
   T.Text ->
   Either
     (TCError Annotation)
     ( ResolvedExpr (Type ResolvedDep Annotation),
       M.Map (ResolvedDep Identifier) (Constraint ResolvedDep Annotation)
     )
-evalExpr constraints varsInScope input =
+evalExpr constraints input =
   case parseExprAndFormatError input of
     Left e -> error (show e)
     Right expr ->
-      let localDefs =
-            S.fromList $
-              mapMaybe
-                ( \case
-                    LocalDefinition i -> Just (DIName i)
-                    _ -> Nothing
-                )
-                (M.keys varsInScope)
-       in case resolveExprDeps expr (getTypeclassMethodNames @() typecheckEnv) localDefs of
-            Left e -> error $ "error resolving Expr deps :" <> show e
-            Right resolvedExpr ->
-              let env =
-                    typecheckEnv
-                      { tceConstraints = constraints,
-                        tceVars = varsInScope
-                      }
-               in elaborate env resolvedExpr
+      case resolveExprDeps expr (getTypeclassMethodNames @() typecheckEnv) mempty of
+        Left e -> error $ "error resolving Expr deps :" <> show e
+        Right resolvedExpr ->
+          let env =
+                typecheckEnv
+                  { tceConstraints = constraints
+                  }
+           in elaborate env resolvedExpr
 
 -- | elaborate but don't do clever resolving so we can construct the
 -- expectations we want
 evalExprUnsafe ::
-  M.Map (ResolvedDep Identifier) ([Constraint ResolvedDep Annotation], Type ResolvedDep Annotation) ->
   T.Text ->
   Either (TCError Annotation) (ResolvedExpr (Type ResolvedDep Annotation))
-evalExprUnsafe varsInScope input = case parseExprAndFormatError input of
+evalExprUnsafe input = case parseExprAndFormatError input of
   Left e -> error (show e)
   Right expr ->
-    let env = typecheckEnv {tceVars = varsInScope}
-     in case elaborate env (fromParsedExpr expr) of
-          Right (typedExpr, _typeclassUses) -> pure typedExpr
-          Left e -> Left e
+    case elaborate typecheckEnv (fromParsedExpr expr) of
+      Right (typedExpr, _typeclassUses) -> pure typedExpr
+      Left e -> Left e
 
 getRight :: (Show e) => Either e a -> a
 getRight (Right a) = a
@@ -307,7 +293,7 @@ spec = do
   describe "Get dictionaries" $ do
     it "Single item dictionary for single constraint" $ do
       let constraints = addTypesToConstraint <$> NE.fromList [Constraint "Eq" [tyInt]]
-          expected = evalExprUnsafe mempty "(\\a1 -> \\b2 -> a1 == b2 : Int -> Int -> Bool)"
+          expected = evalExprUnsafe "(\\a1 -> \\b2 -> a1 == b2 : Int -> Int -> Bool)"
 
           instances = moInstances testModule
 
@@ -316,7 +302,7 @@ spec = do
 
     it "Tuple for two constraints" $ do
       let constraints = addTypesToConstraint <$> NE.fromList [Constraint "Eq" [tyInt], Constraint "Eq" [tyInt]]
-          expected = evalExprUnsafe mempty "((\\a1 -> \\b2 -> a1 == b2 : Int -> Int -> Bool), (\\a1 -> \\b2 -> a1 == b2 : Int -> Int -> Bool))"
+          expected = evalExprUnsafe "((\\a1 -> \\b2 -> a1 == b2 : Int -> Int -> Bool), (\\a1 -> \\b2 -> a1 == b2 : Int -> Int -> Bool))"
 
           instances = moInstances testModule
 
@@ -336,11 +322,11 @@ spec = do
           let input = joinText parts
               expected = joinText expectedParts
            in it ("Successfully converted " <> show input) $ do
-                let (expr, typeclassUses) = getRight $ evalExpr constraints mempty input
+                let (expr, typeclassUses) = getRight $ evalExpr constraints input
                     env = typecheckEnv {tceConstraints = constraints}
                     instances = mempty
 
-                let expectedExpr = getRight $ evalExprUnsafe mempty expected
+                let expectedExpr = getRight $ evalExprUnsafe expected
                     (dedupedConstraints, tidyExpr) = deduplicateConstraints typeclassUses expr
                     result = convertExprToUseTypeclassDictionary env instances (addTypesToConstraint <$> dedupedConstraints) tidyExpr
 
@@ -365,33 +351,30 @@ spec = do
       ]
 
   -- the whole transformation basically
-  fdescribe "toDictionaryPassing" $ do
+  describe "toDictionaryPassing" $ do
     traverse_
-      ( \(varsInScope, constraints, parts, expectedParts) -> do
+      ( \(constraints, parts, expectedParts) -> do
           let input = joinText parts
               expected = joinText expectedParts
            in it ("Successfully inlined " <> show input) $ do
-                let (expr, typeclassUses) = getRight $ evalExpr constraints varsInScope input
-                let env = typecheckEnv {tceVars = varsInScope}
+                let (expr, typeclassUses) = getRight $ evalExpr constraints input
 
                     instances = moInstances testModule
 
-                let expectedExpr = getRight $ evalExprUnsafe varsInScope expected
+                let expectedExpr = getRight $ evalExprUnsafe expected
                     (dedupedConstraints, tidyExpr) = deduplicateConstraints typeclassUses expr
                     allConstraints = nub (dedupedConstraints <> constraints) -- we lose outer constraints sometimes
-                    result = toDictionaryPassing env instances (addTypesToConstraint <$> allConstraints) tidyExpr
+                    result = toDictionaryPassing typecheckEnv instances (addTypesToConstraint <$> allConstraints) tidyExpr
 
                 simplify <$> result `shouldBe` Right (simplify expectedExpr)
       )
-      [ (mempty, mempty, ["1 + 2"], ["1 + 2"]),
+      [ (mempty, ["1 + 2"], ["1 + 2"]),
         ( mempty,
-          mempty,
           ["equals (1: Int) (2: Int)"],
           [ "(\\a1 -> \\b2 -> a1 == b2 : Int -> Int -> Bool) (1 : Int) (2: Int)"
           ]
         ),
         ( mempty,
-          mempty,
           ["equals ((1: Int), (2: Int)) ((2: Int), (3: Int))"],
           [ "(\\a -> \\b -> case (a,b) of ((a1, a2), (b1, b2)) ->",
             "if (\\a -> \\b -> a == b : Int -> Int -> Bool) a1 b1 ",
@@ -400,8 +383,7 @@ spec = do
             "((1: Int), (2: Int)) ((2: Int), (3: Int))"
           ]
         ),
-        ( mempty,
-          [Constraint "Eq" [tcVar "a"]],
+        ( [Constraint "Eq" [tcVar "a"]],
           ["(\\a -> \\b -> equals a b : a -> a -> Bool)"],
           [ "\\instances -> case (instances : (a -> a -> Bool)) of tcvaluefromdictionary0 -> ",
             "(\\a1 -> \\b2 -> tcvaluefromdictionary0 a1 b2 : a -> a -> Bool)"
