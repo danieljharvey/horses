@@ -13,7 +13,6 @@ import qualified Data.Map.Strict as M
 import qualified Data.Set as S
 import qualified Data.Text as T
 import Smol.Core
-import Smol.Core.Helpers
 import Smol.Core.Modules.FromParts
 import Smol.Core.Modules.ResolveDeps
 import Smol.Core.Modules.Typecheck
@@ -54,19 +53,12 @@ passModuleDictionaries input inputModule = do
         let constraints = constraintsFromTLE tle
             expr = tleExpr tle
 
-        tracePrettyM "module passModuleDictionaries to" ident
-
-        let thisEnv =
-              env
-                { tceConstraints = constraints
-                }
-
         let typedConstraints = addTypesToConstraint <$> constraints
 
         newExpr <-
           modifyError
             (DictionaryPassingError input)
-            (toDictionaryPassing thisEnv (moInstances inputModule) typedConstraints expr)
+            (toDictionaryPassing (tceClasses env) (moInstances inputModule) mempty typedConstraints expr)
 
         pure (ident, tle {tleExpr = newExpr})
 

@@ -198,8 +198,6 @@ typecheckInstance ::
   Instance ResolvedDep Annotation ->
   m (Instance ResolvedDep (Type ResolvedDep Annotation))
 typecheckInstance input inputModule deps def inst = do
-  tracePrettyM "typecheck instance" def
-
   -- where are we getting constraints from?
   let exprTypeMap =
         mapKey LocalDefinition $
@@ -289,8 +287,6 @@ typecheckExprDef ::
   (DefIdentifier ResolvedDep, TopLevelExpression ResolvedDep Annotation) ->
   m (TopLevelExpression ResolvedDep (Type ResolvedDep Annotation))
 typecheckExprDef input inputModule deps (def, tle) = do
-  tracePrettyM "typecheck expr" def
-
   -- where are we getting constraints from?
   let exprTypeMap =
         mapKey LocalDefinition $
@@ -323,8 +319,6 @@ typecheckExprDef input inputModule deps (def, tle) = do
       first
         (DefDoesNotTypeCheck input def)
         (typecheck env actualExpr)
-
-  tracePrettyM "post-typecheck" newExpr
 
   -- split the type out again
   let (typedType, typedExpr) = case newExpr of

@@ -7,6 +7,7 @@ import Data.Foldable (traverse_)
 import Data.Text (Text)
 import Smol.Core
 import Smol.Core.Interpreter.Types.Stack
+import Smol.Core.Modules.Types.Module
 import Smol.Core.Typecheck.FromParsedExpr
 import Smol.Core.Typecheck.Typecheck (typecheck)
 import Smol.Core.Typecheck.Typeclass
@@ -38,7 +39,7 @@ doInterpret input =
         . addEmptyStackFrames
         . void
         . discardLeft
-        . passDictionaries typecheckEnv mempty
+        . passDictionaries (tceClasses typecheckEnv) ((fmap . fmap) void $ moInstances testModule) mempty
         $ typedExpr
     Left e -> error (show e)
 

@@ -22,7 +22,6 @@ where
 
 import Control.Monad (zipWithM)
 import Control.Monad.Except
-import Control.Monad.Writer
 import Data.Foldable (traverse_)
 import Data.Functor (($>))
 import qualified Data.List.NonEmpty as NE
@@ -35,7 +34,6 @@ import Smol.Core.Modules.Types
 import Smol.Core.TypeUtils
 import Smol.Core.Typecheck.Shared
 import Smol.Core.Typecheck.Substitute
-import Smol.Core.Typecheck.Subtype
 import Smol.Core.Typecheck.Types
 import Smol.Core.Types
 
@@ -86,6 +84,11 @@ matchType (TApp _ lFn lArg) (TApp _ rFn rArg) = do
   pure (matchA <> matchB)
 matchType (TArray _ _ a) (TArray _ _ b) =
   matchType a b
+matchType (TFunc _ _ lArg lTo) (TFunc _ _ rArg rTo) = do
+  matchArg <- matchType lArg rArg
+  matchTo <- matchType lTo rTo
+  pure (matchArg <> matchTo)
+matchType (TPrim _ lPrim) (TPrim _ rPrim) | lPrim == rPrim = pure mempty
 matchType a b = Left (a, b)
 
 instanceMatchesType ::
@@ -166,19 +169,18 @@ isConcrete (Constraint _ tys) =
 
 -- given a func name and type, find the typeclass instance (if applicable)
 recoverInstance ::
-  (MonadError (TCError ann) m, Eq ann, Show ann, Monoid ann) =>
-  TCEnv ann ->
+  (MonadError (TCError ann) m, Show ann, Monoid ann) =>
+  M.Map TypeclassName (Typeclass ResolvedDep ann) ->
   ResolvedDep Identifier ->
   Type ResolvedDep ann ->
   m (Maybe (Constraint ResolvedDep ann))
-recoverInstance env ident ty = do
+recoverInstance typeClasses ident ty = do
   let getInnerIdent (TypeclassCall i _) = Just i
       getInnerIdent (LocalDefinition i) = Just i -- not sure if this should happen but it makes testing waaaay easier
       getInnerIdent _ = Nothing
 
   -- if name matches typeclass instance, return freshened type
-  case listToMaybe $ M.elems $ M.filter (\tc -> Just (tcFuncName tc) == getInnerIdent ident) (tceClasses env) of
-    -- need to turn Type Identity ann into Type ResolvedDep ann
+  case listToMaybe $ M.elems $ M.filter (\tc -> Just (tcFuncName tc) == getInnerIdent ident) typeClasses of
     Just tc -> Just <$> applyTypeToConstraint tc ty
     Nothing -> pure Nothing
 
@@ -196,14 +198,18 @@ lookupTypeclass env tcn =
 -- given a Typeclass (ie `Eq a`) and a type calling it (ie `Int -> Int ->
 -- Bool`), recover the instance we want, `Eq Int`.
 applyTypeToConstraint ::
-  (Monoid ann, Show ann, Eq ann, MonadError (TCError ann) m) =>
+  (Monoid ann, Show ann, MonadError (TCError ann) m) =>
   Typeclass ResolvedDep ann ->
   Type ResolvedDep ann ->
   m (Constraint ResolvedDep ann)
 applyTypeToConstraint tc ty = do
-  (_, subs) <- runWriterT $ isSubtypeOf (tcFuncType tc) ty
-  let applySubs = substituteMany (filterSubstitutions subs) . TVar mempty . emptyResolvedDep
-  pure $ Constraint (tcName tc) (applySubs <$> tcArgs tc)
+  tracePrettyM "applyTypeToConstraint typeclass" (show tc)
+  tracePrettyM "applyTypeToConstraint ty" ty
+  case matchType ty (tcFuncType tc) of
+    Right subs -> do
+      let applySubs = substituteMany subs . TVar mempty . emptyResolvedDep
+      pure $ Constraint (tcName tc) (applySubs <$> tcArgs tc)
+    Left (l,r) -> throwError (TCTypeMismatch l r)
 
 -- given I have a constraint and a type for it's callsite
 -- substitute the type onto the constraint to get the actual constraint.
@@ -212,7 +218,7 @@ applyTypeToConstraint tc ty = do
 -- Bool` and I can use that to specialise the constraint to `Eq Int` and thus
 -- dispatch the correct `Eq` instance
 specialiseConstraint ::
-  (MonadError (TCError ann) m, Eq ann, Show ann, Monoid ann) =>
+  (MonadError (TCError ann) m, Show ann, Monoid ann) =>
   TCEnv ann ->
   Type ResolvedDep ann ->
   Constraint ResolvedDep ann ->

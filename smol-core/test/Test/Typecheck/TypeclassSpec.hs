@@ -7,7 +7,6 @@
 
 module Test.Typecheck.TypeclassSpec (spec) where
 
-import Control.Monad.Except
 import Data.Bifunctor (bimap)
 import Data.Either
 import Data.Foldable (traverse_)
@@ -15,37 +14,15 @@ import Data.Functor
 import Data.List (nub)
 import qualified Data.List.NonEmpty as NE
 import qualified Data.Map.Strict as M
-import qualified Data.Set as S
 import Data.String (fromString)
 import qualified Data.Text as T
 import Smol.Core
-import Smol.Core.Modules.FromParts
 import Smol.Core.Modules.ResolveDeps
-import Smol.Core.Modules.Typecheck
 import Smol.Core.Modules.Types.Module
-import Smol.Core.Modules.Types.ModuleError
 import Smol.Core.Typecheck.FromParsedExpr (fromParsedExpr)
 import Smol.Core.Typecheck.Typeclass
 import Test.Helpers
 import Test.Hspec
-
-typedModule ::
-  (MonadError (ModuleError Annotation) m) =>
-  T.Text ->
-  m (Module ResolvedDep (Type ResolvedDep Annotation))
-typedModule input = do
-  let moduleItems = case parseModuleAndFormatError input of
-        Right a -> a
-        _ -> error "parsing module for typeclass spec"
-  myModule <- moduleFromModuleParts moduleItems
-
-  let classes = resolveTypeclass <$> moClasses myModule
-      typeclassMethods = S.fromList . M.elems . fmap tcFuncName $ classes
-
-  (resolvedModule, deps) <-
-    modifyError ErrorInResolveDeps (resolveModuleDeps typeclassMethods myModule)
-
-  typecheckModule input resolvedModule deps
 
 simplify :: Expr ResolvedDep ann -> Expr ResolvedDep ()
 simplify = void . goExpr
@@ -105,20 +82,6 @@ evalExprUnsafe input = case parseExprAndFormatError input of
 getRight :: (Show e) => Either e a -> a
 getRight (Right a) = a
 getRight (Left e) = error (show e)
-
-testModule :: Module ResolvedDep (Type ResolvedDep Annotation)
-testModule =
-  getRight $
-    typedModule $
-      joinText
-        [ "class Eq a { equals: a -> a -> Bool }",
-          "instance Eq Int = \\a -> \\b -> a == b",
-          "instance Eq Bool = \\a -> \\b -> a == b",
-          "instance Eq String = \\a -> \\b -> a == b",
-          "instance (Eq a, Eq b) => Eq (a,b) = ",
-          "\\pairA -> \\pairB -> case (pairA, pairB) of ((a1, b1), (a2, b2)) -> ",
-          "if equals a1 a2 then equals b1 b2 else False"
-        ]
 
 spec :: Spec
 spec = do
@@ -323,12 +286,11 @@ spec = do
               expected = joinText expectedParts
            in it ("Successfully converted " <> show input) $ do
                 let (expr, typeclassUses) = getRight $ evalExpr constraints input
-                    env = typecheckEnv {tceConstraints = constraints}
                     instances = mempty
 
                 let expectedExpr = getRight $ evalExprUnsafe expected
                     (dedupedConstraints, tidyExpr) = deduplicateConstraints typeclassUses expr
-                    result = convertExprToUseTypeclassDictionary env instances (addTypesToConstraint <$> dedupedConstraints) tidyExpr
+                    result = convertExprToUseTypeclassDictionary (tceClasses typecheckEnv) instances (addTypesToConstraint <$> dedupedConstraints) tidyExpr
 
                 dedupedConstraints `shouldBe` expectedConstraints
                 simplify <$> result `shouldBe` Right (simplify expectedExpr)
@@ -364,7 +326,7 @@ spec = do
                 let expectedExpr = getRight $ evalExprUnsafe expected
                     (dedupedConstraints, tidyExpr) = deduplicateConstraints typeclassUses expr
                     allConstraints = nub (dedupedConstraints <> constraints) -- we lose outer constraints sometimes
-                    result = toDictionaryPassing typecheckEnv instances (addTypesToConstraint <$> allConstraints) tidyExpr
+                    result = toDictionaryPassing (tceClasses typecheckEnv) instances mempty (addTypesToConstraint <$> allConstraints) tidyExpr
 
                 simplify <$> result `shouldBe` Right (simplify expectedExpr)
       )

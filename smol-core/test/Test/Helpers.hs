@@ -1,3 +1,4 @@
+{-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE OverloadedStrings #-}
 
 module Test.Helpers
@@ -35,9 +36,11 @@ module Test.Helpers
     unsafeParseInstanceExpr,
     tcVar,
     typeForComparison,
+    testModule,
   )
 where
 
+import Control.Monad.Except
 import Control.Monad.Reader
 import Control.Monad.State
 import Control.Monad.Writer
@@ -46,15 +49,55 @@ import Data.Functor
 import qualified Data.List.NonEmpty as NE
 import qualified Data.Map.Strict as M
 import qualified Data.Sequence as Seq
+import qualified Data.Set as S
 import qualified Data.Set.NonEmpty as NES
 import Data.Text (Text)
 import qualified Data.Text as T
 import Smol.Core
 import Smol.Core.Modules.FromParts
+import Smol.Core.Modules.ResolveDeps
+import Smol.Core.Modules.Typecheck
 import Smol.Core.Modules.Types.Module
+import Smol.Core.Modules.Types.ModuleError
 import Smol.Core.Modules.Types.ModuleItem
 import Smol.Core.Typecheck.FromParsedExpr
 import Test.BuiltInTypes (builtInTypes)
+
+typedModule ::
+  (MonadError (ModuleError Annotation) m) =>
+  T.Text ->
+  m (Module ResolvedDep (Type ResolvedDep Annotation))
+typedModule input = do
+  let moduleItems = case parseModuleAndFormatError input of
+        Right a -> a
+        _ -> error "parsing module for typeclass spec"
+  myModule <- moduleFromModuleParts moduleItems
+
+  let typeClasses = resolveTypeclass <$> moClasses myModule
+      typeclassMethods = S.fromList . M.elems . fmap tcFuncName $ typeClasses
+
+  (resolvedModule, deps) <-
+    modifyError ErrorInResolveDeps (resolveModuleDeps typeclassMethods myModule)
+
+  typecheckModule input resolvedModule deps
+
+getRight :: (Show e) => Either e a -> a
+getRight (Right a) = a
+getRight (Left e) = error (show e)
+
+testModule :: Module ResolvedDep (Type ResolvedDep Annotation)
+testModule =
+  getRight $
+    typedModule $
+      joinText
+        [ "class Eq a { equals: a -> a -> Bool }",
+          "instance Eq Int = \\a -> \\b -> a == b",
+          "instance Eq Bool = \\a -> \\b -> a == b",
+          "instance Eq String = \\a -> \\b -> a == b",
+          "instance (Eq a, Eq b) => Eq (a,b) = ",
+          "\\pairA -> \\pairB -> case (pairA, pairB) of ((a1, b1), (a2, b2)) -> ",
+          "if equals a1 a2 then equals b1 b2 else False"
+        ]
 
 tyBool :: (Monoid ann) => Type dep ann
 tyBool = TPrim mempty TPBool
