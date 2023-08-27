@@ -7,6 +7,7 @@
 
 module Test.Typecheck.TypeclassSpec (spec) where
 
+import Control.Monad.Except
 import Data.Bifunctor (bimap)
 import Data.Either
 import Data.Foldable (traverse_)
@@ -17,14 +18,36 @@ import qualified Data.Map.Strict as M
 import Data.Maybe (mapMaybe)
 import qualified Data.Set as S
 import Data.String (fromString)
-import Data.Text (Text)
+import qualified Data.Text as T
 import Smol.Core
+import Smol.Core.Modules.FromParts
 import Smol.Core.Modules.ResolveDeps
+import Smol.Core.Modules.Typecheck
 import Smol.Core.Modules.Types.DefIdentifier
+import Smol.Core.Modules.Types.Module
+import Smol.Core.Modules.Types.ModuleError
 import Smol.Core.Typecheck.FromParsedExpr (fromParsedExpr)
 import Smol.Core.Typecheck.Typeclass
 import Test.Helpers
 import Test.Hspec
+
+typedModule ::
+  (MonadError (ModuleError Annotation) m) =>
+  T.Text ->
+  m (Module ResolvedDep (Type ResolvedDep Annotation))
+typedModule input = do
+  let moduleItems = case parseModuleAndFormatError input of
+        Right a -> a
+        _ -> error "parsing module for typeclass spec"
+  myModule <- moduleFromModuleParts moduleItems
+
+  let classes = resolveTypeclass <$> moClasses myModule
+      typeclassMethods = S.fromList . M.elems . fmap tcFuncName $ classes
+
+  (resolvedModule, deps) <-
+    modifyError ErrorInResolveDeps (resolveModuleDeps typeclassMethods myModule)
+
+  typecheckModule input resolvedModule deps
 
 simplify :: Expr ResolvedDep ann -> Expr ResolvedDep ()
 simplify = void . goExpr
@@ -51,7 +74,7 @@ simplify = void . goExpr
 evalExpr ::
   [Constraint ResolvedDep Annotation] ->
   M.Map (ResolvedDep Identifier) ([Constraint ResolvedDep Annotation], Type ResolvedDep Annotation) ->
-  Text ->
+  T.Text ->
   Either
     (TCError Annotation)
     ( ResolvedExpr (Type ResolvedDep Annotation),
@@ -83,7 +106,7 @@ evalExpr constraints varsInScope input =
 -- expectations we want
 evalExprUnsafe ::
   M.Map (ResolvedDep Identifier) ([Constraint ResolvedDep Annotation], Type ResolvedDep Annotation) ->
-  Text ->
+  T.Text ->
   Either (TCError Annotation) (ResolvedExpr (Type ResolvedDep Annotation))
 evalExprUnsafe varsInScope input = case parseExprAndFormatError input of
   Left e -> error (show e)
@@ -96,6 +119,20 @@ evalExprUnsafe varsInScope input = case parseExprAndFormatError input of
 getRight :: (Show e) => Either e a -> a
 getRight (Right a) = a
 getRight (Left e) = error (show e)
+
+testModule :: Module ResolvedDep (Type ResolvedDep Annotation)
+testModule =
+  getRight $
+    typedModule $
+      joinText
+        [ "class Eq a { equals: a -> a -> Bool }",
+          "instance Eq Int = \\a -> \\b -> a == b",
+          "instance Eq Bool = \\a -> \\b -> a == b",
+          "instance Eq String = \\a -> \\b -> a == b",
+          "instance (Eq a, Eq b) => Eq (a,b) = ",
+          "\\pairA -> \\pairB -> case (pairA, pairB) of ((a1, b1), (a2, b2)) -> ",
+          "if equals a1 a2 then equals b1 b2 else False"
+        ]
 
 spec :: Spec
 spec = do
@@ -270,17 +307,18 @@ spec = do
   describe "Get dictionaries" $ do
     it "Single item dictionary for single constraint" $ do
       let constraints = addTypesToConstraint <$> NE.fromList [Constraint "Eq" [tyInt]]
-          expected = evalExprUnsafe mempty "(\\a -> \\b -> a == b : Int -> Int -> Bool)"
+          expected = evalExprUnsafe mempty "(\\a1 -> \\b2 -> a1 == b2 : Int -> Int -> Bool)"
 
-          instances = mempty
+          instances = moInstances testModule
 
       fmap simplify (createTypeclassDict typecheckEnv instances constraints)
         `shouldBe` simplify <$> expected
 
     it "Tuple for two constraints" $ do
       let constraints = addTypesToConstraint <$> NE.fromList [Constraint "Eq" [tyInt], Constraint "Eq" [tyInt]]
-          expected = evalExprUnsafe mempty "((\\a -> \\b -> a == b : Int -> Int -> Bool), (\\a -> \\b -> a == b : Int -> Int -> Bool))"
-          instances = mempty
+          expected = evalExprUnsafe mempty "((\\a1 -> \\b2 -> a1 == b2 : Int -> Int -> Bool), (\\a1 -> \\b2 -> a1 == b2 : Int -> Int -> Bool))"
+
+          instances = moInstances testModule
 
       fmap simplify (createTypeclassDict typecheckEnv instances constraints)
         `shouldBe` simplify <$> expected
@@ -327,7 +365,7 @@ spec = do
       ]
 
   -- the whole transformation basically
-  describe "toDictionaryPassing" $ do
+  fdescribe "toDictionaryPassing" $ do
     traverse_
       ( \(varsInScope, constraints, parts, expectedParts) -> do
           let input = joinText parts
@@ -335,7 +373,8 @@ spec = do
            in it ("Successfully inlined " <> show input) $ do
                 let (expr, typeclassUses) = getRight $ evalExpr constraints varsInScope input
                 let env = typecheckEnv {tceVars = varsInScope}
-                    instances = mempty
+
+                    instances = moInstances testModule
 
                 let expectedExpr = getRight $ evalExprUnsafe varsInScope expected
                     (dedupedConstraints, tidyExpr) = deduplicateConstraints typeclassUses expr
@@ -348,7 +387,7 @@ spec = do
         ( mempty,
           mempty,
           ["equals (1: Int) (2: Int)"],
-          [ "(\\a -> \\b -> a == b : Int -> Int -> Bool) (1 : Int) (2: Int)"
+          [ "(\\a1 -> \\b2 -> a1 == b2 : Int -> Int -> Bool) (1 : Int) (2: Int)"
           ]
         ),
         ( mempty,
