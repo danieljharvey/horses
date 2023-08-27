@@ -209,7 +209,7 @@ applyTypeToConstraint tc ty = do
     Right subs -> do
       let applySubs = substituteMany subs . TVar mempty . emptyResolvedDep
       pure $ Constraint (tcName tc) (applySubs <$> tcArgs tc)
-    Left (l,r) -> throwError (TCTypeMismatch l r)
+    Left (l, r) -> throwError (TCTypeMismatch l r)
 
 -- given I have a constraint and a type for it's callsite
 -- substitute the type onto the constraint to get the actual constraint.

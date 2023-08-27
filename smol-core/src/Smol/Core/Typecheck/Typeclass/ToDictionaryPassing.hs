@@ -239,12 +239,10 @@ passDictionaries typeClasses instances subs =
           (newSubs, Instance fnConstraints fnExpr) <-
             liftEither (lookupTypecheckedTypeclassInstance typeClasses instances (addTypesToConstraint subbedConstraint))
 
-          tracePrettyM "found instance" (newSubs, fnConstraints, fnExpr)
-          let allSubs = newSubs <> subs
-          tracePrettyM "all subs" allSubs
+          tracePrettyM "found instance" (fnConstraints, fnExpr)
 
           -- convert instance to dictionary passing then return it inlined
-          toDictionaryPassing typeClasses instances allSubs fnConstraints fnExpr
+          toDictionaryPassing typeClasses instances newSubs fnConstraints fnExpr
         Nothing -> do
           tracePrettyM "nothng recovered for " ident
           pure (EVar ann ident)
