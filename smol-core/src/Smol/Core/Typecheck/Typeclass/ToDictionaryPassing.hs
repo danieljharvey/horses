@@ -236,6 +236,7 @@ passDictionaries env instances =
     go other = bindExpr go other
 
 -- | well well well lets put it all together
+-- TODO: replace TCEnv ann with [Constraint ResolvedDep ann]
 toDictionaryPassing ::
   (MonadError (TCError ann) m, Show ann, Ord ann, Monoid ann) =>
   TCEnv ann ->
