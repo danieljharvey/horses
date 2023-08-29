@@ -338,10 +338,10 @@ spec = do
         ),
         ( mempty,
           ["equals ((1: Int), (2: Int)) ((2: Int), (3: Int))"],
-          [ "(\\a -> \\b -> case (a,b) of ((a1, a2), (b1, b2)) ->",
-            "if (\\a -> \\b -> a == b : Int -> Int -> Bool) a1 b1 ",
-            "then (\\a -> \\b -> a == b : Int -> Int -> Bool) a2 b2",
-            "else False : (Int,Int) -> (Int,Int) -> Bool)",
+          [ "(\\pairA7 -> \\pairB8 -> case (pairA7, pairB8) of ((a19, b110), (a211, b212)) ->",
+            "if (\\a1 -> \\b2 -> a1 == b2 : Int -> Int -> Bool) a19 a211 ",
+            "then (\\a1 -> \\b2 -> a1 == b2 : Int -> Int -> Bool) b110 b212",
+            "else False : (a, b) -> (a,b) -> Bool)",
             "((1: Int), (2: Int)) ((2: Int), (3: Int))"
           ]
         ),
