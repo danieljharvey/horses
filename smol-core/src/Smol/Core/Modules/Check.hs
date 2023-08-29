@@ -54,11 +54,16 @@ passModuleDictionaries input inputModule = do
             expr = tleExpr tle
 
         let typedConstraints = addTypesToConstraint <$> constraints
-
+            dictEnv =
+              ToDictEnv
+                { tdeClasses = tceClasses env,
+                  tdeInstances = moInstances inputModule,
+                  tdeVars = getVarsInScope inputModule
+                }
         newExpr <-
           modifyError
             (DictionaryPassingError input)
-            (toDictionaryPassing (tceClasses env) (moInstances inputModule) mempty typedConstraints expr)
+            (toDictionaryPassing dictEnv mempty typedConstraints expr)
 
         pure (ident, tle {tleExpr = newExpr})
 

@@ -10,7 +10,6 @@ where
 
 import Control.Monad.Except
 import qualified Data.Map.Strict as M
-import Smol.Core.Helpers
 import Smol.Core.Typecheck.Elaborate (elaborate)
 import Smol.Core.Typecheck.Shared
 import Smol.Core.Typecheck.Typeclass.Helpers
@@ -40,26 +39,13 @@ checkInstance tcEnv typeclass constraint (Instance constraints expr) =
   do
     let subbedType = applyConstraintTypes typeclass constraint
 
-    -- tracePrettyM "checkInstance constraints" constraints
-    -- tracePrettyM "checkInstance expr" expr
-
-    -- need to synthesize types for our constraints
-    -- tracePrettyM "tceVars" (tceVars tcEnv)
-
     -- we add the instance's constraints (so typechecker forgives a missing `Eq a` etc)
     let typecheckEnv = tcEnv {tceConstraints = constraints}
         annotatedExpr = EAnn (getExprAnnotation expr) subbedType expr
 
-    -- tracePrettyM "annotatedExpr" annotatedExpr
-
     -- we `elaborate` rather than `typecheck` as we don't want the names
     -- mangled
-    (typedExpr, newConstraints) <- elaborate typecheckEnv annotatedExpr
-
-    tracePrettyM "constraints" constraints
-    tracePrettyM "newConstraints" newConstraints
-
-    tracePrettyM "typedExpr" typedExpr
+    (typedExpr, _newConstraints) <- elaborate typecheckEnv annotatedExpr
 
     let allConstraints = constraints -- nub (constraints <> newConstraints)
     pure $ Instance (addTypesToConstraint <$> allConstraints) typedExpr

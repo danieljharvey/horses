@@ -226,7 +226,7 @@ typecheckInstance input inputModule deps def inst = do
   typeclass <-
     modifyError
       (DefDoesNotTypeCheck input def)
-      (lookupTypeclass env (conTypeclass constraint))
+      (lookupTypeclass classes (conTypeclass constraint))
 
   let typedConstraint = addTypesToConstraint (constraint $> mempty)
 

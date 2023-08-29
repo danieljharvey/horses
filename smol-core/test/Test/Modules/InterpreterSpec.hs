@@ -35,7 +35,9 @@ spec = do
   describe "Module InterpreterSpec" $ do
     describe "interpret" $ do
       let cases =
-            [ (["def main = 1 + 1"], "2"),
+            [ ( ["def main = 1 + 1"],
+                "2"
+              ),
               ( [ "def id a = a",
                   "def main = id -10"
                 ],

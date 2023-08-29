@@ -31,17 +31,23 @@ discardLeft (Right a) = a
 -- | typecheck, resolve typeclasses, interpret, profit
 doInterpret :: Text -> Expr ResolvedDep ()
 doInterpret input =
-  case typecheck typecheckEnv (fromParsedExpr (unsafeParseExpr input)) of
-    Right (_constraints, typedExpr) ->
-      fmap edAnnotation
-        . discardLeft
-        . interpret mempty
-        . addEmptyStackFrames
-        . void
-        . discardLeft
-        . passDictionaries (tceClasses typecheckEnv) ((fmap . fmap) void $ moInstances testModule) mempty
-        $ typedExpr
-    Left e -> error (show e)
+  let dictEnv =
+        ToDictEnv
+          { tdeClasses = tceClasses typecheckEnv,
+            tdeInstances = ((fmap . fmap) void $ moInstances testModule),
+            tdeVars = mempty
+          }
+   in case typecheck typecheckEnv (fromParsedExpr (unsafeParseExpr input)) of
+        Right (_constraints, typedExpr) ->
+          fmap edAnnotation
+            . discardLeft
+            . interpret mempty
+            . addEmptyStackFrames
+            . void
+            . discardLeft
+            . passDictionaries dictEnv mempty
+            $ typedExpr
+        Left e -> error (show e)
 
 spec :: Spec
 spec = do

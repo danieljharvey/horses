@@ -17,6 +17,7 @@ module Smol.Core.Typecheck.Typeclass.Helpers
     removeTypesFromConstraint,
     applyConstraintTypes,
     getTypeclassMethodNames,
+    getVarsInScope,
   )
 where
 
@@ -127,7 +128,6 @@ lookupTypeclassInstance env constraint@(Constraint name tys) = do
     Nothing -> do
       case mapMaybe
         ( \(Constraint innerName innerTys) -> do
-            tracePrettyM "instance match?" (tys, innerTys)
             case (innerName == name, instanceMatchesType tys innerTys) of
               (True, Right matches) -> Just (Constraint innerName innerTys, matches)
               _ -> Nothing
@@ -169,7 +169,7 @@ isConcrete (Constraint _ tys) =
 
 -- given a func name and type, find the typeclass instance (if applicable)
 recoverInstance ::
-  (MonadError (TCError ann) m, Show ann, Monoid ann) =>
+  (MonadError (TCError ann) m, Monoid ann) =>
   M.Map TypeclassName (Typeclass ResolvedDep ann) ->
   ResolvedDep Identifier ->
   Type ResolvedDep ann ->
@@ -187,24 +187,22 @@ recoverInstance typeClasses ident ty = do
 -- find Typeclass in env or explode
 lookupTypeclass ::
   (MonadError (TCError ann) m) =>
-  TCEnv ann ->
+  M.Map TypeclassName (Typeclass ResolvedDep ann) -> 
   TypeclassName ->
   m (Typeclass ResolvedDep ann)
-lookupTypeclass env tcn =
-  case M.lookup tcn (tceClasses env) of
+lookupTypeclass classes tcn =
+  case M.lookup tcn classes of
     Just tc -> pure tc
     Nothing -> throwError (TCTypeclassNotFound tcn)
 
 -- given a Typeclass (ie `Eq a`) and a type calling it (ie `Int -> Int ->
 -- Bool`), recover the instance we want, `Eq Int`.
 applyTypeToConstraint ::
-  (Monoid ann, Show ann, MonadError (TCError ann) m) =>
+  (Monoid ann, MonadError (TCError ann) m) =>
   Typeclass ResolvedDep ann ->
   Type ResolvedDep ann ->
   m (Constraint ResolvedDep ann)
-applyTypeToConstraint tc ty = do
-  tracePrettyM "applyTypeToConstraint typeclass" (show tc)
-  tracePrettyM "applyTypeToConstraint ty" ty
+applyTypeToConstraint tc ty = 
   case matchType ty (tcFuncType tc) of
     Right subs -> do
       let applySubs = substituteMany subs . TVar mempty . emptyResolvedDep
@@ -218,14 +216,14 @@ applyTypeToConstraint tc ty = do
 -- Bool` and I can use that to specialise the constraint to `Eq Int` and thus
 -- dispatch the correct `Eq` instance
 specialiseConstraint ::
-  (MonadError (TCError ann) m, Show ann, Monoid ann) =>
-  TCEnv ann ->
+  (MonadError (TCError ann) m, Monoid ann) =>
+  M.Map TypeclassName (Typeclass ResolvedDep ann) -> 
   Type ResolvedDep ann ->
   Constraint ResolvedDep ann ->
   m (Constraint ResolvedDep ann)
-specialiseConstraint env ty (Constraint tcn _tys) = do
+specialiseConstraint classes ty (Constraint tcn _tys) = do
   -- lookup typeclass
-  tc <- lookupTypeclass env tcn
+  tc <- lookupTypeclass classes tcn
   -- apply types
   applyTypeToConstraint tc ty
 
