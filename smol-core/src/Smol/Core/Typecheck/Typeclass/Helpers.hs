@@ -187,7 +187,7 @@ recoverInstance typeClasses ident ty = do
 -- find Typeclass in env or explode
 lookupTypeclass ::
   (MonadError (TCError ann) m) =>
-  M.Map TypeclassName (Typeclass ResolvedDep ann) -> 
+  M.Map TypeclassName (Typeclass ResolvedDep ann) ->
   TypeclassName ->
   m (Typeclass ResolvedDep ann)
 lookupTypeclass classes tcn =
@@ -202,7 +202,7 @@ applyTypeToConstraint ::
   Typeclass ResolvedDep ann ->
   Type ResolvedDep ann ->
   m (Constraint ResolvedDep ann)
-applyTypeToConstraint tc ty = 
+applyTypeToConstraint tc ty =
   case matchType ty (tcFuncType tc) of
     Right subs -> do
       let applySubs = substituteMany subs . TVar mempty . emptyResolvedDep
@@ -217,7 +217,7 @@ applyTypeToConstraint tc ty =
 -- dispatch the correct `Eq` instance
 specialiseConstraint ::
   (MonadError (TCError ann) m, Monoid ann) =>
-  M.Map TypeclassName (Typeclass ResolvedDep ann) -> 
+  M.Map TypeclassName (Typeclass ResolvedDep ann) ->
   Type ResolvedDep ann ->
   Constraint ResolvedDep ann ->
   m (Constraint ResolvedDep ann)

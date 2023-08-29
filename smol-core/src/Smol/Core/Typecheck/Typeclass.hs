@@ -1,6 +1,3 @@
-{-# LANGUAGE FlexibleContexts #-}
-{-# LANGUAGE OverloadedStrings #-}
-
 module Smol.Core.Typecheck.Typeclass
   ( module Smol.Core.Typecheck.Typeclass.Helpers,
     module Smol.Core.Typecheck.Typeclass.Deduplicate,

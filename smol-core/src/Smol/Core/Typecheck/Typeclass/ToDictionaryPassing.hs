@@ -214,7 +214,7 @@ passDictionaries ::
 passDictionaries env subs =
   go
   where
-    go (EVar ann ident) = 
+    go (EVar ann ident) =
       case M.lookup ident (tdeVars env) of
         Just (constraints, _defExpr) -> do
           -- need to specialise constraint to actual type here
@@ -228,7 +228,6 @@ passDictionaries env subs =
           result <- recoverInstance (tdeClasses env) ident ann
           case result of
             Just constraint -> do
-
               -- specialise contraints to found types
               let subbedConstraint =
                     substituteConstraint subs constraint
@@ -256,7 +255,6 @@ toDictionaryPassing ::
   Expr ResolvedDep (Type ResolvedDep ann) ->
   m (Expr ResolvedDep (Type ResolvedDep ann))
 toDictionaryPassing env subs constraints expr = do
-
   passDictionaries env subs
     <=< convertExprToUseTypeclassDictionary env constraints
     $ expr

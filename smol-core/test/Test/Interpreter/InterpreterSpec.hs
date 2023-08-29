@@ -34,7 +34,7 @@ doInterpret input =
   let dictEnv =
         ToDictEnv
           { tdeClasses = tceClasses typecheckEnv,
-            tdeInstances = ((fmap . fmap) void $ moInstances testModule),
+            tdeInstances = fmap void <$> moInstances testModule,
             tdeVars = mempty
           }
    in case typecheck typecheckEnv (fromParsedExpr (unsafeParseExpr input)) of
