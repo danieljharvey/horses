@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1692568572179,
+  "lastUpdate": 1693377374698,
   "repoUrl": "https://github.com/danieljharvey/mimsa",
   "entries": {
     "Store benchmarks in Github Pages": [
@@ -2899,6 +2899,50 @@ window.BENCHMARK_DATA = {
           {
             "name": "evaluate/evaluate parsing 2",
             "value": 0.26103088799999913,
+            "unit": "Time (ms)"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "danieljamesharvey@gmail.com",
+            "name": "Daniel Harvey",
+            "username": "danieljharvey"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "19d051339c09fed4300daa135e750b81c77f84e4",
+          "message": "Use typeclasses from modules (#1008)\n\n* OK, found the problem, we looping now\r\n\r\n* Start raising hell\r\n\r\n* Gah\r\n\r\n* sdflksdjklf\r\n\r\n* Oh nearly\r\n\r\n* sdjkfjsdfjlksdjklf\r\n\r\n* Oh god\r\n\r\n* Still fucked but let's simplify it\r\n\r\n* Good\r\n\r\n* Well\r\n\r\n* so\r\n\r\n* Now just fix all the little tests and see where we're at\r\n\r\n* Start fixing those tests and see what the hell we've done\r\n\r\n* Remove lookup in vars\r\n\r\n* Well\r\n\r\n* Slowly slowly catchy monkey\r\n\r\n* So I think this works\r\n\r\n* Fix test\r\n\r\n* Well, shit\r\n\r\n* Lint and format\r\n\r\n* Fix shit\r\n\r\n* Oh",
+          "timestamp": "2023-08-30T07:22:10+01:00",
+          "tree_id": "f135adcc4b5b3bd6c1b7862156311a9b50ee8069",
+          "url": "https://github.com/danieljharvey/mimsa/commit/19d051339c09fed4300daa135e750b81c77f84e4"
+        },
+        "date": 1693377373634,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "build stdlib/allFns",
+            "value": 0.10083723126667214,
+            "unit": "Time (ms)"
+          },
+          {
+            "name": "evaluate/evaluate big looping thing",
+            "value": 0.09206778856667096,
+            "unit": "Time (ms)"
+          },
+          {
+            "name": "evaluate/evaluate parsing",
+            "value": 0.032011660080883624,
+            "unit": "Time (ms)"
+          },
+          {
+            "name": "evaluate/evaluate parsing 2",
+            "value": 0.21932899802858566,
             "unit": "Time (ms)"
           }
         ]
