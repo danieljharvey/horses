@@ -109,6 +109,7 @@ parseInstance = do
 parseClass :: Parser (ModuleItem Annotation)
 parseClass = do
   myString "class"
+  constraints <- try typeConstraintParser <|> pure mempty
   typeclassName <- typeclassNameParser
   parts <-
     chainl1 ((: []) <$> identifierParser) (pure (<>))
@@ -122,7 +123,8 @@ parseClass = do
   pure $
     ModuleClass
       ( Typeclass
-          { tcName = typeclassName,
+          { tcConstraints = constraints,
+            tcName = typeclassName,
             tcArgs = parts,
             tcFuncName = fnName,
             tcFuncType = ty

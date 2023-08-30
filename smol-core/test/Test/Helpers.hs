@@ -241,7 +241,8 @@ tcVar = TVar mempty . LocalDefinition
 showTypeclass :: (Monoid ann) => Typeclass ResolvedDep ann
 showTypeclass =
   Typeclass
-    { tcName = "Show",
+    { tcConstraints = mempty,
+      tcName = "Show",
       tcArgs = ["a"],
       tcFuncName = "show",
       tcFuncType = tyFunc (tcVar "a") tyString
@@ -250,7 +251,8 @@ showTypeclass =
 eqTypeclass :: (Monoid ann) => Typeclass ResolvedDep ann
 eqTypeclass =
   Typeclass
-    { tcName = "Eq",
+    { tcConstraints = mempty,
+      tcName = "Eq",
       tcArgs = ["a"],
       tcFuncName = "equals",
       tcFuncType = tyFunc (tcVar "a") (tyFunc (tcVar "a") tyBool)

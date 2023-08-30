@@ -54,6 +54,8 @@ data ModuleError ann
   = DuplicateDefinition Identifier
   | DuplicateTypeName TypeName
   | DuplicateConstructor Constructor
+  | DuplicateTypeclass TypeclassName
+  | MissingTypeclassDependent TypeclassName TypeclassName -- `Semigroup` , `Monoid`
   | CannotFindValues (Set Identifier)
   | CannotFindConstructors (Set Constructor)
   | ErrorInResolveDeps ResolveDepsError

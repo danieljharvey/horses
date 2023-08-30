@@ -1,31 +1,19 @@
-  
-def maybe innerM = {
-  mappend: \a -> \b -> case (a,b) of
-                    (Maybe.Just iA, Maybe.Just iB) -> Maybe.Just (innerM.mappend iA iB)
-                  | (Maybe.Just iA, Maybe.Nothing) -> (Maybe.Just iA) 
-                  | (Maybe.Nothing, Maybe.Just iB) -> (Maybe.Just iB) 
-                  | _ -> Maybe.Nothing,
-  mempty: Maybe.Nothing
-  }
+class Semigroup a { mappend: a -> a -> a }
 
-def any = { mappend: Prelude.or, mempty: False }
- 
-def all = { mappend: Prelude.and, mempty: True }
+instance Semigroup Int = \a -> \b -> a + a
 
-def sum = { mappend: \a -> \b -> a + b, mempty: 0 }
+class (Semigroup a) => Monoid a { mempty: a }
 
-def first = { mappend: \a -> \b ->
-                        case (a, b) of
-                            (Maybe.Just a, _) -> (Maybe.Just a)
-                          | (_, b) -> b,
-                     mempty: Maybe.Nothing
-                    }
+instance Monoid Int = 0
 
-def last = { mappend: \a -> \b ->
-                        case (a, b) of
-                            (_, Maybe.Just b) -> (Maybe.Just b)
-                          | (a, _) -> a,
-                     mempty: Maybe.Nothing
-                    }
-  
+type All = All Bool
+
+def runAll : All -> Bool
+def runAll all = case all of All a -> a
+
+instance Semigroup All = \a -> \b -> case (a,b) of
+                                    (All True, All True) -> All True
+                                   | _ -> All False
+
+instance Monoid All = All True
 

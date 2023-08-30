@@ -23,3 +23,24 @@ spec = do
             expected = EmptyTestName "yes"
 
         moduleFromModuleParts modParts `shouldBe` Left expected
+
+      it "Can't have duplicate typeclasses" $ do
+        let modParts =
+              unsafeParseModuleItems $
+                joinText
+                  [ "class Eq { equals : a -> a -> Bool }",
+                    "class Eq { eq: a -> Bool }"
+                  ]
+            expected = DuplicateTypeclass "Eq"
+
+        moduleFromModuleParts modParts `shouldBe` Left expected
+
+      it "Missing dependent typeclass" $ do
+        let modParts =
+              unsafeParseModuleItems $
+                joinText
+                  [ "class (Semigroup a) => Monoid a { mempty: a }" 
+                  ]
+            expected = MissingTypeclassDependent "Semigroup" "Monoid"
+
+        moduleFromModuleParts modParts `shouldBe` Left expected
