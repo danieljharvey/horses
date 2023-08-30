@@ -51,7 +51,8 @@ protectedNames =
       "Unit",
       "def",
       "test",
-      "instance"
+      "instance",
+      "class"
     ]
 
 filterProtectedNames :: Text -> Maybe Text

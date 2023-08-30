@@ -1,6 +1,5 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE ScopedTypeVariables #-}
-{-# LANGUAGE TypeApplications #-}
 
 module Test.IR.IRSpec (spec) where
 
@@ -20,7 +19,6 @@ import Smol.Core.Modules.Typecheck
 import Smol.Core.Modules.Types
 import Smol.Core.Modules.Types.ModuleError
 import Smol.Core.Parser (parseModuleAndFormatError)
-import Smol.Core.Typecheck.Typeclass.BuiltIns
 import Smol.Core.Typecheck.Typeclass.Types
 import Smol.Core.Types
 import Test.BuiltInTypes
@@ -60,7 +58,10 @@ resolveModule input =
   case parseModuleAndFormatError input of
     Right moduleItems -> runExcept $ do
       myModule <- moduleFromModuleParts moduleItems
-      let typeclassMethods = S.fromList . M.elems . fmap tcFuncName $ builtInClasses @Annotation
+
+      let classes = resolveTypeclass <$> moClasses myModule
+          typeclassMethods = S.fromList . M.elems . fmap tcFuncName $ classes
+
       (resolvedModule, deps) <-
         modifyError ErrorInResolveDeps (resolveModuleDeps typeclassMethods (addTestDataTypesToModule myModule))
 

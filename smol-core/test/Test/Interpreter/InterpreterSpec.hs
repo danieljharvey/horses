@@ -7,6 +7,7 @@ import Data.Foldable (traverse_)
 import Data.Text (Text)
 import Smol.Core
 import Smol.Core.Interpreter.Types.Stack
+import Smol.Core.Modules.Types.Module
 import Smol.Core.Typecheck.FromParsedExpr
 import Smol.Core.Typecheck.Typecheck (typecheck)
 import Smol.Core.Typecheck.Typeclass
@@ -30,17 +31,23 @@ discardLeft (Right a) = a
 -- | typecheck, resolve typeclasses, interpret, profit
 doInterpret :: Text -> Expr ResolvedDep ()
 doInterpret input =
-  case typecheck typecheckEnv (fromParsedExpr (unsafeParseExpr input)) of
-    Right (_constraints, typedExpr) ->
-      fmap edAnnotation
-        . discardLeft
-        . interpret mempty
-        . addEmptyStackFrames
-        . void
-        . discardLeft
-        . passDictionaries typecheckEnv
-        $ typedExpr
-    Left e -> error (show e)
+  let dictEnv =
+        ToDictEnv
+          { tdeClasses = tceClasses typecheckEnv,
+            tdeInstances = fmap void <$> moInstances testModule,
+            tdeVars = mempty
+          }
+   in case typecheck typecheckEnv (fromParsedExpr (unsafeParseExpr input)) of
+        Right (_constraints, typedExpr) ->
+          fmap edAnnotation
+            . discardLeft
+            . interpret mempty
+            . addEmptyStackFrames
+            . void
+            . discardLeft
+            . passDictionaries dictEnv mempty
+            $ typedExpr
+        Left e -> error (show e)
 
 spec :: Spec
 spec = do

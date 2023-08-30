@@ -4,7 +4,6 @@
 module Smol.Core.Typecheck.Typeclass.Helpers
   ( recoverTypeclassUses,
     constraintsFromTLE,
-    lookupTypeclassConstraint,
     lookupTypeclassInstance,
     matchType,
     lookupTypeclass,
@@ -12,28 +11,39 @@ module Smol.Core.Typecheck.Typeclass.Helpers
     isConcrete,
     recoverInstance,
     specialiseConstraint,
+    substituteConstraint,
     envFromTypecheckedModule,
+    addTypesToConstraint,
+    removeTypesFromConstraint,
+    applyConstraintTypes,
+    getTypeclassMethodNames,
+    getVarsInScope,
   )
 where
 
-import Control.Monad (unless, void, zipWithM)
+import Control.Monad (zipWithM)
 import Control.Monad.Except
-import Control.Monad.Writer
 import Data.Foldable (traverse_)
 import Data.Functor (($>))
 import qualified Data.List.NonEmpty as NE
 import qualified Data.Map.Strict as M
 import Data.Maybe (listToMaybe, mapMaybe)
 import Data.Monoid
+import qualified Data.Set as S
 import Smol.Core.Helpers
 import Smol.Core.Modules.Types
 import Smol.Core.TypeUtils
 import Smol.Core.Typecheck.Shared
 import Smol.Core.Typecheck.Substitute
-import Smol.Core.Typecheck.Subtype
-import Smol.Core.Typecheck.Typeclass.BuiltIns
 import Smol.Core.Typecheck.Types
 import Smol.Core.Types
+
+-- let's get all the method names from the Typeclasses
+-- mentioned in the instance constraints
+getTypeclassMethodNames :: TCEnv ann -> S.Set Identifier
+getTypeclassMethodNames tcEnv =
+  S.fromList $
+    tcFuncName <$> M.elems (tceClasses tcEnv)
 
 -- this just chucks types in any order and will break on multi-parameter type
 -- classes
@@ -75,6 +85,11 @@ matchType (TApp _ lFn lArg) (TApp _ rFn rArg) = do
   pure (matchA <> matchB)
 matchType (TArray _ _ a) (TArray _ _ b) =
   matchType a b
+matchType (TFunc _ _ lArg lTo) (TFunc _ _ rArg rTo) = do
+  matchArg <- matchType lArg rArg
+  matchTo <- matchType lTo rTo
+  pure (matchArg <> matchTo)
+matchType (TPrim _ lPrim) (TPrim _ rPrim) | lPrim == rPrim = pure mempty
 matchType a b = Left (a, b)
 
 instanceMatchesType ::
@@ -112,7 +127,7 @@ lookupTypeclassInstance env constraint@(Constraint name tys) = do
     Just tcInstance -> pure tcInstance
     Nothing -> do
       case mapMaybe
-        ( \(Constraint innerName innerTys) ->
+        ( \(Constraint innerName innerTys) -> do
             case (innerName == name, instanceMatchesType tys innerTys) of
               (True, Right matches) -> Just (Constraint innerName innerTys, matches)
               _ -> Nothing
@@ -144,27 +159,8 @@ substituteConstraint ::
 substituteConstraint subs (Constraint name tys) =
   Constraint name (substituteMany subs <$> tys)
 
--- | do we have a matching constraint?
--- first look for a concrete instance
--- if one is not there, see if we already have a matching constraint
--- in TCEnv (ie, the function has declared `Eq a`)
-lookupTypeclassConstraint ::
-  (MonadError (TCError ann) m, Ord ann, Monoid ann, Show ann) =>
-  TCEnv ann ->
-  Constraint ResolvedDep ann ->
-  m ()
-lookupTypeclassConstraint env constraint@(Constraint name tys) = do
-  -- see if this is a valid instance first?
-  _ <-
-    void (lookupTypeclassInstance env constraint) `catchError` \_ -> do
-      -- maybe it's a constraint, look there
-      unless
-        (constraint `elem` tceConstraints env)
-        (throwError (TCTypeclassInstanceNotFound name tys (M.keys $ tceInstances env)))
-  pure ()
-
 -- look for vars, if no, then it's concrete
-isConcrete :: Constraint ResolvedDep ann -> Bool
+isConcrete :: Constraint dep ann -> Bool
 isConcrete (Constraint _ tys) =
   not $ getAny $ foldMap containsVars tys
   where
@@ -173,44 +169,45 @@ isConcrete (Constraint _ tys) =
 
 -- given a func name and type, find the typeclass instance (if applicable)
 recoverInstance ::
-  (MonadError (TCError ann) m, Eq ann, Show ann, Monoid ann) =>
-  TCEnv ann ->
+  (MonadError (TCError ann) m, Monoid ann) =>
+  M.Map TypeclassName (Typeclass ResolvedDep ann) ->
   ResolvedDep Identifier ->
   Type ResolvedDep ann ->
   m (Maybe (Constraint ResolvedDep ann))
-recoverInstance env ident ty = do
+recoverInstance typeClasses ident ty = do
   let getInnerIdent (TypeclassCall i _) = Just i
       getInnerIdent (LocalDefinition i) = Just i -- not sure if this should happen but it makes testing waaaay easier
       getInnerIdent _ = Nothing
 
   -- if name matches typeclass instance, return freshened type
-  case listToMaybe $ M.elems $ M.filter (\tc -> Just (tcFuncName tc) == getInnerIdent ident) (tceClasses env) of
-    -- need to turn Type Identity ann into Type ResolvedDep ann
+  case listToMaybe $ M.elems $ M.filter (\tc -> Just (tcFuncName tc) == getInnerIdent ident) typeClasses of
     Just tc -> Just <$> applyTypeToConstraint tc ty
     Nothing -> pure Nothing
 
 -- find Typeclass in env or explode
 lookupTypeclass ::
   (MonadError (TCError ann) m) =>
-  TCEnv ann ->
+  M.Map TypeclassName (Typeclass ResolvedDep ann) ->
   TypeclassName ->
   m (Typeclass ResolvedDep ann)
-lookupTypeclass env tcn =
-  case M.lookup tcn (tceClasses env) of
+lookupTypeclass classes tcn =
+  case M.lookup tcn classes of
     Just tc -> pure tc
     Nothing -> throwError (TCTypeclassNotFound tcn)
 
 -- given a Typeclass (ie `Eq a`) and a type calling it (ie `Int -> Int ->
 -- Bool`), recover the instance we want, `Eq Int`.
 applyTypeToConstraint ::
-  (Monoid ann, Show ann, Eq ann, MonadError (TCError ann) m) =>
+  (Monoid ann, MonadError (TCError ann) m) =>
   Typeclass ResolvedDep ann ->
   Type ResolvedDep ann ->
   m (Constraint ResolvedDep ann)
-applyTypeToConstraint tc ty = do
-  (_, subs) <- runWriterT $ isSubtypeOf (tcFuncType tc) ty
-  let applySubs = substituteMany (filterSubstitutions subs) . TVar mempty . emptyResolvedDep
-  pure $ Constraint (tcName tc) (applySubs <$> tcArgs tc)
+applyTypeToConstraint tc ty =
+  case matchType ty (tcFuncType tc) of
+    Right subs -> do
+      let applySubs = substituteMany subs . TVar mempty . emptyResolvedDep
+      pure $ Constraint (tcName tc) (applySubs <$> tcArgs tc)
+    Left (l, r) -> throwError (TCTypeMismatch l r)
 
 -- given I have a constraint and a type for it's callsite
 -- substitute the type onto the constraint to get the actual constraint.
@@ -219,14 +216,14 @@ applyTypeToConstraint tc ty = do
 -- Bool` and I can use that to specialise the constraint to `Eq Int` and thus
 -- dispatch the correct `Eq` instance
 specialiseConstraint ::
-  (MonadError (TCError ann) m, Eq ann, Show ann, Monoid ann) =>
-  TCEnv ann ->
+  (MonadError (TCError ann) m, Monoid ann) =>
+  M.Map TypeclassName (Typeclass ResolvedDep ann) ->
   Type ResolvedDep ann ->
   Constraint ResolvedDep ann ->
   m (Constraint ResolvedDep ann)
-specialiseConstraint env ty (Constraint tcn _tys) = do
+specialiseConstraint classes ty (Constraint tcn _tys) = do
   -- lookup typeclass
-  tc <- lookupTypeclass env tcn
+  tc <- lookupTypeclass classes tcn
   -- apply types
   applyTypeToConstraint tc ty
 
@@ -251,6 +248,8 @@ getVarsInScope =
         (constraintsFromTLE tle, getExprAnnotation (tleExpr tle))
       )
 
+-- make a typechecking env from a module
+-- this means throwing away all the types which seems silly
 envFromTypecheckedModule :: (Ord ann, Monoid ann) => Module ResolvedDep (Type ResolvedDep ann) -> TCEnv ann
 envFromTypecheckedModule inputModule =
   let instances =
@@ -268,7 +267,30 @@ envFromTypecheckedModule inputModule =
    in TCEnv
         { tceVars = getVarsInScope inputModule,
           tceDataTypes = dataTypes,
-          tceInstances = builtInInstances <> instances,
-          tceClasses = builtInClasses <> classes,
+          tceInstances = instances,
+          tceClasses = classes,
           tceConstraints = mempty
         }
+
+addTypesToConstraint :: Constraint dep ann -> Constraint dep (Type dep ann)
+addTypesToConstraint (Constraint tcn tys) =
+  Constraint tcn (f <$> tys)
+  where
+    f ty = ty $> ty
+
+removeTypesFromConstraint :: Constraint dep (Type dep ann) -> Constraint dep ann
+removeTypesFromConstraint (Constraint tcn tys) =
+  Constraint tcn (getTypeAnnotation <$> tys)
+
+applyConstraintTypes ::
+  Typeclass ResolvedDep ann ->
+  Constraint ResolvedDep (Type ResolvedDep ann) ->
+  Type ResolvedDep ann
+applyConstraintTypes (Typeclass _ args _ ty) constraint =
+  let (Constraint _ tys) = removeTypesFromConstraint constraint
+      subs =
+        ( \(ident, tySub) ->
+            Substitution (SubId $ LocalDefinition ident) tySub
+        )
+          <$> zip args tys
+   in substituteMany subs ty

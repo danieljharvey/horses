@@ -209,7 +209,8 @@ protectedTypeNames =
       "infix",
       "test",
       "using",
-      "instance"
+      "instance",
+      "class"
     ]
 
 tyVarParser :: Parser Identifier

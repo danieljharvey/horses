@@ -58,6 +58,7 @@ data ModuleError ann
   | CannotFindConstructors (Set Constructor)
   | ErrorInResolveDeps ResolveDepsError
   | DefDoesNotTypeCheck Text (DefIdentifier ResolvedDep) (TCError ann)
+  | DictionaryPassingError Text (TCError ann)
   | NamedImportNotFound (Set ModuleName) ModuleName
   | EmptyTestName Identifier
   | ErrorInTest TestName (TestError ann)
@@ -66,6 +67,8 @@ data ModuleError ann
 
 moduleErrorDiagnostic :: ModuleError Annotation -> Diag.Diagnostic Text
 moduleErrorDiagnostic (DefDoesNotTypeCheck input _ typeErr) =
+  typeErrorDiagnostic input typeErr
+moduleErrorDiagnostic (DictionaryPassingError input typeErr) =
   typeErrorDiagnostic input typeErr
 moduleErrorDiagnostic (ErrorInTest _ testErr) =
   testErrorDiagnostic testErr

@@ -1,5 +1,5 @@
 {-# LANGUAGE FlexibleContexts #-}
-{-# LANGUAGE TypeApplications #-}
+{-# LANGUAGE ScopedTypeVariables #-}
 
 module Smol.Core.Modules.Check
   ( checkModule,
@@ -14,13 +14,11 @@ import Smol.Core
 import Smol.Core.Modules.FromParts
 import Smol.Core.Modules.ResolveDeps
 import Smol.Core.Modules.Typecheck
-import Smol.Core.Modules.Types.DefIdentifier
 import Smol.Core.Modules.Types.Module
 import Smol.Core.Modules.Types.ModuleError
 import Smol.Core.Modules.Types.ModuleItem
 import Smol.Core.Modules.Types.TopLevelExpression
 import Smol.Core.Typecheck.Typeclass
-import Smol.Core.Typecheck.Typeclass.BuiltIns
 
 -- this is the front door as such
 checkModule ::
@@ -31,7 +29,7 @@ checkModule ::
 checkModule input moduleItems = do
   myModule <- moduleFromModuleParts moduleItems
 
-  let classes = builtInClasses @Annotation <> (resolveTypeclass <$> moClasses myModule)
+  let classes = resolveTypeclass <$> moClasses myModule
       typeclassMethods = S.fromList . M.elems . fmap tcFuncName $ classes
 
   (resolvedModule, deps) <-
@@ -39,28 +37,31 @@ checkModule input moduleItems = do
 
   typedModule <- typecheckModule input resolvedModule deps
 
-  passModuleDictionaries typedModule
+  passModuleDictionaries input typedModule
 
 passModuleDictionaries ::
   (MonadError (ModuleError Annotation) m) =>
+  T.Text ->
   Module ResolvedDep (Type ResolvedDep Annotation) ->
   m (Module ResolvedDep (Type ResolvedDep Annotation))
-passModuleDictionaries inputModule = do
+passModuleDictionaries input inputModule = do
   let env = envFromTypecheckedModule inputModule
 
   let passDictToTopLevelExpression (ident, tle) = do
         let constraints = constraintsFromTLE tle
             expr = tleExpr tle
 
-        let thisEnv =
-              env
-                { tceConstraints = constraints
+        let typedConstraints = addTypesToConstraint <$> constraints
+            dictEnv =
+              ToDictEnv
+                { tdeClasses = tceClasses env,
+                  tdeInstances = moInstances inputModule,
+                  tdeVars = getVarsInScope inputModule
                 }
-
         newExpr <-
           modifyError
-            (DefDoesNotTypeCheck mempty (DIName ident))
-            (toDictionaryPassing thisEnv constraints expr)
+            (DictionaryPassingError input)
+            (toDictionaryPassing dictEnv mempty typedConstraints expr)
 
         pure (ident, tle {tleExpr = newExpr})
 

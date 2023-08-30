@@ -1,7 +1,9 @@
+class Eq a { equals : a -> a -> Bool }
+
+instance Eq Int = \a -> \b -> a == b
 
 class Semigroup a { mappend: a -> a -> a }
 
-/* it's Sum semigroup */
 instance Semigroup Int = \a -> \b -> a + a
 
 def main : Bool

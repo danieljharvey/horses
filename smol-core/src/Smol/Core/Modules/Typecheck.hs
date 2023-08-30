@@ -22,8 +22,7 @@ import Smol.Core.Modules.Types
 import Smol.Core.Modules.Types.DepType
 import Smol.Core.Modules.Types.ModuleError
 import Smol.Core.Typecheck.Typecheck (typecheck)
-import Smol.Core.Typecheck.Typeclass (checkInstance, lookupTypeclass)
-import Smol.Core.Typecheck.Typeclass.BuiltIns
+import Smol.Core.Typecheck.Typeclass (addTypesToConstraint, checkInstance, lookupTypeclass)
 
 -- go through the module, and wrap all the items in DefIdentifier keys and
 -- DepType for items
@@ -219,24 +218,19 @@ typecheckInstance input inputModule deps def inst = do
         TCEnv
           { tceVars = exprTypeMap,
             tceDataTypes = getDataTypeMap deps,
-            tceClasses = builtInClasses <> classes,
-            tceInstances = builtInInstances <> instances,
-            tceConstraints = mempty
+            tceClasses = classes,
+            tceInstances = instances,
+            tceConstraints = inConstraints inst
           }
 
   typeclass <-
     modifyError
       (DefDoesNotTypeCheck input def)
-      (lookupTypeclass env (conTypeclass constraint))
+      (lookupTypeclass classes (conTypeclass constraint))
 
-  (_fnName, constraints, typedExpr) <-
-    modifyError (DefDoesNotTypeCheck input def) (checkInstance env typeclass (constraint $> mempty) inst)
+  let typedConstraint = addTypesToConstraint (constraint $> mempty)
 
-  pure $
-    Instance
-      { inExpr = typedExpr,
-        inConstraints = typeForConstraint <$> constraints
-      }
+  modifyError (DefDoesNotTypeCheck input def) (checkInstance env typeclass typedConstraint inst)
 
 -- typechecking in this context means "does this data type make sense"
 -- and "do we know about all external datatypes it mentions"
@@ -284,10 +278,6 @@ resolveConstraint (Constraint tcn tys) =
   where
     resolveTy ty = ty $> ty
 
-typeForConstraint :: Constraint ResolvedDep ann -> Constraint ResolvedDep (Type ResolvedDep ann)
-typeForConstraint (Constraint tc tys) =
-  Constraint tc $ fmap (\ty -> ty $> ty) tys
-
 -- given types for other required definition, typecheck a definition
 typecheckExprDef ::
   (MonadError (ModuleError Annotation) m) =>
@@ -313,8 +303,8 @@ typecheckExprDef input inputModule deps (def, tle) = do
         TCEnv
           { tceVars = exprTypeMap,
             tceDataTypes = getDataTypeMap deps,
-            tceClasses = builtInClasses <> classes,
-            tceInstances = builtInInstances <> instances,
+            tceClasses = classes,
+            tceInstances = instances,
             tceConstraints = tleConstraints tle
           }
 
