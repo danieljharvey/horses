@@ -2,11 +2,14 @@ module Smol.Core.Transform.FloatDown (floatDown) where
 
 import Data.Bifunctor (second)
 import Smol.Core
-import Smol.Core.Interpreter.FindUses
 import Smol.Core.Helpers
+import Smol.Core.Interpreter.FindUses
 
-floatDown :: (
-    Ord (dep Identifier)) => Expr dep ann -> Expr dep ann
+floatDown ::
+  ( Ord (dep Identifier)
+  ) =>
+  Expr dep ann ->
+  Expr dep ann
 floatDown = nTimes 5 floatDownInternal
 
 -- if a let is above a pattern, it pushes it down into each branch of the

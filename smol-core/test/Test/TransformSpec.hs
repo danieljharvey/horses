@@ -1,5 +1,4 @@
 {-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE TemplateHaskell #-}
 
 module Test.TransformSpec (spec) where
 
@@ -86,7 +85,7 @@ spec = do
             ( "let a = 1; if b then 1 else 2",
               "if b then let a = 1; 1 else let a = 1; 2"
             ),
-            ("let a = 1; let b = 2; if c then 1 else 2",
+            ( "let a = 1; let b = 2; if c then 1 else 2",
               "if c then let a = 1; let b = 2; 1 else let a = 1; let b = 2; 2"
             )
           ]

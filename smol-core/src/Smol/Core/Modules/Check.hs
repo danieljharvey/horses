@@ -6,7 +6,6 @@ module Smol.Core.Modules.Check
   )
 where
 
-import Smol.Core.Transform
 import Control.Monad.Except
 import qualified Data.Map.Strict as M
 import qualified Data.Set as S
@@ -20,6 +19,7 @@ import Smol.Core.Modules.Types.Module
 import Smol.Core.Modules.Types.ModuleError
 import Smol.Core.Modules.Types.ModuleItem
 import Smol.Core.Modules.Types.TopLevelExpression
+import Smol.Core.Transform
 import Smol.Core.Typecheck.Typeclass
 
 -- this is the front door as such
@@ -43,12 +43,11 @@ checkModule input moduleItems = do
 
   pure (transformModule dictModule)
 
-transformModule :: (Ord (dep Identifier), Printer (dep TypeName), Printer (dep Identifier), Printer (dep Constructor)) => Module dep ann  -> Module dep ann
+transformModule :: (Ord (dep Identifier), Printer (dep TypeName), Printer (dep Identifier), Printer (dep Constructor)) => Module dep ann -> Module dep ann
 transformModule inputModule =
   let transformTle tle =
-        tle { tleExpr = tracePrettyId "after" $ transform (tracePrettyId "before" $ tleExpr tle) }
-
-   in inputModule { moExpressions = transformTle <$> moExpressions inputModule }
+        tle {tleExpr = tracePrettyId "after" $ transform (tracePrettyId "before" $ tleExpr tle)}
+   in inputModule {moExpressions = transformTle <$> moExpressions inputModule}
 
 passModuleDictionaries ::
   (MonadError (ModuleError Annotation) m) =>

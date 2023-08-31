@@ -14,7 +14,7 @@ module Smol.Core.Helpers
     mapKey,
     tracePrettyM,
     tracePrettyId,
-    nTimes
+    nTimes,
   )
 where
 
@@ -26,7 +26,7 @@ import Data.Map.Strict (Map)
 import qualified Data.Map.Strict as M
 import Data.Maybe (mapMaybe)
 import qualified Data.Text as T
-import Debug.Trace (traceM, trace)
+import Debug.Trace (trace, traceM)
 import Smol.Core.Printer
 
 neZipWithM ::
@@ -116,6 +116,4 @@ tracePrettyM msg a = traceM (msg <> ": " <> T.unpack (renderWithWidth 40 $ prett
 
 nTimes :: Int -> (a -> a) -> a -> a
 nTimes 0 _ x = x
-nTimes n f x = nTimes (n-1) f (f x)
-
-
+nTimes n f x = nTimes (n - 1) f (f x)
