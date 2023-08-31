@@ -8,6 +8,7 @@ import qualified Test.Modules.ResolveDepsSpec
 import qualified Test.Modules.RunTestsSpec
 import qualified Test.Modules.TypecheckSpec
 import qualified Test.ParserSpec
+import qualified Test.TransformSpec
 import qualified Test.Typecheck.ExhaustivenessSpec
 import qualified Test.Typecheck.NestingMonadSpec
 import qualified Test.Typecheck.PatternSpec
@@ -32,3 +33,4 @@ main = hspec $ do
   Test.Modules.ResolveDepsSpec.spec
   Test.Modules.RunTestsSpec.spec
   Test.Modules.TypecheckSpec.spec
+  Test.TransformSpec.spec

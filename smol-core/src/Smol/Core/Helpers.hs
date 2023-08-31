@@ -13,6 +13,8 @@ module Smol.Core.Helpers
     filterMapKeys,
     mapKey,
     tracePrettyM,
+    tracePrettyId,
+    nTimes
   )
 where
 
@@ -24,7 +26,7 @@ import Data.Map.Strict (Map)
 import qualified Data.Map.Strict as M
 import Data.Maybe (mapMaybe)
 import qualified Data.Text as T
-import Debug.Trace (traceM)
+import Debug.Trace (traceM, trace)
 import Smol.Core.Printer
 
 neZipWithM ::
@@ -106,5 +108,14 @@ foldMapM f =
 mapKey :: (Ord k1) => (k -> k1) -> Map k a -> Map k1 a
 mapKey f = M.fromList . fmap (first f) . M.toList
 
+tracePrettyId :: (Printer a) => String -> a -> a
+tracePrettyId msg a = trace (msg <> ": " <> T.unpack (renderWithWidth 40 $ prettyDoc a)) a
+
 tracePrettyM :: (Printer a, Monad m) => String -> a -> m ()
 tracePrettyM msg a = traceM (msg <> ": " <> T.unpack (renderWithWidth 40 $ prettyDoc a))
+
+nTimes :: Int -> (a -> a) -> a -> a
+nTimes 0 _ x = x
+nTimes n f x = nTimes (n-1) f (f x)
+
+
