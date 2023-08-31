@@ -6,10 +6,10 @@
 
 module Smol.Core.Modules.FromParts (addModulePart, moduleFromModuleParts, exprAndTypeFromParts) where
 
+import Control.Monad (unless)
 import Control.Monad.Except
 import Data.Coerce
 import Data.Functor (void)
-import Data.Foldable (traverse_)
 import qualified Data.Map.Strict as M
 import Data.Maybe (isJust, mapMaybe)
 import Smol.Core
@@ -64,14 +64,15 @@ addModulePart allParts part mod' =
     ModuleClass tc ->
       case M.lookup (tcName tc) (moClasses mod') of
         Just _ -> throwError (DuplicateTypeclass (tcName tc))
-        Nothing -> do
-          traverse_ (findDependentTypeclass (tcName tc) allParts) (conTypeclass <$> tcConstraints tc)
+        Nothing -> 
           pure $
             mod'
               { moClasses =
                   M.singleton (tcName tc) tc <> moClasses mod'
               }
-    ModuleInstance constraints constraint expr ->
+    ModuleInstance constraints constraint expr -> do
+      unless (isJust $ findTypeclass (conTypeclass constraint) allParts)
+        (throwError $ MissingTypeclass (conTypeclass constraint))
       pure $
         mod'
           { moInstances =
@@ -149,12 +150,6 @@ findTypeExpression ident moduleItems =
     moduleItems of
     [a] -> Just a
     _ -> Nothing -- we should have better errors for multiple type declarations, but for now, chill out friend
-
-findDependentTypeclass :: (MonadError (ModuleError ann) m) =>
-    TypeclassName -> [ModuleItem ann] -> TypeclassName -> m ()
-findDependentTypeclass childTcn moduleItems tcn = case findTypeclass tcn moduleItems of 
-                                           Just _ -> pure ()
-                                           Nothing -> throwError $ MissingTypeclassDependent tcn childTcn  
 
 findTypeclass :: TypeclassName -> [ModuleItem ann] -> Maybe (Typeclass ParseDep ann)
 findTypeclass tcn moduleItems

@@ -35,12 +35,12 @@ spec = do
 
         moduleFromModuleParts modParts `shouldBe` Left expected
 
-      it "Missing dependent typeclass" $ do
+      it "Missing typeclass for instance" $ do
         let modParts =
               unsafeParseModuleItems $
                 joinText
-                  [ "class (Semigroup a) => Monoid a { mempty: a }" 
+                  [ "instance Eq Int = \\a -> \\b -> a == b"
                   ]
-            expected = MissingTypeclassDependent "Semigroup" "Monoid"
+            expected = MissingTypeclass "Eq"
 
         moduleFromModuleParts modParts `shouldBe` Left expected

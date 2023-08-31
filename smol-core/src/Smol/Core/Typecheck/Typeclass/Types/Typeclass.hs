@@ -13,12 +13,11 @@ import Data.Aeson (FromJSON, FromJSONKey, ToJSON, ToJSONKey)
 import GHC.Generics (Generic)
 import Smol.Core.Typecheck.Typeclass.Types.TypeclassName
 import Smol.Core.Types
-import Smol.Core.Typecheck.Typeclass.Types.Constraint
 
 -- | the typeclass described in it's most general form, ie
 -- class Show a where show :: a -> String
 data Typeclass dep ann = Typeclass
-  { tcConstraints :: [Constraint dep ann],
+  {
     tcName :: TypeclassName,
     tcArgs :: [Identifier],
     tcFuncName :: Identifier,

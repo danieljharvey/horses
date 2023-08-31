@@ -129,9 +129,9 @@ resolveDefIdentifier (DIType ty) = DIType ty
 resolveDefIdentifier (DIInstance inst) = DIInstance (resolveConstraint inst)
 
 resolveTypeclass :: Typeclass ParseDep ann -> Typeclass ResolvedDep ann
-resolveTypeclass (Typeclass {tcConstraints, tcName, tcArgs, tcFuncName, tcFuncType}) =
+resolveTypeclass (Typeclass {tcName, tcArgs, tcFuncName, tcFuncType}) =
   Typeclass
-    { tcConstraints = resolveConstraint <$> tcConstraints,
+    {
       tcName,
       tcArgs,
       tcFuncName,

@@ -2,7 +2,7 @@ class Semigroup a { mappend: a -> a -> a }
 
 instance Semigroup Int = \a -> \b -> a + a
 
-class (Semigroup a) => Monoid a { mempty: a }
+class Monoid a { mempty: a }
 
 instance Monoid Int = 0
 
