@@ -64,14 +64,15 @@ addModulePart allParts part mod' =
     ModuleClass tc ->
       case M.lookup (tcName tc) (moClasses mod') of
         Just _ -> throwError (DuplicateTypeclass (tcName tc))
-        Nothing -> 
+        Nothing ->
           pure $
             mod'
               { moClasses =
                   M.singleton (tcName tc) tc <> moClasses mod'
               }
     ModuleInstance constraints constraint expr -> do
-      unless (isJust $ findTypeclass (conTypeclass constraint) allParts)
+      unless
+        (isJust $ findTypeclass (conTypeclass constraint) allParts)
         (throwError $ MissingTypeclass (conTypeclass constraint))
       pure $
         mod'
@@ -152,13 +153,12 @@ findTypeExpression ident moduleItems =
     _ -> Nothing -- we should have better errors for multiple type declarations, but for now, chill out friend
 
 findTypeclass :: TypeclassName -> [ModuleItem ann] -> Maybe (Typeclass ParseDep ann)
-findTypeclass tcn moduleItems
-  = case mapMaybe
-      (\case
-          ModuleClass tc | tcName tc == tcn -> Just tc
-          _ -> Nothing
-      )
-      moduleItems of
-      [a] -> Just a
-      _ -> Nothing -- we should have better errors for multiple type declarations, but for now, chill out friend
-
+findTypeclass tcn moduleItems =
+  case mapMaybe
+    ( \case
+        ModuleClass tc | tcName tc == tcn -> Just tc
+        _ -> Nothing
+    )
+    moduleItems of
+    [a] -> Just a
+    _ -> Nothing -- we should have better errors for multiple type declarations, but for now, chill out friend

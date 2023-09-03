@@ -122,8 +122,7 @@ parseClass = do
   pure $
     ModuleClass
       ( Typeclass
-          {
-            tcName = typeclassName,
+          { tcName = typeclassName,
             tcArgs = parts,
             tcFuncName = fnName,
             tcFuncType = ty

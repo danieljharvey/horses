@@ -17,8 +17,7 @@ import Smol.Core.Types
 -- | the typeclass described in it's most general form, ie
 -- class Show a where show :: a -> String
 data Typeclass dep ann = Typeclass
-  {
-    tcName :: TypeclassName,
+  { tcName :: TypeclassName,
     tcArgs :: [Identifier],
     tcFuncName :: Identifier,
     tcFuncType :: Type dep ann
