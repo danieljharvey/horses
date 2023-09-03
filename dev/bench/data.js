@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1693377374698,
+  "lastUpdate": 1693749779793,
   "repoUrl": "https://github.com/danieljharvey/mimsa",
   "entries": {
     "Store benchmarks in Github Pages": [
@@ -2943,6 +2943,50 @@ window.BENCHMARK_DATA = {
           {
             "name": "evaluate/evaluate parsing 2",
             "value": 0.21932899802858566,
+            "unit": "Time (ms)"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "danieljamesharvey@gmail.com",
+            "name": "Daniel Harvey",
+            "username": "danieljharvey"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "f3429ad5e0d58f205220fb04cc2d9feb8e5bb47d",
+          "message": "Basic optimising transforms (#1010)\n\n* Well well well\r\n\r\n* Format\r\n\r\n* Fixies",
+          "timestamp": "2023-09-03T15:01:13+01:00",
+          "tree_id": "ab59a7bdfad4f12e0b4e2b4708787b631d2e4ba3",
+          "url": "https://github.com/danieljharvey/mimsa/commit/f3429ad5e0d58f205220fb04cc2d9feb8e5bb47d"
+        },
+        "date": 1693749778986,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "build stdlib/allFns",
+            "value": 0.09240825298333388,
+            "unit": "Time (ms)"
+          },
+          {
+            "name": "evaluate/evaluate big looping thing",
+            "value": 0.08422395058181915,
+            "unit": "Time (ms)"
+          },
+          {
+            "name": "evaluate/evaluate parsing",
+            "value": 0.030101442500515378,
+            "unit": "Time (ms)"
+          },
+          {
+            "name": "evaluate/evaluate parsing 2",
+            "value": 0.20461923371428267,
             "unit": "Time (ms)"
           }
         ]
