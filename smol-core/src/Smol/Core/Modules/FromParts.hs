@@ -6,6 +6,7 @@
 
 module Smol.Core.Modules.FromParts (addModulePart, moduleFromModuleParts, exprAndTypeFromParts) where
 
+import Control.Monad (unless)
 import Control.Monad.Except
 import Data.Coerce
 import Data.Functor (void)
@@ -61,9 +62,18 @@ addModulePart allParts part mod' =
               }
         else throwError (ErrorInResolveDeps $ VarNotFound ident)
     ModuleClass tc ->
-      -- TODO: check duplicates and explode
-      pure $ mod' {moClasses = M.singleton (tcName tc) tc <> moClasses mod'}
-    ModuleInstance constraints constraint expr ->
+      case M.lookup (tcName tc) (moClasses mod') of
+        Just _ -> throwError (DuplicateTypeclass (tcName tc))
+        Nothing ->
+          pure $
+            mod'
+              { moClasses =
+                  M.singleton (tcName tc) tc <> moClasses mod'
+              }
+    ModuleInstance constraints constraint expr -> do
+      unless
+        (isJust $ findTypeclass (conTypeclass constraint) allParts)
+        (throwError $ MissingTypeclass (conTypeclass constraint))
       pure $
         mod'
           { moInstances =
@@ -111,6 +121,9 @@ exprAndTypeFromParts moduleItems ident idents expr =
             (mempty, Nothing)
    in TopLevelExpression {..}
 
+expressionExists :: (Monoid ann) => Identifier -> [ModuleItem ann] -> Bool
+expressionExists ident moduleItems = isJust (findExpression ident moduleItems)
+
 findExpression ::
   (Monoid ann) =>
   Identifier ->
@@ -128,14 +141,22 @@ findExpression ident moduleItems =
     [a] -> Just a
     _ -> Nothing -- we should have better errors for multiple declarations, but for now, chill out friend
 
-expressionExists :: (Monoid ann) => Identifier -> [ModuleItem ann] -> Bool
-expressionExists ident moduleItems = isJust (findExpression ident moduleItems)
-
 findTypeExpression :: Identifier -> [ModuleItem ann] -> Maybe ([Constraint ParseDep ann], Type ParseDep ann)
 findTypeExpression ident moduleItems =
   case mapMaybe
     ( \case
         ModuleExpressionType name constraints ty | name == ident -> Just (constraints, ty)
+        _ -> Nothing
+    )
+    moduleItems of
+    [a] -> Just a
+    _ -> Nothing -- we should have better errors for multiple type declarations, but for now, chill out friend
+
+findTypeclass :: TypeclassName -> [ModuleItem ann] -> Maybe (Typeclass ParseDep ann)
+findTypeclass tcn moduleItems =
+  case mapMaybe
+    ( \case
+        ModuleClass tc | tcName tc == tcn -> Just tc
         _ -> Nothing
     )
     moduleItems of

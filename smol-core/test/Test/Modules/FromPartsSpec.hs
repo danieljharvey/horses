@@ -23,3 +23,24 @@ spec = do
             expected = EmptyTestName "yes"
 
         moduleFromModuleParts modParts `shouldBe` Left expected
+
+      it "Can't have duplicate typeclasses" $ do
+        let modParts =
+              unsafeParseModuleItems $
+                joinText
+                  [ "class Eq { equals : a -> a -> Bool }",
+                    "class Eq { eq: a -> Bool }"
+                  ]
+            expected = DuplicateTypeclass "Eq"
+
+        moduleFromModuleParts modParts `shouldBe` Left expected
+
+      it "Missing typeclass for instance" $ do
+        let modParts =
+              unsafeParseModuleItems $
+                joinText
+                  [ "instance Eq Int = \\a -> \\b -> a == b"
+                  ]
+            expected = MissingTypeclass "Eq"
+
+        moduleFromModuleParts modParts `shouldBe` Left expected

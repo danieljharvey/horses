@@ -286,11 +286,11 @@ applyConstraintTypes ::
   Typeclass ResolvedDep ann ->
   Constraint ResolvedDep (Type ResolvedDep ann) ->
   Type ResolvedDep ann
-applyConstraintTypes (Typeclass _ args _ ty) constraint =
+applyConstraintTypes (Typeclass {tcArgs, tcFuncType}) constraint =
   let (Constraint _ tys) = removeTypesFromConstraint constraint
       subs =
         ( \(ident, tySub) ->
             Substitution (SubId $ LocalDefinition ident) tySub
         )
-          <$> zip args tys
-   in substituteMany subs ty
+          <$> zip tcArgs tys
+   in substituteMany subs tcFuncType

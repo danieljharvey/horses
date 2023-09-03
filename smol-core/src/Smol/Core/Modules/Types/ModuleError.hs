@@ -54,6 +54,8 @@ data ModuleError ann
   = DuplicateDefinition Identifier
   | DuplicateTypeName TypeName
   | DuplicateConstructor Constructor
+  | DuplicateTypeclass TypeclassName
+  | MissingTypeclass TypeclassName
   | CannotFindValues (Set Identifier)
   | CannotFindConstructors (Set Constructor)
   | ErrorInResolveDeps ResolveDepsError

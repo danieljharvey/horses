@@ -112,3 +112,6 @@ spec = do
 
       it "Typechecks Semigroup successfully" $ do
         testModuleTypecheck "Semigroup" `shouldSatisfy` isRight
+
+      it "Typecheck Monoid successfully" $ do
+        testModuleTypecheck "Monoid" `shouldSatisfy` isRight
