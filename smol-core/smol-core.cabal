@@ -104,6 +104,11 @@ library
     Smol.Core.Parser.Typeclass
     Smol.Core.Printer
     Smol.Core.SourceSpan
+    Smol.Core.Transform
+    Smol.Core.Transform.BetaReduce
+    Smol.Core.Transform.EtaReduce
+    Smol.Core.Transform.FlattenLets
+    Smol.Core.Transform.FloatDown
     Smol.Core.Typecheck
     Smol.Core.Typecheck.Elaborate
     Smol.Core.Typecheck.Errors
