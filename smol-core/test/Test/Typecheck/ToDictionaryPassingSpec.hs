@@ -77,10 +77,6 @@ evalExprUnsafe input = case parseExprAndFormatError input of
       Right (typedExpr, _typeclassUses) -> pure typedExpr
       Left e -> Left e
 
-getRight :: (Show e) => Either e a -> a
-getRight (Right a) = a
-getRight (Left e) = error (show e)
-
 spec :: Spec
 spec = do
   describe "toDictionaryPassing" $ do

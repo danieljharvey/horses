@@ -23,6 +23,7 @@ module Test.Helpers
     identifier,
     constructor,
     patternMatch,
+    getRight,
     unsafeParseExpr,
     unsafeParseModule,
     unsafeParseModuleItems,
