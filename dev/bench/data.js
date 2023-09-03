@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1693749779793,
+  "lastUpdate": 1693775214303,
   "repoUrl": "https://github.com/danieljharvey/mimsa",
   "entries": {
     "Store benchmarks in Github Pages": [
@@ -2987,6 +2987,50 @@ window.BENCHMARK_DATA = {
           {
             "name": "evaluate/evaluate parsing 2",
             "value": 0.20461923371428267,
+            "unit": "Time (ms)"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "danieljamesharvey@gmail.com",
+            "name": "Daniel Harvey",
+            "username": "danieljharvey"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "400bdeb4d687788f0cc9b6f998280fd2b6fb31ec",
+          "message": "A few tweaks etc (#1009)\n\n* Start adding subclasses to typeclass\r\n\r\n* Check typeclasses exist\r\n\r\n* Fix things\r\n\r\n* Fix",
+          "timestamp": "2023-09-03T22:05:02+01:00",
+          "tree_id": "127ca10fbb395f2bd3c77de2086bae8372366b5b",
+          "url": "https://github.com/danieljharvey/mimsa/commit/400bdeb4d687788f0cc9b6f998280fd2b6fb31ec"
+        },
+        "date": 1693775213831,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "build stdlib/allFns",
+            "value": 0.1029727209333306,
+            "unit": "Time (ms)"
+          },
+          {
+            "name": "evaluate/evaluate big looping thing",
+            "value": 0.09289219675000111,
+            "unit": "Time (ms)"
+          },
+          {
+            "name": "evaluate/evaluate parsing",
+            "value": 0.032078052357844236,
+            "unit": "Time (ms)"
+          },
+          {
+            "name": "evaluate/evaluate parsing 2",
+            "value": 0.21837895417142966,
             "unit": "Time (ms)"
           }
         ]
