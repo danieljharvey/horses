@@ -31,27 +31,33 @@ handlers =
           Left err ->
             sendNotification SMethod_WindowShowMessage (ShowMessageParams MessageType_Error $ "Something went wrong!\n" <> T.pack (show err))
         pure (),
-
       notificationHandler SMethod_TextDocumentDidOpen $
         \noti -> do
           let TNotificationMessage _ _ (DidOpenTextDocumentParams doc) = noti
-              TextDocumentItem _uri _ _ _ = doc
-              --Just _fp = uriToFilePath uri
-              _diag =
-                Diagnostic
-                  (mkRange 0 0 0 1)
-                  (Just DiagnosticSeverity_Warning)
-                  (Just (InL 42))
-                  Nothing
-                  (Just "dummy-server")
-                  "Here's a warning"
-                  Nothing
-                  Nothing
-                  Nothing
+              TextDocumentItem uri _ _ _ = doc
+              version = Nothing
+          case uriToFilePath uri of
+            Nothing -> pure ()
+            Just _fp -> do
+              let diag =
+                    Diagnostic
+                      (mkRange 0 0 0 1)
+                      (Just DiagnosticSeverity_Warning)
+                      (Just (InL 42))
+                      Nothing
+                      (Just "dummy-server")
+                      "Here's a warning"
+                      Nothing
+                      Nothing
+                      Nothing
 
-          pure ()
-      ,
-
+              sendNotification
+                SMethod_TextDocumentPublishDiagnostics
+                PublishDiagnosticsParams
+                  { _uri = uri,
+                    _version = version,
+                    _diagnostics = [diag]
+                  },
       requestHandler SMethod_TextDocumentHover $ \req responder -> do
         let TRequestMessage _ _ _ (HoverParams _doc pos _workDone) = req
             Position _l _c' = pos
