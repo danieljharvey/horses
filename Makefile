@@ -47,6 +47,10 @@ ghcid-smol-backend-test:
 ghcid-smol-repl:
 	ghcid -c "cabal repl smol-repl"
 
+.PHONY: ghcid-lsp
+ghcid-lsp:
+	ghcid -c "cabal repl smol-lsp"
+
 .PHONY: update
 update:
 	cabal update

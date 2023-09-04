@@ -5,6 +5,7 @@ packages:
   backends/backends.cabal,
   repl/repl.cabal,
   core/core.cabal,
+  smol-lsp/smol-lsp.cabal,
   smol-backend/smol-backend.cabal,
   smol-core/smol-core.cabal,
   smol-repl/smol-repl.cabal,

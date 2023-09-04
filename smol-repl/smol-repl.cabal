@@ -12,7 +12,6 @@ maintainer:         danieljamesharvey@gmail.com
 -- category:
 extra-source-files:
   CHANGELOG.md
-  static/runtime.c
 
 common shared
   ghc-options:
