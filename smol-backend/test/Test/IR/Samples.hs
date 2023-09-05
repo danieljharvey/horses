@@ -11,6 +11,7 @@ module Test.IR.Samples
     irRecursive,
     irCurriedNoClosure,
     irCurried,
+    irBoxedSum,
   )
 where
 
@@ -31,6 +32,19 @@ irPrintInt =
 
 tyPrintInt :: IRType
 tyPrintInt = IRFunctionType [IRInt32] IRInt32
+
+irPrintBoxedInt :: IRModulePart
+irPrintBoxedInt =
+  IRExternDef
+    ( IRExtern
+        { ireName = "print_boxed_int",
+          ireArgs = [IRPointer (IRStruct [IRInt32])],
+          ireReturn = IRInt32
+        }
+    )
+
+tyPrintBoxedInt :: IRType
+tyPrintBoxedInt = IRFunctionType [IRStruct [IRInt32]] IRInt32
 
 -- this should print the number 42
 irPrint42 :: IRModule
@@ -490,3 +504,53 @@ irCurried =
                 }
             )
         ]
+
+-- | place a single value in a single item tuple
+irBox :: IRType -> IRExpr -> IRExpr
+irBox irType irExpr =
+  let tyBoxed = IRStruct [irType]
+   in IRInitialiseDataType
+        (IRAlloc tyBoxed)
+        tyBoxed
+        tyBoxed
+        [ IRSetTo
+            { irstPath = [0],
+              irstType = irType,
+              irstExpr = irExpr
+            }
+        ]
+
+irUnbox :: IRExpr -> IRExpr
+irUnbox = IRStructPath [0]
+
+-- testing making the IR for boxing
+-- 20 + 22
+irBoxedSum :: IRModule
+irBoxedSum =
+  IRModule
+    [ irPrintBoxedInt,
+      IRFunctionDef
+        ( IRFunction
+            { irfName = "main",
+              irfArgs = [],
+              irfReturn = IRInt32,
+              irfBody =
+                [ IRDiscard
+                    ( IRApply
+                        tyPrintBoxedInt
+                        (IRFuncPointer "print_boxed_int")
+                        [ IRLet
+                            "int_box_a"
+                            (irBox IRInt32 (IRPrim $ IRPrimInt32 20))
+                            ( IRLet
+                                "int_box_b"
+                                (irBox IRInt32 (IRPrim $ IRPrimInt32 22))
+                                (irBox IRInt32 (IRInfix IRAdd (irUnbox (IRVar "int_box_a")) (irUnbox (IRVar "int_box_b"))))
+                            )
+                        ]
+                    ),
+                  IRRet IRInt32 $ IRPrim $ IRPrimInt32 0
+                ]
+            }
+        )
+    ]

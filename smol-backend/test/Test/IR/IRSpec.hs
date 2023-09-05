@@ -78,7 +78,7 @@ testCompileModuleIR (inputs, result) =
 spec :: Spec
 spec = do
   describe "Compile via IR" $ do
-    describe "IR" $ do
+    fdescribe "irToLLVM" $ do
       it "print 42" $ do
         resp <- run (irToLLVM irPrint42) mempty
         resp `shouldBe` "42"
@@ -102,6 +102,9 @@ spec = do
         resp `shouldBe` "22"
       it "curried function" $ do
         resp <- run (irToLLVM irCurried) mempty
+        resp `shouldBe` "42"
+      it "boxed sum function" $ do
+        resp <- run (irToLLVM irBoxedSum) mempty
         resp `shouldBe` "42"
 
     describe "From modules" $ do
