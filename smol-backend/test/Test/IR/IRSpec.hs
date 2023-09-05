@@ -103,9 +103,16 @@ spec = do
       it "curried function" $ do
         resp <- run (irToLLVM irCurried) mempty
         resp `shouldBe` "42"
+      it "boxed addition" $ do
+        resp <- run (irToLLVM irBoxedAddition) mempty
+        resp `shouldBe` "42"
       it "boxed sum function" $ do
         resp <- run (irToLLVM irBoxedSum) mempty
         resp `shouldBe` "42"
+      it "polymorphic fst function" $ do
+        resp <- run (irToLLVM irPolymorphicFst) mempty
+        resp `shouldBe` "41"
+
 
     describe "From modules" $ do
       let testModules =

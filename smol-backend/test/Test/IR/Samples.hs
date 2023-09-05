@@ -11,7 +11,9 @@ module Test.IR.Samples
     irRecursive,
     irCurriedNoClosure,
     irCurried,
+    irBoxedAddition,
     irBoxedSum,
+    irPolymorphicFst
   )
 where
 
@@ -525,8 +527,8 @@ irUnbox = IRStructPath [0]
 
 -- testing making the IR for boxing
 -- 20 + 22
-irBoxedSum :: IRModule
-irBoxedSum =
+irBoxedAddition :: IRModule
+irBoxedAddition =
   IRModule
     [ irPrintBoxedInt,
       IRFunctionDef
@@ -554,3 +556,100 @@ irBoxedSum =
             }
         )
     ]
+
+-- testing making the IR for boxing
+-- let sum a b = a + b; sum 20 22
+-- (we're not bothering with currying sum here, so it won't _strictly_ match
+-- the expr)
+irBoxedSum :: IRModule
+irBoxedSum =
+  let sumReturnType = IRStruct [IRInt32]
+      sumFunctionType = IRFunctionType [IRStruct [IRInt32], IRStruct [IRInt32]] sumReturnType
+   in IRModule
+        [ irPrintBoxedInt,
+          IRFunctionDef
+            ( IRFunction
+                { irfName = "sum",
+                  irfArgs = [(IRStruct [IRInt32], "a"), (IRStruct [IRInt32], "b")],
+                  irfReturn = sumReturnType,
+                  irfBody =
+                    [ IRRet
+                        sumReturnType
+                        (irBox IRInt32 (IRInfix IRAdd (irUnbox (IRVar "a")) (irUnbox (IRVar "b"))))
+                    ]
+                }
+            ),
+          IRFunctionDef
+            ( IRFunction
+                { irfName = "main",
+                  irfArgs = [],
+                  irfReturn = IRInt32,
+                  irfBody =
+                    [ IRDiscard
+                        ( IRApply
+                            tyPrintBoxedInt
+                            (IRFuncPointer "print_boxed_int")
+                            [ IRLet
+                                "int_box_a"
+                                (irBox IRInt32 (IRPrim $ IRPrimInt32 20))
+                                ( IRLet
+                                    "int_box_b"
+                                    (irBox IRInt32 (IRPrim $ IRPrimInt32 22))
+                                    (IRApply sumFunctionType (IRFuncPointer "sum") [IRVar "int_box_a", IRVar "int_box_b"])
+                                )
+                            ]
+                        ),
+                      IRRet IRInt32 $ IRPrim $ IRPrimInt32 0
+                    ]
+                }
+            )
+        ]
+
+
+-- we want a polymorphic `fst` function 
+-- let fst p = case p of (a,b) -> (b,a); fst (20,200) + fst (22, True) 
+irPolymorphicFst :: IRModule
+irPolymorphicFst =
+  let sumReturnType = IRStruct [IRInt32]
+      sumFunctionType = IRFunctionType [IRStruct [IRInt32], IRStruct [IRInt32]] sumReturnType
+   in IRModule
+        [ irPrintBoxedInt,
+          IRFunctionDef
+            ( IRFunction
+                { irfName = "fst",
+                  irfArgs = [(IRStruct [IRPointer IRInt32,IRPointer IRInt32], "pair")],
+                  irfReturn = sumReturnType,
+                  irfBody =
+                    [ IRRet
+                        sumReturnType
+                        undefined 
+                    ]
+                }
+            ),
+          IRFunctionDef
+            ( IRFunction
+                { irfName = "main",
+                  irfArgs = [],
+                  irfReturn = IRInt32,
+                  irfBody =
+                    [ IRDiscard
+                        ( IRApply
+                            tyPrintBoxedInt
+                            (IRFuncPointer "print_boxed_int")
+                            [ IRLet
+                                "int_box_a"
+                                (irBox IRInt32 (IRPrim $ IRPrimInt32 20))
+                                ( IRLet
+                                    "int_box_b"
+                                    (irBox IRInt32 (IRPrim $ IRPrimInt32 22))
+                                    (IRApply sumFunctionType (IRFuncPointer "sum") [IRVar "int_box_a", IRVar "int_box_b"])
+                                )
+                            ]
+                        ),
+                      IRRet IRInt32 $ IRPrim $ IRPrimInt32 0
+                    ]
+                }
+            )
+        ]
+
+
