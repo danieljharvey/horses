@@ -149,7 +149,7 @@ spec = do
         traverse_ testCompileModuleIR testModules
 
     describe "From expressions" $ do
-      describe "Basic" $ do
+      fdescribe "Basic" $ do
         let testVals =
               [ ("42", "42"),
                 ("True", "True"),

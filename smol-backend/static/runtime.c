@@ -3,12 +3,20 @@
 #include <string.h>
 #include <stdbool.h>
 
-void printint(int i) {
-  printf("%d", i);
+struct boxed_int {
+  int inner;
+};
+
+void printint(boxed_int i) {
+  printf("%d", i.inner);
 }
 
-void printbool(int b) {
-  printf(b ? "True" : "False");
+struct boxed_bool {
+  bool inner;
+}
+
+void printbool(boxed_bool b) {
+  printf(b.inner ? "True" : "False");
 }
 
 // our string value is a struct { length: int, values: int [] }

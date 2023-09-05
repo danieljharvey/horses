@@ -310,6 +310,7 @@ irTypeToLLVM :: IRType -> LLVM.Type
 irTypeToLLVM IRInt32 = LLVM.i32
 irTypeToLLVM IRInt8 = LLVM.i8
 irTypeToLLVM IRInt2 = LLVM.i1
+irTypeToLLVM IRVoid = LLVM.void
 irTypeToLLVM (IRArray size inner) = LLVM.ArrayType size (irTypeToLLVM inner)
 irTypeToLLVM (IRStruct bits) =
   LLVM.StructureType False (irTypeToLLVM <$> bits)

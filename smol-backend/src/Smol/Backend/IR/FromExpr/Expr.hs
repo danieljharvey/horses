@@ -45,16 +45,16 @@ irPrintInt :: IRExtern
 irPrintInt =
   IRExtern
     { ireName = "printint",
-      ireArgs = [IRInt32],
-      ireReturn = IRInt32
+      ireArgs = [IRStruct [IRInt32]],
+      ireReturn = IRVoid
     }
 
 irPrintBool :: IRExtern
 irPrintBool =
   IRExtern
     { ireName = "printbool",
-      ireArgs = [IRInt2],
-      ireReturn = IRInt32
+      ireArgs = [IRStruct [IRInt2]],
+      ireReturn = IRVoid
     }
 
 irPrintString :: IRExtern
@@ -62,7 +62,7 @@ irPrintString =
   IRExtern
     { ireName = "printstring",
       ireArgs = [IRPointer IRInt8],
-      ireReturn = IRInt32
+      ireReturn = IRVoid
     }
 
 irStringConcat :: IRExtern
@@ -156,10 +156,20 @@ irFromModule myModule =
           <> modulePartsFromExpr dataTypes (tleExpr <$> otherFuncs) (tleExpr mainFunc)
 
 fromPrim :: (Monad m) => Prim -> m IRExpr
-fromPrim (PInt i) = pure $ IRPrim (IRPrimInt32 i)
-fromPrim (PBool b) = pure $ IRPrim (IRPrimInt2 b)
-fromPrim PUnit = pure $ IRPrim (IRPrimInt2 False) -- Unit is represented the same as False
-fromPrim (PString txt) = pure $ IRString txt
+fromPrim (PInt i) = do
+  let ty = IRStruct [IRInt32]
+      alloc = IRAlloc ty
+      val = IRPrim (IRPrimInt32 i)
+      setTo =
+        IRSetTo
+          { irstPath = [0],
+            irstType = ty,
+            irstExpr = val
+          }
+  pure $ IRInitialiseDataType alloc ty ty [setTo] -- where to put stuff, type of whole thing, type of constructor, values
+fromPrim (PBool b) = pure $ IRBox $ IRPrim (IRPrimInt2 b)
+fromPrim PUnit = pure $ IRBox $ IRPrim (IRPrimInt2 False) -- Unit is represented the same as False
+fromPrim (PString txt) = pure $ IRBox $ IRString txt
 
 fromInfix ::
   (Show ann, MonadState (FromExprState ann) m, MonadWriter (Map IRIdentifier IRExpr) m) =>
@@ -366,6 +376,8 @@ mapIRExpr _ (IRVar a) = IRVar a
 mapIRExpr _ (IRString txt) = IRString txt
 mapIRExpr _ (IRAlloc ty) = IRAlloc ty
 mapIRExpr _ (IRPrim p) = IRPrim p
+mapIRExpr f (IRBox a) = IRBox (f a)
+mapIRExpr f (IRUnbox a) = IRUnbox (f a)
 mapIRExpr f (IRInfix op a b) = IRInfix op (f a) (f b)
 mapIRExpr f (IRApply ty fn arg) = IRApply ty (f fn) (f <$> arg)
 mapIRExpr f (IRLet ident expr rest) =

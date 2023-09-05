@@ -49,6 +49,7 @@ data IRType
   | IRPointer IRType
   | IRFunctionType [IRType] IRType
   | IRArray Word64 IRType
+  | IRVoid
   deriving stock (Eq, Ord, Show)
 
 data IRPrim
@@ -89,6 +90,8 @@ data IRSetTo = IRSetTo
 data IRExpr
   = IRAlloc IRType
   | IRPrim IRPrim
+  | IRBox IRExpr
+  | IRUnbox IRExpr
   | IRInfix IROp IRExpr IRExpr
   | IRApply IRType IRExpr [IRExpr] -- fnType, fn, [args]
   | IRVar IRIdentifier

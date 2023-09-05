@@ -94,6 +94,8 @@ irExprToLLVM ::
   m LLVM.Operand
 irExprToLLVM (IRPrim prim) = pure $ irPrimToLLVM prim
 irExprToLLVM (IRString txt) = lookupString txt
+irExprToLLVM (IRBox inner) = error $ "irExprToLLVM " <> show inner
+irExprToLLVM (IRUnbox inner) = error $ "irExprToLLVM " <> show inner
 irExprToLLVM (IRApply fnType fn fnArgs) = do
   functionConst <- irExprToLLVM fn
   let (_, tyRet) = returnType fnType
