@@ -13,7 +13,7 @@ module Test.IR.Samples
     irCurried,
     irBoxedAddition,
     irBoxedSum,
-    irPolymorphicFst
+    irPolymorphicFst,
   )
 where
 
@@ -605,24 +605,36 @@ irBoxedSum =
             )
         ]
 
-
--- we want a polymorphic `fst` function 
--- let fst p = case p of (a,b) -> (b,a); fst (20,200) + fst (22, True) 
+-- we want a polymorphic `fst` function
+-- let fst p = case p of (a,b) -> (b,a); fst (20,200) + fst (22, True)
 irPolymorphicFst :: IRModule
 irPolymorphicFst =
-  let sumReturnType = IRStruct [IRInt32]
-      sumFunctionType = IRFunctionType [IRStruct [IRInt32], IRStruct [IRInt32]] sumReturnType
+  let boxedInt = IRStruct [IRInt32]
+      pairType = IRStruct [boxedInt, boxedInt]
+      fstFunctionType = IRFunctionType [pairType] boxedInt
+      pair a b =
+        IRApply
+          fstFunctionType
+          (IRFuncPointer "fst")
+          [ IRInitialiseDataType
+              (IRAlloc pairType)
+              pairType
+              pairType
+              [ IRSetTo [0] boxedInt a,
+                IRSetTo [1] boxedInt b
+              ]
+          ]
    in IRModule
         [ irPrintBoxedInt,
           IRFunctionDef
             ( IRFunction
                 { irfName = "fst",
-                  irfArgs = [(IRStruct [IRPointer IRInt32,IRPointer IRInt32], "pair")],
-                  irfReturn = sumReturnType,
+                  irfArgs = [(pairType, "pair")],
+                  irfReturn = boxedInt,
                   irfBody =
                     [ IRRet
-                        sumReturnType
-                        undefined 
+                        boxedInt
+                        (IRPointerTo [0] (IRVar "pair"))
                     ]
                 }
             ),
@@ -636,13 +648,15 @@ irPolymorphicFst =
                         ( IRApply
                             tyPrintBoxedInt
                             (IRFuncPointer "print_boxed_int")
-                            [ IRLet
-                                "int_box_a"
-                                (irBox IRInt32 (IRPrim $ IRPrimInt32 20))
-                                ( IRLet
-                                    "int_box_b"
+                            [ irBox IRInt32 $ IRInfix
+                                IRAdd
+                                (irUnbox $ pair
+                                    (irBox IRInt32 (IRPrim $ IRPrimInt32 20))
+                                    (irBox IRInt32 (IRPrim $ IRPrimInt32 200))
+                                )
+                                (irUnbox $ pair
                                     (irBox IRInt32 (IRPrim $ IRPrimInt32 22))
-                                    (IRApply sumFunctionType (IRFuncPointer "sum") [IRVar "int_box_a", IRVar "int_box_b"])
+                                    (irBox IRInt32 (IRPrim $ IRPrimInt2 True))
                                 )
                             ]
                         ),
@@ -651,5 +665,3 @@ irPolymorphicFst =
                 }
             )
         ]
-
-

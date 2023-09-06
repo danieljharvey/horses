@@ -111,8 +111,7 @@ spec = do
         resp `shouldBe` "42"
       it "polymorphic fst function" $ do
         resp <- run (irToLLVM irPolymorphicFst) mempty
-        resp `shouldBe` "41"
-
+        resp `shouldBe` "42"
 
     describe "From modules" $ do
       let testModules =
