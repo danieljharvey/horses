@@ -94,6 +94,9 @@ irExprToLLVM ::
   m LLVM.Operand
 irExprToLLVM (IRPrim prim) = pure $ irPrimToLLVM prim
 irExprToLLVM (IRString txt) = lookupString txt
+irExprToLLVM (IRCast ty expr) = do
+  irExpr <- irExprToLLVM expr
+  LLVM.bitcast irExpr (irTypeToLLVM (getCastType ty))
 irExprToLLVM (IRApply fnType fn fnArgs) = do
   functionConst <- irExprToLLVM fn
   let (_, tyRet) = returnType fnType

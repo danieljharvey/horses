@@ -366,6 +366,7 @@ mapIRExpr _ (IRVar a) = IRVar a
 mapIRExpr _ (IRString txt) = IRString txt
 mapIRExpr _ (IRAlloc ty) = IRAlloc ty
 mapIRExpr _ (IRPrim p) = IRPrim p
+mapIRExpr f (IRCast ty a) = IRCast ty (f a)
 mapIRExpr f (IRInfix op a b) = IRInfix op (f a) (f b)
 mapIRExpr f (IRApply ty fn arg) = IRApply ty (f fn) (f <$> arg)
 mapIRExpr f (IRLet ident expr rest) =
