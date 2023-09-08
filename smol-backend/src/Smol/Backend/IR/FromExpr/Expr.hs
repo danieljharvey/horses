@@ -263,8 +263,7 @@ fromExpr (EVar ty v@(LocalDefinition var)) = do
       let irExpr =
             IRInitialiseDataType
               (IRAlloc closureType)
-              closureType
-              closureType
+              Nothing
               [ IRSetTo
                   [0]
                   (IRPointer functionType)
@@ -293,8 +292,7 @@ fromExpr (ETuple ty tHead tTail) = do
   pure $
     IRInitialiseDataType
       (IRAlloc structType)
-      structType
-      structType
+      Nothing
       statements
 fromExpr (ELet _ ident expr body) = do
   irExpr <- fromExpr expr
@@ -321,8 +319,7 @@ fromExpr (EConstructor ty constructor) = do
       pure $
         IRInitialiseDataType
           (IRAlloc structType)
-          specificStructType
-          structType
+          (Just (specificStructType, structType))
           [setConsNum]
 fromExpr (EArray ty items) = do
   irType <- fromType ty
@@ -338,8 +335,7 @@ fromExpr (EArray ty items) = do
   pure $
     IRInitialiseDataType
       (IRAlloc irType)
-      irType
-      irType
+      Nothing
       ([setCount] <> setItems)
 fromExpr expr = error ("fuck: " <> show expr)
 
@@ -380,9 +376,9 @@ mapIRExpr f (IRStatements as rest) =
   IRStatements as (f rest)
 mapIRExpr f (IRPointerTo a b) =
   IRPointerTo a (f b)
-mapIRExpr f (IRInitialiseDataType input a b args) =
+mapIRExpr f (IRInitialiseDataType input maybeA args) =
   let mapSetTo (IRSetTo path ty expr) = IRSetTo path ty (f expr)
-   in IRInitialiseDataType (f input) a b (mapSetTo <$> args)
+   in IRInitialiseDataType (f input) maybeA (mapSetTo <$> args)
 
 closureFromExpr ::
   ( MonadState (FromExprState ann) m,
@@ -432,8 +428,7 @@ closureFromExpr ty ident body = do
   pure $
     IRInitialiseDataType
       (IRAlloc closureType)
-      closureType
-      closureType
+      Nothing
       ( [ IRSetTo
             [0]
             (IRPointer functionType)
@@ -498,8 +493,7 @@ constructorAppFromExpr ty constructor cnArgs = do
   pure $
     IRInitialiseDataType
       (IRAlloc structType)
-      specificStructType
-      structType
+      (Just (specificStructType, structType))
       ([setConsNum] <> statements)
 
 -- | application could be function application or constructor application

@@ -76,8 +76,7 @@ spec = do
       getMainExpr "(1,2,3)"
         `shouldBe` IRInitialiseDataType
           (IRAlloc structType)
-          structType
-          structType
+          Nothing
           [ IRSetTo [0] IRInt32 (IRPrim $ IRPrimInt32 1),
             IRSetTo [1] IRInt32 (IRPrim $ IRPrimInt32 2),
             IRSetTo [2] IRInt32 (IRPrim $ IRPrimInt32 3)
@@ -92,8 +91,7 @@ spec = do
       getMainExpr "Just 42"
         `shouldBe` IRInitialiseDataType
           (IRAlloc maybeIntType)
-          justIntType
-          maybeIntType
+          (Just (justIntType, maybeIntType))
           [ IRSetTo [0] IRInt32 (IRPrim $ IRPrimInt32 0),
             IRSetTo [1] IRInt32 (IRPrim $ IRPrimInt32 42)
           ]
@@ -104,8 +102,7 @@ spec = do
       getMainExpr "(Nothing : Maybe Int)"
         `shouldBe` IRInitialiseDataType
           (IRAlloc maybeIntType)
-          nothingIntType
-          maybeIntType
+          (Just (nothingIntType, maybeIntType))
           [ IRSetTo [0] IRInt32 (IRPrim $ IRPrimInt32 1)
           ]
 
@@ -123,8 +120,7 @@ spec = do
       getMainExpr "(\\a -> 1 : Int -> Int)"
         `shouldBe` IRInitialiseDataType
           (IRAlloc closureType)
-          closureType
-          closureType
+          Nothing
           [ IRSetTo [0] (IRPointer functionPointerType) (IRFuncPointer "function1")
           ]
 
@@ -148,8 +144,7 @@ spec = do
           "closure2"
           ( IRInitialiseDataType
               (IRAlloc closureType)
-              closureType
-              closureType
+              Nothing
               [ IRSetTo [0] (IRPointer functionPointerType) (IRFuncPointer "function1")
               ]
           )
@@ -159,8 +154,7 @@ spec = do
                   [0]
                   ( IRInitialiseDataType
                       (IRAlloc innerStructType)
-                      innerStructType
-                      innerStructType
+                      Nothing
                       [ IRSetTo
                           [0]
                           (IRPointer (IRFunctionType [IRInt32, IRStruct []] IRInt32))
@@ -227,8 +221,7 @@ spec = do
                   add1ReturnType
                   ( IRInitialiseDataType
                       (IRAlloc add1ReturnType)
-                      add1ReturnType
-                      add1ReturnType
+                      Nothing
                       [ IRSetTo
                           [0]
                           (IRPointer func2Type)
@@ -260,8 +253,7 @@ spec = do
       getMainExpr "Just 41"
         `shouldBe` IRInitialiseDataType
           (IRAlloc (IRStruct [IRInt32, IRArray 1 IRInt32]))
-          (IRStruct [IRInt32, IRInt32])
-          (IRStruct [IRInt32, IRArray 1 IRInt32])
+          (Just (IRStruct [IRInt32, IRInt32], IRStruct [IRInt32, IRArray 1 IRInt32]))
           [ IRSetTo {irstPath = [0], irstType = IRInt32, irstExpr = IRPrim (IRPrimInt32 0)},
             IRSetTo
               { irstPath = [1],
@@ -307,8 +299,7 @@ spec = do
         `shouldBe` IRMatch
           ( IRInitialiseDataType
               (IRAlloc typeTheseIntInt)
-              thisIntInt
-              typeTheseIntInt
+              (Just (thisIntInt, typeTheseIntInt))
               [ IRSetTo [0] IRInt32 (IRPrim (IRPrimInt32 2)),
                 IRSetTo [1] IRInt32 (IRPrim (IRPrimInt32 42))
               ]

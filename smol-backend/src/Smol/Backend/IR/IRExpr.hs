@@ -99,7 +99,7 @@ data IRExpr
   | IRStatements [IRStatement] IRExpr -- [things to do], value
   | IRPointerTo [Integer] IRExpr
   | IRCast IRType IRExpr
-  | IRInitialiseDataType IRExpr IRType IRType [IRSetTo] -- where to put stuff, type of whole thing, type of constructor, values
+  | IRInitialiseDataType IRExpr (Maybe (IRType, IRType)) [IRSetTo] -- where to put stuff, type of whole thing, type of constructor, values
   | IRString Text
   deriving stock (Eq, Ord, Show)
 

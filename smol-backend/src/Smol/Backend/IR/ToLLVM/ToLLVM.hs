@@ -75,7 +75,8 @@ irStatementToLLVM (IRRet ty expr) =
       opRet <- lookupVar "sRet" -- magic strings, what could go wrong
       moveToStruct opExpr opRet -- copy the return value to 'sRet'
       LLVM.retVoid
-    else irExprToLLVM expr >>= LLVM.ret
+    else
+      irExprToLLVM expr >>= LLVM.ret
 irStatementToLLVM (IRSet path tyFrom fromExp toExp) = do
   opFrom <- irExprToLLVM fromExp
   opTo <- irExprToLLVM toExp
@@ -138,7 +139,18 @@ irExprToLLVM (IRInfix op a b) = irInfixToLLVM op a b
 irExprToLLVM (IRStatements statements expr) = do
   traverse_ irStatementToLLVM statements
   irExprToLLVM expr
-irExprToLLVM (IRInitialiseDataType input tyThis tyWhole args) = do
+irExprToLLVM (IRInitialiseDataType input Nothing args) = do
+  llInput <- irExprToLLVM input
+
+  -- set all the items inside
+  let setArg (IRSetTo path ty arg) = do
+        opArg <- irExprToLLVM arg
+        irStoreInStruct ty llInput path opArg
+  traverse_ setArg args
+
+  pure llInput
+
+irExprToLLVM (IRInitialiseDataType input (Just (tyThis, tyWhole)) args) = do
   llInput <- irExprToLLVM input
 
   -- cast to tyThis

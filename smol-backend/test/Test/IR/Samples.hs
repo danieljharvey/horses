@@ -111,8 +111,7 @@ irTwoTuple42 =
                         tyStruct
                         ( IRInitialiseDataType
                             (IRAlloc tyStruct)
-                            tyStruct
-                            tyStruct
+                            Nothing
                             [ IRSetTo
                                 { irstPath = [0],
                                   irstType = IRInt32,
@@ -226,8 +225,7 @@ irPatternMatch =
                           "either"
                           ( IRInitialiseDataType
                               (IRAlloc tyEitherBoolInt)
-                              tyRightInt
-                              tyEitherBoolInt
+                              (Just (tyRightInt, tyEitherBoolInt))
                               [ IRSetTo
                                   { irstPath = [0],
                                     irstType = IRInt32,
@@ -459,8 +457,7 @@ irCurried =
                         add1ReturnType
                         ( IRInitialiseDataType
                             (IRAlloc add1ReturnType)
-                            add1ReturnType
-                            add1ReturnType
+                            Nothing
                             [ IRSetTo
                                 [0]
                                 func2Type
@@ -513,8 +510,7 @@ irBox irType irExpr =
   let tyBoxed = IRStruct [irType]
    in IRInitialiseDataType
         (IRAlloc tyBoxed)
-        tyBoxed
-        tyBoxed
+        Nothing
         [ IRSetTo
             { irstPath = [0],
               irstType = irType,
@@ -609,32 +605,32 @@ irBoxedSum =
 -- let fst p = case p of (a,b) -> (b,a); fst (20,200) + fst (22, True)
 irPolymorphicFst :: IRModule
 irPolymorphicFst =
-  let boxedInt = IRStruct [IRInt32]
-      pairType = IRStruct [boxedInt, boxedInt]
-      fstFunctionType = IRFunctionType [pairType] boxedInt
-      pair a b =
-        IRApply
-          fstFunctionType
-          (IRFuncPointer "fst")
-          [ IRInitialiseDataType
-              (IRAlloc pairType)
-              pairType
-              pairType
-              [ IRSetTo [0] boxedInt a,
-                IRSetTo [1] boxedInt b
+  let tyAny = IRPointer  IRInt32  -- pointer to anything, our polymorphic type
+      tyAnyPair = IRStruct [tyAny, tyAny]
+      tyBoxedInt = IRStruct [IRInt32]
+      tyBoxedBool = IRStruct [IRInt2]
+      fstFunctionType = IRFunctionType [tyAnyPair] tyAny
+      applyFst a = IRApply fstFunctionType (IRFuncPointer "fst") [IRCast tyAnyPair a]
+      -- | pair talks about the original types
+      pair (tyA,a) (tyB,b) =
+           IRInitialiseDataType
+              (IRAlloc $ IRStruct [tyA, tyB])
+              Nothing
+              [ IRSetTo [0] tyA a,
+                IRSetTo [1] tyB b
               ]
-          ]
+
    in IRModule
         [ irPrintBoxedInt,
           IRFunctionDef
             ( IRFunction
                 { irfName = "fst",
-                  irfArgs = [(pairType, "pair")],
-                  irfReturn = boxedInt,
+                  irfArgs = [(tyAnyPair, "pair")],
+                  irfReturn = tyAny,
                   irfBody =
                     [ IRRet
-                        boxedInt
-                        (IRPointerTo [0] (IRVar "pair"))
+                        tyAny
+                        (IRStructPath [0] (IRVar "pair"))
                     ]
                 }
             ),
@@ -650,13 +646,13 @@ irPolymorphicFst =
                             (IRFuncPointer "print_boxed_int")
                             [ irBox IRInt32 $ IRInfix
                                 IRAdd
-                                (irUnbox $ pair
-                                    (irBox IRInt32 (IRPrim $ IRPrimInt32 20))
-                                    (irBox IRInt32 (IRPrim $ IRPrimInt32 200))
+                                (irUnbox $ IRCast tyBoxedInt $ applyFst $ pair
+                                    (tyBoxedInt, irBox IRInt32 (IRPrim $ IRPrimInt32 20))
+                                    (tyBoxedInt, irBox IRInt32 (IRPrim $ IRPrimInt32 200))
                                 )
-                                (irUnbox $ pair
-                                    (irBox IRInt32 (IRPrim $ IRPrimInt32 22))
-                                    (irBox IRInt32 (IRPrim $ IRPrimInt2 True))
+                                (irUnbox $ IRCast tyBoxedInt $ applyFst $ pair
+                                    (tyBoxedInt, irBox IRInt32 (IRPrim $ IRPrimInt32 22))
+                                    (tyBoxedBool, irBox IRInt2 (IRPrim $ IRPrimInt2 True))
                                 )
                             ]
                         ),
