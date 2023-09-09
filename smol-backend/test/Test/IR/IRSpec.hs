@@ -112,6 +112,10 @@ spec = do
       fit "polymorphic id function" $ do
         resp <- run (irToLLVM irPolymorphicId) mempty
         resp `shouldBe` "42"
+      fit "polymorphic id function with struct" $ do
+        resp <- run (irToLLVM irPolymorphicId2) mempty
+        resp `shouldBe` "42"
+
       it "polymorphic fst function" $ do
         resp <- run (irToLLVM irPolymorphicFst) mempty
         resp `shouldBe` "42"

@@ -14,6 +14,9 @@ module Test.IR.Samples
     irBoxedAddition,
     irBoxedSum,
     irPolymorphicId,
+  irPolymorphicId2,
+
+
     irPolymorphicFst,
   )
 where
@@ -644,6 +647,58 @@ irPolymorphicId =
                 }
             )
         ]
+
+-- we want a polymorphic `id` function and for it to work when passed a struct
+-- let id a = a; case id (42,42) of (a,_) -> a
+irPolymorphicId2 :: IRModule
+irPolymorphicId2 =
+  let tyAny = IRPointer IRInt32 -- pointer to anything, our polymorphic type
+      idFunctionType = IRFunctionType [tyAny] tyAny
+      applyId a = IRApply idFunctionType (IRFuncPointer "id") [IRCast tyAny a]
+      pair (tyA,a) (tyB,b) =
+           IRInitialiseDataType
+              (IRAlloc $ IRStruct [tyA, tyB])
+              Nothing
+              [ IRSetTo [0] tyA a,
+                IRSetTo [1] tyB b
+              ]
+      tyPair = IRStruct [IRStruct [IRInt32], IRStruct [IRInt2]]
+
+   in IRModule
+        [ irPrintBoxedInt,
+          IRFunctionDef
+            ( IRFunction
+                { irfName = "id",
+                  irfArgs = [(tyAny, "a")],
+                  irfReturn = tyAny,
+                  irfBody =
+                    [ IRRet tyAny (IRVar "a")
+                    ]
+                }
+            ),
+          IRFunctionDef
+            ( IRFunction
+                { irfName = "main",
+                  irfArgs = [],
+                  irfReturn = IRInt32,
+                  irfBody =
+                    [ IRDiscard
+                        ( IRApply
+                            tyPrintBoxedInt
+                            (IRFuncPointer "print_boxed_int")
+                            [ IRPointerTo [0] $  -- this is the magic that makes it work, try and understand how
+                                IRCast tyPair
+                                (applyId
+                                  (pair (IRStruct [IRInt32], irBox IRInt32 $ IRPrim $ IRPrimInt32 42)
+                                      (IRStruct [IRInt2], irBox IRInt2 $ IRPrim $ IRPrimInt2 True)))
+                            ]
+                        ),
+                      IRRet IRInt32 $ IRPrim $ IRPrimInt32 0
+                    ]
+                }
+            )
+        ]
+
 
 -- we want a polymorphic `fst` function
 -- let fst p = case p of (a,b) -> (b,a); fst (20,200) + fst (22, True)
