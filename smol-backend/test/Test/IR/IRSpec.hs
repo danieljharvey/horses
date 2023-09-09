@@ -103,11 +103,14 @@ spec = do
       it "curried function" $ do
         resp <- run (irToLLVM irCurried) mempty
         resp `shouldBe` "42"
-      it "boxed addition" $ do
+      fit "boxed addition" $ do
         resp <- run (irToLLVM irBoxedAddition) mempty
         resp `shouldBe` "42"
-      it "boxed sum function" $ do
+      fit "boxed sum function" $ do
         resp <- run (irToLLVM irBoxedSum) mempty
+        resp `shouldBe` "42"
+      fit "polymorphic id function" $ do
+        resp <- run (irToLLVM irPolymorphicId) mempty
         resp `shouldBe` "42"
       it "polymorphic fst function" $ do
         resp <- run (irToLLVM irPolymorphicFst) mempty

@@ -13,6 +13,7 @@ module Test.IR.Samples
     irCurried,
     irBoxedAddition,
     irBoxedSum,
+    irPolymorphicId,
     irPolymorphicFst,
   )
 where
@@ -593,6 +594,49 @@ irBoxedSum =
                                     (irBox IRInt32 (IRPrim $ IRPrimInt32 22))
                                     (IRApply sumFunctionType (IRFuncPointer "sum") [IRVar "int_box_a", IRVar "int_box_b"])
                                 )
+                            ]
+                        ),
+                      IRRet IRInt32 $ IRPrim $ IRPrimInt32 0
+                    ]
+                }
+            )
+        ]
+
+
+-- we want a polymorphic `id` function
+-- let id a = a; id 42
+irPolymorphicId :: IRModule
+irPolymorphicId =
+  let tyAny = IRPointer IRInt32 -- pointer to anything, our polymorphic type
+      tyBoxedInt = IRStruct [IRInt32]
+      idFunctionType = IRFunctionType [tyAny] tyAny
+      applyId a = IRApply idFunctionType (IRFuncPointer "id") [IRCast tyAny a]
+
+   in IRModule
+        [ irPrintBoxedInt,
+          IRFunctionDef
+            ( IRFunction
+                { irfName = "id",
+                  irfArgs = [(tyAny, "a")],
+                  irfReturn = tyAny,
+                  irfBody =
+                    [ IRRet tyAny (IRVar "a")
+                    ]
+                }
+            ),
+          IRFunctionDef
+            ( IRFunction
+                { irfName = "main",
+                  irfArgs = [],
+                  irfReturn = IRInt32,
+                  irfBody =
+                    [ IRDiscard
+                        ( IRApply
+                            tyPrintBoxedInt
+                            (IRFuncPointer "print_boxed_int")
+                            [ IRCast tyBoxedInt
+                                (applyId (irBox IRInt32
+                                    $ IRPrim $ IRPrimInt32 42))
                             ]
                         ),
                       IRRet IRInt32 $ IRPrim $ IRPrimInt32 0
