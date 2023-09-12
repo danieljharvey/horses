@@ -175,6 +175,18 @@ spec = do
                       (TApp () (TVar () "m") (TVar () "b"))
                   )
               ),
+              ( "(a -> b) -> f a -> f b",
+                TFunc
+                  ()
+                  mempty
+                  (TFunc () mempty (TVar () "a") (TVar () "b"))
+                  ( TFunc
+                      ()
+                      mempty
+                      (TApp () (TVar () "f") (TVar () "a"))
+                      (TApp () (TVar () "f") (TVar () "b"))
+                  )
+              ),
               ("Maybe.Maybe", TConstructor () (ParseDep "Maybe" (Just "Maybe"))),
               ("[Bool]", TArray () 0 tyBool),
               ("String", TPrim () TPString),
