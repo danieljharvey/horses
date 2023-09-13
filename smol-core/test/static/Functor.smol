@@ -1,0 +1,13 @@
+class Functor f { fmap : (a -> b) -> f a -> f b }
+
+type Maybe a = Just a | Nothing
+
+instance Functor (Maybe a) =
+    \f -> \maybe -> case maybe of Just a -> Just (f a) | Nothing -> Nothing
+
+type List a = Cons a (List a) | Nil
+
+instance Functor (List a) =
+    \f -> \list -> case list of
+                Cons a rest -> Cons (f a) (fmap f rest)
+                | Nil -> Nil

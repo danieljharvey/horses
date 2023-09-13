@@ -1,0 +1,12 @@
+
+class Show a { show: a -> String }
+
+instance Show Bool = \bool -> if bool then "True" else "False"
+
+type Natural = Suc Natural | Zero
+
+instance Show Natural = \nat -> case nat of
+                                Suc n -> "S (" + show n + ")"
+                                | Zero -> "Z"
+
+
