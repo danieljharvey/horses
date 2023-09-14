@@ -1,12 +1,17 @@
 
 class Show a { show: a -> String }
 
-instance Show Bool = \bool -> if bool then "True" else "False"
+instance Show Bool = \bool ->
+    if bool then "True" else "False"
+
+def showTrueWorks =
+    show (True: Bool) == "True"
+
+test "Show True works correctly" using showTrueWorks
 
 type Natural = Suc Natural | Zero
 
 instance Show Natural = \nat -> case nat of
                                 Suc n -> "S (" + show n + ")"
                                 | Zero -> "Z"
-
 
