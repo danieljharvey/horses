@@ -63,6 +63,11 @@ install:
 smol-repl:
 	cabal run smol-repl:exe:smol-repl -- repl
 
+CHECK_FILE = "file.smol"
+.PHONY: smol-check
+smol-check:
+	watchexec -w $(CHECK_FILE) cabal run smol-repl:exe:smol-repl -- check $(CHECK_FILE)
+
 .PHONY: run-server
 run-server:
 	cabal run server:exe:mimsa-server
