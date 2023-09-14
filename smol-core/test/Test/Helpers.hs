@@ -97,7 +97,11 @@ testModule =
           "instance Eq String = \\a -> \\b -> a == b",
           "instance (Eq a, Eq b) => Eq (a,b) = ",
           "\\pairA -> \\pairB -> case (pairA, pairB) of ((a1, b1), (a2, b2)) -> ",
-          "if equals a1 a2 then equals b1 b2 else False"
+          "if equals a1 a2 then equals b1 b2 else False",
+          "type Natural = Suc Natural | Zero",
+          "class Show a { show: a -> String }",
+          "instance Show Natural = \\nat -> case nat of Suc n -> \"S \" | _ -> \"\"" -- without looping
+
         ]
 
 tyBool :: (Monoid ann) => Type dep ann
@@ -136,11 +140,11 @@ tyTuple a as = TTuple mempty a (NE.fromList as)
 
 tyCons ::
   (Monoid ann) =>
-  TypeName ->
-  [Type ParseDep ann] ->
-  Type ParseDep ann
+  dep TypeName ->
+  [Type dep ann] ->
+  Type dep ann
 tyCons typeName =
-  foldl' (TApp mempty) (TConstructor mempty (emptyParseDep typeName))
+  foldl' (TApp mempty) (TConstructor mempty typeName)
 
 tyFunc :: (Monoid ann, Ord (dep Identifier)) => Type dep ann -> Type dep ann -> Type dep ann
 tyFunc = TFunc mempty mempty

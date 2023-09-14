@@ -37,7 +37,6 @@ builtInTypes liftDep =
                 ("Right", [TVar mempty $ liftDep "a"])
               ]
           )
-
       theseDt =
         DataType
           "These"
@@ -98,6 +97,18 @@ builtInTypes liftDep =
                 )
               ]
           )
+      naturalDt =
+        DataType
+          "Natural"
+          []
+          ( M.fromList
+              [ ( "Suc",
+                  [ TConstructor mempty (liftDep "Natural")
+                  ]
+                ),
+                ("Zero", mempty)
+              ]
+          )
    in M.fromList
         [ (liftDep "Maybe", maybeDt),
           (liftDep "Either", eitherDt),
@@ -106,5 +117,6 @@ builtInTypes liftDep =
           (liftDep "Identity", identityDt),
           (liftDep "List", listDt),
           (liftDep "State", stateDt),
-          (liftDep "Expr", exprDt)
+          (liftDep "Expr", exprDt),
+          (liftDep "Natural", naturalDt)
         ]

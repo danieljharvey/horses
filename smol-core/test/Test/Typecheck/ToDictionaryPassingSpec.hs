@@ -6,6 +6,7 @@
 
 module Test.Typecheck.ToDictionaryPassingSpec (spec) where
 
+import qualified Data.Set as S
 import Data.Bifunctor (bimap)
 import Data.Foldable (traverse_)
 import Data.Functor
@@ -44,6 +45,10 @@ simplify = void . goExpr
     goPattern (PVar ann ident) = PVar ann (changeIdent ident)
     goPattern other = mapPattern goPattern other
 
+constructorsForTypecheckEnv :: TCEnv ann -> S.Set Constructor
+constructorsForTypecheckEnv env
+  = foldMap (\dt -> M.keysSet (dtConstructors dt)) (tceDataTypes env)
+
 evalExpr ::
   [Constraint ResolvedDep Annotation] ->
   T.Text ->
@@ -56,7 +61,7 @@ evalExpr constraints input =
   case parseExprAndFormatError input of
     Left e -> error (show e)
     Right expr ->
-      case resolveExprDeps expr (getTypeclassMethodNames @() typecheckEnv) mempty of
+      case resolveExprDeps expr (getTypeclassMethodNames @() typecheckEnv) mempty (constructorsForTypecheckEnv @() typecheckEnv) of
         Left e -> error $ "error resolving Expr deps :" <> show e
         Right resolvedExpr ->
           let env =
@@ -153,7 +158,7 @@ spec = do
         ]
 
     -- the whole transformation basically
-    describe "toDictionaryPassing" $ do
+    fdescribe "toDictionaryPassing" $ do
       traverse_
         ( \(constraints, parts, expectedParts) -> do
             let input = joinText parts
@@ -197,5 +202,8 @@ spec = do
             [ "\\instances -> case (instances : (a -> a -> Bool)) of tcvaluefromdictionary0 -> ",
               "(\\a1 -> \\b2 -> tcvaluefromdictionary0 a1 b2 : a -> a -> Bool)"
             ]
-          )
+          ),
+          (mempty, ["show Zero"],
+              [ "(\\nat15 -> case nat15 of Suc n16 -> \"S \" | _ -> \"\" : Natural -> String) Zero"])
+
         ]

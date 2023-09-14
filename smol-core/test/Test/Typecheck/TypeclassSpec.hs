@@ -123,6 +123,23 @@ spec = do
         )
         `shouldSatisfy` isRight
 
+    fit "Natural Show instance" $ do
+      checkInstance @()
+        typecheckEnv
+        showTypeclass
+        (addTypesToConstraint (Constraint "Show" [tyCons "Natural" []]))
+        ( Instance
+            { inExpr =
+                unsafeParseInstanceExpr "\\nat -> case nat of Suc n -> \"S \" + show n | _ -> \"\"",
+              inConstraints =
+                [
+
+                ]
+            }
+        )
+        `shouldSatisfy` isRight
+
+
   -- don't do anything with concrete ones pls
   -- then we can look those up again later
   describe "findDedupedConstraints" $ do
