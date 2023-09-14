@@ -236,7 +236,12 @@ passDictionaries env subs =
                 liftEither (lookupTypecheckedTypeclassInstance env (addTypesToConstraint subbedConstraint))
 
               -- convert instance to dictionary passing then return it inlined
-              toDictionaryPassing env newSubs fnConstraints fnExpr
+              toInline <- toDictionaryPassing env newSubs fnConstraints fnExpr
+              -- need to push this to state with a fresh name, and put a var to
+              -- the fresh name
+              error "sdfsdf"
+              tracePrettyM "to inline!" toInline
+              pure toInline
             Nothing -> pure (EVar ann ident)
     go other = bindExpr go other
 

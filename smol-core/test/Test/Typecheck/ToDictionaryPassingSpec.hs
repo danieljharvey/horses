@@ -185,7 +185,7 @@ spec = do
         [ (mempty, ["1 + 2"], ["1 + 2"]),
           ( mempty,
             ["equals (1: Int) (2: Int)"],
-            [ "(\\a1 -> \\b2 -> a1 == b2 : Int -> Int -> Bool) (1 : Int) (2: Int)"
+            [ "let equals = (\\a1 -> \\b2 -> a1 == b2 : Int -> Int -> Bool); equals (1 : Int) (2: Int)"
             ]
           ),
           ( mempty,
