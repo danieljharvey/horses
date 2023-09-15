@@ -169,7 +169,9 @@ spec = do
                       instances = moInstances testModule
 
                   let expectedExpr = getRight $ evalExprUnsafe expected
+
                       (dedupedConstraints, tidyExpr) = deduplicateConstraints typeclassUses expr
+
                       allConstraints = nub (dedupedConstraints <> constraints) -- we lose outer constraints sometimes
                       dictEnv =
                         ToDictEnv
@@ -205,6 +207,6 @@ spec = do
             ]
           ),
           (mempty, ["show Zero"],
-              [ "let shownatural = (\\nat15 -> case nat15 of Suc n16 -> \"S \"  + show n16 | _ -> \"\" : Natural -> String); shownatural Zero"])
+              [ "let shownatural = (\\nat15 -> case nat15 of Suc n16 -> \"S \"  + shownatural n16 | _ -> \"\" : Natural -> String); shownatural Zero"])
 
         ]

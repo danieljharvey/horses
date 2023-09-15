@@ -251,7 +251,8 @@ passDictionaries env subs expr = do
   (finalExpr, dictState) <- flip runStateT emptyPassDictState (go expr)
   -- now, add all the instance let bindings at the top level
   pure $ foldl' (\totalExpr (constraint, instanceExpr) ->
-      ELet (getExprAnnotation instanceExpr) (identifierFromConstraint constraint) instanceExpr totalExpr) finalExpr (M.toList $ pdsInstances dictState)
+      ELet (getExprAnnotation instanceExpr) (identifierFromConstraint constraint) instanceExpr totalExpr)
+            finalExpr (M.toList $ pdsInstances dictState)
   where
     go (EVar ann ident) =
       case M.lookup ident (tdeVars env) of
@@ -271,10 +272,15 @@ passDictionaries env subs expr = do
               let subbedConstraint =
                     substituteConstraint subs constraint
 
+              -- have we already created this instance?
               maybeFound <- lookupInstance (void subbedConstraint)
               case maybeFound of
+                -- if so, return it
                 Just identifier -> pure (EVar ann identifier)
                 Nothing -> do
+                  -- what if we are in fact the instance?
+                  _ <- error "chew on that"
+
                   (newSubs, Instance fnConstraints fnExpr) <-
                     liftEither (lookupTypecheckedTypeclassInstance env (addTypesToConstraint subbedConstraint))
 
