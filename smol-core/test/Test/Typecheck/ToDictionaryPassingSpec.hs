@@ -185,16 +185,17 @@ spec = do
         [ (mempty, ["1 + 2"], ["1 + 2"]),
           ( mempty,
             ["equals (1: Int) (2: Int)"],
-            [ "let equals = (\\a1 -> \\b2 -> a1 == b2 : Int -> Int -> Bool); equals (1 : Int) (2: Int)"
+            [ "let eqint = (\\a1 -> \\b2 -> a1 == b2 : Int -> Int -> Bool); eqint (1 : Int) (2: Int)"
             ]
           ),
           ( mempty,
             ["equals ((1: Int), (2: Int)) ((2: Int), (3: Int))"],
-            [ "(\\pairA7 -> \\pairB8 -> case (pairA7, pairB8) of ((a19, b110), (a211, b212)) ->",
-              "if (\\a1 -> \\b2 -> a1 == b2 : Int -> Int -> Bool) a19 a211 ",
-              "then (\\a1 -> \\b2 -> a1 == b2 : Int -> Int -> Bool) b110 b212",
-              "else False : (a, b) -> (a,b) -> Bool)",
-              "((1: Int), (2: Int)) ((2: Int), (3: Int))"
+            [ "let eqintint = let eqint = (\\a1 -> \\b2 -> a1 == b2 : Int -> Int -> Bool);",
+              "(\\pairA7 -> \\pairB8 -> case (pairA7, pairB8) of ((a19, b110), (a211, b212)) ->",
+              "if eqint a19 a211 ",
+              "then eqint b110 b212",
+              "else False : (a, b) -> (a,b) -> Bool); ",
+              "eqintint ((1: Int), (2: Int)) ((2: Int), (3: Int))"
             ]
           ),
           ( [Constraint "Eq" [tcVar "a"]],
@@ -204,6 +205,6 @@ spec = do
             ]
           ),
           (mempty, ["show Zero"],
-              [ "(\\nat15 -> case nat15 of Suc n16 -> \"S \" | _ -> \"\" : Natural -> String) Zero"])
+              [ "let shownatural = (\\nat15 -> case nat15 of Suc n16 -> \"S \"  + show n16 | _ -> \"\" : Natural -> String); shownatural Zero"])
 
         ]

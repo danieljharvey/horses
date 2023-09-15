@@ -14,6 +14,11 @@ module Smol.Core.Typecheck.Typeclass.ToDictionaryPassing
   )
 where
 
+import qualified Data.Char as Char
+import Smol.Core.Printer
+import qualified Data.Text as T
+import Data.Foldable (foldl')
+import Control.Monad.State
 import Control.Monad
 import Control.Monad.Except
 import Data.Foldable (traverse_)
@@ -203,6 +208,37 @@ createTypeclassDict env constraints = do
 filterNotConcrete :: [Constraint ResolvedDep ann] -> [Constraint ResolvedDep ann]
 filterNotConcrete = filter (not . isConcrete)
 
+data PassDictState ann = PassDictState
+      { pdsInstances :: M.Map (Constraint ResolvedDep ()) (Expr ResolvedDep (Type ResolvedDep ann))
+      }
+
+storeInstance :: (MonadState (PassDictState ann) m) =>
+  Constraint ResolvedDep () -> Expr ResolvedDep (Type ResolvedDep ann) -> m (ResolvedDep Identifier)
+storeInstance constraint instanceExpr = do
+  modify (\pds -> pds { pdsInstances = pdsInstances pds <> M.singleton constraint instanceExpr })
+  pure (identifierFromConstraint constraint)
+
+lookupInstance :: (MonadState (PassDictState ann) m) => Constraint ResolvedDep () -> m (Maybe (ResolvedDep Identifier))
+lookupInstance constraint = do
+  maybeInstance <- gets (M.lookup constraint . pdsInstances)
+  case maybeInstance of
+    Just _ -> pure $ Just $ identifierFromConstraint constraint
+    Nothing -> pure Nothing
+
+-- make a nice name for an instance
+identifierFromConstraint :: Constraint ResolvedDep () ->  ResolvedDep Identifier
+identifierFromConstraint (Constraint (TypeclassName tcn) tys) = LocalDefinition . Identifier $ toBasic $ tcn <> "_" <> foldMap tshowType tys
+  where
+    toBasic :: T.Text -> T.Text
+    toBasic = T.toLower . T.filter Char.isAlpha
+
+    tshowType :: Type ResolvedDep ann -> T.Text
+    tshowType ty =
+      renderWithWidth 100 (prettyDoc ty)
+
+emptyPassDictState :: PassDictState ann
+emptyPassDictState = PassDictState mempty
+
 -- given we know the types of all our deps
 -- pass dictionaries to them all
 passDictionaries ::
@@ -211,8 +247,11 @@ passDictionaries ::
   [Substitution ResolvedDep ann] ->
   Expr ResolvedDep (Type ResolvedDep ann) ->
   m (Expr ResolvedDep (Type ResolvedDep ann))
-passDictionaries env subs =
-  go
+passDictionaries env subs expr = do
+  (finalExpr, dictState) <- flip runStateT emptyPassDictState (go expr)
+  -- now, add all the instance let bindings at the top level
+  pure $ foldl' (\totalExpr (constraint, instanceExpr) ->
+      ELet (getExprAnnotation instanceExpr) (identifierFromConstraint constraint) instanceExpr totalExpr) finalExpr (M.toList $ pdsInstances dictState)
   where
     go (EVar ann ident) =
       case M.lookup ident (tdeVars env) of
@@ -232,16 +271,19 @@ passDictionaries env subs =
               let subbedConstraint =
                     substituteConstraint subs constraint
 
-              (newSubs, Instance fnConstraints fnExpr) <-
-                liftEither (lookupTypecheckedTypeclassInstance env (addTypesToConstraint subbedConstraint))
+              maybeFound <- lookupInstance (void subbedConstraint)
+              case maybeFound of
+                Just identifier -> pure (EVar ann identifier)
+                Nothing -> do
+                  (newSubs, Instance fnConstraints fnExpr) <-
+                    liftEither (lookupTypecheckedTypeclassInstance env (addTypesToConstraint subbedConstraint))
 
-              -- convert instance to dictionary passing then return it inlined
-              toInline <- toDictionaryPassing env newSubs fnConstraints fnExpr
-              -- need to push this to state with a fresh name, and put a var to
-              -- the fresh name
-              error "sdfsdf"
-              tracePrettyM "to inline!" toInline
-              pure toInline
+                  -- convert instance to dictionary passing then return it inlined
+                  toInline <- toDictionaryPassing env newSubs fnConstraints fnExpr
+                  -- need to push this to state with a fresh name, and put a var to
+                  -- the fresh name
+                  identifier <- storeInstance (void subbedConstraint) toInline
+                  pure (EVar ann identifier)
             Nothing -> pure (EVar ann ident)
     go other = bindExpr go other
 
