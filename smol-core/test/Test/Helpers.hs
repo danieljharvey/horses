@@ -100,7 +100,7 @@ testModule =
           "if equals a1 a2 then equals b1 b2 else False",
           "type Natural = Suc Natural | Zero",
           "class Show a { show: a -> String }",
-          "instance Show Natural = \\nat -> case nat of Suc n -> \"S \" + show n | _ -> \"\"" -- without looping
+          "instance Show Natural = \\nat -> case nat of Suc n -> \"S \" + show n | _ -> \"\""
         ]
 
 tyBool :: (Monoid ann) => Type dep ann

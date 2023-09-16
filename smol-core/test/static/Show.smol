@@ -23,11 +23,7 @@ def showZero = show Zero == "Z"
 
 test "Show Zero" using showZero
 
-/*
-def showThree : Bool
 def showThree =
-    let str = show (Suc Zero);
-    str == "S (S (S Z))"
+        show (Suc (Suc (Suc Zero))) == "S (S (S (Z)))"
 
 test "Show Three" using showThree
-*/

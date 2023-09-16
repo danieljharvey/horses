@@ -314,7 +314,7 @@ passDictionaries env subs expr = do
   pure $
     foldl'
       ( \totalExpr (constraint, instanceExpr) ->
-          ELet (getExprAnnotation instanceExpr) (identifierFromConstraint constraint) instanceExpr totalExpr
+          ELet (TPrim mempty TPBool) (identifierFromConstraint constraint) instanceExpr totalExpr
       )
       finalExpr
       (M.toList $ pdsInstances dictState)
@@ -322,7 +322,6 @@ passDictionaries env subs expr = do
     go (EVar ann ident) =
       case M.lookup ident (tdeVars env) of
         Just (constraints, _defExpr) -> do
-          tracePrettyM "dfg" ident
           -- need to specialise constraint to actual type here
           case NE.nonEmpty constraints of
             Just neConstraints -> do
@@ -356,6 +355,7 @@ passDictionaries env subs expr = do
                   -- need to push this to state with a fresh name, and put a var to
                   -- the fresh name
                   identifier <- storeInstance (void subbedConstraint) toInline
+
                   pure (EVar ann identifier)
             Nothing -> pure (EVar ann ident)
     go other = bindExpr go other

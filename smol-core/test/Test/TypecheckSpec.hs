@@ -161,6 +161,8 @@ spec = do
               ("0 + 0", "0"),
               ("0 + 1", "1"),
               ("1 + 1", "2"),
+              ("\"dog\" + \"log\"", "\"doglog\""),
+              ("(\"dog\" : String) + (\"log\" : String)", "String"),
               ("let f = \\a -> a + 1; let g = 100; f 1", "2"),
               ("(\\pair -> case pair of (a,b) -> a + b : (Int,Int) -> Int)", "(Int,Int) -> Int"),
               ("let id = (\\i -> i : i -> i); case (Just 1) of Just a -> Just (id a) | Nothing -> Nothing", "Maybe 1"),

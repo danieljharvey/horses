@@ -62,7 +62,7 @@ evalExpr constraints input =
   case parseExprAndFormatError input of
     Left e -> error (show e)
     Right expr ->
-      case resolveExprDeps expr (getTypeclassMethodNames @() typecheckEnv) mempty (constructorsForTypecheckEnv @() typecheckEnv) of
+      case resolveExprDeps expr (getTypeclassMethodNames @Annotation typecheckEnv) mempty (constructorsForTypecheckEnv @Annotation typecheckEnv) of
         Left e -> error $ "error resolving Expr deps :" <> show e
         Right resolvedExpr ->
           let env =
