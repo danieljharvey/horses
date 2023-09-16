@@ -119,5 +119,5 @@ spec = do
       it "Typecheck Functor successfully" $ do
         testModuleTypecheck "Functor" `shouldSatisfy` isRight
 
-      fit "Typecheck Show successfully" $ do
+      it "Typecheck Show successfully" $ do
         testModuleTypecheck "Show" `shouldSatisfy` isRight

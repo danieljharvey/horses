@@ -3,6 +3,7 @@
 module Test.Interpreter.InterpreterSpec (spec) where
 
 import Control.Monad (void)
+import Control.Monad.Reader
 import Data.Foldable (traverse_)
 import Data.Text (Text)
 import Smol.Core
@@ -28,6 +29,12 @@ discardLeft :: (Show e) => Either e a -> a
 discardLeft (Left e) = error (show e)
 discardLeft (Right a) = a
 
+runDictEnv :: ReaderT PassDictEnv m a -> m a
+runDictEnv = flip runReaderT emptyPassDictEnv
+  where
+    emptyPassDictEnv :: PassDictEnv
+    emptyPassDictEnv = PassDictEnv Nothing
+
 -- | typecheck, resolve typeclasses, interpret, profit
 doInterpret :: Text -> Expr ResolvedDep ()
 doInterpret input =
@@ -45,6 +52,7 @@ doInterpret input =
             . addEmptyStackFrames
             . void
             . discardLeft
+            . runDictEnv
             . passDictionaries dictEnv mempty
             $ typedExpr
         Left e -> error (show e)

@@ -6,13 +6,14 @@
 
 module Test.Typecheck.ToDictionaryPassingSpec (spec) where
 
-import qualified Data.Set as S
+import Control.Monad.Reader
 import Data.Bifunctor (bimap)
 import Data.Foldable (traverse_)
 import Data.Functor
 import Data.List (nub)
 import qualified Data.List.NonEmpty as NE
 import qualified Data.Map.Strict as M
+import qualified Data.Set as S
 import Data.String (fromString)
 import qualified Data.Text as T
 import Smol.Core
@@ -46,8 +47,8 @@ simplify = void . goExpr
     goPattern other = mapPattern goPattern other
 
 constructorsForTypecheckEnv :: TCEnv ann -> S.Set Constructor
-constructorsForTypecheckEnv env
-  = foldMap (\dt -> M.keysSet (dtConstructors dt)) (tceDataTypes env)
+constructorsForTypecheckEnv env =
+  foldMap (\dt -> M.keysSet (dtConstructors dt)) (tceDataTypes env)
 
 evalExpr ::
   [Constraint ResolvedDep Annotation] ->
@@ -82,6 +83,12 @@ evalExprUnsafe input = case parseExprAndFormatError input of
       Right (typedExpr, _typeclassUses) -> pure typedExpr
       Left e -> Left e
 
+runDictEnv :: ReaderT PassDictEnv m a -> m a
+runDictEnv = flip runReaderT emptyPassDictEnv
+  where
+    emptyPassDictEnv :: PassDictEnv
+    emptyPassDictEnv = PassDictEnv Nothing
+
 spec :: Spec
 spec = do
   describe "toDictionaryPassing" $ do
@@ -98,7 +105,7 @@ spec = do
                   tdeVars = mempty
                 }
 
-        fmap simplify (createTypeclassDict dictEnv constraints)
+        fmap simplify (runDictEnv $ createTypeclassDict dictEnv constraints)
           `shouldBe` simplify <$> expected
 
       it "Tuple for two constraints" $ do
@@ -113,7 +120,7 @@ spec = do
                   tdeVars = mempty
                 }
 
-        fmap simplify (createTypeclassDict dictEnv constraints)
+        fmap simplify (runDictEnv $ createTypeclassDict dictEnv constraints)
           `shouldBe` simplify <$> expected
 
     describe "Convert expr to use typeclass dictionaries" $ do
@@ -135,7 +142,7 @@ spec = do
                             tdeVars = mempty
                           }
 
-                      result = convertExprToUseTypeclassDictionary dictEnv (addTypesToConstraint <$> dedupedConstraints) tidyExpr
+                      result = runDictEnv $ convertExprToUseTypeclassDictionary dictEnv (addTypesToConstraint <$> dedupedConstraints) tidyExpr
 
                   dedupedConstraints `shouldBe` expectedConstraints
                   simplify <$> result `shouldBe` Right (simplify expectedExpr)
@@ -158,7 +165,7 @@ spec = do
         ]
 
     -- the whole transformation basically
-    fdescribe "toDictionaryPassing" $ do
+    describe "toDictionaryPassing" $ do
       traverse_
         ( \(constraints, parts, expectedParts) -> do
             let input = joinText parts
@@ -206,7 +213,12 @@ spec = do
               "(\\a1 -> \\b2 -> tcvaluefromdictionary0 a1 b2 : a -> a -> Bool)"
             ]
           ),
-          (mempty, ["show Zero"],
-              [ "let shownatural = (\\nat15 -> case nat15 of Suc n16 -> \"S \"  + shownatural n16 | _ -> \"\" : Natural -> String); shownatural Zero"])
-
+          ( mempty,
+            ["show Zero"],
+            [ "let shownatural = (\\nat15 -> ",
+              "case nat15 of Suc n16 -> \"S \" + shownatural n16 ",
+              "| _ -> \"\" : Natural -> String); ",
+              "shownatural Zero"
+            ]
+          )
         ]

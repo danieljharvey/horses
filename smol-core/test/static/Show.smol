@@ -19,8 +19,15 @@ instance Show Natural = \nat -> case nat of
                                 Suc n -> "S (" + show n + ")"
                                 | Zero -> "Z"
 
-/*
 def showZero = show Zero == "Z"
 
 test "Show Zero" using showZero
+
+/*
+def showThree : Bool
+def showThree =
+    let str = show (Suc Zero);
+    str == "S (S (S Z))"
+
+test "Show Three" using showThree
 */
