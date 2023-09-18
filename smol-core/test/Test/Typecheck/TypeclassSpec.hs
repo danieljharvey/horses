@@ -142,14 +142,13 @@ spec = do
         typecheckEnv
         functorTypeclass
         (addTypesToConstraint (Constraint "Functor" [tyCons "Maybe" []]))
-        (
-        Instance
-         { inExpr =
-            unsafeParseInstanceExpr "\\f -> \\maybe -> case maybe of Just a -> Just (f a) | Nothing -> Nothing",
-            inConstraints = mempty
-         }
-
-        ) `shouldSatisfy` isRight
+        ( Instance
+            { inExpr =
+                unsafeParseInstanceExpr "\\f -> \\maybe -> case maybe of Just a -> Just (f a) | Nothing -> Nothing",
+              inConstraints = mempty
+            }
+        )
+        `shouldSatisfy` isRight
 
   -- don't do anything with concrete ones pls
   -- then we can look those up again later

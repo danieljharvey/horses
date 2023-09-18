@@ -273,9 +273,13 @@ functorTypeclass =
       tcFuncName = "fmap",
       tcFuncType =
         -- (a -> b) -> f a -> f b
-        tyFunc (tyFunc (tcVar "a") (tcVar "b")) (tyFunc (tyApp (tcVar "f") (tcVar "a"))
-              (tyApp (tcVar "f") (tcVar "b")))
-  }
+        tyFunc
+          (tyFunc (tcVar "a") (tcVar "b"))
+          ( tyFunc
+              (tyApp (tcVar "f") (tcVar "a"))
+              (tyApp (tcVar "f") (tcVar "b"))
+          )
+    }
 
 classes :: (Monoid ann) => M.Map TypeclassName (Typeclass ResolvedDep ann)
 classes =
@@ -305,13 +309,12 @@ instances =
               ]
           }
       ),
-      (
-        Constraint "Functor" [tyCons "Maybe" [tcVar "a"]],
+      ( Constraint "Functor" [tyCons "Maybe" [tcVar "a"]],
         Instance
-         { inExpr =
-            unsafeParseInstanceExpr "\\f -> \\maybe -> case maybe of Just a -> Just (f a) | Nothing -> Nothing",
+          { inExpr =
+              unsafeParseInstanceExpr "\\f -> \\maybe -> case maybe of Just a -> Just (f a) | Nothing -> Nothing",
             inConstraints = mempty
-         }
+          }
       )
     ]
 

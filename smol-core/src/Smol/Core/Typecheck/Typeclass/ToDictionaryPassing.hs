@@ -307,10 +307,7 @@ passDictionaries ::
   m (Expr ResolvedDep (Type ResolvedDep ann))
 passDictionaries env subs expr = do
   (finalExpr, dictState) <-
-    flip
-      runStateT
-      emptyPassDictState
-      (go expr)
+    runStateT (go expr) emptyPassDictState
   pure $
     foldl'
       ( \totalExpr (constraint, instanceExpr) ->

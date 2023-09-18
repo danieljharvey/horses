@@ -48,7 +48,7 @@ simplify = void . goExpr
 
 constructorsForTypecheckEnv :: TCEnv ann -> S.Set Constructor
 constructorsForTypecheckEnv env =
-  foldMap (\dt -> M.keysSet (dtConstructors dt)) (tceDataTypes env)
+  foldMap (M.keysSet . dtConstructors) (tceDataTypes env)
 
 evalExpr ::
   [Constraint ResolvedDep Annotation] ->
