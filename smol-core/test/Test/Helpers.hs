@@ -14,6 +14,7 @@ module Test.Helpers
     tyCons,
     tyFunc,
     tyString,
+    tyApp,
     bool,
     int,
     var,
@@ -34,6 +35,7 @@ module Test.Helpers
     typecheckEnv,
     showTypeclass,
     eqTypeclass,
+    functorTypeclass,
     unsafeParseInstanceExpr,
     tcVar,
     typeForComparison,
@@ -148,6 +150,9 @@ tyCons typeName =
 tyFunc :: (Monoid ann, Ord (dep Identifier)) => Type dep ann -> Type dep ann -> Type dep ann
 tyFunc = TFunc mempty mempty
 
+tyApp :: (Monoid ann) => Type dep ann -> Type dep ann -> Type dep ann
+tyApp = TApp mempty
+
 unit :: (Monoid ann) => Expr dep ann
 unit = EPrim mempty PUnit
 
@@ -260,11 +265,24 @@ eqTypeclass =
       tcFuncType = tyFunc (tcVar "a") (tyFunc (tcVar "a") tyBool)
     }
 
+functorTypeclass :: (Monoid ann) => Typeclass ResolvedDep ann
+functorTypeclass =
+  Typeclass
+    { tcName = "Functor",
+      tcArgs = ["f"],
+      tcFuncName = "fmap",
+      tcFuncType =
+        -- (a -> b) -> f a -> f b
+        tyFunc (tyFunc (tcVar "a") (tcVar "b")) (tyFunc (tyApp (tcVar "f") (tcVar "a"))
+              (tyApp (tcVar "f") (tcVar "b")))
+  }
+
 classes :: (Monoid ann) => M.Map TypeclassName (Typeclass ResolvedDep ann)
 classes =
   M.fromList
     [ ("Eq", eqTypeclass),
-      ("Show", showTypeclass)
+      ("Show", showTypeclass),
+      ("Functor", functorTypeclass)
     ]
 
 unsafeParseInstanceExpr :: (Monoid ann) => Text -> Expr ResolvedDep ann
@@ -286,6 +304,14 @@ instances =
                 Constraint "Eq" [tcVar "b"]
               ]
           }
+      ),
+      (
+        Constraint "Functor" [tyCons "Maybe" [tcVar "a"]],
+        Instance
+         { inExpr =
+            unsafeParseInstanceExpr "\\f -> \\maybe -> case maybe of Just a -> Just (f a) | Nothing -> Nothing",
+            inConstraints = mempty
+         }
       )
     ]
 
