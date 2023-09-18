@@ -6,15 +6,11 @@
 {-# LANGUAGE ScopedTypeVariables #-}
 
 module Smol.Core.Typecheck.Typeclass.ToDictionaryPassing.Types
-  (
-
-
-
-    emptyPassDictEnv,
+  ( emptyPassDictEnv,
     emptyPassDictState,
     ToDictEnv (..),
     PassDictEnv (..),
-    PassDictState (..)
+    PassDictState (..),
   )
 where
 
