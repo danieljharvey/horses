@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1695043124130,
+  "lastUpdate": 1695043911511,
   "repoUrl": "https://github.com/danieljharvey/mimsa",
   "entries": {
     "Store benchmarks in Github Pages": [
@@ -3075,6 +3075,50 @@ window.BENCHMARK_DATA = {
           {
             "name": "evaluate/evaluate parsing 2",
             "value": 0.2911387392000279,
+            "unit": "Time (ms)"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "danieljamesharvey@gmail.com",
+            "name": "Daniel Harvey",
+            "username": "danieljharvey"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "f7b168576829fa2720594e0f574340a9af6aa00b",
+          "message": "Get Functor typeclass working (#1012)\n\n* We can parse generalised fmap type signature\r\n\r\n* Typecheck Show examples, we should add tests into these modules and run them\r\n\r\n* Test\r\n\r\n* New Makefile thing\r\n\r\n* OK, let's fix recursion\r\n\r\n* Aha\r\n\r\n* Nice\r\n\r\n* Oh no\r\n\r\n* Hmm\r\n\r\n* Shit, nested stuff\r\n\r\n* Working Show instances\r\n\r\n* Nice\r\n\r\n* Damn, it works\r\n\r\n* Yesh\r\n\r\n* Yerp\r\n\r\n* Yes\r\n\r\n* Linties",
+          "timestamp": "2023-09-18T14:17:54+01:00",
+          "tree_id": "5e759cee7720a6b5e537cd76bc809dab83018e4c",
+          "url": "https://github.com/danieljharvey/mimsa/commit/f7b168576829fa2720594e0f574340a9af6aa00b"
+        },
+        "date": 1695043910961,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "build stdlib/allFns",
+            "value": 0.10324532163333126,
+            "unit": "Time (ms)"
+          },
+          {
+            "name": "evaluate/evaluate big looping thing",
+            "value": 0.09311087651666593,
+            "unit": "Time (ms)"
+          },
+          {
+            "name": "evaluate/evaluate parsing",
+            "value": 0.03293745290441568,
+            "unit": "Time (ms)"
+          },
+          {
+            "name": "evaluate/evaluate parsing 2",
+            "value": 0.21785607811427132,
             "unit": "Time (ms)"
           }
         ]
