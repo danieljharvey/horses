@@ -125,6 +125,7 @@ library
     Smol.Core.Typecheck.Typeclass.Deduplicate
     Smol.Core.Typecheck.Typeclass.Helpers
     Smol.Core.Typecheck.Typeclass.ToDictionaryPassing
+    Smol.Core.Typecheck.Typeclass.ToDictionaryPassing.Types
     Smol.Core.Typecheck.Typeclass.Typecheck
     Smol.Core.Typecheck.Typeclass.Types
     Smol.Core.Typecheck.Typeclass.Types.Constraint

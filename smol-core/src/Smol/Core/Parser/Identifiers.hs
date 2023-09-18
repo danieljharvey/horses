@@ -47,7 +47,6 @@ protectedNames =
       "infix",
       "True",
       "False",
-      "Nat",
       "Unit",
       "def",
       "test",

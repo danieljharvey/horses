@@ -137,7 +137,7 @@ spec = do
         )
         `shouldSatisfy` isRight
 
-    fit "Functor Maybe instance" $ do
+    it "Functor Maybe instance" $ do
       checkInstance @()
         typecheckEnv
         functorTypeclass

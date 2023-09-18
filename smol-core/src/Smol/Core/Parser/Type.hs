@@ -198,7 +198,6 @@ protectedTypeNames =
   S.fromList
     [ "String",
       "Int",
-      "Nat",
       "Bool",
       "Unit",
       "True",

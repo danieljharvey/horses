@@ -1,6 +1,4 @@
-{-# LANGUAGE DerivingStrategies #-}
 {-# LANGUAGE FlexibleContexts #-}
-{-# LANGUAGE GeneralisedNewtypeDeriving #-}
 {-# LANGUAGE NamedFieldPuns #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE ScopedTypeVariables #-}
@@ -12,8 +10,7 @@ module Smol.Core.Typecheck.Typeclass.ToDictionaryPassing
     toDictionaryPassing,
     passDictionaries,
     lookupTypecheckedTypeclassInstance,
-    ToDictEnv (..),
-    PassDictEnv (..),
+    module Smol.Core.Typecheck.Typeclass.ToDictionaryPassing.Types,
   )
 where
 
@@ -35,34 +32,10 @@ import Smol.Core.Printer
 import Smol.Core.Typecheck.Shared
 import Smol.Core.Typecheck.Typeclass.Deduplicate
 import Smol.Core.Typecheck.Typeclass.Helpers
+import Smol.Core.Typecheck.Typeclass.ToDictionaryPassing.Types
 import Smol.Core.Typecheck.Types
 import Smol.Core.Typecheck.Types.Substitution
 import Smol.Core.Types
-
-data ToDictEnv ann = ToDictEnv
-  { tdeClasses :: M.Map TypeclassName (Typeclass ResolvedDep ann),
-    tdeInstances :: M.Map (Constraint ResolvedDep ()) (Instance ResolvedDep (Type ResolvedDep ann)),
-    tdeVars :: M.Map (ResolvedDep Identifier) ([Constraint ResolvedDep ann], ResolvedType ann)
-  }
-
--- | Are we currently creating an instance? If so, include it's constraint
--- so it is able to refer to itself
-newtype PassDictEnv = PassDictEnv
-  { pdeCurrentConstraint :: Maybe (Constraint ResolvedDep ())
-  }
-  deriving newtype (Eq, Ord, Show)
-
-emptyPassDictEnv :: PassDictEnv
-emptyPassDictEnv = PassDictEnv Nothing
-
--- | the instances we've accumulated whilst traversing the expr
-newtype PassDictState ann = PassDictState
-  { pdsInstances :: M.Map (Constraint ResolvedDep ()) (Expr ResolvedDep (Type ResolvedDep ann))
-  }
-  deriving newtype (Eq, Ord, Show)
-
-emptyPassDictState :: PassDictState ann
-emptyPassDictState = PassDictState mempty
 
 -- create an instance using the already typechecked instances we already have
 lookupTypecheckedTypeclassInstance ::
