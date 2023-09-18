@@ -25,11 +25,24 @@ interpretInfix interpretFn operator a b = do
       if void plainA == void plainB
         then withBool True
         else withBool False
-    OpAdd -> do
-      let withInt = pure . EPrim (getExprAnnotation a) . PInt
-          getInt exp' = case exp' of
-            (EPrim _ (PInt i)) -> Right i
-            _ -> Left $ AdditionWithNonNumber a
-      case (,) <$> getInt plainA <*> getInt plainB of
+    OpAdd -> addInts plainA plainB `catchError` \_ -> concatStrings plainA plainB
+
+addInts :: InterpretExpr ann -> InterpretExpr ann -> InterpreterM ann (InterpretExpr ann)
+addInts plainA plainB =
+  let withInt = pure . EPrim (getExprAnnotation plainA) . PInt
+      getInt exp' = case exp' of
+        (EPrim _ (PInt i)) -> Right i
+        _ -> Left $ AdditionWithNonNumber plainA
+   in case (,) <$> getInt plainA <*> getInt plainB of
         Right (a', b') -> withInt (a' + b')
+        Left e -> throwError e
+
+concatStrings :: InterpretExpr ann -> InterpretExpr ann -> InterpreterM ann (InterpretExpr ann)
+concatStrings plainA plainB =
+  let withStr = pure . EPrim (getExprAnnotation plainA) . PString
+      getStr exp' = case exp' of
+        (EPrim _ (PString s)) -> Right s
+        _ -> Left $ AdditionWithNonNumber plainA
+   in case (,) <$> getStr plainA <*> getStr plainB of
+        Right (a', b') -> withStr (a' <> b')
         Left e -> throwError e

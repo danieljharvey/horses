@@ -11,7 +11,6 @@ import qualified Data.Map.Strict as M
 import qualified Data.Set as S
 import qualified Data.Text as T
 import Smol.Core
-import Smol.Core.Helpers (tracePrettyId)
 import Smol.Core.Modules.FromParts
 import Smol.Core.Modules.ResolveDeps
 import Smol.Core.Modules.Typecheck
@@ -43,10 +42,10 @@ checkModule input moduleItems = do
 
   pure (transformModule dictModule)
 
-transformModule :: (Ord (dep Identifier), Printer (dep TypeName), Printer (dep Identifier), Printer (dep Constructor)) => Module dep ann -> Module dep ann
+transformModule :: (Ord (dep Identifier)) => Module dep ann -> Module dep ann
 transformModule inputModule =
   let transformTle tle =
-        tle {tleExpr = tracePrettyId "after" $ transform (tracePrettyId "before" $ tleExpr tle)}
+        tle {tleExpr = transform (tleExpr tle)}
    in inputModule {moExpressions = transformTle <$> moExpressions inputModule}
 
 passModuleDictionaries ::

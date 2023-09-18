@@ -6,12 +6,14 @@
 
 module Test.Typecheck.ToDictionaryPassingSpec (spec) where
 
+import Control.Monad.Reader
 import Data.Bifunctor (bimap)
 import Data.Foldable (traverse_)
 import Data.Functor
 import Data.List (nub)
 import qualified Data.List.NonEmpty as NE
 import qualified Data.Map.Strict as M
+import qualified Data.Set as S
 import Data.String (fromString)
 import qualified Data.Text as T
 import Smol.Core
@@ -44,6 +46,10 @@ simplify = void . goExpr
     goPattern (PVar ann ident) = PVar ann (changeIdent ident)
     goPattern other = mapPattern goPattern other
 
+constructorsForTypecheckEnv :: TCEnv ann -> S.Set Constructor
+constructorsForTypecheckEnv env =
+  foldMap (M.keysSet . dtConstructors) (tceDataTypes env)
+
 evalExpr ::
   [Constraint ResolvedDep Annotation] ->
   T.Text ->
@@ -56,7 +62,7 @@ evalExpr constraints input =
   case parseExprAndFormatError input of
     Left e -> error (show e)
     Right expr ->
-      case resolveExprDeps expr (getTypeclassMethodNames @() typecheckEnv) mempty of
+      case resolveExprDeps expr (getTypeclassMethodNames @Annotation typecheckEnv) mempty (constructorsForTypecheckEnv @Annotation typecheckEnv) of
         Left e -> error $ "error resolving Expr deps :" <> show e
         Right resolvedExpr ->
           let env =
@@ -77,6 +83,12 @@ evalExprUnsafe input = case parseExprAndFormatError input of
       Right (typedExpr, _typeclassUses) -> pure typedExpr
       Left e -> Left e
 
+runDictEnv :: ReaderT PassDictEnv m a -> m a
+runDictEnv = flip runReaderT emptyPassDictEnv
+  where
+    emptyPassDictEnv :: PassDictEnv
+    emptyPassDictEnv = PassDictEnv Nothing
+
 spec :: Spec
 spec = do
   describe "toDictionaryPassing" $ do
@@ -93,7 +105,7 @@ spec = do
                   tdeVars = mempty
                 }
 
-        fmap simplify (createTypeclassDict dictEnv constraints)
+        fmap simplify (runDictEnv $ createTypeclassDict dictEnv constraints)
           `shouldBe` simplify <$> expected
 
       it "Tuple for two constraints" $ do
@@ -108,7 +120,7 @@ spec = do
                   tdeVars = mempty
                 }
 
-        fmap simplify (createTypeclassDict dictEnv constraints)
+        fmap simplify (runDictEnv $ createTypeclassDict dictEnv constraints)
           `shouldBe` simplify <$> expected
 
     describe "Convert expr to use typeclass dictionaries" $ do
@@ -130,7 +142,7 @@ spec = do
                             tdeVars = mempty
                           }
 
-                      result = convertExprToUseTypeclassDictionary dictEnv (addTypesToConstraint <$> dedupedConstraints) tidyExpr
+                      result = runDictEnv $ convertExprToUseTypeclassDictionary dictEnv (addTypesToConstraint <$> dedupedConstraints) tidyExpr
 
                   dedupedConstraints `shouldBe` expectedConstraints
                   simplify <$> result `shouldBe` Right (simplify expectedExpr)
@@ -164,7 +176,9 @@ spec = do
                       instances = moInstances testModule
 
                   let expectedExpr = getRight $ evalExprUnsafe expected
+
                       (dedupedConstraints, tidyExpr) = deduplicateConstraints typeclassUses expr
+
                       allConstraints = nub (dedupedConstraints <> constraints) -- we lose outer constraints sometimes
                       dictEnv =
                         ToDictEnv
@@ -180,22 +194,31 @@ spec = do
         [ (mempty, ["1 + 2"], ["1 + 2"]),
           ( mempty,
             ["equals (1: Int) (2: Int)"],
-            [ "(\\a1 -> \\b2 -> a1 == b2 : Int -> Int -> Bool) (1 : Int) (2: Int)"
+            [ "let eqint = (\\a1 -> \\b2 -> a1 == b2 : Int -> Int -> Bool); eqint (1 : Int) (2: Int)"
             ]
           ),
           ( mempty,
             ["equals ((1: Int), (2: Int)) ((2: Int), (3: Int))"],
-            [ "(\\pairA7 -> \\pairB8 -> case (pairA7, pairB8) of ((a19, b110), (a211, b212)) ->",
-              "if (\\a1 -> \\b2 -> a1 == b2 : Int -> Int -> Bool) a19 a211 ",
-              "then (\\a1 -> \\b2 -> a1 == b2 : Int -> Int -> Bool) b110 b212",
-              "else False : (a, b) -> (a,b) -> Bool)",
-              "((1: Int), (2: Int)) ((2: Int), (3: Int))"
+            [ "let eqintint = let eqint = (\\a1 -> \\b2 -> a1 == b2 : Int -> Int -> Bool);",
+              "(\\pairA7 -> \\pairB8 -> case (pairA7, pairB8) of ((a19, b110), (a211, b212)) ->",
+              "if eqint a19 a211 ",
+              "then eqint b110 b212",
+              "else False : (a, b) -> (a,b) -> Bool); ",
+              "eqintint ((1: Int), (2: Int)) ((2: Int), (3: Int))"
             ]
           ),
           ( [Constraint "Eq" [tcVar "a"]],
             ["(\\a -> \\b -> equals a b : a -> a -> Bool)"],
             [ "\\instances -> case (instances : (a -> a -> Bool)) of tcvaluefromdictionary0 -> ",
               "(\\a1 -> \\b2 -> tcvaluefromdictionary0 a1 b2 : a -> a -> Bool)"
+            ]
+          ),
+          ( mempty,
+            ["show Zero"],
+            [ "let shownatural = (\\nat15 -> ",
+              "case nat15 of Suc n16 -> \"S \" + shownatural n16 ",
+              "| _ -> \"\" : Natural -> String); ",
+              "shownatural Zero"
             ]
           )
         ]

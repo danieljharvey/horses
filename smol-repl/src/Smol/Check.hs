@@ -19,7 +19,6 @@ import Prelude hiding (init)
 -- read a file, check if it is OK etc
 checkFile :: (MonadIO m) => Text -> m ExitCode
 checkFile filePath = liftIO $ do
-  putStrLn ("Reading " <> show filePath)
   input <- T.readFile (T.unpack filePath)
   case parseModule input of
     Left bundle -> do

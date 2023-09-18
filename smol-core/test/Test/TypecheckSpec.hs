@@ -161,6 +161,8 @@ spec = do
               ("0 + 0", "0"),
               ("0 + 1", "1"),
               ("1 + 1", "2"),
+              ("\"dog\" + \"log\"", "\"doglog\""),
+              ("(\"dog\" : String) + (\"log\" : String)", "String"),
               ("let f = \\a -> a + 1; let g = 100; f 1", "2"),
               ("(\\pair -> case pair of (a,b) -> a + b : (Int,Int) -> Int)", "(Int,Int) -> Int"),
               ("let id = (\\i -> i : i -> i); case (Just 1) of Just a -> Just (id a) | Nothing -> Nothing", "Maybe 1"),
@@ -177,7 +179,8 @@ spec = do
               ("let f = (\\x -> (x 1, x False) : (a -> a) -> (1, False)); let id = \\a -> a; f id", "(1, False)"), -- they need annotation, but that's ok
               ("\\a -> \\b -> if a then a else b", "Bool -> Bool -> Bool"),
               ("\\a -> case a of (b,c) -> if b then b else c", "(Bool,Bool) -> Bool"),
-              ("equals (10 : Int) (11: Int)", "Bool") -- using Eq Int typeclass instance
+              ("equals (10 : Int) (11: Int)", "Bool"), -- using Eq Int typeclass instance
+              ("let maybeFmap = \\f -> \\maybe -> case maybe of Just a -> Just (f a) | Nothing -> Nothing; let useFmap = (\\fmap -> fmap (\\a -> a + 1 : Int -> Int) : ((a -> b) -> f a -> f b) -> f Int -> f Int); useFmap maybeFmap", "Maybe Int -> Maybe Int")
             ]
       traverse_
         ( \(inputExpr, expectedType) -> it (T.unpack inputExpr <> " :: " <> T.unpack expectedType) $ do

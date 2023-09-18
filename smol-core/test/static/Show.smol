@@ -1,0 +1,50 @@
+
+class Show a { show: a -> String }
+
+instance Show Bool = \bool ->
+    if bool then "True" else "False"
+
+def showTrue =
+    show (True: Bool) == "True"
+
+test "Show True" using showTrue
+
+def showFalse = show (False: Bool) == "False"
+
+test "Show False" using showFalse
+
+/* Natural */
+
+type Natural = Suc Natural | Zero
+
+instance Show Natural = \nat -> case nat of
+                                Suc n -> "S (" + show n + ")"
+                                | Zero -> "Z"
+
+def showZero = show Zero == "Z"
+
+test "Show Zero" using showZero
+
+def showThree =
+        show (Suc (Suc (Suc Zero))) == "S (S (S (Z)))"
+
+test "Show Three" using showThree
+
+/* List */
+
+type List a = Cons a (List a) | Nil
+
+instance (Show a) => Show (List a) =
+    \list -> case list of
+                Cons a rest -> show a + ":" + show rest
+              | Nil -> "Nil"
+
+def showBoolList =
+    show (Cons (True: Bool) (Cons (False: Bool) Nil)) == "True:False:Nil"
+
+test "Show Bool List" using showBoolList
+
+def showNaturalList =
+        show (Cons (Suc Zero) (Cons Zero Nil)) == "S (Z):Z:Nil"
+
+test "Show Natural List" using showNaturalList

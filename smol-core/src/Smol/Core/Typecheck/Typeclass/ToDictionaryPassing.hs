@@ -10,23 +10,29 @@ module Smol.Core.Typecheck.Typeclass.ToDictionaryPassing
     toDictionaryPassing,
     passDictionaries,
     lookupTypecheckedTypeclassInstance,
-    ToDictEnv (..),
+    module Smol.Core.Typecheck.Typeclass.ToDictionaryPassing.Types,
   )
 where
 
 import Control.Monad
 import Control.Monad.Except
-import Data.Foldable (traverse_)
+import Control.Monad.Reader
+import Control.Monad.State
+import qualified Data.Char as Char
+import Data.Foldable (foldl', traverse_)
 import Data.Functor
 import Data.List (elemIndex)
 import qualified Data.List.NonEmpty as NE
 import qualified Data.Map.Strict as M
 import Data.Maybe (mapMaybe)
+import qualified Data.Text as T
 import Smol.Core.ExprUtils
 import Smol.Core.Helpers
+import Smol.Core.Printer
 import Smol.Core.Typecheck.Shared
 import Smol.Core.Typecheck.Typeclass.Deduplicate
 import Smol.Core.Typecheck.Typeclass.Helpers
+import Smol.Core.Typecheck.Typeclass.ToDictionaryPassing.Types
 import Smol.Core.Typecheck.Types
 import Smol.Core.Typecheck.Types.Substitution
 import Smol.Core.Types
@@ -34,7 +40,12 @@ import Smol.Core.Types
 -- create an instance using the already typechecked instances we already have
 lookupTypecheckedTypeclassInstance ::
   forall m ann.
-  (MonadError (TCError ann) m, Monoid ann, Ord ann, Show ann) =>
+  ( MonadError (TCError ann) m,
+    MonadReader PassDictEnv m,
+    Monoid ann,
+    Ord ann,
+    Show ann
+  ) =>
   ToDictEnv ann ->
   Constraint ResolvedDep (Type ResolvedDep ann) ->
   m ([Substitution ResolvedDep ann], Instance ResolvedDep (Type ResolvedDep ann))
@@ -57,7 +68,9 @@ lookupTypecheckedTypeclassInstance env constraint = do
                   <$> inConstraints
 
           -- see if found types exist
-          traverse_ (lookupTypecheckedTypeclassInstance env) (addTypesToConstraint <$> subbedConstraints)
+          traverse_
+            (lookupTypecheckedTypeclassInstance env)
+            (addTypesToConstraint <$> subbedConstraints)
 
           -- return new instance
           pure
@@ -101,6 +114,7 @@ findMatchingConstraint constraints (Constraint name tys) =
 
 getTypeForDictionary ::
   ( MonadError (TCError ann) m,
+    MonadReader PassDictEnv m,
     Monoid ann,
     Ord ann,
     Show ann
@@ -111,7 +125,8 @@ getTypeForDictionary ::
 getTypeForDictionary env constraints = do
   let getConstraintPattern constraint i = do
         let ident = identForConstraint (i + 1)
-        ty <- case lookupTypecheckedTypeclassInstance env constraint of
+        result <- tryError (lookupTypecheckedTypeclassInstance env constraint)
+        ty <- case result of
           -- we found the instance, return it's type
           Right (_, Instance _ instanceExpr) -> pure (getExprAnnotation instanceExpr)
           -- we didn't find an instance, but we can get the type from the
@@ -143,7 +158,12 @@ typeForConstraint typeClasses constraint@(Constraint tcn _) = do
 -- methods, we inline all the instances as Let bindings
 -- `let equals_1 = \a -> \b -> a == b in equals_1 10 11`
 convertExprToUseTypeclassDictionary ::
-  (MonadError (TCError ann) m, Monoid ann, Ord ann, Show ann) =>
+  ( MonadError (TCError ann) m,
+    MonadReader PassDictEnv m,
+    Monoid ann,
+    Ord ann,
+    Show ann
+  ) =>
   ToDictEnv ann ->
   [Constraint ResolvedDep (Type ResolvedDep ann)] ->
   Expr ResolvedDep (Type ResolvedDep ann) ->
@@ -172,7 +192,12 @@ convertExprToUseTypeclassDictionary env constraints expr = do
 -- return either solid instances or use vars from constraints if not available
 -- (ie "pass them through", as such)
 createTypeclassDict ::
-  (Show ann, Ord ann, Monoid ann, MonadError (TCError ann) m) =>
+  ( Show ann,
+    Ord ann,
+    Monoid ann,
+    MonadReader PassDictEnv m,
+    MonadError (TCError ann) m
+  ) =>
   ToDictEnv ann ->
   NE.NonEmpty (Constraint ResolvedDep (Type ResolvedDep ann)) ->
   m (Expr ResolvedDep (Type ResolvedDep ann))
@@ -180,10 +205,11 @@ createTypeclassDict env constraints = do
   foundInstances <-
     traverse
       ( \constraint -> do
-          case lookupTypecheckedTypeclassInstance env constraint of
+          result <- tryError (lookupTypecheckedTypeclassInstance env constraint)
+          case result of
             Right (subs, Instance newConstraints expr) -> do
               -- found a concrete instance
-              toDictionaryPassing env subs newConstraints expr
+              toDictionaryPassingInternal env subs newConstraints expr
             Left e -> do
               -- no concrete instance, maybe we can pass through a constraint
               -- from the current function
@@ -203,16 +229,65 @@ createTypeclassDict env constraints = do
 filterNotConcrete :: [Constraint ResolvedDep ann] -> [Constraint ResolvedDep ann]
 filterNotConcrete = filter (not . isConcrete)
 
+storeInstance ::
+  (MonadState (PassDictState ann) m) =>
+  Constraint ResolvedDep () ->
+  Expr ResolvedDep (Type ResolvedDep ann) ->
+  m (ResolvedDep Identifier)
+storeInstance constraint instanceExpr = do
+  modify (\pds -> pds {pdsInstances = pdsInstances pds <> M.singleton constraint instanceExpr})
+  pure (identifierFromConstraint constraint)
+
+lookupInstance ::
+  ( MonadReader PassDictEnv m,
+    MonadState (PassDictState ann) m
+  ) =>
+  Constraint ResolvedDep () ->
+  m (Maybe (ResolvedDep Identifier))
+lookupInstance constraint = do
+  maybeCurrentConstraint <- asks pdeCurrentConstraint
+  if maybeCurrentConstraint == Just constraint
+    then pure $ Just $ identifierFromConstraint constraint -- this is the current instance, so return its own name
+    else do
+      maybeInstance <- gets (M.lookup constraint . pdsInstances)
+      case maybeInstance of
+        Just _ -> pure $ Just $ identifierFromConstraint constraint
+        Nothing -> pure Nothing
+
+-- make a nice name for an instance
+identifierFromConstraint :: Constraint ResolvedDep () -> ResolvedDep Identifier
+identifierFromConstraint (Constraint (TypeclassName tcn) tys) = LocalDefinition . Identifier $ toBasic $ tcn <> "_" <> foldMap tshowType tys
+  where
+    toBasic :: T.Text -> T.Text
+    toBasic = T.toLower . T.filter Char.isAlpha
+
+    tshowType :: Type ResolvedDep ann -> T.Text
+    tshowType ty =
+      renderWithWidth 100 (prettyDoc ty)
+
 -- given we know the types of all our deps
 -- pass dictionaries to them all
 passDictionaries ::
-  (Monoid ann, Ord ann, Show ann, MonadError (TCError ann) m) =>
+  ( Monoid ann,
+    Ord ann,
+    Show ann,
+    MonadReader PassDictEnv m,
+    MonadError (TCError ann) m
+  ) =>
   ToDictEnv ann ->
   [Substitution ResolvedDep ann] ->
   Expr ResolvedDep (Type ResolvedDep ann) ->
   m (Expr ResolvedDep (Type ResolvedDep ann))
-passDictionaries env subs =
-  go
+passDictionaries env subs expr = do
+  (finalExpr, dictState) <-
+    runStateT (go expr) emptyPassDictState
+  pure $
+    foldl'
+      ( \totalExpr (constraint, instanceExpr) ->
+          ELet (TPrim mempty TPBool) (identifierFromConstraint constraint) instanceExpr totalExpr
+      )
+      finalExpr
+      (M.toList $ pdsInstances dictState)
   where
     go (EVar ann ident) =
       case M.lookup ident (tdeVars env) of
@@ -232,19 +307,46 @@ passDictionaries env subs =
               let subbedConstraint =
                     substituteConstraint subs constraint
 
-              (newSubs, Instance fnConstraints fnExpr) <-
-                liftEither (lookupTypecheckedTypeclassInstance env (addTypesToConstraint subbedConstraint))
+              -- have we already created this instance?
+              maybeFound <- lookupInstance (void subbedConstraint)
+              case maybeFound of
+                -- if so, return it
+                Just identifier -> pure (EVar ann identifier)
+                Nothing -> do
+                  (newSubs, Instance fnConstraints fnExpr) <-
+                    lookupTypecheckedTypeclassInstance env (addTypesToConstraint subbedConstraint)
 
-              -- convert instance to dictionary passing then return it inlined
-              toDictionaryPassing env newSubs fnConstraints fnExpr
+                  -- convert instance to dictionary passing then return it inlined
+                  toInline <-
+                    local
+                      (const (PassDictEnv $ Just $ void subbedConstraint))
+                      (toDictionaryPassingInternal env newSubs fnConstraints fnExpr)
+
+                  -- need to push this to state with a fresh name, and put a var to
+                  -- the fresh name
+                  identifier <- storeInstance (void subbedConstraint) toInline
+
+                  pure (EVar ann identifier)
             Nothing -> pure (EVar ann ident)
     go other = bindExpr go other
 
-data ToDictEnv ann = ToDictEnv
-  { tdeClasses :: M.Map TypeclassName (Typeclass ResolvedDep ann),
-    tdeInstances :: M.Map (Constraint ResolvedDep ()) (Instance ResolvedDep (Type ResolvedDep ann)),
-    tdeVars :: M.Map (ResolvedDep Identifier) ([Constraint ResolvedDep ann], ResolvedType ann)
-  }
+-- | well well well lets put it all together
+toDictionaryPassingInternal ::
+  ( MonadError (TCError ann) m,
+    MonadReader PassDictEnv m,
+    Show ann,
+    Ord ann,
+    Monoid ann
+  ) =>
+  ToDictEnv ann ->
+  [Substitution ResolvedDep ann] ->
+  [Constraint ResolvedDep (Type ResolvedDep ann)] ->
+  Expr ResolvedDep (Type ResolvedDep ann) ->
+  m (Expr ResolvedDep (Type ResolvedDep ann))
+toDictionaryPassingInternal env subs constraints expr = do
+  passDictionaries env subs
+    <=< convertExprToUseTypeclassDictionary env constraints
+    $ expr
 
 -- | well well well lets put it all together
 toDictionaryPassing ::
@@ -254,7 +356,5 @@ toDictionaryPassing ::
   [Constraint ResolvedDep (Type ResolvedDep ann)] ->
   Expr ResolvedDep (Type ResolvedDep ann) ->
   m (Expr ResolvedDep (Type ResolvedDep ann))
-toDictionaryPassing env subs constraints expr = do
-  passDictionaries env subs
-    <=< convertExprToUseTypeclassDictionary env constraints
-    $ expr
+toDictionaryPassing env subs constraints expr =
+  runReaderT (toDictionaryPassingInternal env subs constraints expr) emptyPassDictEnv

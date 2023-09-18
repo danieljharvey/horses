@@ -115,3 +115,9 @@ spec = do
 
       it "Typecheck Monoid successfully" $ do
         testModuleTypecheck "Monoid" `shouldSatisfy` isRight
+
+      it "Typecheck Functor successfully" $ do
+        testModuleTypecheck "Functor" `shouldSatisfy` isRight
+
+      it "Typecheck Show successfully" $ do
+        testModuleTypecheck "Show" `shouldSatisfy` isRight

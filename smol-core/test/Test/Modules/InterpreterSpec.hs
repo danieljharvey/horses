@@ -139,6 +139,16 @@ spec = do
                   "def main = equals (Just (1: Int)) Nothing"
                 ],
                 "False"
+              ),
+              ( [ "type Natural = Suc Natural | Zero",
+                  "class Show a { show: a -> String }",
+                  "instance Show Natural = \\nat -> ",
+                  "case nat of Suc n -> \"S \" + show n ",
+                  "| _ -> \"Z\"",
+                  "def main : String",
+                  "def main = show (Suc Zero)"
+                ],
+                "\"S Z\""
               )
             ]
       traverse_
