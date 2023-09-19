@@ -3,11 +3,12 @@
 
 module Smol.Core.Typecheck.Types.TCError
   ( TCError (..),
+    module Smol.Core.Typecheck.Typeclass.Types.TypeclassError,
   )
 where
 
 import Data.Set (Set)
-import Smol.Core.Typecheck.Typeclass.Types
+import Smol.Core.Typecheck.Typeclass.Types.TypeclassError
 import Smol.Core.Types
 import Smol.Core.Types.PatternMatchError (PatternMatchError)
 
@@ -27,7 +28,5 @@ data TCError ann
   | TCExpectedConstructorType (ResolvedType ann)
   | TCCompoundTypeInEquality (ResolvedType ann) -- for now we only do primitive equality
   | TCPatternMatchError (PatternMatchError (ResolvedType ann))
-  | TCTypeclassNotFound TypeclassName
-  | TCTypeclassInstanceNotFound TypeclassName [Type ResolvedDep ann] [Constraint ResolvedDep ann]
-  | TCConflictingTypeclassInstancesFound [Constraint ResolvedDep ann]
+  | TCTypeclassError (TypeclassError ann)
   deriving stock (Eq, Ord, Show, Foldable)

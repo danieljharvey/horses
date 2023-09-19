@@ -83,7 +83,7 @@ lookupTypecheckedTypeclassInstance env constraint = do
         Nothing ->
           let constraintsWithAnn = (fmap . fmap) (const mempty) (M.keys instances)
               (Constraint name tys) = constraint
-           in throwError (TCTypeclassInstanceNotFound name (getTypeAnnotation <$> tys) constraintsWithAnn)
+           in throwError (TCTypeclassError $ TypeclassInstanceNotFound name (getTypeAnnotation <$> tys) constraintsWithAnn)
 
 -- | given a pile of constraints, find the matching one and return
 -- substitutions required to make it match
@@ -108,9 +108,9 @@ findMatchingConstraint constraints (Constraint name tys) =
         -- we deliberately fail if we find more than one matching instance
         [(foundConstraint, subs)] -> pure (foundConstraint, subs)
         [] ->
-          throwError (TCTypeclassInstanceNotFound name tys constraintsWithAnn)
+          throwError (TCTypeclassError $ TypeclassInstanceNotFound name tys constraintsWithAnn)
         multiple ->
-          throwError (TCConflictingTypeclassInstancesFound (fst <$> multiple))
+          throwError (TCTypeclassError $ ConflictingTypeclassInstancesFound (fst <$> multiple))
 
 getTypeForDictionary ::
   ( MonadError (TCError ann) m,

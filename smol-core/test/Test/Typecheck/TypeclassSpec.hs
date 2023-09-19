@@ -10,6 +10,7 @@ import Data.Either
 import qualified Data.Map.Strict as M
 import Smol.Core
 import Smol.Core.Typecheck.Typeclass
+import Smol.Core.Typecheck.Typeclass.KindChecker
 import Test.Helpers
 import Test.Hspec
 
@@ -149,6 +150,45 @@ spec = do
             }
         )
         `shouldSatisfy` isRight
+
+    it "Functor (Maybe a) instance" $ do
+      checkInstance @()
+        typecheckEnv
+        functorTypeclass
+        (addTypesToConstraint (Constraint "Functor" [tyCons "Maybe" [tcVar "a"]]))
+        ( Instance
+            { inExpr =
+                unsafeParseInstanceExpr "\\f -> \\maybe -> case maybe of Just a -> Just (f a) | Nothing -> Nothing",
+              inConstraints = mempty
+            }
+        )
+        `shouldBe` Left (TCTypeclassError $ KindMismatch "f" (KindFn Star Star) Star)
+
+  fdescribe "KindChecker" $ do
+    let dts = tceDataTypes typecheckEnv
+    describe "type for kind" $ do
+      it "Int" $ do
+        getTypeAnnotation (typeKind dts (tyInt :: Type ResolvedDep ())) `shouldBe` Star
+      it "Maybe Int" $ do
+        getTypeAnnotation (typeKind dts (tyCons "Maybe" [tyInt] :: Type ResolvedDep ())) `shouldBe` Star
+      it "Either Int" $ do
+        getTypeAnnotation (typeKind dts (tyCons "Either" [tyInt] :: Type ResolvedDep ())) `shouldBe` KindFn Star Star
+      it "Int -> Int" $ do
+        getTypeAnnotation (typeKind dts (tyFunc tyInt tyInt :: Type ResolvedDep ())) `shouldBe` Star
+      it "f a" $ do
+        getTypeAnnotation (typeKind dts (tyApp (tcVar "f") (tcVar "a") :: Type ResolvedDep ())) `shouldBe` Star
+
+    fdescribe "type from type sig" $ do
+      it "a in 'a -> String'" $ do
+        lookupKindInType  (typeKind dts (tyFunc (tcVar "a") tyString)) "a" `shouldBe` Just Star
+
+      it "f in 'f a'" $ do
+        lookupKindInType  (typeKind dts (tyApp (tcVar "f") (tcVar "a"))) "f" `shouldBe` Just (KindFn Star Star)
+
+      it "f in 'f a b'" $ do
+        lookupKindInType  (typeKind dts (tyApp (tyApp (tcVar "f") (tcVar "a")) (tcVar "b") )) "f" `shouldBe` Just (KindFn Star (KindFn Star Star))
+
+
 
   -- don't do anything with concrete ones pls
   -- then we can look those up again later

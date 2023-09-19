@@ -145,11 +145,11 @@ lookupTypeclassInstance env constraint@(Constraint name tys) = do
               -- return new instance
               pure (Instance {inConstraints = subbedConstraints, inExpr})
             Nothing ->
-              throwError (TCTypeclassInstanceNotFound name tys (M.keys $ tceInstances env))
+              throwError (TCTypeclassError $ TypeclassInstanceNotFound name tys (M.keys $ tceInstances env))
         [] ->
-          throwError (TCTypeclassInstanceNotFound name tys (M.keys $ tceInstances env))
+          throwError (TCTypeclassError $ TypeclassInstanceNotFound name tys (M.keys $ tceInstances env))
         multiple ->
-          throwError (TCConflictingTypeclassInstancesFound (fst <$> multiple))
+          throwError (TCTypeclassError $ ConflictingTypeclassInstancesFound (fst <$> multiple))
 
 substituteConstraint ::
   (Eq (dep Identifier)) =>
@@ -193,7 +193,7 @@ lookupTypeclass ::
 lookupTypeclass classes tcn =
   case M.lookup tcn classes of
     Just tc -> pure tc
-    Nothing -> throwError (TCTypeclassNotFound tcn)
+    Nothing -> throwError (TCTypeclassError $ TypeclassNotFound tcn)
 
 -- given a Typeclass (ie `Eq a`) and a type calling it (ie `Int -> Int ->
 -- Bool`), recover the instance we want, `Eq Int`.
