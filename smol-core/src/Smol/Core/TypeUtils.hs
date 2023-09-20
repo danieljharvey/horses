@@ -1,4 +1,4 @@
-module Smol.Core.TypeUtils (mapType, monoidType) where
+module Smol.Core.TypeUtils (mapType, bindType, monoidType) where
 
 import Smol.Core.Types
 
@@ -19,6 +19,25 @@ mapType f (TRecord ann parts) = TRecord ann (mapType f <$> parts)
 mapType f (TApp ann fn arg) =
   TApp ann (f fn) (f arg)
 mapType _ (TConstructor ann c) = TConstructor ann c
+
+-- helper functions for manipulating Types
+bindType :: (Applicative m) => (Type dep ann -> m (Type dep ann)) -> Type dep ann -> m (Type dep ann)
+bindType f (TFunc ann env fn arg) =
+  TFunc ann <$> (traverse (bindType f) env) <*> f fn <*> f arg
+bindType f (TTuple ann tHead tTail) =
+  TTuple ann <$> bindType f tHead <*> traverse (bindType f) tTail
+bindType f (TInfix ann op a b) =
+  TInfix ann op <$> bindType f a <*> bindType f b
+bindType f (TArray ann i as) = TArray ann i <$> f as
+bindType _ (TLiteral ann l) = pure $ TLiteral ann l
+bindType _ (TPrim ann p) = pure $ TPrim ann p
+bindType _ (TVar ann v) = pure $ TVar ann v
+bindType _ (TUnknown ann i) = pure $ TUnknown ann i
+bindType f (TRecord ann parts) = TRecord ann <$> traverse (bindType f) parts
+bindType f (TApp ann fn arg) =
+  TApp ann <$> f fn <*> f arg
+bindType _ (TConstructor ann c) = pure $ TConstructor ann c
+
 
 monoidType :: (Monoid a) => (Type dep ann -> a) -> Type dep ann -> a
 monoidType _ TVar {} = mempty
