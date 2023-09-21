@@ -141,10 +141,10 @@ typecheckModule input inputModule depMap = do
 typecheckTest ::
   (MonadError (ModuleError Annotation) m) =>
   Map (DefIdentifier ResolvedDep) (DepType ResolvedDep (Type ResolvedDep Annotation)) ->
-  Test ->
+  Test ResolvedDep Annotation ->
   m ()
 typecheckTest defs (UnitTest testName ident) = do
-  case M.lookup (DIName ident) defs of
+  case M.lookup (DITest ident) defs of
     Just (DTExpr tle) -> do
       let ty = getExprAnnotation (tleExpr tle)
       case ty of

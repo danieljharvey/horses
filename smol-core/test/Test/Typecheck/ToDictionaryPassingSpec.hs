@@ -85,9 +85,6 @@ evalExprUnsafe input = case parseExprAndFormatError input of
 
 runDictEnv :: ReaderT PassDictEnv m a -> m a
 runDictEnv = flip runReaderT emptyPassDictEnv
-  where
-    emptyPassDictEnv :: PassDictEnv
-    emptyPassDictEnv = PassDictEnv Nothing
 
 spec :: Spec
 spec = do

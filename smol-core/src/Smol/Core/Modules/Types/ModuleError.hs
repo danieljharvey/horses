@@ -62,7 +62,7 @@ data ModuleError ann
   | DefDoesNotTypeCheck Text (DefIdentifier ResolvedDep) (TCError ann)
   | DictionaryPassingError Text (TCError ann)
   | NamedImportNotFound (Set ModuleName) ModuleName
-  | EmptyTestName Identifier
+  | EmptyTestName (Expr ParseDep ann)
   | ErrorInTest TestName (TestError ann)
   | ErrorInInterpreter (InterpreterError ann)
   deriving stock (Eq, Ord, Show)
