@@ -47,6 +47,10 @@
                   ghcid = pkgs.haskell.lib.dontCheck (pkgs.haskell.lib.overrideCabal super.ghcid (drv: { enableSeparateBinOutput = false; }));
                   # has wrong version of unix-compat, so we ignore it
                   shelly = pkgs.haskell.lib.doJailbreak super.shelly;
+                  # try and remove cycle
+                  cabal-fmt = pkgs.haskell.lib.dontCheck (pkgs.haskell.lib.overrideCabal super.cabal-fmt (drv: {
+                    enableSeparateBinOutput = false;
+                  }));
                 };
 
               };
@@ -70,9 +74,9 @@
           buildInputs = with haskellPackages; [
             oldHaskellPackages.hlint
             oldHaskellPackages.ormolu
-            haskell-language-server
+            # haskell-language-server # this simply does nothing atm
             ghcid
-            # cabal-fmt
+            cabal-fmt
             cabal-install
             ghc
             pkgs.zlib # used by `digest` package
