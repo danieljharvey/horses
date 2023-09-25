@@ -12,6 +12,13 @@ test "fmap works with Just" =
     let inc = (\a -> a + 1 : Int -> Int);
     unwrapMaybe (fmap inc (Just 1)) == unwrapMaybe (Just (2 : Int))
 
+/*
+property "fmap id on Maybe does nothing"
+    = \(maybe : Maybe a) ->
+            let id = \a -> a;
+            fmap id maybe == maybe
+*/
+
 /* List */
 type List a = Cons a (List a) | Nil
 

@@ -31,7 +31,7 @@ spec = do
         let typedMod = testTypecheck (joinText ["def id a = a"])
         runTests <$> typedMod `shouldBe` Right mempty
 
-      it "Two tests, one pass, one fail, no deps" $ do
+      it "Two unit tests, one pass, one fail, no deps" $ do
         let typedMod =
               testTypecheck
                 ( joinText
@@ -43,7 +43,7 @@ spec = do
                 )
         runTests <$> typedMod `shouldBe` Right [("fail", False), ("pass", True)]
 
-      it "Two tests, one pass, one fail, with deps" $ do
+      it "Two unit tests, one pass, one fail, with deps" $ do
         let typedMod =
               testTypecheck
                 ( joinText
@@ -55,3 +55,13 @@ spec = do
                     ]
                 )
         runTests <$> typedMod `shouldBe` Right [("fail", False), ("pass", True)]
+
+      it "One property test that passes, no deps" $ do
+        let typedMod =
+              testTypecheck
+                ( joinText
+                    [
+                      "test \"bool property\" = (\\a -> True : Bool -> Bool)"
+                    ]
+                )
+        runTests <$> typedMod `shouldBe` Right [("bool property", True) ]
