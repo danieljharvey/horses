@@ -12,15 +12,9 @@ spec :: Spec
 spec = do
   describe "Modules" $ do
     describe "FromParts" $ do
-      it "Test that refers to non-existent identifier" $ do
-        let modParts = unsafeParseModuleItems (joinText ["test \"horses\" using missing"])
-            expected = ErrorInResolveDeps $ VarNotFound "missing"
-
-        moduleFromModuleParts modParts `shouldBe` Left expected
-
       it "Can't have an empty test name" $ do
-        let modParts = unsafeParseModuleItems (joinText ["def yes = True", "test \"\" using yes"])
-            expected = EmptyTestName "yes"
+        let modParts = unsafeParseModuleItems (joinText ["def yes = True", "test \"\" = yes"])
+            expected = EmptyTestName (unsafeParseExpr "yes")
 
         moduleFromModuleParts modParts `shouldBe` Left expected
 

@@ -31,9 +31,6 @@ discardLeft (Right a) = a
 
 runDictEnv :: ReaderT PassDictEnv m a -> m a
 runDictEnv = flip runReaderT emptyPassDictEnv
-  where
-    emptyPassDictEnv :: PassDictEnv
-    emptyPassDictEnv = PassDictEnv Nothing
 
 -- | typecheck, resolve typeclasses, interpret, profit
 doInterpret :: Text -> Expr ResolvedDep ()

@@ -50,17 +50,14 @@ addModulePart allParts part mod' =
           }
     ModuleExpressionType _name _ _ty -> do
       pure mod' -- we sort these elsewhere
-    ModuleTest testName ident
+    ModuleTest testName expr
       | "" == testName ->
-          throwError (EmptyTestName ident)
-    ModuleTest testName ident ->
-      if expressionExists ident allParts
-        then
-          pure $
-            mod'
-              { moTests = UnitTest testName ident : moTests mod'
-              }
-        else throwError (ErrorInResolveDeps $ VarNotFound ident)
+          throwError (EmptyTestName expr)
+    ModuleTest testName expr ->
+      pure $
+        mod'
+          { moTests = UnitTest testName expr : moTests mod'
+          }
     ModuleClass tc ->
       case M.lookup (tcName tc) (moClasses mod') of
         Just _ -> throwError (DuplicateTypeclass (tcName tc))
@@ -120,26 +117,6 @@ exprAndTypeFromParts moduleItems ident idents expr =
           Nothing ->
             (mempty, Nothing)
    in TopLevelExpression {..}
-
-expressionExists :: (Monoid ann) => Identifier -> [ModuleItem ann] -> Bool
-expressionExists ident moduleItems = isJust (findExpression ident moduleItems)
-
-findExpression ::
-  (Monoid ann) =>
-  Identifier ->
-  [ModuleItem ann] ->
-  Maybe (TopLevelExpression ParseDep ann)
-findExpression ident moduleItems =
-  case mapMaybe
-    ( \case
-        ModuleExpression name bits expr
-          | name == ident ->
-              Just (exprAndTypeFromParts moduleItems name bits expr)
-        _ -> Nothing
-    )
-    moduleItems of
-    [a] -> Just a
-    _ -> Nothing -- we should have better errors for multiple declarations, but for now, chill out friend
 
 findTypeExpression :: Identifier -> [ModuleItem ann] -> Maybe ([Constraint ParseDep ann], Type ParseDep ann)
 findTypeExpression ident moduleItems =

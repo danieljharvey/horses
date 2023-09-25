@@ -14,6 +14,7 @@ data DepType dep ann
   = DTExpr (TopLevelExpression dep ann)
   | DTInstance (Instance dep ann)
   | DTData (DataType dep ann)
+  | DTTest (Expr dep ann)
 
 deriving stock instance
   ( Eq ann,

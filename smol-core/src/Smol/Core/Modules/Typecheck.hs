@@ -1,5 +1,6 @@
 {-# LANGUAGE DerivingStrategies #-}
 {-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE LambdaCase #-}
 
 module Smol.Core.Modules.Typecheck (typecheckModule) where
 
@@ -37,7 +38,7 @@ getModuleDefIdentifiers depMap inputModule =
         M.fromList $
           ( \(name, expr) ->
               let defId = DIName name
-               in (defId, (defId, DTExpr expr, getDeps (DIName name)))
+               in (defId, (defId, DTExpr expr, getDeps defId))
           )
             <$> M.toList (moExpressions inputModule)
       dataTypes =
@@ -54,7 +55,14 @@ getModuleDefIdentifiers depMap inputModule =
                in (defId, (defId, DTInstance inst, getDeps defId))
           )
             <$> M.toList (moInstances inputModule)
-   in exprs <> dataTypes <> instances
+      tests =
+        M.fromList $
+          ( \(UnitTest testName expr) ->
+              let defId = DITest testName
+               in (defId, (defId, DTTest expr, getDeps defId))
+          )
+            <$> moTests inputModule
+   in exprs <> dataTypes <> instances <> tests
 
 moduleFromDepTypes ::
   Module ResolvedDep ann ->
@@ -74,7 +82,7 @@ moduleFromDepTypes oldModule definitions =
       typedExpressions =
         M.fromList $
           mapMaybe
-            ( \(k, a) -> case (k, a) of
+            ( \case
                 (DIName name, expr) -> Just (name, expr)
                 _ -> Nothing
             )
@@ -83,7 +91,7 @@ moduleFromDepTypes oldModule definitions =
       typedInstances =
         M.fromList $
           mapMaybe
-            ( \(k, a) -> case (k, a) of
+            ( \case
                 (DIInstance constraint, DTInstance inst) -> Just (constraint, inst)
                 _ -> Nothing
             )
@@ -92,13 +100,22 @@ moduleFromDepTypes oldModule definitions =
       typedClasses =
         (\tc -> tc $> tcFuncType tc)
           <$> moClasses oldModule
+
+      typedTests =
+        mapMaybe
+          ( \case
+              (DITest testName, DTTest expr) -> Just (UnitTest testName expr)
+              _ -> Nothing
+          )
+          (M.toList definitions)
    in -- replace input module with typechecked versions
 
       oldModule
         { moExpressions = typedExpressions,
           moDataTypes = mapKeyMaybe getTypeName (filterDataTypes definitions),
           moInstances = typedInstances,
-          moClasses = typedClasses
+          moClasses = typedClasses,
+          moTests = typedTests
         }
 
 --- typecheck a single module
@@ -131,36 +148,34 @@ typecheckModule input inputModule depMap = do
     Build.stOutputs
       <$> Build.doJobs (typecheckDef input inputModule) state
 
-  -- check all tests make sense
-  traverse_ (typecheckTest typecheckedDefs) (moTests inputModule)
-
   -- replace input module with typechecked versions
-  pure $ moduleFromDepTypes inputModule typecheckedDefs
+  let newModule = moduleFromDepTypes inputModule typecheckedDefs
+
+  -- check tests are the right types
+  traverse_ (ensureTestsAreBooleans typecheckedDefs) (moTests newModule)
+
+  pure newModule
 
 -- our "typecheck" is "get the expression, typecheck it against `Boolean`"
-typecheckTest ::
+ensureTestsAreBooleans ::
   (MonadError (ModuleError Annotation) m) =>
   Map (DefIdentifier ResolvedDep) (DepType ResolvedDep (Type ResolvedDep Annotation)) ->
-  Test ->
+  Test ResolvedDep (Type ResolvedDep Annotation) ->
   m ()
-typecheckTest defs (UnitTest testName ident) = do
-  case M.lookup (DIName ident) defs of
-    Just (DTExpr tle) -> do
-      let ty = getExprAnnotation (tleExpr tle)
-      case ty of
-        TPrim _ TPBool -> pure ()
-        TLiteral _ (TLBool _) -> pure ()
-        other ->
-          throwError
-            ( ErrorInTest
-                testName
-                ( TestDoesNotTypecheck
-                    mempty
-                    ident
-                    (TCTypeMismatch other (TPrim (getTypeAnnotation other) TPBool))
-                )
+ensureTestsAreBooleans _defs (UnitTest testName expr) = do
+  let ty = getExprAnnotation expr
+  case ty of
+    TPrim _ TPBool -> pure ()
+    TLiteral _ (TLBool _) -> pure ()
+    other ->
+      throwError
+        ( ErrorInTest
+            testName
+            ( TestDoesNotTypecheck
+                mempty
+                (TCTypeMismatch other (TPrim (getTypeAnnotation other) TPBool))
             )
-    _ -> throwError (ErrorInResolveDeps $ VarNotFound ident)
+        )
 
 -- given types for other required definition, typecheck a definition
 typecheckDef ::
@@ -181,6 +196,8 @@ typecheckDef input inputModule deps (def, dep) =
           (def, expr)
     DTInstance inst ->
       DTInstance <$> typecheckInstance input inputModule deps def inst
+    DTTest expr ->
+      DTTest . tleExpr <$> typecheckExprDef input inputModule deps (def, TopLevelExpression {tleConstraints = mempty, tleExpr = expr, tleType = Nothing})
     DTData dt ->
       DTData
         <$> typecheckTypeDef

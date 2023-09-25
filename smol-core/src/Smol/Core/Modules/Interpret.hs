@@ -4,6 +4,7 @@
 module Smol.Core.Modules.Interpret (interpretModule) where
 
 import Control.Monad.Except
+import Data.List (find)
 import qualified Data.Map.Strict as M
 import Smol.Core
 import Smol.Core.Interpreter.Types.Stack
@@ -14,10 +15,10 @@ import Smol.Core.Modules.Types.ModuleError
 -- function)
 interpretModule ::
   (Show ann, Eq ann, MonadError (ModuleError ann) m) =>
-  Identifier ->
+  DefIdentifier ResolvedDep ->
   Module ResolvedDep ann ->
   m (Expr ResolvedDep ann)
-interpretModule exprName inputModule = do
+interpretModule (DIName exprName) inputModule = do
   let expressions = addEmptyStackFrames . tleExpr <$> moExpressions inputModule
 
   let mainExpression = case M.lookup exprName expressions of
@@ -34,3 +35,21 @@ interpretModule exprName inputModule = do
 
   -- return resolved value, with extra metadata mess removed
   pure (edAnnotation <$> interpretExpr)
+interpretModule (DITest testName) inputModule = do
+  let expressions = addEmptyStackFrames . tleExpr <$> moExpressions inputModule
+
+  let mainExpression = case find (\(UnitTest tn _) -> tn == testName) (moTests inputModule) of
+        Just (UnitTest _ expr) -> addEmptyStackFrames expr
+        Nothing -> error $ "could not find test '" <> show testName <> "'"
+
+  let otherExpressions = M.mapKeys LocalDefinition expressions
+
+  interpretExpr <-
+    modifyError ErrorInInterpreter
+      . liftEither
+      . interpret otherExpressions
+      $ mainExpression
+
+  -- return resolved value, with extra metadata mess removed
+  pure (edAnnotation <$> interpretExpr)
+interpretModule defIdent _inputModule = error $ "interpretModule " <> show defIdent

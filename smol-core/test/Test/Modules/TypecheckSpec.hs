@@ -63,7 +63,7 @@ spec = do
       it "Accepts a unit test with type `Boolean`" $ do
         testTypecheck
           ( joinText
-              [ "test \"it's fine\" using yes",
+              [ "test \"it's fine\" = yes",
                 "def yes = True"
               ]
           )
@@ -72,7 +72,7 @@ spec = do
       it "Does not accept a unit test with another type" $ do
         let input =
               joinText
-                [ "test \"it's fine\" using yes",
+                [ "test \"it's fine\" = yes",
                   "def yes = 100"
                 ]
         testTypecheck input
@@ -82,7 +82,6 @@ spec = do
                   "it's fine"
                   ( TestDoesNotTypecheck
                       _
-                      "yes"
                       (TCTypeMismatch _ _)
                     )
                 ) -> True

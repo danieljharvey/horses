@@ -20,11 +20,11 @@ import Smol.Core.Typecheck
 import Smol.Core.Types
 
 data TestError ann
-  = TestDoesNotTypecheck Text Identifier (TCError ann)
+  = TestDoesNotTypecheck Text (TCError ann)
   deriving stock (Eq, Ord, Show)
 
 testErrorDiagnostic :: TestError Annotation -> Diag.Diagnostic Text
-testErrorDiagnostic (TestDoesNotTypecheck input _ typeErr) =
+testErrorDiagnostic (TestDoesNotTypecheck input typeErr) =
   typeErrorDiagnostic input typeErr
 
 data ResolveDepsError
@@ -62,7 +62,7 @@ data ModuleError ann
   | DefDoesNotTypeCheck Text (DefIdentifier ResolvedDep) (TCError ann)
   | DictionaryPassingError Text (TCError ann)
   | NamedImportNotFound (Set ModuleName) ModuleName
-  | EmptyTestName Identifier
+  | EmptyTestName (Expr ParseDep ann)
   | ErrorInTest TestName (TestError ann)
   | ErrorInInterpreter (InterpreterError ann)
   deriving stock (Eq, Ord, Show)

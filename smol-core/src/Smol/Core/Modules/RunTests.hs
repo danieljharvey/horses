@@ -11,7 +11,7 @@ runTests :: (Show ann, Eq ann) => Module ResolvedDep ann -> [(TestName, Bool)]
 runTests wholeModule@(Module {moTests}) =
   fmap runTest moTests
   where
-    runTest (UnitTest testName ident) =
-      case interpretModule ident wholeModule of
+    runTest (UnitTest testName _) =
+      case interpretModule (DITest testName) wholeModule of
         Right (EPrim _ (PBool b)) -> (testName, b)
         _ -> error "Expected a boolean result"

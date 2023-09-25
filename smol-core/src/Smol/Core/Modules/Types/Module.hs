@@ -40,7 +40,7 @@ import Smol.Core.Types.TypeName
 data Module dep ann = Module
   { moExpressions :: Map Identifier (TopLevelExpression dep ann),
     moDataTypes :: Map TypeName (DataType dep ann),
-    moTests :: [Test],
+    moTests :: [Test dep ann],
     moInstances :: Map (Constraint dep ()) (Instance dep ann),
     moClasses :: Map TypeclassName (Typeclass dep ann)
   }
