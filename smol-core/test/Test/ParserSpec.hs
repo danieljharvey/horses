@@ -42,7 +42,7 @@ spec = do
         )
         inputs
 
-    fdescribe "Module" $ do
+    describe "Module" $ do
       let singleDefs =
             [ "type Dog a = Woof String | Other a",
               "def id : a -> a",

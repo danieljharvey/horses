@@ -207,7 +207,6 @@ protectedTypeNames =
       "type",
       "infix",
       "test",
-      "using",
       "instance",
       "class"
     ]

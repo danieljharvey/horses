@@ -1,22 +1,22 @@
 {-# LANGUAGE DeriveAnyClass #-}
+{-# LANGUAGE DeriveFunctor #-}
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE DerivingStrategies #-}
-  {-# LANGUAGE StandaloneDeriving #-}
-    {-# LANGUAGE DeriveFunctor #-}
+{-# LANGUAGE StandaloneDeriving #-}
+
 module Smol.Core.Modules.Types.Test where
 
+import Data.Aeson (FromJSON, FromJSONKey, ToJSON, ToJSONKey)
 import GHC.Generics (Generic)
 import Smol.Core.Modules.Types.TestName
-import Smol.Core.Types.Expr
-import Smol.Core.Types.TypeName
-import Smol.Core.Types.Identifier
 import Smol.Core.Types.Constructor
-import Data.Aeson (FromJSON, FromJSONKey, ToJSON, ToJSONKey)
+import Smol.Core.Types.Expr
+import Smol.Core.Types.Identifier
+import Smol.Core.Types.TypeName
 
 data Test dep ann
   = UnitTest TestName (Expr dep ann)
   deriving stock (Functor, Generic)
-
 
 deriving stock instance
   ( Eq ann,
@@ -42,7 +42,6 @@ deriving stock instance
   ) =>
   Show (Test dep ann)
 
-
 deriving anyclass instance
   ( ToJSONKey (dep Identifier),
     ToJSON ann,
@@ -63,5 +62,3 @@ deriving anyclass instance
     FromJSON (dep Identifier)
   ) =>
   FromJSON (Test dep ann)
-
-

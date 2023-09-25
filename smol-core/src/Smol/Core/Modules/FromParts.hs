@@ -54,10 +54,10 @@ addModulePart allParts part mod' =
       | "" == testName ->
           throwError (EmptyTestName expr)
     ModuleTest testName expr ->
-          pure $
-            mod'
-              { moTests = UnitTest testName expr : moTests mod'
-              }
+      pure $
+        mod'
+          { moTests = UnitTest testName expr : moTests mod'
+          }
     ModuleClass tc ->
       case M.lookup (tcName tc) (moClasses mod') of
         Just _ -> throwError (DuplicateTypeclass (tcName tc))

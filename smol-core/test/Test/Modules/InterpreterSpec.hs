@@ -9,6 +9,7 @@ import Error.Diagnose (defaultStyle, printDiagnostic, stdout)
 import Smol.Core
 import Smol.Core.Modules.Check
 import Smol.Core.Modules.Interpret
+import Smol.Core.Modules.Types.DefIdentifier
 import Smol.Core.Modules.Types.ModuleError
 import Smol.Core.Typecheck.FromParsedExpr
 import Test.Helpers
@@ -27,7 +28,7 @@ testInterpret input =
   case parseModuleAndFormatError input of
     Right moduleParts -> do
       goodModule <- checkModule input moduleParts
-      fmap void (interpretModule "main" (fmap getTypeAnnotation goodModule))
+      fmap void (interpretModule (DIName "main") (fmap getTypeAnnotation goodModule))
     Left e -> error (show e)
 
 spec :: Spec

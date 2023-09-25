@@ -24,6 +24,7 @@ import Smol.Core.Modules.Types.DepType
 import qualified Smol.Core.Modules.Types.Entity as E
 import Smol.Core.Modules.Types.Module
 import Smol.Core.Modules.Types.ModuleError
+import Smol.Core.Modules.Types.Test
 import Smol.Core.Modules.Types.TopLevelExpression
 import Smol.Core.Modules.Uses
 
@@ -91,7 +92,7 @@ getDependencies getUses mod' = do
   exprDeps <-
     M.mapKeys DIName
       <$> traverse
-        (getExprDependencies getUses mod')
+        (getTopLevelExprDependencies getUses mod')
         (moExpressions mod')
   typeDeps <-
     M.mapKeys DIType
@@ -103,7 +104,12 @@ getDependencies getUses mod' = do
       <$> traverse
         (getInstanceDependencies getUses mod')
         (moInstances mod')
-  pure (exprDeps <> typeDeps <> instanceDeps)
+  testDeps <-
+    M.mapKeys DITest
+      <$> traverse
+        (getTestDependencies getUses mod')
+        (M.fromList ((\(UnitTest testName expr) -> (testName, expr)) <$> moTests mod'))
+  pure (exprDeps <> typeDeps <> instanceDeps <> testDeps)
 
 -- get all dependencies of a type definition
 getTypeDependencies ::
@@ -194,18 +200,38 @@ getConstructorUses mod' uses = do
            in pure (S.map DIType localTypeDeps)
         else throwError (CannotFindTypes unknownTypeDeps)
 
-getExprDependencies ::
+getTopLevelExprDependencies ::
   (MonadError ResolveDepsError m, Ord (dep Constructor), Ord (dep TypeName), Ord (dep Identifier)) =>
   (Expr dep ann -> Set E.Entity) ->
   Module dep ann ->
   TopLevelExpression dep ann ->
   m (DepType dep ann, Set (DefIdentifier dep), Set E.Entity)
+getTopLevelExprDependencies getUses mod' expr = do
+  (defIds, entities) <- getExprDependencies getUses mod' (tleExpr expr)
+  pure (DTExpr expr, defIds, entities)
+
+getTestDependencies ::
+  (MonadError ResolveDepsError m, Ord (dep Constructor), Ord (dep TypeName), Ord (dep Identifier)) =>
+  (Expr dep ann -> Set E.Entity) ->
+  Module dep ann ->
+  Expr dep ann ->
+  m (DepType dep ann, Set (DefIdentifier dep), Set E.Entity)
+getTestDependencies getUses mod' expr = do
+  (defIds, entities) <- getExprDependencies getUses mod' expr
+  pure (DTTest expr, defIds, entities)
+
+getExprDependencies ::
+  (MonadError ResolveDepsError m, Ord (dep Constructor), Ord (dep TypeName), Ord (dep Identifier)) =>
+  (Expr dep ann -> Set E.Entity) ->
+  Module dep ann ->
+  Expr dep ann ->
+  m (Set (DefIdentifier dep), Set E.Entity)
 getExprDependencies getUses mod' expr = do
-  let allUses = getUses (tleExpr expr)
+  let allUses = getUses expr
   exprDefIds <- S.map DIName <$> getExprDeps mod' allUses
   consDefIds <- getConstructorUses mod' allUses
   typeDefIds <- getTypeUses mod' allUses
-  pure (DTExpr expr, exprDefIds <> typeDefIds <> consDefIds, allUses)
+  pure (exprDefIds <> typeDefIds <> consDefIds, allUses)
 
 getInstanceDependencies ::
   (MonadError ResolveDepsError m, Ord (dep Constructor), Ord (dep TypeName), Ord (dep Identifier)) =>

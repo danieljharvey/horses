@@ -9,7 +9,7 @@ import Smol.Core.Modules.Types
 -- just unit tests for now, ignore possibility of failure
 runTests :: (Show ann, Eq ann) => Module ResolvedDep ann -> [(TestName, Bool)]
 runTests wholeModule@(Module {moTests}) =
- fmap runTest moTests
+  fmap runTest moTests
   where
     runTest (UnitTest testName _) =
       case interpretModule (DITest testName) wholeModule of

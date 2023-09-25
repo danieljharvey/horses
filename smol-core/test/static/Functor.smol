@@ -6,13 +6,11 @@ type Maybe a = Just a | Nothing
 instance Functor Maybe =
     \f -> \maybe -> case maybe of Just a -> Just (f a) | Nothing -> Nothing
 
-def testFmapMaybe =
+test "fmap works with Just" =
     let unwrapMaybe = \maybe -> case maybe of
         Just a -> a | Nothing -> 0;
     let inc = (\a -> a + 1 : Int -> Int);
     unwrapMaybe (fmap inc (Just 1)) == unwrapMaybe (Just (2 : Int))
-
-test "fmap works with Just" using testFmapMaybe
 
 /* List */
 type List a = Cons a (List a) | Nil
@@ -22,12 +20,10 @@ instance Functor List =
                 Cons a rest -> Cons (f a) (fmap f rest)
                 | Nil -> Nil
 
-def testFmapList =
+test "fmap works with List" =
     let listHead = \list -> case list of
         Cons a _ -> a | Nil -> 0;
     let inc = (\a -> a + 1 : Int -> Int);
     listHead (fmap inc (Cons 1 Nil)) == listHead (Cons (2 : Int) Nil)
-
-test "fmap works with List" using testFmapList
 
 

@@ -43,7 +43,6 @@ protectedNames =
       "type",
       "case",
       "of",
-      "using",
       "infix",
       "True",
       "False",

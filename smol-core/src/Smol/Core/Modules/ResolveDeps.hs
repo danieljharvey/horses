@@ -26,6 +26,7 @@ import Smol.Core.Modules.Types.DefIdentifier
 import Smol.Core.Modules.Types.DepType
 import Smol.Core.Modules.Types.Module
 import Smol.Core.Modules.Types.ModuleError
+import Smol.Core.Modules.Types.Test
 import Smol.Core.Modules.Types.TopLevelExpression
 import Smol.Core.Modules.Uses
 
@@ -62,6 +63,8 @@ resolveModuleDeps typeclassMethods parsedModule = do
   map' <- getDependencies extractUses parsedModule
   let resolveIt (DTData dt, _, _) =
         pure (DTData (resolveDataType dt))
+      resolveIt (DTTest expr, defIds, _entities) =
+        DTTest <$> resolveExpr expr typeclassMethods defIds (allConstructors parsedModule)
       resolveIt (DTExpr expr, defIds, _entities) =
         DTExpr <$> resolveTopLevelExpression expr typeclassMethods defIds (allConstructors parsedModule)
       resolveIt (DTInstance inst, defIds, _entities) = do
@@ -101,6 +104,16 @@ resolveModuleDeps typeclassMethods parsedModule = do
           )
           resolvedMap
 
+      resolvedTests =
+        fmap (uncurry UnitTest)
+          . M.toList
+          . mapMaybeWithKey
+            ( \k a -> case (k, a) of
+                (DITest testName, DTTest expr) -> Just (testName, expr)
+                _ -> Nothing
+            )
+          $ resolvedMap
+
       dependencies =
         M.fromList $
           (\(k, (_, b, _)) -> (resolveDefIdentifier k, S.map resolveDefIdentifier b))
@@ -109,7 +122,7 @@ resolveModuleDeps typeclassMethods parsedModule = do
         ( Module
             { moExpressions = resolvedExpressions,
               moDataTypes = resolvedDataTypes,
-              moTests = moTests parsedModule,
+              moTests = resolvedTests,
               moInstances = M.mapKeys resolveConstraint resolvedInstances,
               moClasses = resolveTypeclass <$> moClasses parsedModule
             },
