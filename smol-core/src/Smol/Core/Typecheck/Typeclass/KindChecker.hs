@@ -5,11 +5,9 @@
   module Smol.Core.Typecheck.Typeclass.KindChecker (Kind (..), UKind (..), unifyKinds, typeKind, lookupKindInType) where
 
 import Data.Maybe (listToMaybe)
-import Debug.Trace
 import Control.Monad.Except
 import Control.Monad.State
 import Data.Foldable
-import Data.Functor
 import qualified Data.Map as M
 import qualified Prettyprinter as PP
 import Smol.Core.Printer
@@ -46,27 +44,28 @@ data KindError i = KindMismatch (UKind i) (UKind i)
   deriving stock (Eq,Ord,Show)
 
 typeKind ::
-  (MonadError (KindError Int) m, Ord (dep TypeName), Show (dep TypeName), Show (dep Identifier)) =>
+  (MonadError (KindError Int) m, Ord (dep TypeName), Show (dep TypeName) ) =>
   M.Map (dep TypeName) (DataType dep ann) ->
   Type dep ann ->
   m (Type dep Kind)
 typeKind dts ty = do 
-  let (ty', ks) = flip runState (KindState dts 1 mempty) (inferKinds ty)
+  let (ty', ks) = flip runState (KindState dts 1 mempty) (checkKinds ty)
   subs <- solve (ksEnv ks) 
-  unifyType subs (traceShowId ty') 
+  unifyType subs ty' 
 
 -- given a bunch of substitutions
 -- run them all
 -- then create one more, which is the resulting kind equalling star
 unifyType :: (MonadError (KindError Int) m) =>
     M.Map Int (UKind Int) -> Type dep (UKind Int) -> m (Type dep Kind)
-unifyType subs ty =
-  let applyToKind k = do 
-        let appliedKind = applySubstitutions subs k
-        let newConstraints = [(appliedKind, UStar)] -- ie, every type should have kind Star
-        newSubs <- solve newConstraints
-        toKind (applySubstitutions newSubs appliedKind) 
-  in traverse applyToKind ty
+unifyType subs ty = do
+  let tyWithKinds = applySubstitutions subs <$> ty
+      topKind = getTypeAnnotation tyWithKinds
+
+  let newConstraints = [(topKind, UStar)] -- ie, every type should have kind Star
+  newSubs <- solve newConstraints
+
+  traverse toKind (applySubstitutions newSubs <$> tyWithKinds) 
 
 toKind :: (MonadError (KindError i) m, Show i) => UKind i -> m Kind
 toKind UStar = pure $ Star
@@ -128,19 +127,18 @@ inferKinds ::
   m (Type dep (UKind Int))
 inferKinds (TPrim _ p) = pure $ TPrim UStar p
 inferKinds (TApp _ fn arg) = do
+  argKind <- checkKinds arg
   fnKind <- inferKinds fn
-  argKind <- inferKinds arg
-  k <- case getTypeAnnotation fnKind of
+  resultKind <- case getTypeAnnotation fnKind of
     UKindFn _ r -> pure r
     _ -> do
       var <- UVar <$> getUnique
       pure var
-  kArg <- UVar <$> getUnique
 
-  -- we don't know what l is, but we know it's `* -> r`
-  addConstraint (UKindFn UStar (getTypeAnnotation argKind)) kArg
+  -- tell whatever we guessed fn was that in fact it's some kind of `UKindFn` 
+  addConstraint (UKindFn (getTypeAnnotation argKind) resultKind) (getTypeAnnotation fnKind)
 
-  TApp k (fnKind $> kArg) <$> inferKinds arg
+  pure $ TApp resultKind fnKind  argKind 
 inferKinds (TConstructor _ constructor) = do
   dts <- gets ksDataTypes
   let k = case M.lookup constructor dts of
@@ -152,13 +150,22 @@ inferKinds (TVar _ var) = do
   pure $ TVar (UVar i) var
 inferKinds (TLiteral _ l) = pure (TLiteral UStar l)
 inferKinds (TFunc _ env a b) =
-  TFunc UStar <$> traverse inferKinds env <*> inferKinds a <*> inferKinds b
+  TFunc UStar <$> traverse checkKinds env <*> checkKinds a <*> checkKinds b
 inferKinds (TTuple _ a as) =
-  TTuple UStar <$> inferKinds a <*> traverse inferKinds as
-inferKinds (TArray _ a as) = TArray UStar a <$> inferKinds as
+  TTuple UStar <$> checkKinds a <*> traverse checkKinds as
+inferKinds (TArray _ a as) = TArray UStar a <$> checkKinds as
 inferKinds (TUnknown _ a) = pure (TUnknown UStar a)
-inferKinds (TRecord _ as) = TRecord UStar <$> traverse inferKinds as
-inferKinds (TInfix _ op a b) = TInfix UStar op <$> inferKinds a <*> inferKinds b
+inferKinds (TRecord _ as) = TRecord UStar <$> traverse checkKinds as
+inferKinds (TInfix _ op a b) = TInfix UStar op <$> checkKinds a <*> checkKinds b
+
+-- infer and emit constraint that this is always Star
+checkKinds :: (Ord (dep TypeName), Show (dep TypeName), MonadState (KindState dep ann) m) => 
+    Type dep ann -> m (Type dep (UKind Int))
+checkKinds ty = do
+  tyKind <- inferKinds ty
+  addConstraint UStar (getTypeAnnotation tyKind)
+  pure tyKind
+
 
 lookupKindInType ::
   ( Eq (dep Identifier)

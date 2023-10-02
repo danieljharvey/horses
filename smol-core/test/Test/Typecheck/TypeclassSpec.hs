@@ -193,10 +193,16 @@ spec = do
       it "f in 'f a'" $ do
         let result = getRight $ typeKind dts (tyApp (tcVar "f") (tcVar "a"))
 
+        lookupKindInType result "a" `shouldBe` Just Star
+
         lookupKindInType result "f" `shouldBe` Just (KindFn Star Star)
 
       it "f in 'f a b'" $ do
         let result =  getRight $ typeKind dts (tyApp (tyApp (tcVar "f") (tcVar "a")) (tcVar "b"))
+
+        lookupKindInType result "a" `shouldBe` Just Star
+
+        lookupKindInType result "b" `shouldBe` Just Star
 
         lookupKindInType result "f"
           `shouldBe` Just (KindFn Star (KindFn Star Star))
