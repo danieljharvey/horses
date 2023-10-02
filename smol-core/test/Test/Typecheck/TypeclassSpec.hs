@@ -168,25 +168,51 @@ spec = do
     let dts = tceDataTypes typecheckEnv
     describe "type for kind" $ do
       it "Int" $ do
-        getTypeAnnotation (typeKind dts (tyInt :: Type ResolvedDep ())) `shouldBe` Star
+        fmap getTypeAnnotation (typeKind dts (tyInt :: Type ResolvedDep ()))
+          `shouldBe` Right Star
       it "Maybe Int" $ do
-        getTypeAnnotation (typeKind dts (tyCons "Maybe" [tyInt] :: Type ResolvedDep ())) `shouldBe` Star
+        fmap getTypeAnnotation (typeKind dts (tyCons "Maybe" [tyInt] :: Type ResolvedDep ()))
+          `shouldBe` Right Star
       it "Either Int" $ do
-        getTypeAnnotation (typeKind dts (tyCons "Either" [tyInt] :: Type ResolvedDep ())) `shouldBe` KindFn Star Star
+        fmap getTypeAnnotation (typeKind dts (tyCons "Either" [tyInt] :: Type ResolvedDep ()))
+          `shouldBe` Right (KindFn Star Star
+                           )
       it "Int -> Int" $ do
-        getTypeAnnotation (typeKind dts (tyFunc tyInt tyInt :: Type ResolvedDep ())) `shouldBe` Star
+        fmap getTypeAnnotation (typeKind dts (tyFunc tyInt tyInt :: Type ResolvedDep ()))
+          `shouldBe` Right Star
       it "f a" $ do
-        getTypeAnnotation (typeKind dts (tyApp (tcVar "f") (tcVar "a") :: Type ResolvedDep ())) `shouldBe` Star
+        fmap getTypeAnnotation (typeKind dts (tyApp (tcVar "f") (tcVar "a") :: Type ResolvedDep ()))
+          `shouldBe` Right Star
 
     fdescribe "type from type sig" $ do
       it "a in 'a -> String'" $ do
-        lookupKindInType  (typeKind dts (tyFunc (tcVar "a") tyString)) "a" `shouldBe` Just Star
+        let result =  getRight (typeKind dts (tyFunc (tcVar "a") tyString))
+
+        lookupKindInType result "a" `shouldBe` Just Star
 
       it "f in 'f a'" $ do
-        lookupKindInType  (typeKind dts (tyApp (tcVar "f") (tcVar "a"))) "f" `shouldBe` Just (KindFn Star Star)
+        let result = getRight $ typeKind dts (tyApp (tcVar "f") (tcVar "a"))
+
+        lookupKindInType result "f" `shouldBe` Just (KindFn Star Star)
 
       it "f in 'f a b'" $ do
-        lookupKindInType  (typeKind dts (tyApp (tyApp (tcVar "f") (tcVar "a")) (tcVar "b") )) "f" `shouldBe` Just (KindFn Star (KindFn Star Star))
+        let result =  getRight $ typeKind dts (tyApp (tyApp (tcVar "f") (tcVar "a")) (tcVar "b"))
+
+        lookupKindInType result "f"
+          `shouldBe` Just (KindFn Star (KindFn Star Star))
+
+    fdescribe "Unify kinds" $ do
+      it "Star and star" $ do
+        unifyKinds @() UStar UStar `shouldBe` Right mempty
+      it "Star and var" $ do
+        unifyKinds @Int UStar (UVar 1) `shouldBe` Right (M.singleton 1 UStar)
+      it "Recover argument of Kind function" $ do
+        unifyKinds @Int (UKindFn (UVar 1) UStar) (UKindFn UStar (UVar 2)) `shouldBe`
+              Right (M.fromList [(1, UStar), (2, UStar)])
+      it "Recover argument of multi arg Kind function" $ do
+        unifyKinds @Int (UKindFn (UVar 1) (UKindFn (UVar 2) UStar)) (UKindFn UStar (UVar 3)) `shouldBe`
+              Right (M.fromList [( 1, UStar),
+                    (3, UKindFn (UVar 2) UStar)])
 
 
 

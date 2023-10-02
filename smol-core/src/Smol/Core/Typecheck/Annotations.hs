@@ -54,4 +54,3 @@ getTypeAnnotation (TArray ann _ _) = ann
 getTypeAnnotation (TVar ann _) = ann
 getTypeAnnotation (TLiteral ann _) = ann
 getTypeAnnotation (TRecord ann _) = ann
-

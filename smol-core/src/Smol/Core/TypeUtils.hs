@@ -38,7 +38,6 @@ bindType f (TApp ann fn arg) =
   TApp ann <$> f fn <*> f arg
 bindType _ (TConstructor ann c) = pure $ TConstructor ann c
 
-
 monoidType :: (Monoid a) => (Type dep ann -> a) -> Type dep ann -> a
 monoidType _ TVar {} = mempty
 monoidType _ TLiteral {} = mempty

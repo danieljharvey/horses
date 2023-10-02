@@ -4,10 +4,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 
 module Smol.Core.Typecheck.Shared
-  (
-
-
-    module Smol.Core.Typecheck.Annotations,
+  ( module Smol.Core.Typecheck.Annotations,
     getUnknown,
     getClosureType,
     reduceType,
@@ -31,7 +28,6 @@ module Smol.Core.Typecheck.Shared
   )
 where
 
-import Smol.Core.Typecheck.Annotations
 import Control.Monad.Except
 import Control.Monad.Reader
 import Control.Monad.State
@@ -43,6 +39,7 @@ import Data.Maybe (listToMaybe, mapMaybe)
 import qualified Data.Set as S
 import qualified Data.Set.NonEmpty as NES
 import Smol.Core.Helpers
+import Smol.Core.Typecheck.Annotations
 import Smol.Core.Typecheck.FreeVars
 import Smol.Core.Typecheck.Substitute
 import Smol.Core.Typecheck.Types

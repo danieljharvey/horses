@@ -1,16 +1,16 @@
 {-# LANGUAGE DerivingStrategies #-}
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE LambdaCase #-}
-  {-# LANGUAGE NamedFieldPuns #-}
-  module Smol.Core.Typecheck.Typeclass.KindChecker (Kind (..), UKind (..), unifyKinds, typeKind, lookupKindInType) where
 
-import Data.Maybe (listToMaybe)
-import Debug.Trace
+module Smol.Core.Typecheck.Typeclass.KindChecker (Kind (..), UKind (..), unifyKinds, typeKind, lookupKindInType) where
+
 import Control.Monad.Except
 import Control.Monad.State
 import Data.Foldable
 import Data.Functor
 import qualified Data.Map as M
+import Data.Monoid
+import Debug.Trace
 import qualified Prettyprinter as PP
 import Smol.Core.Printer
 import Smol.Core.TypeUtils (monoidType)
@@ -41,37 +41,20 @@ data KindState dep ann = KindState
     ksEnv :: [(UKind Int, UKind Int)] -- unique, what it is
   }
 
-data KindError i = KindMismatch (UKind i) (UKind i) 
- | UnassignedVar i
+data KindError i = KindMismatch (UKind i) (UKind i)
   deriving stock (Eq,Ord,Show)
 
 typeKind ::
-  (MonadError (KindError Int) m, Ord (dep TypeName), Show (dep TypeName), Show (dep Identifier)) =>
+  (Ord (dep TypeName), Show (dep Identifier), Show (dep TypeName)) =>
   M.Map (dep TypeName) (DataType dep ann) ->
   Type dep ann ->
-  m (Type dep Kind)
-typeKind dts ty = do 
-  let (ty', ks) = flip runState (KindState dts 1 mempty) (inferKinds ty)
-  subs <- solve (ksEnv ks) 
-  unifyType subs (traceShowId ty') 
+  Type dep Kind
+typeKind dts = fmap toKind . traceShowId . flip evalState (KindState dts 1 mempty) . inferKinds
 
--- given a bunch of substitutions
--- run them all
--- then create one more, which is the resulting kind equalling star
-unifyType :: (MonadError (KindError Int) m) =>
-    M.Map Int (UKind Int) -> Type dep (UKind Int) -> m (Type dep Kind)
-unifyType subs ty =
-  let applyToKind k = do 
-        let appliedKind = applySubstitutions subs k
-        let newConstraints = [(appliedKind, UStar)] -- ie, every type should have kind Star
-        newSubs <- solve newConstraints
-        toKind (applySubstitutions newSubs appliedKind) 
-  in traverse applyToKind ty
-
-toKind :: (MonadError (KindError i) m, Show i) => UKind i -> m Kind
-toKind UStar = pure $ Star
-toKind (UKindFn a b) = KindFn <$> toKind a <*> toKind b
-toKind (UVar i) = throwError (UnassignedVar i) 
+toKind :: (Show i) => UKind i -> Kind
+toKind UStar = Star
+toKind (UKindFn a b) = KindFn (toKind a) (toKind b)
+toKind (UVar i) = error $ "Found UVar " <> show i
 
 applySubstitution :: (Eq i) => (i, UKind i) -> UKind i -> UKind i
 applySubstitution (i, sub) (UVar i') | i == i' = sub
@@ -82,8 +65,9 @@ applySubstitution _ other = other
 applySubstitutions :: (Ord i) => M.Map i (UKind i) -> UKind i -> UKind i
 applySubstitutions subs kind = foldr' applySubstitution kind (M.toList subs)  
 
+
 solve ::
-  ( MonadError (KindError i) m, Ord i
+  ( MonadError (KindError i) m
   ) =>
   [(UKind i, UKind i)] ->
   m (M.Map i (UKind i)) 
@@ -96,9 +80,9 @@ solve = go mempty
           s2 <- unifyKinds a b
           go (s2 <> s1) (applyToConstraint (s1 <> s2) <$> rest)
 
-applyToConstraint :: (Ord i) => M.Map i (UKind i) -> (UKind i,UKind i) -> (UKind i, UKind i)
+applyToConstraint :: M.Map i (UKind i) -> (UKind i,UKind i) -> (UKind i, UKind i)
 applyToConstraint subs (a, b) =
-  (applySubstitutions subs a, applySubstitutions subs b)
+  ShouldEqual (applySubstitutions subs a) (applySubst subs b)
 
 unifyKinds :: (MonadError (KindError i) m, Ord i) => UKind i -> UKind i -> m (M.Map i (UKind i)) 
 unifyKinds a b | a ==b = pure mempty
@@ -135,12 +119,13 @@ inferKinds (TApp _ fn arg) = do
     _ -> do
       var <- UVar <$> getUnique
       pure var
-  kArg <- UVar <$> getUnique
+  unique <- getUnique
+  let l = UVar unique
 
   -- we don't know what l is, but we know it's `* -> r`
-  addConstraint (UKindFn UStar (getTypeAnnotation argKind)) kArg
+  addConstraint (UKindFn UStar (getTypeAnnotation argKind)) l
 
-  TApp k (fnKind $> kArg) <$> inferKinds arg
+  TApp k (fnKind $> l) <$> inferKinds arg
 inferKinds (TConstructor _ constructor) = do
   dts <- gets ksDataTypes
   let k = case M.lookup constructor dts of
@@ -167,7 +152,10 @@ lookupKindInType ::
   dep Identifier ->
   Maybe Kind
 lookupKindInType ty identifier =
-  listToMaybe $ go ty
-  where
-    go (TVar k a) | a == identifier = [k]
-    go other = monoidType go other
+  getFirst $
+    monoidType
+      ( \case
+          TVar k a | a == identifier -> First (Just k)
+          _ -> First Nothing
+      )
+      ty
