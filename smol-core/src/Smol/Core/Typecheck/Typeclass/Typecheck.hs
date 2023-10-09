@@ -1,6 +1,6 @@
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE OverloadedStrings #-}
-
+  {-# LANGUAGE NamedFieldPuns #-}
 -- everything used to typecheck typeclasses
 module Smol.Core.Typecheck.Typeclass.Typecheck
   ( checkInstance,
@@ -8,6 +8,9 @@ module Smol.Core.Typecheck.Typeclass.Typecheck
   )
 where
 
+import Data.Maybe
+import Smol.Core.Typecheck.Typeclass.KindChecker
+import Debug.Trace
 import Control.Monad.Except
 import qualified Data.Map.Strict as M
 import Smol.Core.Typecheck.Elaborate (elaborate)
@@ -43,9 +46,31 @@ checkInstance tcEnv typeclass constraint (Instance constraints expr) =
     let typecheckEnv = tcEnv {tceConstraints = constraints}
         annotatedExpr = EAnn (getExprAnnotation expr) subbedType expr
 
+        typeclassKinds = kindsForTypeclass typeclass
+        constraintKinds = kindsForConstraint constraint
+
+    -- now compare these to the constraint
+
+    traceShowM typeclassKinds
+    traceShowM constraintKinds
+
     -- we `elaborate` rather than `typecheck` as we don't want the names
     -- mangled
     (typedExpr, _newConstraints) <- elaborate typecheckEnv annotatedExpr
 
     let allConstraints = constraints -- nub (constraints <> newConstraints)
     pure $ Instance (addTypesToConstraint <$> allConstraints) typedExpr
+
+-- | what kinds does the actual type have?
+kindsForConstraint :: Constraint ResolvedDep ann -> [Kind]
+kindsForConstraint (Constraint {conType}) =
+  case traverse (typeKind mempty) conType of
+    Right yes -> getTypeAnnotation <$> yes
+    Left e -> error (show e)
+
+-- | what kinds are expected?
+kindsForTypeclass :: Typeclass ResolvedDep ann -> [Kind]
+kindsForTypeclass (Typeclass {tcArgs,tcFuncType}) = do
+  case typeKind mempty tcFuncType of
+    Left e -> error (show e)
+    Right tyKind -> catMaybes (lookupKindInType tyKind . emptyResolvedDep <$> tcArgs)

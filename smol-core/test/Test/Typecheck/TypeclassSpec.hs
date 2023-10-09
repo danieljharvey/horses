@@ -164,7 +164,7 @@ spec = do
         )
         `shouldBe` Left (TCTypeclassError $ KindMismatch "f" (KindFn Star Star) Star)
 
-  fdescribe "KindChecker" $ do
+  describe "KindChecker" $ do
     let dts = tceDataTypes typecheckEnv
     describe "type for kind" $ do
       it "Int" $ do
@@ -173,6 +173,10 @@ spec = do
       it "Maybe Int" $ do
         fmap getTypeAnnotation (typeKind dts (tyCons "Maybe" [tyInt] :: Type ResolvedDep ()))
           `shouldBe` Right Star
+      it "Either Int Int"  $ do
+        fmap getTypeAnnotation (typeKind dts (tyCons "Either" [tyInt, tyInt] :: Type ResolvedDep ()))
+          `shouldBe` Right Star
+
       it "Either Int" $ do
         fmap getTypeAnnotation (typeKind dts (tyCons "Either" [tyInt] :: Type ResolvedDep ()))
           `shouldBe` Right (KindFn Star Star
@@ -184,7 +188,7 @@ spec = do
         fmap getTypeAnnotation (typeKind dts (tyApp (tcVar "f") (tcVar "a") :: Type ResolvedDep ()))
           `shouldBe` Right Star
 
-    fdescribe "type from type sig" $ do
+    describe "type from type sig" $ do
       it "a in 'a -> String'" $ do
         let result =  getRight (typeKind dts (tyFunc (tcVar "a") tyString))
 
@@ -207,7 +211,7 @@ spec = do
         lookupKindInType result "f"
           `shouldBe` Just (KindFn Star (KindFn Star Star))
 
-    fdescribe "Unify kinds" $ do
+    describe "Unify kinds" $ do
       it "Star and star" $ do
         unifyKinds @() UStar UStar `shouldBe` Right mempty
       it "Star and var" $ do
