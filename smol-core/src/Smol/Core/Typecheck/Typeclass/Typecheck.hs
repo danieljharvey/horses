@@ -1,6 +1,7 @@
 {-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE NamedFieldPuns #-}
 {-# LANGUAGE OverloadedStrings #-}
-  {-# LANGUAGE NamedFieldPuns #-}
+
 -- everything used to typecheck typeclasses
 module Smol.Core.Typecheck.Typeclass.Typecheck
   ( checkInstance,
@@ -8,14 +9,14 @@ module Smol.Core.Typecheck.Typeclass.Typecheck
   )
 where
 
-import Data.Maybe
-import Smol.Core.Typecheck.Typeclass.KindChecker
-import Debug.Trace
 import Control.Monad.Except
+import Data.Bifunctor (bimap)
 import qualified Data.Map.Strict as M
+import Data.Maybe
 import Smol.Core.Typecheck.Elaborate (elaborate)
 import Smol.Core.Typecheck.Shared
 import Smol.Core.Typecheck.Typeclass.Helpers
+import Smol.Core.Typecheck.Typeclass.KindChecker
 import Smol.Core.Typecheck.Types
 import Smol.Core.Types
 
@@ -46,13 +47,17 @@ checkInstance tcEnv typeclass constraint (Instance constraints expr) =
     let typecheckEnv = tcEnv {tceConstraints = constraints}
         annotatedExpr = EAnn (getExprAnnotation expr) subbedType expr
 
-        typeclassKinds = kindsForTypeclass typeclass
-        constraintKinds = kindsForConstraint constraint
+        dataTypes = tceDataTypes tcEnv
+        typeclassKinds = kindsForTypeclass dataTypes typeclass
+        constraintKinds = kindsForConstraint dataTypes constraint
 
-    -- now compare these to the constraint
-
-    traceShowM typeclassKinds
-    traceShowM constraintKinds
+    _ <-
+      modifyError
+        TCKindError
+        ( traverse
+            (uncurry unifyKinds . bimap fromKind fromKind)
+            (zip typeclassKinds constraintKinds)
+        )
 
     -- we `elaborate` rather than `typecheck` as we don't want the names
     -- mangled
@@ -62,15 +67,26 @@ checkInstance tcEnv typeclass constraint (Instance constraints expr) =
     pure $ Instance (addTypesToConstraint <$> allConstraints) typedExpr
 
 -- | what kinds does the actual type have?
-kindsForConstraint :: Constraint ResolvedDep ann -> [Kind]
-kindsForConstraint (Constraint {conType}) =
-  case traverse (typeKind mempty) conType of
+kindsForConstraint ::
+  M.Map (ResolvedDep TypeName) (DataType ResolvedDep ann) ->
+  Constraint ResolvedDep (Type ResolvedDep ann) ->
+  [Kind]
+kindsForConstraint dataTypes (Constraint {conType}) =
+  case traverse (typeKind dataTypes) (getTypeAnnotation <$> conType) of
     Right yes -> getTypeAnnotation <$> yes
     Left e -> error (show e)
 
 -- | what kinds are expected?
-kindsForTypeclass :: Typeclass ResolvedDep ann -> [Kind]
-kindsForTypeclass (Typeclass {tcArgs,tcFuncType}) = do
-  case typeKind mempty tcFuncType of
+kindsForTypeclass ::
+  M.Map (ResolvedDep TypeName) (DataType ResolvedDep ann) ->
+  Typeclass ResolvedDep ann ->
+  [Kind]
+kindsForTypeclass dataTypes (Typeclass {tcArgs, tcFuncType}) = do
+  case typeKind dataTypes tcFuncType of
     Left e -> error (show e)
-    Right tyKind -> catMaybes (lookupKindInType tyKind . emptyResolvedDep <$> tcArgs)
+    Right tyKind ->
+      catMaybes
+        ( lookupKindInType tyKind
+            . emptyResolvedDep
+            <$> tcArgs
+        )

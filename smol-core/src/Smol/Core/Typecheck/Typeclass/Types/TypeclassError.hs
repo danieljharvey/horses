@@ -15,5 +15,5 @@ data TypeclassError ann
   = TypeclassNotFound TypeclassName
   | TypeclassInstanceNotFound TypeclassName [Type ResolvedDep ann] [Constraint ResolvedDep ann]
   | ConflictingTypeclassInstancesFound [Constraint ResolvedDep ann]
-  | KindMismatch Identifier Kind Kind -- expected, actual
+  | InstanceKindMismatch Identifier Kind Kind -- expected, actual
   deriving stock (Eq, Ord, Show, Foldable)

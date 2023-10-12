@@ -1,37 +1,29 @@
 {-# LANGUAGE DerivingStrategies #-}
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE LambdaCase #-}
-  {-# LANGUAGE NamedFieldPuns #-}
-  module Smol.Core.Typecheck.Typeclass.KindChecker (Kind (..), UKind (..), unifyKinds, typeKind, lookupKindInType) where
+{-# LANGUAGE NamedFieldPuns #-}
 
-import Data.Maybe (listToMaybe)
+module Smol.Core.Typecheck.Typeclass.KindChecker
+  ( module Smol.Core.Typecheck.Typeclass.Types.Kind,
+    fromKind,
+    unifyKinds,
+    typeKind,
+    lookupKindInType,
+  )
+where
+
 import Control.Monad.Except
 import Control.Monad.State
 import Data.Foldable
 import qualified Data.Map as M
-import qualified Prettyprinter as PP
-import Smol.Core.Printer
+import Data.Maybe (listToMaybe)
 import Smol.Core.TypeUtils (monoidType)
 import Smol.Core.Typecheck.Annotations
+import Smol.Core.Typecheck.Typeclass.Types.Kind
 import Smol.Core.Types.DataType
 import Smol.Core.Types.Identifier
 import Smol.Core.Types.Type
 import Smol.Core.Types.TypeName
-
-data Kind
-  = Star
-  | KindFn Kind Kind
-  deriving stock (Eq, Ord, Show)
-
--- | Unresolved Kind
-data UKind i
-  = UStar
-  | UKindFn (UKind i) (UKind i)
-  | UVar i
-  deriving stock (Eq, Ord, Show)
-
-instance (Show i) => Printer (UKind i) where
-  prettyDoc = PP.pretty . show
 
 data KindState dep ann = KindState
   { ksDataTypes :: M.Map (dep TypeName) (DataType dep ann),
@@ -39,25 +31,28 @@ data KindState dep ann = KindState
     ksEnv :: [(UKind Int, UKind Int)] -- unique, what it is
   }
 
-data KindError i = KindMismatch (UKind i) (UKind i) 
- | UnassignedVar i
-  deriving stock (Eq,Ord,Show)
+fromKind :: Kind -> UKind i
+fromKind Star = UStar
+fromKind (KindFn a b) = UKindFn (fromKind a) (fromKind b)
 
 typeKind ::
-  (MonadError (KindError Int) m, Ord (dep TypeName), Show (dep TypeName) ) =>
+  (MonadError (KindError dep Int) m, Ord (dep TypeName), Show (dep TypeName)) =>
   M.Map (dep TypeName) (DataType dep ann) ->
   Type dep ann ->
   m (Type dep Kind)
-typeKind dts ty = do 
-  let (ty', ks) = flip runState (KindState dts 1 mempty) (checkKinds ty)
-  subs <- solve (ksEnv ks) 
-  unifyType subs ty' 
+typeKind dts ty = do
+  (ty', ks) <- flip runStateT (KindState dts 1 mempty) (checkKinds ty)
+  subs <- solve (ksEnv ks)
+  unifyType subs ty'
 
 -- given a bunch of substitutions
 -- run them all
 -- then create one more, which is the resulting kind equalling star
-unifyType :: (MonadError (KindError Int) m) =>
-    M.Map Int (UKind Int) -> Type dep (UKind Int) -> m (Type dep Kind)
+unifyType ::
+  (MonadError (KindError dep Int) m) =>
+  M.Map Int (UKind Int) ->
+  Type dep (UKind Int) ->
+  m (Type dep Kind)
 unifyType subs ty = do
   let tyWithKinds = applySubstitutions subs <$> ty
       topKind = getTypeAnnotation tyWithKinds
@@ -65,27 +60,28 @@ unifyType subs ty = do
   let newConstraints = [(topKind, UStar)] -- ie, every type should have kind Star
   newSubs <- solve newConstraints
 
-  traverse toKind (applySubstitutions newSubs <$> tyWithKinds) 
+  traverse toKind (applySubstitutions newSubs <$> tyWithKinds)
 
-toKind :: (MonadError (KindError i) m, Show i) => UKind i -> m Kind
+toKind :: (MonadError (KindError dep i) m, Show i) => UKind i -> m Kind
 toKind UStar = pure $ Star
 toKind (UKindFn a b) = KindFn <$> toKind a <*> toKind b
-toKind (UVar i) = throwError (UnassignedVar i) 
+toKind (UVar i) = throwError (UnassignedVar i)
 
 applySubstitution :: (Eq i) => (i, UKind i) -> UKind i -> UKind i
 applySubstitution (i, sub) (UVar i') | i == i' = sub
-applySubstitution sub (UKindFn a b)  = 
+applySubstitution sub (UKindFn a b) =
   UKindFn (applySubstitution sub a) (applySubstitution sub b)
-applySubstitution _ other = other 
+applySubstitution _ other = other
 
 applySubstitutions :: (Ord i) => M.Map i (UKind i) -> UKind i -> UKind i
-applySubstitutions subs kind = foldr' applySubstitution kind (M.toList subs)  
+applySubstitutions subs kind = foldr' applySubstitution kind (M.toList subs)
 
 solve ::
-  ( MonadError (KindError i) m, Ord i
+  ( MonadError (KindError dep i) m,
+    Ord i
   ) =>
   [(UKind i, UKind i)] ->
-  m (M.Map i (UKind i)) 
+  m (M.Map i (UKind i))
 solve = go mempty
   where
     go s [] = pure s
@@ -95,18 +91,17 @@ solve = go mempty
           s2 <- unifyKinds a b
           go (s2 <> s1) (applyToConstraint (s1 <> s2) <$> rest)
 
-applyToConstraint :: (Ord i) => M.Map i (UKind i) -> (UKind i,UKind i) -> (UKind i, UKind i)
+applyToConstraint :: (Ord i) => M.Map i (UKind i) -> (UKind i, UKind i) -> (UKind i, UKind i)
 applyToConstraint subs (a, b) =
   (applySubstitutions subs a, applySubstitutions subs b)
 
-unifyKinds :: (MonadError (KindError i) m, Ord i) => UKind i -> UKind i -> m (M.Map i (UKind i)) 
-unifyKinds a b | a ==b = pure mempty
-unifyKinds (UVar i) b = pure $ M.singleton i b 
+unifyKinds :: (MonadError (KindError dep i) m, Ord i) => UKind i -> UKind i -> m (M.Map i (UKind i))
+unifyKinds a b | a == b = pure mempty
+unifyKinds (UVar i) b = pure $ M.singleton i b
 unifyKinds a (UVar i) = pure $ M.singleton i a
 unifyKinds (UKindFn argA retA) (UKindFn argB retB) = do
   (<>) <$> unifyKinds argA argB <*> unifyKinds retA retB
 unifyKinds a b = throwError (KindMismatch a b)
-
 
 getUnique :: (MonadState (KindState dep ann) m) => m Int
 getUnique = do
@@ -120,6 +115,7 @@ addConstraint expected actual =
 
 inferKinds ::
   ( MonadState (KindState dep ann) m,
+    MonadError (KindError dep Int) m,
     Ord (dep TypeName),
     Show (dep TypeName)
   ) =>
@@ -135,15 +131,15 @@ inferKinds (TApp _ fn arg) = do
       var <- UVar <$> getUnique
       pure var
 
-  -- tell whatever we guessed fn was that in fact it's some kind of `UKindFn` 
+  -- tell whatever we guessed fn was that in fact it's some kind of `UKindFn`
   addConstraint (UKindFn (getTypeAnnotation argKind) resultKind) (getTypeAnnotation fnKind)
 
-  pure $ TApp resultKind fnKind  argKind 
+  pure $ TApp resultKind fnKind argKind
 inferKinds (TConstructor _ constructor) = do
   dts <- gets ksDataTypes
-  let k = case M.lookup constructor dts of
-        Just dt -> foldl' (\kind _ -> UKindFn UStar kind) UStar (dtVars dt)
-        Nothing -> error $ "Could not find data type for " <> show constructor
+  k <- case M.lookup constructor dts of
+    Just dt -> pure $ foldl' (\kind _ -> UKindFn UStar kind) UStar (dtVars dt)
+    Nothing -> throwError (MissingDataType constructor)
   pure $ TConstructor k constructor
 inferKinds (TVar _ var) = do
   i <- getUnique
@@ -159,13 +155,18 @@ inferKinds (TRecord _ as) = TRecord UStar <$> traverse checkKinds as
 inferKinds (TInfix _ op a b) = TInfix UStar op <$> checkKinds a <*> checkKinds b
 
 -- infer and emit constraint that this is always Star
-checkKinds :: (Ord (dep TypeName), Show (dep TypeName), MonadState (KindState dep ann) m) => 
-    Type dep ann -> m (Type dep (UKind Int))
+checkKinds ::
+  ( Ord (dep TypeName),
+    Show (dep TypeName),
+    MonadState (KindState dep ann) m,
+    MonadError (KindError dep Int) m
+  ) =>
+  Type dep ann ->
+  m (Type dep (UKind Int))
 checkKinds ty = do
   tyKind <- inferKinds ty
   addConstraint UStar (getTypeAnnotation tyKind)
   pure tyKind
-
 
 lookupKindInType ::
   ( Eq (dep Identifier)

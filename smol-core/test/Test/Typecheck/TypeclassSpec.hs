@@ -162,7 +162,7 @@ spec = do
               inConstraints = mempty
             }
         )
-        `shouldBe` Left (TCTypeclassError $ KindMismatch "f" (KindFn Star Star) Star)
+        `shouldBe` Left (TCTypeclassError $ InstanceKindMismatch "f" (KindFn Star Star) Star)
 
   describe "KindChecker" $ do
     let dts = tceDataTypes typecheckEnv
@@ -173,14 +173,15 @@ spec = do
       it "Maybe Int" $ do
         fmap getTypeAnnotation (typeKind dts (tyCons "Maybe" [tyInt] :: Type ResolvedDep ()))
           `shouldBe` Right Star
-      it "Either Int Int"  $ do
+      it "Either Int Int" $ do
         fmap getTypeAnnotation (typeKind dts (tyCons "Either" [tyInt, tyInt] :: Type ResolvedDep ()))
           `shouldBe` Right Star
 
       it "Either Int" $ do
         fmap getTypeAnnotation (typeKind dts (tyCons "Either" [tyInt] :: Type ResolvedDep ()))
-          `shouldBe` Right (KindFn Star Star
-                           )
+          `shouldBe` Right
+            ( KindFn Star Star
+            )
       it "Int -> Int" $ do
         fmap getTypeAnnotation (typeKind dts (tyFunc tyInt tyInt :: Type ResolvedDep ()))
           `shouldBe` Right Star
@@ -190,7 +191,7 @@ spec = do
 
     describe "type from type sig" $ do
       it "a in 'a -> String'" $ do
-        let result =  getRight (typeKind dts (tyFunc (tcVar "a") tyString))
+        let result = getRight (typeKind dts (tyFunc (tcVar "a") tyString))
 
         lookupKindInType result "a" `shouldBe` Just Star
 
@@ -202,7 +203,7 @@ spec = do
         lookupKindInType result "f" `shouldBe` Just (KindFn Star Star)
 
       it "f in 'f a b'" $ do
-        let result =  getRight $ typeKind dts (tyApp (tyApp (tcVar "f") (tcVar "a")) (tcVar "b"))
+        let result = getRight $ typeKind dts (tyApp (tyApp (tcVar "f") (tcVar "a")) (tcVar "b"))
 
         lookupKindInType result "a" `shouldBe` Just Star
 
@@ -213,18 +214,20 @@ spec = do
 
     describe "Unify kinds" $ do
       it "Star and star" $ do
-        unifyKinds @() UStar UStar `shouldBe` Right mempty
+        unifyKinds @ResolvedDep @() UStar UStar `shouldBe` Right mempty
       it "Star and var" $ do
-        unifyKinds @Int UStar (UVar 1) `shouldBe` Right (M.singleton 1 UStar)
+        unifyKinds @ResolvedDep @Int UStar (UVar 1) `shouldBe` Right (M.singleton 1 UStar)
       it "Recover argument of Kind function" $ do
-        unifyKinds @Int (UKindFn (UVar 1) UStar) (UKindFn UStar (UVar 2)) `shouldBe`
-              Right (M.fromList [(1, UStar), (2, UStar)])
+        unifyKinds @ResolvedDep @Int (UKindFn (UVar 1) UStar) (UKindFn UStar (UVar 2))
+          `shouldBe` Right (M.fromList [(1, UStar), (2, UStar)])
       it "Recover argument of multi arg Kind function" $ do
-        unifyKinds @Int (UKindFn (UVar 1) (UKindFn (UVar 2) UStar)) (UKindFn UStar (UVar 3)) `shouldBe`
-              Right (M.fromList [( 1, UStar),
-                    (3, UKindFn (UVar 2) UStar)])
-
-
+        unifyKinds @ResolvedDep @Int (UKindFn (UVar 1) (UKindFn (UVar 2) UStar)) (UKindFn UStar (UVar 3))
+          `shouldBe` Right
+            ( M.fromList
+                [ (1, UStar),
+                  (3, UKindFn (UVar 2) UStar)
+                ]
+            )
 
   -- don't do anything with concrete ones pls
   -- then we can look those up again later

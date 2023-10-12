@@ -8,6 +8,7 @@ module Smol.Core.Typecheck.Types.TCError
 where
 
 import Data.Set (Set)
+import Smol.Core.Typecheck.Typeclass.Types.Kind
 import Smol.Core.Typecheck.Typeclass.Types.TypeclassError
 import Smol.Core.Types
 import Smol.Core.Types.PatternMatchError (PatternMatchError)
@@ -29,4 +30,5 @@ data TCError ann
   | TCCompoundTypeInEquality (ResolvedType ann) -- for now we only do primitive equality
   | TCPatternMatchError (PatternMatchError (ResolvedType ann))
   | TCTypeclassError (TypeclassError ann)
+  | TCKindError (KindError ResolvedDep Int)
   deriving stock (Eq, Ord, Show, Foldable)
