@@ -82,14 +82,14 @@
             pkgs.zlib # used by `digest` package
             pkgs.nodejs-18_x
             pkgs.clang_14
-            pkgs.llvmPackages_14.llvm
+            pkgs.llvmPackages_15.llvm
             pkgs.nodePackages.ts-node
           ];
 
-          # put clang_14 on the path
-          #shellHook = with pkgs; ''
-          # export PATH="${clang_14}/bin:$PATH"
-          #'';
+          # put clang_15 on the path
+          shellHook = with pkgs; ''
+            export PATH="${clang_15}/bin:$PATH"
+          '';
 
           inputsFrom = builtins.attrValues self.packages.${system};
         };

@@ -36,6 +36,7 @@ common shared
     , containers
     , directory
     , file-embed
+    , llvm-codegen
     , llvm-hs-pretty
     , llvm-hs-pure
     , mtl
