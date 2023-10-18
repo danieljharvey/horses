@@ -179,12 +179,12 @@ prettyLet var expr1 expr2 =
    in PP.group
         ( "let"
             <+> prettyVar
-            <> prettyArgs args
+              <> prettyArgs args
             <+> "="
-            <> PP.line
-            <> indentMulti 2 (prettyDoc letExpr)
-            <> newlineOrIn
-            <> prettyDoc expr2
+              <> PP.line
+              <> indentMulti 2 (prettyDoc letExpr)
+              <> newlineOrIn
+              <> prettyDoc expr2
         )
   where
     prettyArgs [] = ""
@@ -298,22 +298,22 @@ prettyPatternMatch sumExpr matches =
     <+> printSubExpr sumExpr
     <+> "with"
     <+> PP.line
-    <> PP.indent
-      2
-      ( PP.align $
-          PP.vsep
-            ( zipWith
-                (<+>)
-                (" " : repeat "|")
-                (printMatch <$> NE.toList matches)
-            )
-      )
+      <> PP.indent
+        2
+        ( PP.align $
+            PP.vsep
+              ( zipWith
+                  (<+>)
+                  (" " : repeat "|")
+                  (printMatch <$> NE.toList matches)
+              )
+        )
   where
     printMatch (construct, expr') =
       printSubPattern construct
         <+> "->"
         <+> PP.line
-        <> indentMulti 4 (printSubExpr expr')
+          <> indentMulti 4 (printSubExpr expr')
 
 prettyArray ::
   ( Printer (dep Constructor),

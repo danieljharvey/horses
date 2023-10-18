@@ -6,6 +6,7 @@
 module Smol.Core.Typecheck.Typeclass.KindChecker
   ( module Smol.Core.Typecheck.Typeclass.Types.Kind,
     fromKind,
+    toKind,
     unifyKinds,
     typeKind,
     lookupKindInType,
@@ -35,19 +36,27 @@ fromKind :: Kind -> UKind i
 fromKind Star = UStar
 fromKind (KindFn a b) = UKindFn (fromKind a) (fromKind b)
 
+toKind :: (Show i) => UKind i -> Kind
+toKind UStar = Star
+toKind (UKindFn a b) = KindFn (toKind a) (toKind b)
+toKind (UVar _i) = Star -- yolo, if we've not found any better news, assume its a Type
+
 typeKind ::
-  (MonadError (KindError dep Int) m, Ord (dep TypeName), Show (dep TypeName)) =>
+  ( MonadError (KindError dep Int) m,
+    Ord (dep TypeName),
+    Show (dep TypeName),
+    Show (dep Identifier)
+  ) =>
   M.Map (dep TypeName) (DataType dep ann) ->
   Type dep ann ->
   m (Type dep Kind)
 typeKind dts ty = do
-  (ty', ks) <- flip runStateT (KindState dts 1 mempty) (checkKinds ty)
+  (ty', ks) <- flip runStateT (KindState dts 1 mempty) (inferKinds ty)
   subs <- solve (ksEnv ks)
   unifyType subs ty'
 
 -- given a bunch of substitutions
 -- run them all
--- then create one more, which is the resulting kind equalling star
 unifyType ::
   (MonadError (KindError dep Int) m) =>
   M.Map Int (UKind Int) ->
@@ -55,17 +64,8 @@ unifyType ::
   m (Type dep Kind)
 unifyType subs ty = do
   let tyWithKinds = applySubstitutions subs <$> ty
-      topKind = getTypeAnnotation tyWithKinds
 
-  let newConstraints = [(topKind, UStar)] -- ie, every type should have kind Star
-  newSubs <- solve newConstraints
-
-  traverse toKind (applySubstitutions newSubs <$> tyWithKinds)
-
-toKind :: (MonadError (KindError dep i) m, Show i) => UKind i -> m Kind
-toKind UStar = pure $ Star
-toKind (UKindFn a b) = KindFn <$> toKind a <*> toKind b
-toKind (UVar i) = throwError (UnassignedVar i)
+  pure $ fmap toKind tyWithKinds
 
 applySubstitution :: (Eq i) => (i, UKind i) -> UKind i -> UKind i
 applySubstitution (i, sub) (UVar i') | i == i' = sub
@@ -74,7 +74,8 @@ applySubstitution sub (UKindFn a b) =
 applySubstitution _ other = other
 
 applySubstitutions :: (Ord i) => M.Map i (UKind i) -> UKind i -> UKind i
-applySubstitutions subs kind = foldr' applySubstitution kind (M.toList subs)
+applySubstitutions subs kind =
+  foldl' (flip applySubstitution) kind (M.toList subs)
 
 solve ::
   ( MonadError (KindError dep i) m,
@@ -89,7 +90,7 @@ solve = go mempty
       case constraint of
         (a, b) -> do
           s2 <- unifyKinds a b
-          go (s2 <> s1) (applyToConstraint (s1 <> s2) <$> rest)
+          go (s2 <> s1) (applyToConstraint (s2 <> s1) <$> rest)
 
 applyToConstraint :: (Ord i) => M.Map i (UKind i) -> (UKind i, UKind i) -> (UKind i, UKind i)
 applyToConstraint subs (a, b) =
@@ -117,22 +118,26 @@ inferKinds ::
   ( MonadState (KindState dep ann) m,
     MonadError (KindError dep Int) m,
     Ord (dep TypeName),
-    Show (dep TypeName)
+    Show (dep TypeName),
+    Show (dep Identifier)
   ) =>
   Type dep ann ->
   m (Type dep (UKind Int))
 inferKinds (TPrim _ p) = pure $ TPrim UStar p
 inferKinds (TApp _ fn arg) = do
   argKind <- checkKinds arg
+
   fnKind <- inferKinds fn
-  resultKind <- case getTypeAnnotation fnKind of
-    UKindFn _ r -> pure r
-    _ -> do
-      var <- UVar <$> getUnique
-      pure var
+
+  resultKind <- do
+    var <- UVar <$> getUnique
+    pure var
+
+  let lhs = UKindFn (getTypeAnnotation argKind) resultKind
+      rhs = getTypeAnnotation fnKind
 
   -- tell whatever we guessed fn was that in fact it's some kind of `UKindFn`
-  addConstraint (UKindFn (getTypeAnnotation argKind) resultKind) (getTypeAnnotation fnKind)
+  addConstraint lhs rhs
 
   pure $ TApp resultKind fnKind argKind
 inferKinds (TConstructor _ constructor) = do
@@ -158,6 +163,7 @@ inferKinds (TInfix _ op a b) = TInfix UStar op <$> checkKinds a <*> checkKinds b
 checkKinds ::
   ( Ord (dep TypeName),
     Show (dep TypeName),
+    Show (dep Identifier),
     MonadState (KindState dep ann) m,
     MonadError (KindError dep Int) m
   ) =>

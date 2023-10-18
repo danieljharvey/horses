@@ -10,7 +10,7 @@ module Smol.Core.Typecheck.Typeclass.Typecheck
 where
 
 import Control.Monad.Except
-import Data.Bifunctor (bimap)
+import Data.Foldable (traverse_)
 import qualified Data.Map.Strict as M
 import Data.Maybe
 import Smol.Core.Typecheck.Elaborate (elaborate)
@@ -51,13 +51,7 @@ checkInstance tcEnv typeclass constraint (Instance constraints expr) =
         typeclassKinds = kindsForTypeclass dataTypes typeclass
         constraintKinds = kindsForConstraint dataTypes constraint
 
-    _ <-
-      modifyError
-        TCKindError
-        ( traverse
-            (uncurry unifyKinds . bimap fromKind fromKind)
-            (zip typeclassKinds constraintKinds)
-        )
+    liftEither (kindcheckInstance typeclassKinds constraintKinds)
 
     -- we `elaborate` rather than `typecheck` as we don't want the names
     -- mangled
@@ -65,6 +59,19 @@ checkInstance tcEnv typeclass constraint (Instance constraints expr) =
 
     let allConstraints = constraints -- nub (constraints <> newConstraints)
     pure $ Instance (addTypesToConstraint <$> allConstraints) typedExpr
+
+-- | check that each item in an instance kind checks
+kindcheckInstance :: [(Identifier, Kind)] -> [Kind] -> Either (TCError ann) ()
+kindcheckInstance typeclassKinds constraintKinds = do
+  let everything = zip typeclassKinds constraintKinds
+  let kindcheckPair ((ident, lhsKind), rhsKind) =
+        case unifyKinds (fromKind lhsKind) (fromKind rhsKind) of
+          Right _ -> pure ()
+          Left (KindMismatch a b) ->
+            Left (TCTypeclassError $ InstanceKindMismatch ident (toKind a) (toKind b))
+          Left kindError ->
+            Left (TCKindError kindError)
+  traverse_ kindcheckPair everything
 
 -- | what kinds does the actual type have?
 kindsForConstraint ::
@@ -80,13 +87,18 @@ kindsForConstraint dataTypes (Constraint {conType}) =
 kindsForTypeclass ::
   M.Map (ResolvedDep TypeName) (DataType ResolvedDep ann) ->
   Typeclass ResolvedDep ann ->
-  [Kind]
+  [(Identifier, Kind)]
 kindsForTypeclass dataTypes (Typeclass {tcArgs, tcFuncType}) = do
   case typeKind dataTypes tcFuncType of
     Left e -> error (show e)
     Right tyKind ->
       catMaybes
-        ( lookupKindInType tyKind
-            . emptyResolvedDep
+        ( ( \ident ->
+              (,) ident
+                <$> ( lookupKindInType tyKind
+                        . emptyResolvedDep
+                        $ ident
+                    )
+          )
             <$> tcArgs
         )

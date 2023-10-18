@@ -170,9 +170,11 @@ spec = do
       it "Int" $ do
         fmap getTypeAnnotation (typeKind dts (tyInt :: Type ResolvedDep ()))
           `shouldBe` Right Star
+
       it "Maybe Int" $ do
         fmap getTypeAnnotation (typeKind dts (tyCons "Maybe" [tyInt] :: Type ResolvedDep ()))
           `shouldBe` Right Star
+
       it "Either Int Int" $ do
         fmap getTypeAnnotation (typeKind dts (tyCons "Either" [tyInt, tyInt] :: Type ResolvedDep ()))
           `shouldBe` Right Star
@@ -182,9 +184,11 @@ spec = do
           `shouldBe` Right
             ( KindFn Star Star
             )
+
       it "Int -> Int" $ do
         fmap getTypeAnnotation (typeKind dts (tyFunc tyInt tyInt :: Type ResolvedDep ()))
           `shouldBe` Right Star
+
       it "f a" $ do
         fmap getTypeAnnotation (typeKind dts (tyApp (tcVar "f") (tcVar "a") :: Type ResolvedDep ()))
           `shouldBe` Right Star

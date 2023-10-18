@@ -121,16 +121,16 @@ printDefinition name (TopLevelExpression {tleType, tleExpr}) =
         "def"
           <+> prettyDoc name
           <+> "="
-          <> line
-          <> indentMulti 2 (prettyDoc tleExpr)
+            <> line
+            <> indentMulti 2 (prettyDoc tleExpr)
       prettyType = case tleType of
         Just ty ->
           "def"
             <+> prettyDoc name
             <+> ":"
-            <> line
-            <> indentMulti 2 (prettyDoc ty)
-            <> "\n"
+              <> line
+              <> indentMulti 2 (prettyDoc ty)
+              <> "\n"
         Nothing -> ""
    in prettyType <> prettyExpr
 
