@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1695654479338,
+  "lastUpdate": 1697697164421,
   "repoUrl": "https://github.com/danieljharvey/mimsa",
   "entries": {
     "Store benchmarks in Github Pages": [
@@ -3251,6 +3251,50 @@ window.BENCHMARK_DATA = {
           {
             "name": "evaluate/evaluate parsing 2",
             "value": 0.22825652000000543,
+            "unit": "Time (ms)"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "danieljamesharvey@gmail.com",
+            "name": "Daniel Harvey",
+            "username": "danieljharvey"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "54b61deb3d5be6b6af13e6004b57eac560ffbf87",
+          "message": "Kind checking typeclass instances! (#1017)\n\n* Start\r\n\r\n* Mess\r\n\r\n* Oh no\r\n\r\n* Well\r\n\r\n* Actually run kind checker when checking instances\r\n\r\n* Well\r\n\r\n* Somewhat working\r\n\r\n* Yes\r\n\r\n* Oops",
+          "timestamp": "2023-10-19T07:11:41+01:00",
+          "tree_id": "e99798daef7401f90c544ab90c3cba850912fb3d",
+          "url": "https://github.com/danieljharvey/mimsa/commit/54b61deb3d5be6b6af13e6004b57eac560ffbf87"
+        },
+        "date": 1697697163155,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "build stdlib/allFns",
+            "value": 0.13329752300000464,
+            "unit": "Time (ms)"
+          },
+          {
+            "name": "evaluate/evaluate big looping thing",
+            "value": 0.12617193822619083,
+            "unit": "Time (ms)"
+          },
+          {
+            "name": "evaluate/evaluate parsing",
+            "value": 0.0403769530785691,
+            "unit": "Time (ms)"
+          },
+          {
+            "name": "evaluate/evaluate parsing 2",
+            "value": 0.2734010611999792,
             "unit": "Time (ms)"
           }
         ]
