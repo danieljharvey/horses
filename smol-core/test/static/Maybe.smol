@@ -13,3 +13,7 @@ def fmap f maybeA =
   case maybeA of
       Just a -> Just (f a)
       | _ -> Nothing
+
+test "fmap id does nothing" =
+    let id = \a -> a;
+    fromMaybe (fmap id (Just True)) False == True
