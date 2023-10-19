@@ -55,12 +55,12 @@ resolveExpr expr typeclassMethods localDefs localTypes =
     initialEnv = ResolveEnv mempty localDefs localTypes typeclassMethods
 
 resolveModuleDeps ::
-  (Show ann, Eq ann, MonadError ResolveDepsError m) =>
+  (Show ann, Eq ann, Monoid ann, MonadError ResolveDepsError m) =>
   Set Identifier ->
   Module ParseDep ann ->
   m (Module ResolvedDep ann, Map (DefIdentifier ResolvedDep) (Set (DefIdentifier ResolvedDep)))
 resolveModuleDeps typeclassMethods parsedModule = do
-  map' <- getDependencies extractUses parsedModule
+  map' <- getDependencies extractUses extractTypeUses parsedModule
   let resolveIt (DTData dt, _, _) =
         pure (DTData (resolveDataType dt))
       resolveIt (DTTest expr, defIds, _entities) =

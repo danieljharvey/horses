@@ -38,6 +38,8 @@ deriving stock instance
   ) =>
   Show (SubstitutionMatcher dep ann)
 
+---------------------
+
 data Substitution dep ann
   = Substitution (SubstitutionMatcher dep ann) (Type dep ann)
 

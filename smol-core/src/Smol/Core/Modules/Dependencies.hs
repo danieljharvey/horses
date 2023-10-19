@@ -77,8 +77,9 @@ filterTypes =
 -- get the vars used by each def
 -- explode if there's not available
 getDependencies ::
-  (MonadError ResolveDepsError m) =>
+  (MonadError ResolveDepsError m, Monoid ann) =>
   (Expr ParseDep ann -> Set E.Entity) ->
+  (Type ParseDep ann -> Set E.Entity) ->
   Module ParseDep ann ->
   m
     ( Map
@@ -88,7 +89,7 @@ getDependencies ::
           Set E.Entity
         )
     )
-getDependencies getUses mod' = do
+getDependencies getUses getTypeUses' mod' = do
   exprDeps <-
     M.mapKeys DIName
       <$> traverse
@@ -102,14 +103,17 @@ getDependencies getUses mod' = do
   instanceDeps <-
     M.mapKeys DIInstance
       <$> traverse
-        (getInstanceDependencies getUses mod')
-        (moInstances mod')
+        (getInstanceDependencies getUses getTypeUses' mod')
+        (addKeysToMap $ moInstances mod')
   testDeps <-
     M.mapKeys DITest
       <$> traverse
         (getTestDependencies getUses mod')
         (M.fromList ((\(UnitTest testName expr) -> (testName, expr)) <$> moTests mod'))
   pure (exprDeps <> typeDeps <> instanceDeps <> testDeps)
+
+addKeysToMap :: (Ord k) => M.Map k a -> M.Map k (k, a)
+addKeysToMap = M.fromList . fmap (\(k, a) -> (k, (k, a))) . M.toList
 
 -- get all dependencies of a type definition
 getTypeDependencies ::
@@ -234,17 +238,27 @@ getExprDependencies getUses mod' expr = do
   pure (exprDefIds <> typeDefIds <> consDefIds, allUses)
 
 getInstanceDependencies ::
-  (MonadError ResolveDepsError m, Ord (dep Constructor), Ord (dep TypeName), Ord (dep Identifier)) =>
+  ( MonadError ResolveDepsError m,
+    Monoid ann,
+    Ord (dep Constructor),
+    Ord (dep TypeName),
+    Ord (dep Identifier)
+  ) =>
   (Expr dep ann -> Set E.Entity) ->
+  (Type dep ann -> Set E.Entity) ->
   Module dep ann ->
-  Instance dep ann ->
+  (Constraint dep (), Instance dep ann) ->
   m (DepType dep ann, Set (DefIdentifier dep), Set E.Entity)
-getInstanceDependencies getUses mod' inst = do
+getInstanceDependencies getUses getTypeUses' mod' (constraint, inst) = do
+  -- get everything mentioned in instance expression
   let allUses = getUses (inExpr inst)
   exprDefIds <- S.map DIName <$> getExprDeps mod' allUses
   consDefIds <- getConstructorUses mod' allUses
   typeDefIds <- getTypeUses mod' allUses
-  pure (DTInstance inst, exprDefIds <> typeDefIds <> consDefIds, allUses)
+  -- get types mentioned in constraint
+  let typeUses = foldMap getTypeUses' ((fmap . fmap . fmap) (const mempty) conType constraint)
+  constraintDefIds <- getTypeUses mod' typeUses
+  pure (DTInstance inst, exprDefIds <> typeDefIds <> consDefIds <> constraintDefIds, allUses)
 
 getExprDeps ::
   (Monad m) =>

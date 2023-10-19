@@ -14,4 +14,4 @@ runTests wholeModule@(Module {moTests}) =
     runTest (UnitTest testName _) =
       case interpretModule (DITest testName) wholeModule of
         Right (EPrim _ (PBool b)) -> (testName, b)
-        _ -> error "Expected a boolean result"
+        other -> error $ "Expected a boolean result, got " <> show other
