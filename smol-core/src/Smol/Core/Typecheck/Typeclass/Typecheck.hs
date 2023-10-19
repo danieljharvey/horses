@@ -93,12 +93,11 @@ kindsForTypeclass dataTypes (Typeclass {tcArgs, tcFuncType}) = do
     Left e -> error (show e)
     Right tyKind ->
       mapMaybe
-        ( ( \ident ->
-              (,) ident
-                <$> ( lookupKindInType tyKind
-                        . emptyResolvedDep
-                        $ ident
-                    )
-          )
-            tcArgs
+        ( \ident ->
+            (,) ident
+              <$> ( lookupKindInType tyKind
+                      . emptyResolvedDep
+                      $ ident
+                  )
         )
+        tcArgs
