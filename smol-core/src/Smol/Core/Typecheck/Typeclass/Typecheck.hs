@@ -92,7 +92,7 @@ kindsForTypeclass dataTypes (Typeclass {tcArgs, tcFuncType}) = do
   case typeKind dataTypes tcFuncType of
     Left e -> error (show e)
     Right tyKind ->
-      catMaybes
+      mapMaybe
         ( ( \ident ->
               (,) ident
                 <$> ( lookupKindInType tyKind
@@ -100,5 +100,5 @@ kindsForTypeclass dataTypes (Typeclass {tcArgs, tcFuncType}) = do
                         $ ident
                     )
           )
-            <$> tcArgs
+            tcArgs
         )

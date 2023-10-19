@@ -110,6 +110,7 @@ library
     Smol.Core.Transform.FlattenLets
     Smol.Core.Transform.FloatDown
     Smol.Core.Typecheck
+    Smol.Core.Typecheck.Annotations
     Smol.Core.Typecheck.Elaborate
     Smol.Core.Typecheck.Errors
     Smol.Core.Typecheck.Exhaustiveness
@@ -124,12 +125,14 @@ library
     Smol.Core.Typecheck.Typeclass
     Smol.Core.Typecheck.Typeclass.Deduplicate
     Smol.Core.Typecheck.Typeclass.Helpers
+    Smol.Core.Typecheck.Typeclass.KindChecker
     Smol.Core.Typecheck.Typeclass.ToDictionaryPassing
     Smol.Core.Typecheck.Typeclass.ToDictionaryPassing.Types
     Smol.Core.Typecheck.Typeclass.Typecheck
     Smol.Core.Typecheck.Typeclass.Types
     Smol.Core.Typecheck.Typeclass.Types.Constraint
     Smol.Core.Typecheck.Typeclass.Types.Instance
+    Smol.Core.Typecheck.Typeclass.Types.Kind
     Smol.Core.Typecheck.Typeclass.Types.Typeclass
     Smol.Core.Typecheck.Typeclass.Types.TypeclassError
     Smol.Core.Typecheck.Typeclass.Types.TypeclassName

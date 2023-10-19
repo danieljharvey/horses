@@ -4,6 +4,7 @@ module Smol.Core.Modules.Uses
   ( extractUses,
     extractUsesTyped,
     extractDataTypeUses,
+    extractTypeUses,
   )
 where
 

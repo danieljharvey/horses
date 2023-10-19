@@ -23,7 +23,7 @@ mapType _ (TConstructor ann c) = TConstructor ann c
 -- helper functions for manipulating Types
 bindType :: (Applicative m) => (Type dep ann -> m (Type dep ann)) -> Type dep ann -> m (Type dep ann)
 bindType f (TFunc ann env fn arg) =
-  TFunc ann <$> (traverse (bindType f) env) <*> f fn <*> f arg
+  TFunc ann <$> traverse (bindType f) env <*> f fn <*> f arg
 bindType f (TTuple ann tHead tTail) =
   TTuple ann <$> bindType f tHead <*> traverse (bindType f) tTail
 bindType f (TInfix ann op a b) =

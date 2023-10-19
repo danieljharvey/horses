@@ -1,7 +1,5 @@
 {-# LANGUAGE DerivingStrategies #-}
 {-# LANGUAGE FlexibleContexts #-}
-{-# LANGUAGE LambdaCase #-}
-{-# LANGUAGE NamedFieldPuns #-}
 
 module Smol.Core.Typecheck.Typeclass.KindChecker
   ( module Smol.Core.Typecheck.Typeclass.Types.Kind,
@@ -51,7 +49,7 @@ typeKind ::
   Type dep ann ->
   m (Type dep Kind)
 typeKind dts ty = do
-  (ty', ks) <- flip runStateT (KindState dts 1 mempty) (inferKinds ty)
+  (ty', ks) <- runStateT (inferKinds ty) (KindState dts 1 mempty)
   subs <- solve (ksEnv ks)
   unifyType subs ty'
 
@@ -129,9 +127,7 @@ inferKinds (TApp _ fn arg) = do
 
   fnKind <- inferKinds fn
 
-  resultKind <- do
-    var <- UVar <$> getUnique
-    pure var
+  resultKind <- UVar <$> getUnique
 
   let lhs = UKindFn (getTypeAnnotation argKind) resultKind
       rhs = getTypeAnnotation fnKind
