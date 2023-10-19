@@ -2,6 +2,7 @@ module Main (main) where
 
 import Test.Hspec
 import qualified Test.Interpreter.InterpreterSpec
+import qualified Test.Modules.CheckSpec
 import qualified Test.Modules.FromPartsSpec
 import qualified Test.Modules.InterpreterSpec
 import qualified Test.Modules.ResolveDepsSpec
@@ -18,7 +19,7 @@ import qualified Test.Typecheck.TypeclassSpec
 import qualified Test.TypecheckSpec
 
 main :: IO ()
-main = hspec $ do
+main = hspec $ parallel $ do
   Test.TypecheckSpec.spec
   Test.Typecheck.SubtypeSpec.spec
   Test.Typecheck.NestingMonadSpec.spec
@@ -28,6 +29,7 @@ main = hspec $ do
   Test.Typecheck.ToDictionaryPassingSpec.spec
   Test.ParserSpec.spec
   Test.Interpreter.InterpreterSpec.spec
+  Test.Modules.CheckSpec.spec
   Test.Modules.FromPartsSpec.spec
   Test.Modules.InterpreterSpec.spec
   Test.Modules.ResolveDepsSpec.spec

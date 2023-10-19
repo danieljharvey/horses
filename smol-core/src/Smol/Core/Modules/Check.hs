@@ -17,6 +17,7 @@ import Smol.Core.Modules.Typecheck
 import Smol.Core.Modules.Types.Module
 import Smol.Core.Modules.Types.ModuleError
 import Smol.Core.Modules.Types.ModuleItem
+import Smol.Core.Modules.Types.Test
 import Smol.Core.Modules.Types.TopLevelExpression
 import Smol.Core.Transform
 import Smol.Core.Typecheck.Typeclass
@@ -75,4 +76,23 @@ passModuleDictionaries input inputModule = do
         pure (ident, tle {tleExpr = newExpr})
 
   newExpressions <- M.fromList <$> traverse passDictToTopLevelExpression (M.toList $ moExpressions inputModule)
-  pure $ inputModule {moExpressions = newExpressions}
+
+  let passDictToTest (UnitTest testName expr) = do
+        let constraints = mempty -- test should have no constraints to satisfy
+        let typedConstraints = addTypesToConstraint <$> constraints
+            dictEnv =
+              ToDictEnv
+                { tdeClasses = tceClasses env,
+                  tdeInstances = moInstances inputModule,
+                  tdeVars = getVarsInScope inputModule
+                }
+        newExpr <-
+          modifyError
+            (DictionaryPassingError input)
+            (toDictionaryPassing dictEnv mempty typedConstraints expr)
+
+        pure (UnitTest testName newExpr)
+
+  newTests <- traverse passDictToTest (moTests inputModule)
+
+  pure $ inputModule {moExpressions = newExpressions, moTests = newTests}

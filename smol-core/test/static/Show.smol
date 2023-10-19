@@ -17,7 +17,6 @@ type Natural = Suc Natural | Zero
 instance Show Natural = \nat -> case nat of
                                 Suc n -> "S (" + show n + ")"
                                 | Zero -> "Z"
-
 test "Show Zero" =
     show Zero == "Z"
 
