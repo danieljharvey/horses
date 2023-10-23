@@ -7,6 +7,18 @@ packages:
 
 with-compiler: ghc-9.6.3
 
+source-repository-package
+  type: git
+  location: https://github.com/llvm-hs/llvm-hs.git
+  tag: 5bca2c1a2a3aa98ecfb19181e7a5ebbf3e212b76
+  subdir: llvm-hs
+
+source-repository-package
+  type: git
+  location: https://github.com/llvm-hs/llvm-hs.git
+  tag: 5bca2c1a2a3aa98ecfb19181e7a5ebbf3e212b76
+  subdir: llvm-hs-pure
+
 package diagnose
   flags: +megaparsec-compat
 

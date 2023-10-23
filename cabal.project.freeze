@@ -73,8 +73,9 @@ constraints: any.Cabal ==3.10.1.0,
              integer-logarithms -check-bounds +integer-gmp,
              any.invariant ==0.6.2,
              any.ki ==1.0.1.1,
-             any.llvm-hs ==9.0.1,
-             llvm-hs -debug +shared-llvm,
+             any.llvm-hs ==15.0.0,
+             llvm-hs -debug -llvm-with-rtti,
+             any.llvm-hs-pure ==15.0.0,
              any.logict ==0.8.1.0,
              any.megaparsec ==9.6.0,
              megaparsec -dev,
@@ -153,4 +154,4 @@ constraints: any.Cabal ==3.10.1.0,
              any.wcwidth ==0.0.2,
              wcwidth -cli +split-base,
              any.witherable ==0.4.2
-index-state: hackage.haskell.org 2023-10-25T21:01:40Z
+index-state: hackage.haskell.org 2023-10-26T12:16:12Z
