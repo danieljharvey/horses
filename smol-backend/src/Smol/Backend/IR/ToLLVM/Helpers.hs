@@ -134,24 +134,26 @@ getPrintInt = extern "printint" [AST.i32] AST.i32
 -- | given a pointer to a struct, get the value at `index`
 loadFromStruct ::
   (L.MonadIRBuilder m, L.MonadModuleBuilder m) =>
+  LLVM.Type ->
   Op.Operand ->
   [Integer] ->
   m Op.Operand
-loadFromStruct struct' indexes = do
+loadFromStruct ty struct' indexes = do
   -- get pointer to slot `i`
-  slot1 <- LLVM.gep struct' $ C.int32 <$> ([0] <> indexes)
+  slot1 <- LLVM.gep ty struct' $ C.int32 <$> ([0] <> indexes)
   -- load value
-  LLVM.load slot1 0
+  LLVM.load ty slot1 0
 
 storePrimInStruct ::
   (L.MonadIRBuilder m, L.MonadModuleBuilder m) =>
+  LLVM.Type ->
   Op.Operand ->
   [Integer] ->
   Op.Operand ->
   m ()
-storePrimInStruct struct' indexes a = do
+storePrimInStruct ty struct' indexes a = do
   -- get pointer to element
-  slot1 <- LLVM.gep struct' $ C.int32 <$> ([0] <> indexes)
+  slot1 <- LLVM.gep ty struct' $ C.int32 <$> ([0] <> indexes)
   -- store a in slot1
   LLVM.store slot1 0 a
 
@@ -160,26 +162,28 @@ moveToStruct ::
   ( L.MonadModuleBuilder m,
     L.MonadIRBuilder m
   ) =>
+  LLVM.Type ->
   Op.Operand ->
   Op.Operand ->
   m ()
-moveToStruct fromStruct toStruct = do
-  input <- LLVM.load fromStruct 0
+moveToStruct ty fromStruct toStruct = do
+  input <- LLVM.load ty fromStruct 0
   LLVM.store toStruct 0 input
 
 callClosure ::
   ( L.MonadModuleBuilder m,
     L.MonadIRBuilder m
   ) =>
+  LLVM.Type ->
   Op.Operand ->
   Op.Operand ->
   m Op.Operand
-callClosure opFunc opArg = do
+callClosure ty opFunc opArg = do
   -- get fn pt and env
   (fn, env) <- fromClosure opFunc
 
   -- call fn with env + arg
-  LLVM.call
+  LLVM.call ty
     fn
     [ (opArg, []),
       (env, [])
@@ -194,11 +198,13 @@ callWithReturnStruct ::
   [Op.Operand] ->
   m Op.Operand
 callWithReturnStruct fn structType fnArgs = do
+  let ty = LLVM.void
+
   retStruct <- allocLocal "struct-return" structType
 
   let allArgs = (,[]) <$> (fnArgs <> [retStruct])
 
-  _ <- LLVM.call fn allArgs
+  _ <- LLVM.call ty fn allArgs
 
   pure retStruct
 
@@ -206,9 +212,9 @@ struct :: [AST.Type] -> AST.Type
 struct =
   AST.StructureType False
 
-pointerType :: AST.Type -> AST.Type
-pointerType ty =
-  AST.PointerType ty (AST.AddrSpace 0)
+pointerType :: AST.Type
+pointerType =
+  AST.PointerType (AST.AddrSpace 0)
 
 allocLocal ::
   (L.MonadIRBuilder m) =>
