@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1698178591553,
+  "lastUpdate": 1698179234170,
   "repoUrl": "https://github.com/danieljharvey/mimsa",
   "entries": {
     "Store benchmarks in Github Pages": [
@@ -3427,6 +3427,50 @@ window.BENCHMARK_DATA = {
           {
             "name": "evaluate/evaluate parsing 2",
             "value": 0.2182914332857227,
+            "unit": "Time (ms)"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "danieljamesharvey@gmail.com",
+            "name": "Daniel Harvey",
+            "username": "danieljharvey"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "4b5ce0c0f43c8580f4d2152e975c34e45f3447c1",
+          "message": "Remove calcs (#1023)\n\n* Remove calcs\r\n\r\n* Use new action",
+          "timestamp": "2023-10-24T21:22:56+01:00",
+          "tree_id": "8be70cafe9090175f747ed1717ed3ec8e0e9b117",
+          "url": "https://github.com/danieljharvey/mimsa/commit/4b5ce0c0f43c8580f4d2152e975c34e45f3447c1"
+        },
+        "date": 1698179232924,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "build stdlib/allFns",
+            "value": 0.13835853075000107,
+            "unit": "Time (ms)"
+          },
+          {
+            "name": "evaluate/evaluate big looping thing",
+            "value": 0.1174947973333332,
+            "unit": "Time (ms)"
+          },
+          {
+            "name": "evaluate/evaluate parsing",
+            "value": 0.04099150025357283,
+            "unit": "Time (ms)"
+          },
+          {
+            "name": "evaluate/evaluate parsing 2",
+            "value": 0.30758091400000465,
             "unit": "Time (ms)"
           }
         ]
