@@ -60,7 +60,7 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-2-cabal-work-${{ matrix.plan.ghc }}
 
-      - uses: haskell/actions/setup@v2
+      - uses: haskell-actions/setup@v2
         with:
           ghc-version: '9.6.2'
           cabal-version: '3.10.1.0'
@@ -78,7 +78,7 @@ jobs:
         with:
           node-version: 19
 
-      - uses: haskell/actions/setup@v2
+      - uses: haskell-actions/setup@v2
         with:
           ghc-version: '9.6.2'
           cabal-version: '3.10.1.0'
@@ -127,7 +127,7 @@ jobs:
     steps:
       - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4
 
-      - uses: haskell/actions/setup@v2
+      - uses: haskell-actions/setup@v2
         with:
           ghc-version: '9.6.2'
           cabal-version: '3.10.1.0'
