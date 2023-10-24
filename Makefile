@@ -92,22 +92,6 @@ test-smol-backend:
 test-core:
 	cabal run core:test:core-test
 
-.PHONY: test-llvm-calc
-test-llvm-calc:
-	cabal run llvm-calc:tests
-
-.PHONY: test-llvm-calc2
-test-llvm-calc2:
-	cabal run llvm-calc2:tests
-
-.PHONY: test-llvm-calc3
-test-llvm-calc3:
-	cabal run llvm-calc3:tests
-
-.PHONY: test-llvm-calc4
-test-llvm-calc4:
-	cabal run llvm-calc4:tests
-
 .PHONY: build-smol-repl
 build-smol-repl:
 	cabal build smol-repl
