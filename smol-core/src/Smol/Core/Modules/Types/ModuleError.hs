@@ -40,7 +40,7 @@ resolveDepsErrorDiagnostic (VarNotFound ident) =
           (T.pack $ "Variable not found: " <> show ident)
           []
           []
-   in Diag.addReport Diag.def report
+   in Diag.addReport mempty report
 resolveDepsErrorDiagnostic (CannotFindTypes tys) =
   let report =
         Diag.Err
@@ -48,7 +48,7 @@ resolveDepsErrorDiagnostic (CannotFindTypes tys) =
           (T.pack $ "Types not found: " <> show tys)
           []
           []
-   in Diag.addReport Diag.def report
+   in Diag.addReport mempty report
 
 data ModuleError ann
   = DuplicateDefinition Identifier
@@ -83,4 +83,4 @@ moduleErrorDiagnostic other =
           (T.pack (show other))
           []
           []
-   in Diag.addReport Diag.def report
+   in Diag.addReport mempty report
