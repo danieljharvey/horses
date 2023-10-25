@@ -5,7 +5,7 @@ packages:
   smol-repl/smol-repl.cabal,
   vendored/**/*.cabal
 
-with-compiler: ghc-9.6.2
+with-compiler: ghc-9.6.3
 
 package diagnose
   flags: +megaparsec-compat
