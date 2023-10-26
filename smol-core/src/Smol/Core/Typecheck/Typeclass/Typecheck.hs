@@ -79,7 +79,7 @@ kindsForConstraint ::
   Constraint ResolvedDep (Type ResolvedDep ann) ->
   [Kind]
 kindsForConstraint dataTypes (Constraint {conType}) =
-  case traverse (typeKind dataTypes) (getTypeAnnotation <$> conType) of
+  case traverse (typeKind dataTypes . getTypeAnnotation) conType of
     Right yes -> getTypeAnnotation <$> yes
     Left e -> error (show e)
 

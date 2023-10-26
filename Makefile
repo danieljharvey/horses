@@ -1,4 +1,5 @@
 HS_FILES = $(shell git ls-files '*.hs' | grep -v 'vendored/')
+CHANGED_HS_FILES = $(shell git diff --diff-filter=d --name-only `git merge-base HEAD origin/trunk` | grep '.*\(\.hs\|hs-boot\)$$' | grep -E -v 'vendored/')
 CABAL_FILES = $(shell git ls-files '*.cabal' | grep -v 'vendored/')
 
 .PHONY: ghcid
@@ -119,6 +120,18 @@ format:
 .PHONY: hlint
 hlint:
 	@hlint $(HS_FILES)
+
+.PHONY: hlint-apply
+hlint-apply:
+	@echo $(HS_FILES) | xargs -n1 hlint --refactor --refactor-options='--inplace'
+
+.PHONY: hlint-changed
+hlint-changed:
+	@hlint $(CHANGED_HS_FILES)
+
+.PHONY: hlint-apply-changed
+hlint-apply-changed:
+	@echo $(CHANGED_HS_FILES) | xargs -n1 hlint --refactor --refactor-options='--inplace'
 
 .PHONY: format-cabal
 format-cabal:

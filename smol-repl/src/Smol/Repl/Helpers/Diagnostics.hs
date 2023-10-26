@@ -32,9 +32,8 @@ printDiagnostic :: (MonadIO m) => Diag.Diagnostic Text -> m ()
 printDiagnostic =
   Diag.printDiagnostic
     Diag.stderr
-    True
-    True
-    4
+    Diag.WithUnicode
+    (Diag.TabSize 4)
     Diag.defaultStyle
 
 -- | turn Megaparsec error + input into a Diagnostic
