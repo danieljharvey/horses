@@ -136,7 +136,7 @@ resolveDataType ::
   m [DataTypeInMemory]
 resolveDataType dtVars constructorArgs args =
   let substitutions = zipWith Substitution (SubId . LocalDefinition <$> dtVars) args
-   in traverse toRepresentation $ substituteMany substitutions <$> constructorArgs
+   in traverse (toRepresentation . substituteMany substitutions) constructorArgs
 
 toRepresentation ::
   ( Show ann,

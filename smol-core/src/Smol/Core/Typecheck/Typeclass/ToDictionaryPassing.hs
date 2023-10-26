@@ -68,9 +68,7 @@ lookupTypecheckedTypeclassInstance env constraint = do
                   <$> inConstraints
 
           -- see if found types exist
-          traverse_
-            (lookupTypecheckedTypeclassInstance env)
-            (addTypesToConstraint <$> subbedConstraints)
+          traverse_ (lookupTypecheckedTypeclassInstance env . addTypesToConstraint) subbedConstraints
 
           -- return new instance
           pure

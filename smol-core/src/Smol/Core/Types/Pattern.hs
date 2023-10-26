@@ -93,7 +93,7 @@ instance
   prettyDoc (PConstructor _ tyCon args) =
     let prettyArgs = case args of
           [] -> mempty
-          _ -> foldr (\a b -> " " <> a <> b) mempty (printSubPattern <$> args)
+          _ -> foldr ((\a b -> " " <> a <> b) . printSubPattern) mempty args
      in prettyDoc tyCon <> prettyArgs
   prettyDoc (PTuple _ a as) =
     "(" <> PP.hsep (PP.punctuate ", " (prettyDoc <$> ([a] <> NE.toList as))) <> ")"

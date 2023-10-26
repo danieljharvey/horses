@@ -43,7 +43,7 @@ runBuilder fn st = do
         M.filter
           ( \plan ->
               let requiredKeys = jbDeps plan
-               in and ((\depK -> M.member depK (stOutputs st)) <$> S.toList requiredKeys)
+               in all (\depK -> M.member depK (stOutputs st)) (S.toList requiredKeys)
           )
           inputs
 

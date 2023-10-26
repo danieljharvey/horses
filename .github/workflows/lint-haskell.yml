@@ -14,7 +14,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4
-      - uses: mrkkrp/ormolu-action@v11
+      - uses: haskell-actions/run-ormolu@v14
         with:
           pattern: |
             builder/**/*.hs
@@ -30,7 +30,7 @@ jobs:
       - name: "Set up HLint"
         uses: rwe/actions-hlint-setup@v1
         with:
-          version: "3.5"
+          version: "3.6.1"
 
       - name: "Run HLint"
         uses: rwe/actions-hlint-run@v2

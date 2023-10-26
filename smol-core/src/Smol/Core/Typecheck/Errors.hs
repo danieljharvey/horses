@@ -44,7 +44,7 @@ typeErrorDiagnostic ::
   Diagnostic Text
 typeErrorDiagnostic input e =
   let filename = "<repl>"
-      diag = addFile def filename (T.unpack input)
+      diag = addFile mempty filename (T.unpack input)
    in case e of
         (TCTypeMismatch a b) ->
           let report =

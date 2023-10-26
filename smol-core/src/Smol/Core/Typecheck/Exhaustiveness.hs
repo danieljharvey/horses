@@ -82,7 +82,7 @@ getVariables (PArray _ as spread) =
   let vars = [getSpreadVariables spread] <> (getVariables <$> as)
    in foldr (M.unionWith (+)) mempty vars
 getVariables (PConstructor _ _ args) =
-  foldr (M.unionWith (+)) mempty (getVariables <$> args)
+  foldr (M.unionWith (+) . getVariables) mempty args
 
 {-getVariables (PString _ a as) =
   M.unionWith (+) (getStringPartVariables a) (getStringPartVariables as)
