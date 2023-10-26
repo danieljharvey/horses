@@ -5,7 +5,7 @@ module Test.Modules.InterpreterSpec (spec) where
 import Control.Monad (void)
 import Data.Foldable (traverse_)
 import Data.Text (Text)
-import Error.Diagnose (defaultStyle, printDiagnostic, stdout)
+import qualified Error.Diagnose as Diag
 import Smol.Core
 import Smol.Core.Modules.Check
 import Smol.Core.Modules.Interpret
@@ -17,7 +17,12 @@ import Test.Hspec
 
 showModuleError :: ModuleError Annotation -> IO ()
 showModuleError modErr =
-  printDiagnostic stdout True True 2 defaultStyle (moduleErrorDiagnostic modErr)
+  Diag.printDiagnostic
+    Diag.stdout
+    Diag.WithUnicode
+    (Diag.TabSize 2)
+    Diag.defaultStyle
+    (moduleErrorDiagnostic modErr)
 
 testInterpret ::
   Text ->

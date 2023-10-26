@@ -8,7 +8,7 @@ import qualified Test.IR.IRSpec
 import qualified Test.IR.PatternSpec
 
 main :: IO ()
-main = hspec $ do
+main = hspec $ parallel $ do
   Test.IR.DataTypesSpec.spec
   Test.IR.PatternSpec.spec
   Test.IR.FromExprSpec.spec

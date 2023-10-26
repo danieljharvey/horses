@@ -12,7 +12,7 @@ import qualified Data.Map.Strict as M
 import qualified Data.Set as S
 import Data.Text (Text)
 import qualified Data.Text as T
-import Error.Diagnose (defaultStyle, printDiagnostic, stdout)
+import qualified Error.Diagnose as Diag
 import Smol.Core
 import Smol.Core.Typecheck.FromParsedExpr
 import Test.Helpers
@@ -339,7 +339,7 @@ spec = do
       traverse_
         ( \inputExpr -> it (T.unpack inputExpr) $ do
             let result = evalExpr inputExpr
-            printDiagnostic stdout True True 2 defaultStyle (typeErrorDiagnostic inputExpr (getLeft result))
+            Diag.printDiagnostic Diag.stdout Diag.WithUnicode (Diag.TabSize 2) Diag.defaultStyle (typeErrorDiagnostic inputExpr (getLeft result))
             result `shouldSatisfy` isLeft
         )
         inputs
