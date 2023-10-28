@@ -1,7 +1,10 @@
 {-# LANGUAGE DerivingStrategies #-}
 {-# LANGUAGE OverloadedStrings #-}
 
-module Smol.Core.Interpreter.Types.InterpreterError (InterpreterError (..)) where
+module Smol.Core.Interpreter.Types.InterpreterError (InterpreterError (..), interpreterErrorDiagnostic) where
+import Smol.Core.Types.Annotation
+import qualified Error.Diagnose as Diag
+import qualified Data.Text as T
 
 import Data.Map.Strict (Map)
 import qualified Data.Map.Strict as M
@@ -41,6 +44,21 @@ instance Monoid (InterpreterError ann) where
 commaSep :: (Printer a) => [a] -> PP.Doc ann
 commaSep =
   foldMap (\a -> prettyDoc a <> ", ")
+
+interpreterErrorDiagnostic :: InterpreterError Annotation -> Diag.Diagnostic T.Text
+interpreterErrorDiagnostic intError =
+  Diag.addReport mempty $
+        Diag.Err
+          Nothing
+          (prettyPrint intError)
+          []
+          []
+  where
+    prettyPrint :: (Printer a) => a -> T.Text
+    prettyPrint = renderWithWidth 40 . prettyDoc
+
+
+
 
 instance Printer (InterpreterError ann) where
   prettyDoc (CouldNotFindVar items name) =

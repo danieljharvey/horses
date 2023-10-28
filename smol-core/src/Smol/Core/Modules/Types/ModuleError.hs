@@ -14,7 +14,6 @@ import qualified Data.Text as T
 import qualified Error.Diagnose as Diag
 import Smol.Core.Interpreter.Types.InterpreterError
 import Smol.Core.Modules.Types.DefIdentifier
-import Smol.Core.Modules.Types.ModuleName
 import Smol.Core.Modules.Types.TestName
 import Smol.Core.Typecheck
 import Smol.Core.Types
@@ -56,12 +55,9 @@ data ModuleError ann
   | DuplicateConstructor Constructor
   | DuplicateTypeclass TypeclassName
   | MissingTypeclass TypeclassName
-  | CannotFindValues (Set Identifier)
-  | CannotFindConstructors (Set Constructor)
   | ErrorInResolveDeps ResolveDepsError
   | DefDoesNotTypeCheck Text (DefIdentifier ResolvedDep) (TCError ann)
   | DictionaryPassingError Text (TCError ann)
-  | NamedImportNotFound (Set ModuleName) ModuleName
   | EmptyTestName (Expr ParseDep ann)
   | ErrorInTest TestName (TestError ann)
   | ErrorInInterpreter (InterpreterError ann)
@@ -74,8 +70,60 @@ moduleErrorDiagnostic (DictionaryPassingError input typeErr) =
   typeErrorDiagnostic input typeErr
 moduleErrorDiagnostic (ErrorInTest _ testErr) =
   testErrorDiagnostic testErr
+moduleErrorDiagnostic (ErrorInInterpreter interpreterErr) =
+  interpreterErrorDiagnostic interpreterErr
 moduleErrorDiagnostic (ErrorInResolveDeps resolveErr) =
   resolveDepsErrorDiagnostic resolveErr
+moduleErrorDiagnostic (EmptyTestName _expr) =
+  Diag.addReport mempty $
+        Diag.Err
+          Nothing
+          (T.pack $ "Test name must not be empty!" )
+          []
+          []
+
+moduleErrorDiagnostic (DuplicateDefinition ident)
+ = Diag.addReport mempty $
+        Diag.Err
+          Nothing
+          (T.pack $ "Duplicate definition in module: " <> show ident )
+          []
+          []
+moduleErrorDiagnostic (DuplicateTypeName typeName)
+ = Diag.addReport mempty $
+        Diag.Err
+          Nothing
+          (T.pack $ "Duplicate type name definition in module: " <> show typeName )
+          []
+          []
+moduleErrorDiagnostic (DuplicateConstructor constructor)
+ = Diag.addReport mempty $
+        Diag.Err
+          Nothing
+          (T.pack $ "Duplicate constructor defined in module: " <> show constructor )
+          []
+          []
+moduleErrorDiagnostic (DuplicateTypeclass typeclassName)
+ = Diag.addReport mempty $
+        Diag.Err
+          Nothing
+          (T.pack $ "Duplicate typeclass defined in module: " <> show typeclassName )
+          []
+          []
+moduleErrorDiagnostic (MissingTypeclass typeclassName)
+ = Diag.addReport mempty $
+        Diag.Err
+          Nothing
+          (T.pack $ "Could not find typeclass: " <> show typeclassName )
+          []
+          []
+
+
+
+
+
+
+    {-
 moduleErrorDiagnostic other =
   let report =
         Diag.Err
@@ -84,3 +132,5 @@ moduleErrorDiagnostic other =
           []
           []
    in Diag.addReport mempty report
+
+-}
