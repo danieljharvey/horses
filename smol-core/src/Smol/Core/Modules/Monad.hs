@@ -20,9 +20,10 @@ import Smol.Core.Modules.Types.ModuleError
 errorIfExpressionAlreadyDefined ::
   (MonadError (ModuleError ann) m) =>
   Module dep ann ->
+  ann ->
   Identifier ->
   m ()
-errorIfExpressionAlreadyDefined mod' def =
+errorIfExpressionAlreadyDefined mod' ann def =
   when
     ( M.member def (moExpressions mod')
     )

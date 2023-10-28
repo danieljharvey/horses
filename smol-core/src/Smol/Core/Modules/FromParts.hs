@@ -3,7 +3,7 @@
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE RecordWildCards #-}
-
+  {-# LANGUAGE NamedFieldPuns #-}
 module Smol.Core.Modules.FromParts (addModulePart, moduleFromModuleParts, exprAndTypeFromParts) where
 
 import Control.Monad (unless)
@@ -40,13 +40,13 @@ addModulePart ::
   m (Module ParseDep ann)
 addModulePart allParts part mod' =
   case part of
-    ModuleExpression name bits expr -> do
-      errorIfExpressionAlreadyDefined mod' name
-      let exp' = exprAndTypeFromParts allParts name bits expr
+    ModuleExpression (ModuleExpressionC {meAnn, meIdent,meArgs,meExpr}) -> do
+      errorIfExpressionAlreadyDefined mod' meAnn meIdent
+      let tle = exprAndTypeFromParts allParts meIdent meArgs meExpr
       pure $
         mod'
           { moExpressions =
-              M.singleton name exp' <> moExpressions mod'
+              M.singleton meIdent tle <> moExpressions mod'
           }
     ModuleExpressionType _name _ _ty -> do
       pure mod' -- we sort these elsewhere

@@ -61,14 +61,24 @@ moduleTypeDeclarationParser = ModuleDataType <$> dataTypeParser
 --
 -- top level definition
 moduleDefinitionParser :: Parser (ModuleItem Annotation)
-moduleDefinitionParser = do
-  myString "def"
-  name <- identifierParser
-  parts <-
-    chainl1 ((: []) <$> identifierParser) (pure (<>))
-      <|> pure mempty
-  myString "="
-  ModuleExpression name parts <$> expressionParser
+moduleDefinitionParser =
+  let parser = do
+            myString "def"
+            ident <- identifierParser
+            args <-
+              chainl1 ((: []) <$> identifierParser) (pure (<>))
+                <|> pure mempty
+            myString "="
+            (,,) ident args <$> expressionParser
+  in withLocation
+        ( \ann (ident, args, expr) ->
+            ModuleExpression (ModuleExpressionC {
+              meAnn = ann,
+              meIdent = ident,
+              meArgs = args,
+              meExpr = expr}
+                             ))
+        parser
 
 -- top level type definition
 -- def id : a -> a

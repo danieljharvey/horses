@@ -5,6 +5,7 @@ module Smol.Core.Modules.Types.ModuleError
     moduleErrorDiagnostic,
     ResolveDepsError (..),
     TestError (..),
+    Duplicate(..)
   )
 where
 
@@ -48,11 +49,15 @@ resolveDepsErrorDiagnostic (CannotFindTypes tys) =
           []
    in Diag.addReport mempty report
 
+data Duplicate thing ann
+  = Duplicate thing ann ann
+  deriving (Eq,Ord,Show)
+
 data ModuleError ann
-  = DuplicateDefinition Identifier
-  | DuplicateTypeName TypeName
-  | DuplicateConstructor Constructor
-  | DuplicateTypeclass TypeclassName
+  = DuplicateDefinition (Duplicate Identifier ann)
+  | DuplicateTypeName (Duplicate TypeName ann)
+  | DuplicateConstructor (Duplicate Constructor ann)
+  | DuplicateTypeclass (Duplicate TypeclassName ann)
   | MissingTypeclass TypeclassName
   | ErrorInResolveDeps ResolveDepsError
   | DefDoesNotTypeCheck (DefIdentifier ResolvedDep) (TCError ann)
