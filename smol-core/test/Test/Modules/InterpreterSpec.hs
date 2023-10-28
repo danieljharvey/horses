@@ -15,14 +15,14 @@ import Smol.Core.Typecheck.FromParsedExpr
 import Test.Helpers
 import Test.Hspec
 
-showModuleError :: ModuleError Annotation -> IO ()
-showModuleError modErr =
+showModuleError :: Text -> ModuleError Annotation -> IO ()
+showModuleError input modErr =
   Diag.printDiagnostic
     Diag.stdout
     Diag.WithUnicode
     (Diag.TabSize 2)
     Diag.defaultStyle
-    (moduleErrorDiagnostic modErr)
+    (moduleErrorDiagnostic input modErr)
 
 testInterpret ::
   Text ->
@@ -166,7 +166,7 @@ spec = do
 
                   let result = testInterpret input
                   case result of
-                    Left e -> showModuleError e
+                    Left e -> showModuleError input e
                     _ -> pure ()
 
                   result `shouldBe` Right expected

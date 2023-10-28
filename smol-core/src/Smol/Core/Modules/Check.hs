@@ -39,7 +39,7 @@ checkModule input moduleItems = do
 
   typedModule <- typecheckModule input resolvedModule deps
 
-  dictModule <- passModuleDictionaries input typedModule
+  dictModule <- passModuleDictionaries typedModule
 
   pure (transformModule dictModule)
 
@@ -51,10 +51,9 @@ transformModule inputModule =
 
 passModuleDictionaries ::
   (MonadError (ModuleError Annotation) m) =>
-  T.Text ->
   Module ResolvedDep (Type ResolvedDep Annotation) ->
   m (Module ResolvedDep (Type ResolvedDep Annotation))
-passModuleDictionaries input inputModule = do
+passModuleDictionaries inputModule = do
   let env = envFromTypecheckedModule inputModule
 
   let passDictToTopLevelExpression (ident, tle) = do
@@ -70,7 +69,7 @@ passModuleDictionaries input inputModule = do
                 }
         newExpr <-
           modifyError
-            (DictionaryPassingError input)
+            DictionaryPassingError
             (toDictionaryPassing dictEnv mempty typedConstraints expr)
 
         pure (ident, tle {tleExpr = newExpr})
@@ -88,7 +87,7 @@ passModuleDictionaries input inputModule = do
                 }
         newExpr <-
           modifyError
-            (DictionaryPassingError input)
+            DictionaryPassingError
             (toDictionaryPassing dictEnv mempty typedConstraints expr)
 
         pure (UnitTest testName newExpr)

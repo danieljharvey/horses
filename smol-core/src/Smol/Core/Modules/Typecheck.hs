@@ -190,14 +190,13 @@ typecheckDef input inputModule deps (def, dep) =
     DTExpr expr ->
       DTExpr
         <$> typecheckExprDef
-          input
           inputModule
           deps
           (def, expr)
     DTInstance inst ->
-      DTInstance <$> typecheckInstance input inputModule deps def inst
+      DTInstance <$> typecheckInstance inputModule deps def inst
     DTTest expr ->
-      DTTest . tleExpr <$> typecheckExprDef input inputModule deps (def, TopLevelExpression {tleConstraints = mempty, tleExpr = expr, tleType = Nothing})
+      DTTest . tleExpr <$> typecheckExprDef inputModule deps (def, TopLevelExpression {tleConstraints = mempty, tleExpr = expr, tleType = Nothing})
     DTData dt ->
       DTData
         <$> typecheckTypeDef
@@ -208,13 +207,12 @@ typecheckDef input inputModule deps (def, dep) =
 
 typecheckInstance ::
   (MonadError (ModuleError Annotation) m) =>
-  Text ->
   Module ResolvedDep Annotation ->
   Map (DefIdentifier ResolvedDep) (DepType ResolvedDep (Type ResolvedDep Annotation)) ->
   DefIdentifier ResolvedDep ->
   Instance ResolvedDep Annotation ->
   m (Instance ResolvedDep (Type ResolvedDep Annotation))
-typecheckInstance input inputModule deps def inst = do
+typecheckInstance inputModule deps def inst = do
   -- where are we getting constraints from?
   let exprTypeMap =
         mapKey LocalDefinition $
@@ -242,12 +240,12 @@ typecheckInstance input inputModule deps def inst = do
 
   typeclass <-
     modifyError
-      (DefDoesNotTypeCheck input def)
+      (DefDoesNotTypeCheck def)
       (lookupTypeclass classes (conTypeclass constraint))
 
   let typedConstraint = addTypesToConstraint (constraint $> mempty)
 
-  modifyError (DefDoesNotTypeCheck input def) (checkInstance env typeclass typedConstraint inst)
+  modifyError (DefDoesNotTypeCheck def) (checkInstance env typeclass typedConstraint inst)
 
 -- typechecking in this context means "does this data type make sense"
 -- and "do we know about all external datatypes it mentions"
@@ -298,12 +296,11 @@ resolveConstraint (Constraint tcn tys) =
 -- given types for other required definition, typecheck a definition
 typecheckExprDef ::
   (MonadError (ModuleError Annotation) m) =>
-  Text ->
   Module ResolvedDep Annotation ->
   Map (DefIdentifier ResolvedDep) (DepType ResolvedDep (Type ResolvedDep Annotation)) ->
   (DefIdentifier ResolvedDep, TopLevelExpression ResolvedDep Annotation) ->
   m (TopLevelExpression ResolvedDep (Type ResolvedDep Annotation))
-typecheckExprDef input inputModule deps (def, tle) = do
+typecheckExprDef inputModule deps (def, tle) = do
   -- where are we getting constraints from?
   let exprTypeMap =
         mapKey LocalDefinition $
@@ -334,7 +331,7 @@ typecheckExprDef input inputModule deps (def, tle) = do
   (constraints, newExpr) <-
     liftEither $
       first
-        (DefDoesNotTypeCheck input def)
+        (DefDoesNotTypeCheck def)
         (typecheck env actualExpr)
 
   -- split the type out again

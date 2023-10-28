@@ -9,7 +9,6 @@ module Smol.Core.Modules.Types.ModuleError
 where
 
 import Data.Set (Set)
-import Data.Text (Text)
 import qualified Data.Text as T
 import qualified Error.Diagnose as Diag
 import Smol.Core.Interpreter.Types.InterpreterError
@@ -19,10 +18,10 @@ import Smol.Core.Typecheck
 import Smol.Core.Types
 
 data TestError ann
-  = TestDoesNotTypecheck Text (TCError ann)
+  = TestDoesNotTypecheck T.Text (TCError ann)
   deriving stock (Eq, Ord, Show)
 
-testErrorDiagnostic :: TestError Annotation -> Diag.Diagnostic Text
+testErrorDiagnostic :: TestError Annotation -> Diag.Diagnostic T.Text
 testErrorDiagnostic (TestDoesNotTypecheck input typeErr) =
   typeErrorDiagnostic input typeErr
 
@@ -31,7 +30,7 @@ data ResolveDepsError
   | CannotFindTypes (Set TypeName)
   deriving stock (Eq, Ord, Show)
 
-resolveDepsErrorDiagnostic :: ResolveDepsError -> Diag.Diagnostic Text
+resolveDepsErrorDiagnostic :: ResolveDepsError -> Diag.Diagnostic T.Text
 resolveDepsErrorDiagnostic (VarNotFound ident) =
   let report =
         Diag.Err
@@ -56,25 +55,25 @@ data ModuleError ann
   | DuplicateTypeclass TypeclassName
   | MissingTypeclass TypeclassName
   | ErrorInResolveDeps ResolveDepsError
-  | DefDoesNotTypeCheck Text (DefIdentifier ResolvedDep) (TCError ann)
-  | DictionaryPassingError Text (TCError ann)
+  | DefDoesNotTypeCheck (DefIdentifier ResolvedDep) (TCError ann)
+  | DictionaryPassingError (TCError ann)
   | EmptyTestName (Expr ParseDep ann)
   | ErrorInTest TestName (TestError ann)
   | ErrorInInterpreter (InterpreterError ann)
   deriving stock (Eq, Ord, Show)
 
-moduleErrorDiagnostic :: ModuleError Annotation -> Diag.Diagnostic Text
-moduleErrorDiagnostic (DefDoesNotTypeCheck input _ typeErr) =
+moduleErrorDiagnostic :: T.Text -> ModuleError Annotation -> Diag.Diagnostic T.Text
+moduleErrorDiagnostic input (DefDoesNotTypeCheck _ typeErr) =
   typeErrorDiagnostic input typeErr
-moduleErrorDiagnostic (DictionaryPassingError input typeErr) =
+moduleErrorDiagnostic input (DictionaryPassingError typeErr) =
   typeErrorDiagnostic input typeErr
-moduleErrorDiagnostic (ErrorInTest _ testErr) =
+moduleErrorDiagnostic _ (ErrorInTest _ testErr) =
   testErrorDiagnostic testErr
-moduleErrorDiagnostic (ErrorInInterpreter interpreterErr) =
+moduleErrorDiagnostic _ (ErrorInInterpreter interpreterErr) =
   interpreterErrorDiagnostic interpreterErr
-moduleErrorDiagnostic (ErrorInResolveDeps resolveErr) =
+moduleErrorDiagnostic _ (ErrorInResolveDeps resolveErr) =
   resolveDepsErrorDiagnostic resolveErr
-moduleErrorDiagnostic (EmptyTestName _expr) =
+moduleErrorDiagnostic _ (EmptyTestName _expr) =
   Diag.addReport mempty $
         Diag.Err
           Nothing
@@ -82,35 +81,35 @@ moduleErrorDiagnostic (EmptyTestName _expr) =
           []
           []
 
-moduleErrorDiagnostic (DuplicateDefinition ident)
+moduleErrorDiagnostic _ (DuplicateDefinition ident)
  = Diag.addReport mempty $
         Diag.Err
           Nothing
           (T.pack $ "Duplicate definition in module: " <> show ident )
           []
           []
-moduleErrorDiagnostic (DuplicateTypeName typeName)
+moduleErrorDiagnostic _ (DuplicateTypeName typeName)
  = Diag.addReport mempty $
         Diag.Err
           Nothing
           (T.pack $ "Duplicate type name definition in module: " <> show typeName )
           []
           []
-moduleErrorDiagnostic (DuplicateConstructor constructor)
+moduleErrorDiagnostic _ (DuplicateConstructor constructor)
  = Diag.addReport mempty $
         Diag.Err
           Nothing
           (T.pack $ "Duplicate constructor defined in module: " <> show constructor )
           []
           []
-moduleErrorDiagnostic (DuplicateTypeclass typeclassName)
+moduleErrorDiagnostic _ (DuplicateTypeclass typeclassName)
  = Diag.addReport mempty $
         Diag.Err
           Nothing
           (T.pack $ "Duplicate typeclass defined in module: " <> show typeclassName )
           []
           []
-moduleErrorDiagnostic (MissingTypeclass typeclassName)
+moduleErrorDiagnostic _ (MissingTypeclass typeclassName)
  = Diag.addReport mempty $
         Diag.Err
           Nothing
@@ -122,15 +121,3 @@ moduleErrorDiagnostic (MissingTypeclass typeclassName)
 
 
 
-
-    {-
-moduleErrorDiagnostic other =
-  let report =
-        Diag.Err
-          Nothing
-          (T.pack (show other))
-          []
-          []
-   in Diag.addReport mempty report
-
--}

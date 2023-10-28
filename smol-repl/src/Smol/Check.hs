@@ -27,7 +27,7 @@ checkFile filePath = liftIO $ do
     Right moduleParts -> do
       case checkModule input moduleParts of
         Left e ->
-          printDiagnostic (moduleErrorDiagnostic e)
+          printDiagnostic (moduleErrorDiagnostic input e)
             >> pure (ExitFailure 1)
         Right tcModule -> do
           let testResults = runTests tcModule

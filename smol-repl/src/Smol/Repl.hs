@@ -39,7 +39,7 @@ repl = do
               printDiagnostic (fromErrorBundle bundle (T.pack input)) >> loop
             Right moduleParts ->
               case checkModule (T.pack input) moduleParts of
-                Left e -> printDiagnostic (moduleErrorDiagnostic e) >> loop
+                Left e -> printDiagnostic (moduleErrorDiagnostic (T.pack input) e) >> loop
                 Right tcModule -> do
                   liftIO $ printTestResults (runTests tcModule)
                   let llvmIR = irToLLVM (irFromModule tcModule)
