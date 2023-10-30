@@ -12,6 +12,7 @@
 
 module Smol.Core.Modules.Types.ModuleItem
   ( ModuleItem (..),
+    ModuleExpression (..),
   )
 where
 
@@ -42,7 +43,7 @@ import Smol.Core.Types.TypeName
 -- TODO: add more annotations to everything so we can produce clearer errors
 -- when things don't make sense (duplicate defs etc)
 data ModuleItem ann
-  = ModuleExpression Identifier [Identifier] (Expr ParseDep ann)
+  = ModuleExpression (ModuleExpression ann)
   | ModuleExpressionType Identifier [Constraint ParseDep ann] (Type ParseDep ann)
   | ModuleDataType (DataType ParseDep ann)
   | ModuleTest TestName (Expr ParseDep ann)
@@ -55,6 +56,21 @@ deriving stock instance
     Show (DataType ParseDep ann)
   ) =>
   Show (ModuleItem ann)
+
+-- a top level expression
+data ModuleExpression ann = ModuleExpressionC
+  { meAnn :: ann,
+    meIdent :: Identifier,
+    meArgs :: [Identifier],
+    meExpr :: Expr ParseDep ann
+  }
+  deriving stock (Eq, Ord, Functor)
+
+deriving stock instance
+  ( Show ann,
+    Show (DataType ParseDep ann)
+  ) =>
+  Show (ModuleExpression ann)
 
 -- this is the checked module, it contains no duplicates and we don't care
 -- about ordering
