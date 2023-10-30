@@ -7,9 +7,10 @@
 {-# LANGUAGE MonoLocalBinds #-}
 {-# LANGUAGE StandaloneDeriving #-}
 {-# LANGUAGE UndecidableInstances #-}
-
+  {-# LANGUAGE NamedFieldPuns #-}
 module Smol.Core.Modules.Types.TopLevelExpression
   ( TopLevelExpression (..),
+    getTopLevelExpressionAnnotation
   )
 where
 
@@ -21,6 +22,13 @@ import Smol.Core.Types.Expr
 import Smol.Core.Types.Identifier
 import Smol.Core.Types.Type
 import Smol.Core.Types.TypeName
+import Smol.Core.Typecheck.Annotations
+
+getTopLevelExpressionAnnotation :: (Monoid ann) => TopLevelExpression dep ann -> ann
+getTopLevelExpressionAnnotation (TopLevelExpression {tleExpr,tleType= Nothing})
+  = getExprAnnotation tleExpr
+getTopLevelExpressionAnnotation (TopLevelExpression {tleExpr,tleType= Just ty})
+  = getExprAnnotation tleExpr <> getTypeAnnotation ty
 
 -- a module is, broadly, one file
 -- it defines some datatypes, infixes and definitions

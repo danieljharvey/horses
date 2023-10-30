@@ -43,3 +43,12 @@ test "fmap works with Either" =
     let inc = (\a -> a + 1 : Int -> Int);
     unwrapEither (fmap inc (Right 1)) == unwrapEither (Right (2 : Int))
 
+def log : True
+def log =
+    if True then "log"
+        else "hot dog"
+
+def log : False
+def log =
+    \a -> False
+

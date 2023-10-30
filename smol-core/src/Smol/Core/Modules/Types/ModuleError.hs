@@ -8,7 +8,7 @@ module Smol.Core.Modules.Types.ModuleError
     Duplicate(..)
   )
 where
-
+import Data.Maybe (catMaybes)
 import Data.Set (Set)
 import qualified Data.Text as T
 import qualified Error.Diagnose as Diag
@@ -17,6 +17,23 @@ import Smol.Core.Modules.Types.DefIdentifier
 import Smol.Core.Modules.Types.TestName
 import Smol.Core.Typecheck
 import Smol.Core.Types
+import Smol.Core.SourceSpan (sourceSpan,ssRowStart,ssColStart,ssRowStart,ssRowEnd,ssColEnd)
+
+-- todo: make share library for this
+positionFromAnnotation ::
+  String ->
+  T.Text ->
+  Annotation ->
+  Maybe Diag.Position
+positionFromAnnotation path input (Location locStart locEnd) =
+  let toPos ss =
+        Diag.Position
+          (ssRowStart ss, ssColStart ss)
+          (ssRowEnd ss, ssColEnd ss)
+          path
+      dropOneAnn = Location locStart (locEnd -2 ) -- TODO: the real fix is drop trailing linebreaks in parsing
+   in toPos <$> sourceSpan input dropOneAnn
+
 
 data TestError ann
   = TestDoesNotTypecheck T.Text (TCError ann)
@@ -51,13 +68,13 @@ resolveDepsErrorDiagnostic (CannotFindTypes tys) =
 
 data Duplicate thing ann
   = Duplicate thing ann ann
-  deriving (Eq,Ord,Show)
+  deriving stock (Eq,Ord,Show)
 
 data ModuleError ann
   = DuplicateDefinition (Duplicate Identifier ann)
-  | DuplicateTypeName (Duplicate TypeName ann)
-  | DuplicateConstructor (Duplicate Constructor ann)
-  | DuplicateTypeclass (Duplicate TypeclassName ann)
+  | DuplicateTypeName TypeName
+  | DuplicateConstructor Constructor
+  | DuplicateTypeclass TypeclassName
   | MissingTypeclass TypeclassName
   | ErrorInResolveDeps ResolveDepsError
   | DefDoesNotTypeCheck (DefIdentifier ResolvedDep) (TCError ann)
@@ -68,59 +85,79 @@ data ModuleError ann
   deriving stock (Eq, Ord, Show)
 
 moduleErrorDiagnostic :: T.Text -> ModuleError Annotation -> Diag.Diagnostic T.Text
-moduleErrorDiagnostic input (DefDoesNotTypeCheck _ typeErr) =
-  typeErrorDiagnostic input typeErr
-moduleErrorDiagnostic input (DictionaryPassingError typeErr) =
-  typeErrorDiagnostic input typeErr
-moduleErrorDiagnostic _ (ErrorInTest _ testErr) =
-  testErrorDiagnostic testErr
-moduleErrorDiagnostic _ (ErrorInInterpreter interpreterErr) =
-  interpreterErrorDiagnostic interpreterErr
-moduleErrorDiagnostic _ (ErrorInResolveDeps resolveErr) =
-  resolveDepsErrorDiagnostic resolveErr
-moduleErrorDiagnostic _ (EmptyTestName _expr) =
-  Diag.addReport mempty $
-        Diag.Err
-          Nothing
-          (T.pack $ "Test name must not be empty!" )
-          []
-          []
+moduleErrorDiagnostic input moduleError
+  = let filename = "<repl>"
+        diag = Diag.addFile mempty filename (T.unpack input)
+  in case moduleError of
+    (DefDoesNotTypeCheck _ typeErr) ->
+      typeErrorDiagnostic input typeErr
+    (DictionaryPassingError typeErr) ->
+      typeErrorDiagnostic input typeErr
+    (ErrorInTest _ testErr) ->
+      testErrorDiagnostic testErr
+    (ErrorInInterpreter interpreterErr) ->
+      interpreterErrorDiagnostic interpreterErr
+    (ErrorInResolveDeps resolveErr) ->
+      resolveDepsErrorDiagnostic resolveErr
+    (EmptyTestName _expr) ->
+      Diag.addReport mempty $
+            Diag.Err
+              Nothing
+              (T.pack $ "Test name must not be empty!" )
+              []
+              []
 
-moduleErrorDiagnostic _ (DuplicateDefinition ident)
- = Diag.addReport mempty $
-        Diag.Err
-          Nothing
-          (T.pack $ "Duplicate definition in module: " <> show ident )
-          []
-          []
-moduleErrorDiagnostic _ (DuplicateTypeName typeName)
- = Diag.addReport mempty $
-        Diag.Err
-          Nothing
-          (T.pack $ "Duplicate type name definition in module: " <> show typeName )
-          []
-          []
-moduleErrorDiagnostic _ (DuplicateConstructor constructor)
- = Diag.addReport mempty $
-        Diag.Err
-          Nothing
-          (T.pack $ "Duplicate constructor defined in module: " <> show constructor )
-          []
-          []
-moduleErrorDiagnostic _ (DuplicateTypeclass typeclassName)
- = Diag.addReport mempty $
-        Diag.Err
-          Nothing
-          (T.pack $ "Duplicate typeclass defined in module: " <> show typeclassName )
-          []
-          []
-moduleErrorDiagnostic _ (MissingTypeclass typeclassName)
- = Diag.addReport mempty $
-        Diag.Err
-          Nothing
-          (T.pack $ "Could not find typeclass: " <> show typeclassName )
-          []
-          []
+    (DuplicateDefinition (Duplicate ident ann1 ann2))
+     -> Diag.addReport diag $
+            Diag.Err
+              Nothing
+              (T.pack $ "Duplicate definition in module: " <> show ident )
+                      ( catMaybes
+                          [ (,)
+                              <$> positionFromAnnotation
+                                filename
+                                input
+                                ann1
+                              <*> pure
+                                ( Diag.This (T.pack "Defined here")
+                                ),
+                            (,)
+                              <$> positionFromAnnotation
+                                filename
+                                input
+                                ann2
+                              <*> pure (Diag.Where (T.pack "Also defined here"))
+                          ]
+                      )
+                      [Diag.Note $ T.pack "Remove one of these definitions"]
+    (DuplicateTypeName typeName)
+     -> Diag.addReport mempty $
+            Diag.Err
+              Nothing
+              (T.pack $ "Duplicate type name definition in module: " <> show typeName )
+              []
+              []
+    (DuplicateConstructor constructor)
+     -> Diag.addReport mempty $
+            Diag.Err
+              Nothing
+              (T.pack $ "Duplicate constructor defined in module: " <> show constructor )
+              []
+              []
+    (DuplicateTypeclass typeclassName)
+     -> Diag.addReport mempty $
+            Diag.Err
+              Nothing
+              (T.pack $ "Duplicate typeclass defined in module: " <> show typeclassName )
+              []
+              []
+    (MissingTypeclass typeclassName)
+     -> Diag.addReport mempty $
+            Diag.Err
+              Nothing
+              (T.pack $ "Could not find typeclass: " <> show typeclassName )
+              []
+              []
 
 
 

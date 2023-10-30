@@ -16,18 +16,19 @@ import qualified Data.Set as S
 import Smol.Core
 import Smol.Core.Modules.Types.Module
 import Smol.Core.Modules.Types.ModuleError
+import Smol.Core.Modules.Types.TopLevelExpression
 
 errorIfExpressionAlreadyDefined ::
-  (MonadError (ModuleError ann) m) =>
+  (MonadError (ModuleError ann) m, Monoid ann) =>
   Module dep ann ->
   ann ->
   Identifier ->
   m ()
-errorIfExpressionAlreadyDefined mod' ann def =
-  when
-    ( M.member def (moExpressions mod')
-    )
-    (throwError (DuplicateDefinition def))
+errorIfExpressionAlreadyDefined mod' ann ident =
+  case M.lookup ident (moExpressions mod') of
+    Nothing -> pure ()
+    Just tle -> throwError $
+      DuplicateDefinition (Duplicate ident ann (getTopLevelExpressionAnnotation tle))
 
 checkDataType ::
   (MonadError (ModuleError ann) m) =>
