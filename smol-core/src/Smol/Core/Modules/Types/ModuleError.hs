@@ -32,7 +32,7 @@ positionFromAnnotation path input (Location locStart locEnd) =
           (ssRowStart ss, ssColStart ss)
           (ssRowEnd ss, ssColEnd ss)
           path
-      dropOneAnn = Location locStart (locEnd - 2) -- TODO: the real fix is drop trailing linebreaks in parsing
+      dropOneAnn = Location locStart (locEnd - 1) -- TODO: the real fix is drop trailing linebreaks in parsing
    in toPos <$> sourceSpan input dropOneAnn
 
 data TestError ann
@@ -72,10 +72,11 @@ data Duplicate thing ann
 
 data ModuleError ann
   = DuplicateDefinition (Duplicate Identifier ann)
-  | DuplicateTypeName TypeName
-  | DuplicateConstructor Constructor
+  | DuplicateTypeDefinition (Duplicate Identifier ann)
+  | DuplicateTypeName (Duplicate TypeName ann)
+  | DuplicateConstructor (Duplicate Constructor ann)
   | DuplicateTypeclass TypeclassName
-  | MissingTypeclass TypeclassName
+  | MissingTypeclass ann TypeclassName
   | ErrorInResolveDeps ResolveDepsError
   | DefDoesNotTypeCheck (DefIdentifier ResolvedDep) (TCError ann)
   | DictionaryPassingError (TCError ann)
@@ -83,6 +84,25 @@ data ModuleError ann
   | ErrorInTest TestName (TestError ann)
   | ErrorInInterpreter (InterpreterError ann)
   deriving stock (Eq, Ord, Show)
+
+fromDuplicate :: String -> T.Text -> Duplicate thing Annotation -> [(Diag.Position, Diag.Marker T.Text)]
+fromDuplicate filename input (Duplicate _ ann1 ann2) =
+  catMaybes
+    [ (,)
+        <$> positionFromAnnotation
+          filename
+          input
+          ann1
+        <*> pure
+          ( Diag.This (T.pack "Defined here")
+          ),
+      (,)
+        <$> positionFromAnnotation
+          filename
+          input
+          ann2
+        <*> pure (Diag.Where (T.pack "Also defined here"))
+    ]
 
 moduleErrorDiagnostic :: T.Text -> ModuleError Annotation -> Diag.Diagnostic T.Text
 moduleErrorDiagnostic input moduleError =
@@ -100,60 +120,61 @@ moduleErrorDiagnostic input moduleError =
         (ErrorInResolveDeps resolveErr) ->
           resolveDepsErrorDiagnostic resolveErr
         (EmptyTestName _expr) ->
-          Diag.addReport mempty $
+          Diag.addReport diag $
             Diag.Err
               Nothing
               (T.pack "Test name must not be empty!")
               []
               []
-        (DuplicateDefinition (Duplicate ident ann1 ann2)) ->
+        (DuplicateDefinition dup@(Duplicate ident _ _)) ->
           Diag.addReport diag $
             Diag.Err
               Nothing
               (T.pack $ "Duplicate definition in module: " <> show ident)
-              ( catMaybes
-                  [ (,)
-                      <$> positionFromAnnotation
-                        filename
-                        input
-                        ann1
-                      <*> pure
-                        ( Diag.This (T.pack "Defined here")
-                        ),
-                    (,)
-                      <$> positionFromAnnotation
-                        filename
-                        input
-                        ann2
-                      <*> pure (Diag.Where (T.pack "Also defined here"))
-                  ]
-              )
+              (fromDuplicate filename input dup)
               [Diag.Note $ T.pack "Remove one of these definitions"]
-        (DuplicateTypeName typeName) ->
-          Diag.addReport mempty $
+        (DuplicateTypeDefinition dup@(Duplicate ident _ _)) ->
+          Diag.addReport diag $
+            Diag.Err
+              Nothing
+              (T.pack $ "Duplicate type definition in module: " <> show ident)
+              (fromDuplicate filename input dup)
+              [Diag.Note $ T.pack "Remove one of these type definitions"]
+        (DuplicateTypeName dup@(Duplicate typeName _ _)) ->
+          Diag.addReport diag $
             Diag.Err
               Nothing
               (T.pack $ "Duplicate type name definition in module: " <> show typeName)
-              []
-              []
-        (DuplicateConstructor constructor) ->
-          Diag.addReport mempty $
+              (fromDuplicate filename input dup)
+              [Diag.Note $ T.pack "Remove one of these data type definitions"]
+        (DuplicateConstructor dup@(Duplicate constructor _ _)) ->
+          Diag.addReport diag $
             Diag.Err
               Nothing
               (T.pack $ "Duplicate constructor defined in module: " <> show constructor)
-              []
-              []
+              (fromDuplicate filename input dup)
+              [Diag.Note $ T.pack "Remove one of these constructors"]
         (DuplicateTypeclass typeclassName) ->
-          Diag.addReport mempty $
+          Diag.addReport diag $
             Diag.Err
               Nothing
               (T.pack $ "Duplicate typeclass defined in module: " <> show typeclassName)
               []
               []
-        (MissingTypeclass typeclassName) ->
-          Diag.addReport mempty $
+        (MissingTypeclass ann typeclassName) ->
+          Diag.addReport diag $
             Diag.Err
               Nothing
               (T.pack $ "Could not find typeclass: " <> show typeclassName)
-              []
+              ( catMaybes
+                  [ (,)
+                      <$> positionFromAnnotation
+                        filename
+                        input
+                        ann
+                      <*> pure
+                        ( Diag.Where (T.pack "Instance defined here")
+                        )
+                  ]
+              )
               []

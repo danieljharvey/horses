@@ -13,6 +13,9 @@
 module Smol.Core.Modules.Types.ModuleItem
   ( ModuleItem (..),
     ModuleExpression (..),
+    ModuleType (..),
+    ModuleDataType (..),
+    ModuleInstance (..),
   )
 where
 
@@ -44,10 +47,10 @@ import Smol.Core.Types.TypeName
 -- when things don't make sense (duplicate defs etc)
 data ModuleItem ann
   = ModuleExpression (ModuleExpression ann)
-  | ModuleExpressionType Identifier [Constraint ParseDep ann] (Type ParseDep ann)
-  | ModuleDataType (DataType ParseDep ann)
+  | ModuleType (ModuleType ann)
+  | ModuleDataType (ModuleDataType ann)
   | ModuleTest TestName (Expr ParseDep ann)
-  | ModuleInstance [Constraint ParseDep ann] (Constraint ParseDep ann) (Expr ParseDep ann)
+  | ModuleInstance (ModuleInstance ann)
   | ModuleClass (Typeclass ParseDep ann)
   deriving stock (Eq, Ord, Functor)
 
@@ -71,6 +74,49 @@ deriving stock instance
     Show (DataType ParseDep ann)
   ) =>
   Show (ModuleExpression ann)
+
+-- a top level type signature
+data ModuleType ann = ModuleTypeC
+  { mtAnn :: ann,
+    mtIdent :: Identifier,
+    mtConstraints :: [Constraint ParseDep ann],
+    mtType :: Type ParseDep ann
+  }
+  deriving stock (Eq, Ord, Functor)
+
+deriving stock instance
+  ( Show ann,
+    Show (DataType ParseDep ann)
+  ) =>
+  Show (ModuleType ann)
+
+-- a top level data type declaration
+data ModuleDataType ann = ModuleDataTypeC
+  { mdtAnn :: ann,
+    mdtDataType :: DataType ParseDep ann
+  }
+  deriving stock (Eq, Ord, Functor)
+
+deriving stock instance
+  ( Show ann,
+    Show (DataType ParseDep ann)
+  ) =>
+  Show (ModuleDataType ann)
+
+-- a top level data type declaration
+data ModuleInstance ann = ModuleInstanceC
+  { miAnn :: ann,
+    miConstraints :: [Constraint ParseDep ann],
+    miHead :: Constraint ParseDep ann,
+    miExpr :: Expr ParseDep ann
+  }
+  deriving stock (Eq, Ord, Functor)
+
+deriving stock instance
+  ( Show ann,
+    Show (DataType ParseDep ann)
+  ) =>
+  Show (ModuleInstance ann)
 
 -- this is the checked module, it contains no duplicates and we don't care
 -- about ordering
