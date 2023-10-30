@@ -143,12 +143,12 @@ parseInstance =
         myString "="
         (,,) constraints mainConstraint <$> expressionParser
    in withLocation
-        ( \ann (constraints, head, expr) ->
+        ( \ann (constraints, head', expr) ->
             ModuleInstance
               ( ModuleInstanceC
                   { miAnn = ann,
                     miConstraints = constraints,
-                    miHead = head,
+                    miHead = head',
                     miExpr = expr
                   }
               )
