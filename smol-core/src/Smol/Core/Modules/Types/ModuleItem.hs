@@ -12,7 +12,7 @@
 
 module Smol.Core.Modules.Types.ModuleItem
   ( ModuleItem (..),
-    ModuleExpression (..)
+    ModuleExpression (..),
   )
 where
 
@@ -58,13 +58,13 @@ deriving stock instance
   Show (ModuleItem ann)
 
 -- a top level expression
-data ModuleExpression ann
-  = ModuleExpressionC {
-      meAnn :: ann,
-      meIdent :: Identifier,
-      meArgs :: [Identifier],
-      meExpr :: Expr ParseDep ann
-  } deriving stock (Eq,Ord,Functor)
+data ModuleExpression ann = ModuleExpressionC
+  { meAnn :: ann,
+    meIdent :: Identifier,
+    meArgs :: [Identifier],
+    meExpr :: Expr ParseDep ann
+  }
+  deriving stock (Eq, Ord, Functor)
 
 deriving stock instance
   ( Show ann,

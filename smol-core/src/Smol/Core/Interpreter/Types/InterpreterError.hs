@@ -2,16 +2,16 @@
 {-# LANGUAGE OverloadedStrings #-}
 
 module Smol.Core.Interpreter.Types.InterpreterError (InterpreterError (..), interpreterErrorDiagnostic) where
-import Smol.Core.Types.Annotation
-import qualified Error.Diagnose as Diag
-import qualified Data.Text as T
 
 import Data.Map.Strict (Map)
 import qualified Data.Map.Strict as M
+import qualified Data.Text as T
+import qualified Error.Diagnose as Diag
 import GHC.Natural
 import qualified Prettyprinter as PP
 import Smol.Core.Interpreter.Types.Stack
 import Smol.Core.Printer
+import Smol.Core.Types.Annotation
 import Smol.Core.Types.Expr
 import Smol.Core.Types.Identifier
 import Smol.Core.Types.Op
@@ -48,17 +48,14 @@ commaSep =
 interpreterErrorDiagnostic :: InterpreterError Annotation -> Diag.Diagnostic T.Text
 interpreterErrorDiagnostic intError =
   Diag.addReport mempty $
-        Diag.Err
-          Nothing
-          (prettyPrint intError)
-          []
-          []
+    Diag.Err
+      Nothing
+      (prettyPrint intError)
+      []
+      []
   where
     prettyPrint :: (Printer a) => a -> T.Text
     prettyPrint = renderWithWidth 40 . prettyDoc
-
-
-
 
 instance Printer (InterpreterError ann) where
   prettyDoc (CouldNotFindVar items name) =

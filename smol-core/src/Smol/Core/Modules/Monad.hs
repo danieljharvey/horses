@@ -27,8 +27,9 @@ errorIfExpressionAlreadyDefined ::
 errorIfExpressionAlreadyDefined mod' ann ident =
   case M.lookup ident (moExpressions mod') of
     Nothing -> pure ()
-    Just tle -> throwError $
-      DuplicateDefinition (Duplicate ident ann (getTopLevelExpressionAnnotation tle))
+    Just tle ->
+      throwError $
+        DuplicateDefinition (Duplicate ident ann (getTopLevelExpressionAnnotation tle))
 
 checkDataType ::
   (MonadError (ModuleError ann) m) =>

@@ -1,9 +1,10 @@
 {-# LANGUAGE DerivingStrategies #-}
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE LambdaCase #-}
+{-# LANGUAGE NamedFieldPuns #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE RecordWildCards #-}
-  {-# LANGUAGE NamedFieldPuns #-}
+
 module Smol.Core.Modules.FromParts (addModulePart, moduleFromModuleParts, exprAndTypeFromParts) where
 
 import Control.Monad (unless)
@@ -40,7 +41,7 @@ addModulePart ::
   m (Module ParseDep ann)
 addModulePart allParts part mod' =
   case part of
-    ModuleExpression (ModuleExpressionC {meAnn, meIdent,meArgs,meExpr}) -> do
+    ModuleExpression (ModuleExpressionC {meAnn, meIdent, meArgs, meExpr}) -> do
       errorIfExpressionAlreadyDefined mod' meAnn meIdent
       let tle = exprAndTypeFromParts allParts meIdent meArgs meExpr
       pure $
