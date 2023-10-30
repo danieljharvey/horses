@@ -5,16 +5,22 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE RecordWildCards #-}
 
-module Smol.Core.Modules.FromParts (addModulePart, moduleFromModuleParts, exprAndTypeFromParts) where
+module Smol.Core.Modules.FromParts
+  ( addModulePart,
+    moduleFromModuleParts,
+    exprAndTypeFromParts,
+  )
+where
 
 import Control.Monad (unless)
 import Control.Monad.Except
 import Data.Coerce
+import Data.Foldable (traverse_)
 import Data.Functor (void)
 import qualified Data.Map.Strict as M
 import Data.Maybe (isJust, mapMaybe)
+import qualified Data.Set as S
 import Smol.Core
-import Smol.Core.Modules.Monad
 import Smol.Core.Modules.Types.Module
 import Smol.Core.Modules.Types.ModuleError
 import Smol.Core.Modules.Types.ModuleItem
@@ -41,15 +47,16 @@ addModulePart ::
   m (Module ParseDep ann)
 addModulePart allParts part mod' =
   case part of
-    ModuleExpression (ModuleExpressionC {meAnn, meIdent, meArgs, meExpr}) -> do
-      errorIfExpressionAlreadyDefined mod' meAnn meIdent
-      let tle = exprAndTypeFromParts allParts meIdent meArgs meExpr
+    ModuleExpression (ModuleExpressionC {meIdent}) -> do
+      tle <- exprAndTypeFromParts allParts meIdent
       pure $
         mod'
           { moExpressions =
               M.singleton meIdent tle <> moExpressions mod'
           }
-    ModuleExpressionType _name _ _ty -> do
+    ModuleType (ModuleTypeC {mtIdent}) -> do
+      -- check for duplicates
+      _ <- findTypeExpression mtIdent allParts
       pure mod' -- we sort these elsewhere
     ModuleTest testName expr
       | "" == testName ->
@@ -68,25 +75,26 @@ addModulePart allParts part mod' =
               { moClasses =
                   M.singleton (tcName tc) tc <> moClasses mod'
               }
-    ModuleInstance constraints constraint expr -> do
+    ModuleInstance (ModuleInstanceC {miAnn, miConstraints, miHead, miExpr}) -> do
       unless
-        (isJust $ findTypeclass (conTypeclass constraint) allParts)
-        (throwError $ MissingTypeclass (conTypeclass constraint))
+        (isJust $ findTypeclass (conTypeclass miHead) allParts)
+        (throwError $ MissingTypeclass miAnn (conTypeclass miHead))
       pure $
         mod'
           { moInstances =
               M.singleton
-                (void constraint)
+                (void miHead)
                 ( Instance
-                    { inConstraints = constraints,
-                      inExpr = expr
+                    { inConstraints = miConstraints,
+                      inExpr = miExpr
                     }
                 )
                 <> moInstances mod'
           }
-    ModuleDataType dt@(DataType tyCon _ _) -> do
+    ModuleDataType (ModuleDataTypeC {mdtDataType = DataType tyCon _ constructors}) -> do
       let typeName = coerce tyCon
-      checkDataType mod' dt
+      dt <- findDataType typeName allParts
+      traverse_ (`findConstructor` allParts) (M.keys constructors)
       pure $
         mod'
           { moDataTypes =
@@ -99,36 +107,129 @@ addModulePart allParts part mod' =
 -- 2) if so - ensure we have a full set (error if not) and create annotation
 -- 3) if not, just return expr
 exprAndTypeFromParts ::
-  (Monoid ann) =>
+  (MonadError (ModuleError ann) m, Monoid ann) =>
   [ModuleItem ann] ->
   Identifier ->
-  [Identifier] ->
-  Expr ParseDep ann ->
-  TopLevelExpression ParseDep ann
-exprAndTypeFromParts moduleItems ident idents expr =
+  m (TopLevelExpression ParseDep ann)
+exprAndTypeFromParts moduleItems ident = do
+  (idents, expr) <- findExpression ident moduleItems
   let tleExpr =
         foldr
           (ELambda mempty . emptyParseDep)
           expr
           idents
-      (tleConstraints, tleType) =
-        case findTypeExpression ident moduleItems of
-          Just (constraints, ty) ->
-            (constraints, Just ty)
-          Nothing ->
-            (mempty, Nothing)
-   in TopLevelExpression {..}
+  (tleConstraints, tleType) <- do
+    foundType <- findTypeExpression ident moduleItems
+    case foundType of
+      Just (constraints, ty) ->
+        pure (constraints, Just ty)
+      Nothing ->
+        pure (mempty, Nothing)
+  pure $ TopLevelExpression {..}
 
-findTypeExpression :: Identifier -> [ModuleItem ann] -> Maybe ([Constraint ParseDep ann], Type ParseDep ann)
-findTypeExpression ident moduleItems =
+findExpression ::
+  (MonadError (ModuleError ann) m) =>
+  Identifier ->
+  [ModuleItem ann] ->
+  m ([Identifier], Expr ParseDep ann)
+findExpression ident moduleItems =
   case mapMaybe
     ( \case
-        ModuleExpressionType name constraints ty | name == ident -> Just (constraints, ty)
+        ModuleExpression moduleExpression
+          | meIdent moduleExpression == ident ->
+              Just moduleExpression
         _ -> Nothing
     )
     moduleItems of
-    [a] -> Just a
-    _ -> Nothing -- we should have better errors for multiple type declarations, but for now, chill out friend
+    [a] -> pure (meArgs a, meExpr a)
+    [] -> error "won't happen"
+    (a : b : _) ->
+      throwError
+        ( DuplicateDefinition
+            ( Duplicate
+                ident
+                (meAnn a)
+                (meAnn b)
+            )
+        )
+
+findTypeExpression ::
+  (MonadError (ModuleError ann) m) =>
+  Identifier ->
+  [ModuleItem ann] ->
+  m (Maybe ([Constraint ParseDep ann], Type ParseDep ann))
+findTypeExpression ident moduleItems =
+  case mapMaybe
+    ( \case
+        ModuleType moduleType
+          | mtIdent moduleType == ident ->
+              Just moduleType
+        _ -> Nothing
+    )
+    moduleItems of
+    [a] -> pure $ Just (mtConstraints a, mtType a)
+    [] -> pure Nothing
+    (a : b : _) ->
+      throwError
+        ( DuplicateTypeDefinition
+            ( Duplicate
+                ident
+                (mtAnn a)
+                (mtAnn b)
+            )
+        )
+
+findDataType ::
+  (MonadError (ModuleError ann) m) =>
+  TypeName ->
+  [ModuleItem ann] ->
+  m (DataType ParseDep ann)
+findDataType typeName moduleItems =
+  case mapMaybe
+    ( \case
+        ModuleDataType mdt@ModuleDataTypeC {mdtDataType = DataType {dtName}}
+          | dtName == typeName ->
+              Just mdt
+        _ -> Nothing
+    )
+    moduleItems of
+    [a] -> pure (mdtDataType a)
+    [] -> error "shouldn't happen"
+    (a : b : _) ->
+      throwError
+        ( DuplicateTypeName
+            ( Duplicate
+                typeName
+                (mdtAnn a)
+                (mdtAnn b)
+            )
+        )
+
+findConstructor ::
+  (MonadError (ModuleError ann) m) =>
+  Constructor ->
+  [ModuleItem ann] ->
+  m (DataType ParseDep ann)
+findConstructor tyCon moduleItems =
+  case mapMaybe
+    ( \case
+        ModuleDataType mdt@ModuleDataTypeC {mdtDataType = DataType {dtConstructors}}
+          | S.member tyCon (M.keysSet dtConstructors) ->
+              Just mdt
+        _ -> Nothing
+    )
+    moduleItems of
+    [a] -> pure (mdtDataType a)
+    [] -> error "shouldn't happen"
+    (a : b : _) ->
+      throwError
+        ( DuplicateConstructor
+            ( Duplicate
+                tyCon
+                (mdtAnn a)
+                (mdtAnn b)
+            )
+        )
 
 findTypeclass :: TypeclassName -> [ModuleItem ann] -> Maybe (Typeclass ParseDep ann)
 findTypeclass tcn moduleItems =

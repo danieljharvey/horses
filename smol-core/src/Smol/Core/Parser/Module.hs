@@ -50,7 +50,17 @@ parseModuleItem =
 -- type Maybe a = Just a | Nothing
 -- type Tree a = Branch (Tree a) a (Tree a) | Leaf a
 moduleTypeDeclarationParser :: Parser (ModuleItem Annotation)
-moduleTypeDeclarationParser = ModuleDataType <$> dataTypeParser
+moduleTypeDeclarationParser =
+  withLocation
+    ( \ann dt ->
+        ModuleDataType
+          ( ModuleDataTypeC
+              { mdtAnn = ann,
+                mdtDataType = dt
+              }
+          )
+    )
+    dataTypeParser
 
 -------
 
@@ -87,12 +97,25 @@ moduleDefinitionParser =
 -- def id : a -> a
 -- def compose : (b -> c) -> (a -> b) -> (a -> c)
 moduleTypeDefinitionParser :: Parser (ModuleItem Annotation)
-moduleTypeDefinitionParser = do
-  myString "def"
-  name <- identifierParser
-  myString ":"
-  constraints <- try typeConstraintParser <|> pure mempty
-  ModuleExpressionType name constraints <$> typeParser
+moduleTypeDefinitionParser =
+  let parser = do
+        myString "def"
+        ident <- identifierParser
+        myString ":"
+        constraints <- try typeConstraintParser <|> pure mempty
+        (,,) ident constraints <$> typeParser
+   in withLocation
+        ( \ann (ident, constraints, ty) ->
+            ModuleType
+              ( ModuleTypeC
+                  { mtAnn = ann,
+                    mtIdent = ident,
+                    mtConstraints = constraints,
+                    mtType = ty
+                  }
+              )
+        )
+        parser
 
 typeConstraintParser :: Parser [Constraint ParseDep Annotation]
 typeConstraintParser = do
@@ -112,12 +135,25 @@ parseTest = do
 
 -- `instance Eq Int = \a -> \b -> a == b`
 parseInstance :: Parser (ModuleItem Annotation)
-parseInstance = do
-  myString "instance"
-  constraints <- try typeConstraintParser <|> pure mempty
-  mainConstraint <- constraintParser
-  myString "="
-  ModuleInstance constraints mainConstraint <$> expressionParser
+parseInstance =
+  let parser = do
+        myString "instance"
+        constraints <- try typeConstraintParser <|> pure mempty
+        mainConstraint <- constraintParser
+        myString "="
+        (,,) constraints mainConstraint <$> expressionParser
+   in withLocation
+        ( \ann (constraints, head, expr) ->
+            ModuleInstance
+              ( ModuleInstanceC
+                  { miAnn = ann,
+                    miConstraints = constraints,
+                    miHead = head,
+                    miExpr = expr
+                  }
+              )
+        )
+        parser
 
 parseClass :: Parser (ModuleItem Annotation)
 parseClass = do

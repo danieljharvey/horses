@@ -43,3 +43,4 @@ test "fmap works with Either" =
     let inc = (\a -> a + 1 : Int -> Int);
     unwrapEither (fmap inc (Right 1)) == unwrapEither (Right (2 : Int))
 
+instance Show String = \a -> "dog"
