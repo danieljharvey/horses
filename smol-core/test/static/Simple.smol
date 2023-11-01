@@ -1,0 +1,2 @@
+def id : a -> a
+def id a = a
