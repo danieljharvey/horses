@@ -19,6 +19,7 @@ module Smol.Core.Modules.Types.ModuleItem
   )
 where
 
+import Data.Foldable (foldl')
 import Prettyprinter
 import Smol.Core.Modules.Types.TestName
 import Smol.Core.Printer
@@ -28,7 +29,8 @@ import Smol.Core.Types.Expr
 import Smol.Core.Types.Identifier
 import Smol.Core.Types.ParseDep
 import Smol.Core.Types.Type
---import Smol.Core.Types.TypeName
+
+-- import Smol.Core.Types.TypeName
 
 -- a module is, broadly, one file
 -- it defines some datatypes, infixes and definitions
@@ -37,8 +39,6 @@ import Smol.Core.Types.Type
 -- item parsed from file, kept like this so we can order them and have
 -- duplicates
 -- we will remove duplicates when we work out dependencies between everything
--- TODO: add more annotations to everything so we can produce clearer errors
--- when things don't make sense (duplicate defs etc)
 data ModuleItem ann
   = ModuleExpression (ModuleExpression ann)
   | ModuleType (ModuleType ann)
@@ -113,13 +113,15 @@ deriving stock instance
   Show (ModuleInstance ann)
 
 instance Printer (ModuleItem ann) where
-  prettyDoc (ModuleExpression (ModuleExpressionC {meIdent,meExpr})) =
-    printExpression meIdent meExpr <> line <> line
-  prettyDoc (ModuleType (ModuleTypeC {mtIdent,mtType})) =
+  prettyDoc (ModuleExpression (ModuleExpressionC {meIdent, meArgs, meExpr})) =
+    printExpression meIdent meArgs meExpr <> line <> line
+  prettyDoc (ModuleType (ModuleTypeC {mtIdent, mtType})) =
     printType mtIdent mtType <> line
-  prettyDoc (ModuleDataType (ModuleDataTypeC {})) = mempty
-  prettyDoc (ModuleTest _ _) = mempty
-  prettyDoc (ModuleInstance _) = mempty
+  prettyDoc (ModuleDataType (ModuleDataTypeC {mdtDataType})) = prettyDoc mdtDataType <> line <> line
+  prettyDoc (ModuleTest testName expr) =
+    printTest testName expr <> line <> line
+  prettyDoc (ModuleInstance (ModuleInstanceC {miConstraints, miHead, miExpr})) =
+    printInstance miConstraints miHead miExpr <> line <> line
   prettyDoc (ModuleClass _) = mempty
 
 _withDoubleLines :: [Doc a] -> Doc a
@@ -129,19 +131,47 @@ _withDoubleLines = vsep . fmap (line <>)
 indentMulti :: Int -> Doc style -> Doc style
 indentMulti i doc = flatAlt (indent i doc) doc
 
+printMany :: (Printer a) => [a] -> Doc style
+printMany = foldl' (\doc a -> doc <+> prettyDoc a) mempty
+
+printInstance ::
+  [Constraint ParseDep ann] ->
+  Constraint ParseDep ann ->
+  Expr ParseDep ann ->
+  Doc style
+printInstance constraints instanceHead expr =
+  let prettyConstraints = case constraints of
+        [] -> " "
+        cons ->
+          "("
+            <> concatWith
+              (\a b -> a <> ", " <> b)
+              (prettyDoc <$> cons)
+            <> ") =>"
+   in "instance"
+        <> prettyConstraints
+        <+> prettyDoc instanceHead
+        <+> "="
+        <> line
+        <> indentMulti 2 (prettyDoc expr)
+
 printType :: Identifier -> Type ParseDep ann -> Doc style
 printType name ty =
-          "def"
-            <+> prettyDoc name
-            <+> ":"
-            <> line
-            <> indentMulti 2 (prettyDoc ty)
-            <> "\n"
+  "def"
+    <+> prettyDoc name
+    <+> ":"
+    <> line
+    <> indentMulti 2 (prettyDoc ty)
 
-printExpression :: Identifier -> Expr ParseDep ann -> Doc a
-printExpression name expr =
-        "def"
-          <+> prettyDoc name
-          <+> "="
-          <> line
-          <> indentMulti 2 (prettyDoc expr)
+printExpression :: Identifier -> [Identifier] -> Expr ParseDep ann -> Doc style
+printExpression name args expr =
+  "def"
+    <+> prettyDoc name
+    <+> printMany args
+    <+> "="
+    <> line
+    <> indentMulti 2 (prettyDoc expr)
+
+printTest :: TestName -> Expr ParseDep ann -> Doc style
+printTest testName expr =
+  "test" <+> "\"" <> prettyDoc testName <> "\"" <+> "=" <+> indentMulti 2 (prettyDoc expr)
