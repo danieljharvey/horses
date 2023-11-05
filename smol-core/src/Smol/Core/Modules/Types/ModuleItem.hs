@@ -117,12 +117,14 @@ instance Printer (ModuleItem ann) where
     printExpression meIdent meArgs meExpr <> line <> line
   prettyDoc (ModuleType (ModuleTypeC {mtIdent, mtType})) =
     printType mtIdent mtType <> line
-  prettyDoc (ModuleDataType (ModuleDataTypeC {mdtDataType})) = prettyDoc mdtDataType <> line <> line
+  prettyDoc (ModuleDataType (ModuleDataTypeC {mdtDataType})) = 
+    prettyDoc mdtDataType <> line <> line
   prettyDoc (ModuleTest testName expr) =
     printTest testName expr <> line <> line
   prettyDoc (ModuleInstance (ModuleInstanceC {miConstraints, miHead, miExpr})) =
     printInstance miConstraints miHead miExpr <> line <> line
-  prettyDoc (ModuleClass _) = mempty
+  prettyDoc (ModuleClass moduleClass) = 
+    prettyDoc moduleClass  <> line <> line
 
 _withDoubleLines :: [Doc a] -> Doc a
 _withDoubleLines = vsep . fmap (line <>)

@@ -67,8 +67,8 @@ deriving anyclass instance
   ) =>
   ToJSON (Pattern dep ann)
 
-inParens :: (Printer a) => a -> PP.Doc style
-inParens = PP.parens . prettyDoc
+_inParens :: (Printer a) => a -> PP.Doc style
+_inParens = PP.parens . prettyDoc
 
 -- print simple things with no brackets, and complex things inside brackets
 printSubPattern ::
@@ -78,7 +78,7 @@ printSubPattern ::
   Pattern dep ann ->
   PP.Doc style
 printSubPattern pat = case pat of
-  all'@PConstructor {} -> inParens all'
+  all'@PConstructor {} -> prettyDoc all' -- inParens all'
   a -> prettyDoc a
 
 instance
