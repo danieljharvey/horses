@@ -20,12 +20,14 @@ import Smol.Core.Parser (parseModule)
 import Smol.Repl.Helpers.Diagnostics
 import Smol.Repl.Helpers.ShowTestResults
 import System.Console.Haskeline
+import Smol.Repl.Monad
+import Control.Monad.Reader
 
-repl :: IO ()
+repl :: (MonadIO m,MonadReader ReplEnv m) => m ()
 repl = do
-  putStrLn "Welcome to smol"
-  putStrLn "Exit with :quit"
-  runInputT defaultSettings loop
+  liftIO $ putStrLn "Welcome to smol"
+  liftIO $ putStrLn "Exit with :quit"
+  liftIO $ runInputT defaultSettings loop
   where
     loop :: InputT IO ()
     loop = do

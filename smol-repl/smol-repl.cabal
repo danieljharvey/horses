@@ -25,7 +25,9 @@ common shared
     , base
     , diagnose
     , haskeline
+    , hs-opentelemetry-sdk
     , megaparsec
+    , mtl
     , optparse-applicative
     , smol-backend
     , smol-core
@@ -37,6 +39,7 @@ common shared
     Smol.Repl
     Smol.Repl.Helpers.Diagnostics
     Smol.Repl.Helpers.ShowTestResults
+    Smol.Repl.Monad
 
 library
   import:           shared

@@ -1,5 +1,9 @@
+{-# LANGUAGE OverloadedStrings #-}
+
 module Repl where
 
+import Control.Exception (bracket)
+import OpenTelemetry.Trace
 import Control.Applicative
 import Data.Text (Text)
 import qualified Options.Applicative as Opt
@@ -45,7 +49,7 @@ helpfulPreferences =
     }
 
 main :: IO ()
-main = do
+main = withTracer $ \_tracer -> do
   hSetBuffering stdout LineBuffering
   hSetBuffering stderr LineBuffering
   action <-
@@ -55,3 +59,12 @@ main = do
   case action of
     Repl -> Repl.repl
     Check filePath -> Check.check filePath
+
+withTracer :: ((TracerOptions -> Tracer) -> IO c) -> IO c
+withTracer f = bracket
+      -- Install the SDK, pulling configuration from the environment
+      initializeGlobalTracerProvider
+      -- Ensure that any spans that haven't been exported yet are flushed
+      shutdownTracerProvider
+      -- Get a tracer so you can create spans
+      (\tracerProvider -> f $ makeTracer tracerProvider "your-app-name-or-subsystem")
