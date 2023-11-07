@@ -174,16 +174,17 @@ callClosure ::
   ( L.MonadModuleBuilder m,
     L.MonadIRBuilder m
   ) =>
+  (LLVM.Type, LLVM.Type) ->
   LLVM.Type ->
   Op.Operand ->
   Op.Operand ->
   m Op.Operand
-callClosure ty opFunc opArg = do
+callClosure (fnTy, closureTy) returnTy opFunc opArg = do
   -- get fn pt and env
-  (fn, env) <- fromClosure opFunc
+  (fn, env) <- fromClosure (fnTy, closureTy) opFunc
 
   -- call fn with env + arg
-  LLVM.call ty
+  LLVM.call returnTy
     fn
     [ (opArg, []),
       (env, [])
@@ -227,14 +228,15 @@ allocLocal label ty =
 -- | get fn and environment from closure for calling
 fromClosure ::
   (L.MonadIRBuilder m, L.MonadModuleBuilder m) =>
+    (LLVM.Type ,LLVM.Type)->
   Op.Operand ->
   m (Op.Operand, Op.Operand)
-fromClosure closure = do
+fromClosure (fnTy,closureTy) closure = do
   -- get fn pt
-  fn <- loadFromStruct closure [0]
+  fn <- loadFromStruct fnTy closure [0]
 
   -- get pointer to env
-  envAddress <- LLVM.gep closure [C.int32 0, C.int32 1]
+  envAddress <- LLVM.gep closureTy closure [C.int32 0, C.int32 1]
 
   pure (fn, envAddress)
 
@@ -319,8 +321,8 @@ irTypeToLLVM IRInt2 = LLVM.i1
 irTypeToLLVM (IRArray size inner) = LLVM.ArrayType size (irTypeToLLVM inner)
 irTypeToLLVM (IRStruct bits) =
   LLVM.StructureType False (irTypeToLLVM <$> bits)
-irTypeToLLVM (IRPointer target) =
-  LLVM.PointerType (irTypeToLLVM target) (LLVM.AddrSpace 0)
+irTypeToLLVM (IRPointer _target) =
+  LLVM.PointerType (LLVM.AddrSpace 0)
 irTypeToLLVM (IRFunctionType tyArgs tyRet) =
   LLVM.FunctionType (functionReturnType tyRet) (functionArgsType tyRet tyArgs) False
 
@@ -353,10 +355,10 @@ irStoreInStruct ::
 irStoreInStruct fromTy toStruct indexes from = do
   input <-
     if irTypeNeedsPointer fromTy
-      then LLVM.load from 0
+      then LLVM.load (irTypeToLLVM fromTy) from 0
       else pure from
   -- get pointer to element
-  slot1 <- LLVM.gep toStruct $ LLVM.int32 <$> ([0] <> indexes)
+  slot1 <- LLVM.gep (irTypeToLLVM fromTy) toStruct $ LLVM.int32 <$> ([0] <> indexes)
   -- store a in slot1
   LLVM.store slot1 0 input
 
@@ -373,14 +375,16 @@ irVarFromPath ::
     LLVM.MonadModuleBuilder m,
     LLVM.MonadIRBuilder m
   ) =>
+  LLVM.Type ->
   LLVM.Operand ->
   IRIdentifier ->
   GetPath ->
   m ()
-irVarFromPath llExpr ident (GetPath as GetValue) = do
-  val <- if null as then pure llExpr else loadFromStruct llExpr as
+irVarFromPath ty llExpr ident (GetPath as GetValue) = do
+  val <- if null as then pure llExpr else
+      loadFromStruct ty llExpr as
   addVar ident val
-irVarFromPath _llExpr _ident (GetPath _ (GetArrayTail _)) = do
+irVarFromPath _llExpr _ _ident (GetPath _ (GetArrayTail _)) = do
   error "spread on arrays not implemented as we'll need some sort of malloc"
 
 irFuncPointerToLLVM :: (MonadState IRState m) => IRFunctionName -> m LLVM.Operand
@@ -388,4 +392,4 @@ irFuncPointerToLLVM fnName = do
   fnType <- lookupFunctionType fnName
   pure $
     LLVM.ConstantOperand
-      (LLVM.GlobalReference (pointerType fnType) (irFunctionNameToLLVM fnName))
+      (LLVM.GlobalReference (irFunctionNameToLLVM fnName))
