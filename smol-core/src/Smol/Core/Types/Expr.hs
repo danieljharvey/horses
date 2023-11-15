@@ -290,7 +290,8 @@ prettyPatternMatch sumExpr matches =
     <+> printSubExpr sumExpr
     <+> "of"
     <+> PP.line
-    <> indentMulti 2
+    <> indentMulti
+      2
       ( PP.align $
           PP.vsep
             ( zipWith

@@ -4,17 +4,18 @@
 {-# LANGUAGE DerivingStrategies #-}
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE NamedFieldPuns #-}
+{-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE StandaloneDeriving #-}
-  {-# LANGUAGE OverloadedStrings #-}
+
 module Smol.Core.Typecheck.Typeclass.Types.Typeclass
   ( Typeclass (..),
   )
 where
 
-import qualified Prettyprinter as PP
 import Data.Aeson (FromJSON, FromJSONKey, ToJSON, ToJSONKey)
 import GHC.Generics (Generic)
 import Prettyprinter ((<+>))
+import qualified Prettyprinter as PP
 import Smol.Core.Printer
 import Smol.Core.Typecheck.Typeclass.Types.TypeclassName
 import Smol.Core.Types
@@ -76,12 +77,9 @@ instance Printer (Typeclass ParseDep ann) where
   prettyDoc (Typeclass {tcName, tcArgs, tcFuncName, tcFuncType}) =
     "class"
       <+> prettyDoc tcName
-      <+> 
-
-            PP.concatWith
-              (\a b -> a <> ", " <> b)
-              (prettyDoc <$> tcArgs)
-
+      <+> PP.concatWith
+        (\a b -> a <> ", " <> b)
+        (prettyDoc <$> tcArgs)
       <+> "{"
       <+> prettyDoc tcFuncName
       <> ":"

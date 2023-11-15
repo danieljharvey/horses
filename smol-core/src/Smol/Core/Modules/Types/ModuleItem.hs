@@ -167,13 +167,12 @@ printType constraints name ty =
               (\a b -> a <> ", " <> b)
               (prettyDoc <$> cons)
             <> ") =>"
-  in
-  "def"
-    <+> prettyDoc name
-    <+> ":"
-    <> prettyConstraints
-    <> line
-    <> indentMulti 2 (prettyDoc ty)
+   in "def"
+        <+> prettyDoc name
+        <+> ":"
+        <> prettyConstraints
+        <> line
+        <> indentMulti 2 (prettyDoc ty)
 
 printExpression :: Identifier -> [Identifier] -> Expr ParseDep ann -> Doc style
 printExpression name args expr =

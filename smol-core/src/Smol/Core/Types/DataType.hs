@@ -94,7 +94,8 @@ renderDataType (DataType tyCon vars' constructors') =
       else
         group $
           softline
-            <> indentMulti 2
+            <> indentMulti
+              2
               ( align $
                   vsep $
                     zipWith
