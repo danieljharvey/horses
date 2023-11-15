@@ -3,14 +3,18 @@ module Smol.Check
   )
 where
 
+import Control.Monad (when)
 import Control.Monad.IO.Class (MonadIO, liftIO)
 import Data.Text (Text)
 import qualified Data.Text as T
 import qualified Data.Text.IO as T
 import Smol.Core.Modules.Check
+import Smol.Core.Modules.PrettyPrint (printModuleParts)
 import Smol.Core.Modules.RunTests
 import Smol.Core.Modules.Types.ModuleError
+import Smol.Core.Modules.Types.ModuleItem
 import Smol.Core.Parser (parseModule)
+import Smol.Core.Printer
 import Smol.Repl.Helpers.Diagnostics
 import Smol.Repl.Helpers.ShowTestResults
 import System.Exit
@@ -32,9 +36,20 @@ checkFile filePath = liftIO $ do
         Right tcModule -> do
           let testResults = runTests tcModule
           liftIO $ printTestResults testResults
+
+          -- auto format the file for lols
+          format (T.unpack filePath) input moduleParts
           if testsAllPass testResults
             then putStrLn "Great job!" >> pure ExitSuccess
             else pure (ExitFailure 1)
+
+-- format the file, and if it's changed, save it
+format :: (MonadIO m) => FilePath -> Text -> [ModuleItem ann] -> m ()
+format filePath originalInput moduleItems = do
+  let printed = renderWithWidth 80 $ printModuleParts moduleItems
+  when (printed /= originalInput) $
+    liftIO $
+      T.writeFile filePath printed
 
 check :: Text -> IO ()
 check filePath = do

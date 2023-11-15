@@ -1,43 +1,42 @@
-
 class Show a { show: a -> String }
 
-instance Show Bool = \bool ->
-    if bool then "True" else "False"
+instance Show Bool =
+  \bool -> if bool then "True" else "False"
 
 test "Show True" =
-    show (True: Bool) == "True"
+  (show (True : Bool)) == "True"
 
 test "Show False" =
-    show (False: Bool) == "False"
+  (show (False : Bool)) == "False"
 
-/* Natural */
+type Natural  = Suc Natural | Zero
 
-type Natural = Suc Natural | Zero
+instance Show Natural =
+  \nat -> case nat of    Suc n -> "S (" + (show n) + ")" | Zero -> "Z"
 
-instance Show Natural = \nat -> case nat of
-                                Suc n -> "S (" + show n + ")"
-                                | Zero -> "Z"
 test "Show Zero" =
-    show Zero == "Z"
+  (show Zero) == "Z"
 
 test "Show Three" =
-    show (Suc (Suc (Suc Zero))) == "S (S (S (Z)))"
-
-/* List */
+  (show (Suc (Suc (Suc Zero)))) == "S (S (S (Z)))"
 
 type List a = Cons a (List a) | Nil
 
-instance (Show a) => Show (List a) =
-    \list -> case list of
-                Cons a rest -> show a + ":" + show rest
-              | Nil -> "Nil"
+instance(Show a) => Show List a =
+  \list ->
+    case list of 
+        Cons a rest ->   (show a) + ":" + (show rest)
+      | Nil ->   "Nil"
 
 def showBoolList =
-    show (Cons (True: Bool) (Cons (False: Bool) Nil)) == "True:False:Nil"
+  (show (Cons (True : Bool) (Cons (False : Bool) Nil))) == "True:False:Nil"
 
-test "Show Bool List" = showBoolList
+test "Show Bool List" =
+  showBoolList
 
 def showNaturalList =
-        show (Cons (Suc Zero) (Cons Zero Nil)) == "S (Z):Z:Nil"
+  (show (Cons (Suc Zero) (Cons Zero Nil))) == "S (Z):Z:Nil"
 
-test "Show Natural List" = showNaturalList
+test "Show Natural List" =
+  showNaturalList
+

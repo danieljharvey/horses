@@ -1,6 +1,4 @@
-{-# LANGUAGE DeriveAnyClass #-}
 {-# LANGUAGE DeriveFunctor #-}
-{-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE DerivingStrategies #-}
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE FlexibleInstances #-}
@@ -19,22 +17,18 @@ module Smol.Core.Modules.Types.ModuleItem
   )
 where
 
-import Data.Aeson (FromJSON, FromJSONKey, ToJSON, ToJSONKey)
-import Data.Map.Strict (Map)
-import qualified Data.Map.Strict as M
-import GHC.Generics (Generic)
+import Data.Foldable (foldl')
 import Prettyprinter
 import Smol.Core.Modules.Types.TestName
-import Smol.Core.Modules.Types.TopLevelExpression
 import Smol.Core.Printer
 import Smol.Core.Typecheck.Typeclass.Types
-import Smol.Core.Types.Constructor
 import Smol.Core.Types.DataType
 import Smol.Core.Types.Expr
 import Smol.Core.Types.Identifier
 import Smol.Core.Types.ParseDep
 import Smol.Core.Types.Type
-import Smol.Core.Types.TypeName
+
+-- import Smol.Core.Types.TypeName
 
 -- a module is, broadly, one file
 -- it defines some datatypes, infixes and definitions
@@ -43,8 +37,6 @@ import Smol.Core.Types.TypeName
 -- item parsed from file, kept like this so we can order them and have
 -- duplicates
 -- we will remove duplicates when we work out dependencies between everything
--- TODO: add more annotations to everything so we can produce clearer errors
--- when things don't make sense (duplicate defs etc)
 data ModuleItem ann
   = ModuleExpression (ModuleExpression ann)
   | ModuleType (ModuleType ann)
@@ -118,107 +110,77 @@ deriving stock instance
   ) =>
   Show (ModuleInstance ann)
 
--- this is the checked module, it contains no duplicates and we don't care
--- about ordering
--- should we care about ordering? it would allow us to pretty print?
-data Module dep ann = Module
-  { moExpressions :: Map Identifier (TopLevelExpression dep ann),
-    moDataTypes :: Map TypeName (DataType dep ann)
-  }
-  deriving stock (Functor, Generic)
+instance Printer (ModuleItem ann) where
+  prettyDoc (ModuleExpression (ModuleExpressionC {meIdent, meArgs, meExpr})) =
+    printExpression meIdent meArgs meExpr <> line <> line
+  prettyDoc (ModuleType (ModuleTypeC {mtConstraints, mtIdent, mtType})) =
+    printType mtConstraints mtIdent mtType <> line
+  prettyDoc (ModuleDataType (ModuleDataTypeC {mdtDataType})) =
+    prettyDoc mdtDataType <> line <> line
+  prettyDoc (ModuleTest testName expr) =
+    printTest testName expr <> line <> line
+  prettyDoc (ModuleInstance (ModuleInstanceC {miConstraints, miHead, miExpr})) =
+    printInstance miConstraints miHead miExpr <> line <> line
+  prettyDoc (ModuleClass moduleClass) =
+    prettyDoc moduleClass <> line <> line
 
-deriving stock instance
-  ( Eq ann,
-    Eq (dep TypeName),
-    Eq (dep Identifier),
-    Eq (dep Constructor)
-  ) =>
-  Eq (Module dep ann)
-
-deriving stock instance
-  ( Ord ann,
-    Ord (dep TypeName),
-    Ord (dep Constructor),
-    Ord (dep Identifier)
-  ) =>
-  Ord (Module dep ann)
-
-deriving stock instance
-  ( Show ann,
-    Show (dep TypeName),
-    Show (dep Constructor),
-    Show (dep Identifier)
-  ) =>
-  Show (Module dep ann)
-
-deriving anyclass instance
-  ( ToJSONKey (dep Identifier),
-    ToJSON ann,
-    ToJSON (dep TypeName),
-    ToJSON (dep Constructor),
-    ToJSON (dep Identifier)
-  ) =>
-  ToJSON (Module dep ann)
-
-deriving anyclass instance
-  ( Ord (dep Identifier),
-    FromJSONKey (dep Identifier),
-    FromJSON ann,
-    FromJSON (dep TypeName),
-    FromJSON (dep Constructor),
-    FromJSON (dep Identifier)
-  ) =>
-  FromJSON (Module dep ann)
-
-instance Printer (Module ParseDep ann) where
-  prettyDoc mod' =
-    let printedDefs =
-          uncurry printDefinition
-            <$> M.toList (moExpressions mod')
-        printedTypes =
-          uncurry printTypeDef
-            <$> M.toList (moDataTypes mod')
-     in withDoubleLines
-          ( printedTypes
-              <> printedDefs
-          )
-
-withDoubleLines :: [Doc a] -> Doc a
-withDoubleLines = vsep . fmap (line <>)
+_withDoubleLines :: [Doc a] -> Doc a
+_withDoubleLines = vsep . fmap (line <>)
 
 -- when on multilines, indent by `i`, if not then nothing
 indentMulti :: Int -> Doc style -> Doc style
 indentMulti i doc = flatAlt (indent i doc) doc
 
-printTypeDef :: TypeName -> DataType ParseDep ann -> Doc style
-printTypeDef _tn =
-  prettyDoc
+printMany :: (Printer a) => [a] -> Doc style
+printMany = foldl' (\doc a -> doc <+> prettyDoc a) mempty
 
-printDefinition :: Identifier -> TopLevelExpression ParseDep ann -> Doc a
-printDefinition name (TopLevelExpression {tleType, tleExpr}) =
-  let prettyExpr =
-        "def"
-          <+> prettyDoc name
-          <+> "="
-          <> line
-          <> indentMulti 2 (prettyDoc tleExpr)
-      prettyType = case tleType of
-        Just ty ->
-          "def"
-            <+> prettyDoc name
-            <+> ":"
-            <> line
-            <> indentMulti 2 (prettyDoc ty)
-            <> "\n"
-        Nothing -> ""
-   in prettyType <> prettyExpr
+printInstance ::
+  [Constraint ParseDep ann] ->
+  Constraint ParseDep ann ->
+  Expr ParseDep ann ->
+  Doc style
+printInstance constraints instanceHead expr =
+  let prettyConstraints = case constraints of
+        [] -> " "
+        cons ->
+          "("
+            <> concatWith
+              (\a b -> a <> ", " <> b)
+              (prettyDoc <$> cons)
+            <> ") => "
+   in "instance"
+        <> prettyConstraints
+        <> prettyDoc instanceHead
+        <+> "="
+        <> line
+        <> indentMulti 2 (prettyDoc expr)
 
-instance Semigroup (Module dep ann) where
-  (Module a b) <> (Module a' b') =
-    Module (a <> a') (b <> b')
+printType :: [Constraint ParseDep ann] -> Identifier -> Type ParseDep ann -> Doc style
+printType constraints name ty =
+  let prettyConstraints = case constraints of
+        [] -> " "
+        cons ->
+          "("
+            <> concatWith
+              (\a b -> a <> ", " <> b)
+              (prettyDoc <$> cons)
+            <> ") =>"
+   in "def"
+        <+> prettyDoc name
+        <+> ":"
+        <> prettyConstraints
+        <> line
+        <> indentMulti 2 (prettyDoc ty)
 
-instance Monoid (Module dep ann) where
-  mempty =
-    Module
-      mempty
-      mempty
+printExpression :: Identifier -> [Identifier] -> Expr ParseDep ann -> Doc style
+printExpression name args expr =
+  "def"
+    <+> prettyDoc name
+    <> printMany args
+    <+> "="
+    <> line
+    <> indentMulti 2 (prettyDoc expr)
+
+printTest :: TestName -> Expr ParseDep ann -> Doc style
+printTest testName expr =
+  "test" <+> dquotes (prettyDoc testName) <+> "=" <> line <> indentMulti 2 (prettyDoc expr)

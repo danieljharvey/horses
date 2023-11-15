@@ -170,15 +170,10 @@ prettyLet ::
   Expr dep ann ->
   PP.Doc style
 prettyLet var expr1 expr2 =
-  let (args, letExpr, maybeMt) = splitExpr expr1
-      prettyVar = case maybeMt of
-        Just mt ->
-          "(" <> prettyDoc var <> ":" <+> prettyDoc mt <> ")"
-        Nothing ->
-          prettyDoc var
+  let (args, letExpr) = splitExpr expr1
    in PP.group
         ( "let"
-            <+> prettyVar
+            <+> prettyDoc var
             <> prettyArgs args
             <+> "="
             <> PP.line
@@ -193,12 +188,9 @@ prettyLet var expr1 expr2 =
     splitExpr expr =
       case expr of
         (ELambda _ a rest) ->
-          let (as, expr', mt) = splitExpr rest
-           in ([a] <> as, expr', mt)
-        (EAnn _ mt annExpr) ->
-          let (as, expr', _) = splitExpr annExpr
-           in (as, expr', Just mt)
-        other -> ([], other, Nothing)
+          let (as, expr') = splitExpr rest
+           in ([a] <> as, expr')
+        other -> ([], other)
 
 newlineOrIn :: PP.Doc style
 newlineOrIn = PP.flatAlt (";" <> PP.line <> PP.line) " in "
@@ -294,11 +286,11 @@ prettyPatternMatch ::
   NE.NonEmpty (Pattern dep ann, Expr dep ann) ->
   PP.Doc style
 prettyPatternMatch sumExpr matches =
-  "match"
+  "case"
     <+> printSubExpr sumExpr
-    <+> "with"
+    <+> "of"
     <+> PP.line
-    <> PP.indent
+    <> indentMulti
       2
       ( PP.align $
           PP.vsep
@@ -312,8 +304,8 @@ prettyPatternMatch sumExpr matches =
     printMatch (construct, expr') =
       printSubPattern construct
         <+> "->"
-        <+> PP.line
-        <> indentMulti 4 (printSubExpr expr')
+        <> PP.softline
+        <> indentMulti 2 (printSubExpr expr')
 
 prettyArray ::
   ( Printer (dep Constructor),
