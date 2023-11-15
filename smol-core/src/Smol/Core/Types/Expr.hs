@@ -294,13 +294,14 @@ prettyPatternMatch sumExpr matches =
       2
       ( PP.align $
           PP.vsep (printMatch <$> addNums matches)
-
-      ) <> PP.line <> "}"
+      )
+    <> PP.line
+    <> "}"
   where
     addNums :: NE.NonEmpty a -> [(Int, a)]
-    addNums = zip [1..] . NE.toList
+    addNums = zip [1 ..] . NE.toList
 
-    printMatch (index,(construct, expr')) =
+    printMatch (index, (construct, expr')) =
       printSubPattern construct
         <+> "->"
         <> PP.softline
