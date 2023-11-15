@@ -305,7 +305,7 @@ prettyPatternMatch sumExpr matches =
       printSubPattern construct
         <+> "->"
         <> PP.softline
-        <> indentMulti 2 (printSubExpr expr')
+        <> printSubExpr expr'
         <> if index < length matches then "," else ""
 
 prettyArray ::

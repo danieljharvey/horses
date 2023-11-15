@@ -5,8 +5,8 @@ def fmap :
 def fmap f =
   let map innerTree =
     case innerTree {
-      Branch left a right ->   (Branch (map left) (f a) (map right)),
-      Leaf a ->   (Leaf (f a))
+      Branch left a right -> (Branch (map left) (f a) (map right)),
+      Leaf a -> (Leaf (f a))
     };
 
   map
@@ -16,8 +16,8 @@ def invert :
 def invert =
   let invertTree innerTree =
     case innerTree {
-      Branch left a right ->   (Branch (invertTree right) a (invertTree left)),
-      Leaf a ->   (Leaf a)
+      Branch left a right -> (Branch (invertTree right) a (invertTree left)),
+      Leaf a -> (Leaf a)
     };
 
   invertTree

@@ -14,7 +14,7 @@ def runFirst :
   (First a) -> a
 def runFirst firstA =
   case firstA {
-    First a ->   a
+    First a -> a
   }
 
 instance Semigroup First a =

@@ -4,7 +4,7 @@ def run :
   (Reader (r -> a)) -> r -> a
 def run reader r =
   case reader {
-    Reader ra ->   (ra r)
+    Reader ra -> (ra r)
   }
 
 def pure : 
