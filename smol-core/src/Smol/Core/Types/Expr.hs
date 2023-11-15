@@ -397,5 +397,4 @@ printSubExpr expr = case expr of
   all'@EIf {} -> inParens all'
   all'@EApp {} -> inParens all'
   all'@ETuple {} -> inParens all'
-  all'@EPatternMatch {} -> inParens all'
   a -> prettyDoc a

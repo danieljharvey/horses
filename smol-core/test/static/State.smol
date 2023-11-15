@@ -31,14 +31,14 @@ def ap stateF stateA =
         sfs s;
 
       case fs {
-        (f,  ss) -> (case stateA {
+        (f,  ss) -> case stateA {
           State sas -> (let as =
             sas ss;
 
           case as {
             (a,  sss) -> (((f a), sss))
           })
-        })
+        }
       })
     })
 
@@ -47,11 +47,11 @@ def bind :
 def bind f state =
   State (\s ->
     case state {
-      State sas -> (case (sas s) {
-        (a,  ss) -> (case (f a) {
+      State sas -> case (sas s) {
+        (a,  ss) -> case (f a) {
           State sbs -> (sbs ss)
-        })
-      })
+        }
+      }
     })
 
 def run : 
