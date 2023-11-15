@@ -84,7 +84,7 @@ spec = do
         fst <$> resolveModuleDeps mempty mod' `shouldBe` Right expected
 
       it "Variables added in pattern matches are unique" $ do
-        let mod' = unsafeParseModule "def main pair = case pair of (a,_) -> a"
+        let mod' = unsafeParseModule "def main pair = case pair { (a,_) -> a }"
             expr =
               ELambda
                 ()

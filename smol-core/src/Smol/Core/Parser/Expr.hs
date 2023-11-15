@@ -281,10 +281,12 @@ match a with
 patternMatchParser :: Parser ParserExpr
 patternMatchParser = addLocation $ do
   matchExpr <- matchExprWithParser
+  myString "{"
   patterns <-
     try patternMatchesParser
       <|> pure
       <$> patternCaseParser
+  myString "}"
   case NE.nonEmpty patterns of
     (Just nePatterns) -> pure $ EPatternMatch mempty matchExpr nePatterns
     _ -> error "need at least one pattern"
@@ -292,15 +294,13 @@ patternMatchParser = addLocation $ do
 matchExprWithParser :: Parser ParserExpr
 matchExprWithParser = do
   myString "case"
-  sumExpr <- expressionParser
-  myString "of"
-  pure sumExpr
+  expressionParser
 
 patternMatchesParser :: Parser [(ParserPattern, ParserExpr)]
 patternMatchesParser =
   sepBy
     patternCaseParser
-    (myString "|")
+    (myString ",")
 
 patternCaseParser :: Parser (ParserPattern, ParserExpr)
 patternCaseParser = do

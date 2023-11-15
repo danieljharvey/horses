@@ -18,39 +18,46 @@ def put s =
 def fmap : 
   (a -> b) -> (State s a) -> State s b
 def fmap f state =
-  case state of 
-      State sas ->   (State (\s -> case (sas s) of    (a,  s) -> (((f a), s))))
+  case state {
+    State sas -> (State (\s -> case (sas s) { (a,  s) -> (((f a), s)) }))
+  }
 
 def ap : 
   (State s (a -> b)) -> (State s a) -> State s b
 def ap stateF stateA =
   State (\s ->
-    case stateF of 
-        State sfs ->   (let fs =
-                         sfs s;
+    case stateF {
+      State sfs -> (let fs =
+        sfs s;
 
-                       case fs of 
-                           (f,  ss) ->   (case stateA of 
-                                             State sas ->   (let as =
-                                                              sas ss;
+      case fs {
+        (f,  ss) -> case stateA {
+          State sas -> (let as =
+            sas ss;
 
-                                                            case as of 
-                                                                (a,  sss) ->
-                                                                (((f a),
-                                                                  sss))))))
+          case as {
+            (a,  sss) -> (((f a), sss))
+          })
+        }
+      })
+    })
 
 def bind : 
   (a -> State s b) -> (State s a) -> State s b
 def bind f state =
   State (\s ->
-    case state of 
-        State sas ->   (case (sas s) of 
-                           (a,  ss) ->   (case (f a) of 
-                                             State sbs ->   (sbs ss))))
+    case state {
+      State sas -> case (sas s) {
+        (a,  ss) -> case (f a) {
+          State sbs -> (sbs ss)
+        }
+      }
+    })
 
 def run : 
   (State s a) -> s -> (a, s)
 def run state s =
-  case state of 
-      State sas ->   (sas s)
+  case state {
+    State sas -> (sas s)
+  }
 

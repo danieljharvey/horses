@@ -18,13 +18,15 @@ class Functor f { fmap : (a -> b) -> f a -> f b }
 type Maybe a = Just a | Nothing
 
 instance (Eq a) => Eq (Maybe a) =
-    \maybeA -> \maybeB -> case (maybeA, maybeB) of
-                            (Just a, Just b) -> equals a b
-                          | (Nothing, Nothing) -> True
-                          | _ -> False
+    \maybeA -> \maybeB -> 
+        case (maybeA, maybeB) {
+          (Just a, Just b) -> equals a b,
+          (Nothing, Nothing) -> True,
+          _ -> False
+        }
 
 instance Functor Maybe =
-    \f -> \maybe -> case maybe of Just a -> Just (f a) | Nothing -> Nothing
+    \f -> \maybe -> case maybe { Just a -> Just (f a), Nothing -> Nothing }
 
 test "fmap works with Just" =
     let result = fmap inc (Just 1);

@@ -66,12 +66,12 @@ spec = do
               ("(\\a -> if a then 1 else 2) True", "1"),
               ("let a = 41 in a + 1", "42"),
               ("Just (1 + 1)", "Just 2"),
-              ("case (Just 1) of Just a -> a + 41 | Nothing -> 0", "42"),
-              ("case Nothing of Just a -> a + 41 | Nothing -> 0", "0"),
+              ("case (Just 1) { Just a -> a + 41, Nothing -> 0 }", "42"),
+              ("case Nothing { Just a -> a + 41, Nothing -> 0 }", "0"),
               ("let stuff = { x: 1, y : 2 }; stuff.x + stuff.y", "3"),
               ("let id = \\a -> a; (id 1, id 2, id 3)", "(1,2,3)"),
               ("[1,2 + 3]", "[1,5]"),
-              ("case [1,2,3] of [_, ...rest] -> rest | _ -> [42]", "[2,3]"),
+              ("case [1,2,3] { [_, ...rest] -> rest, _ -> [42] }", "[2,3]"),
               ("let f = \\a -> if a == 10 then a else a + f (a + 1); f 0", "55")
             ]
       traverse_

@@ -37,7 +37,15 @@ spec = do
       let printModule (filepath, input) =
             it ("Pretty pretting " <> filepath <> " round trips successfully") $ do
               let parts = parseModule input
-                  printed = renderWithWidth 40 $ printModuleParts parts
+                  printed = renderWithWidth 80 $ printModuleParts parts
               let parts2 = parseModule printed
               parts `shouldBe` parts2
+      traverse_ printModule testInputs
+
+    describe "PrettyPrint is saved" $ do
+      let printModule (filepath, input) =
+            it ("Pretty pretting " <> filepath <> " is the same") $ do
+              let parts = parseModule input
+                  printed = renderWithWidth 80 $ printModuleParts parts
+              input `shouldBe` printed
       traverse_ printModule testInputs

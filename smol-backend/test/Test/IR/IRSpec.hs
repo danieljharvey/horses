@@ -123,23 +123,23 @@ spec = do
                 "42"
               ),
               ( [ "type Identity a = Identity a",
-                  "def main = case Identity 42 of Identity a -> a"
+                  "def main = case Identity 42 { Identity a -> a }"
                 ],
                 "42"
               ),
               ( [ "type Identity a = Identity a",
-                  "def main = case Identity (41 + 1) of Identity a -> a"
+                  "def main = case Identity (41 + 1) { Identity a -> a }"
                 ],
                 "42"
               ),
               ( [ "type Identity a = Identity a",
-                  "def main = let id = (\\a -> a : Int -> Int); case Identity (id 42) of Identity a -> a"
+                  "def main = let id = (\\a -> a : Int -> Int); case Identity (id 42) { Identity a -> a }"
                 ],
                 "42"
               ),
               ( [ "type Identity a = Identity a",
                   "def runIdentity : Identity Int -> Int",
-                  "def runIdentity identA = case identA of Identity b -> b",
+                  "def runIdentity identA = case identA { Identity b -> b }",
                   "def main = runIdentity (Identity 42)"
                 ],
                 "42"
@@ -164,9 +164,9 @@ spec = do
                 ("\"horse\" == \"horse\"", "True"),
                 ("\"hor\" + \"se\" == \"horse\"", "True"),
                 ("(\"dog\" : String) == (\"log\" : String)", "False"),
-                ("case \"dog\" of \"dog\" -> True | _ -> False", "True"),
-                ("case (\"log\" : String) of \"dog\" -> True | _ -> False", "False"),
-                ("case \"dog\" of \"dog\" -> True | _ -> False", "True")
+                ("case \"dog\" { \"dog\" -> True, _ -> False }", "True"),
+                ("case (\"log\" : String) { \"dog\" -> True, _ -> False }", "False"),
+                ("case \"dog\" { \"dog\" -> True, _ -> False }", "True")
               ]
 
         describe "IR compile" $ do
@@ -184,7 +184,7 @@ spec = do
                 ("let add = (\\a -> \\b -> a + b : Int -> Int -> Int); add (1 : Int) (2 : Int)", "3"),
                 ("let f = (\\i -> i + 1 : Int -> Int) in f (1 : Int)", "2"), -- single arity function that return prim
                 ("let f = (\\i -> (i,i) : Int -> (Int,Int)); let b = f (1 : Int); 42", "42"), -- single arity function that returns struct
-                ("let f = (\\i -> (i,10) : Int -> (Int,Int)) in (case f (100 : Int) of (a,b) -> a + b : Int)", "110"), -- single arity function that returns struct
+                ("let f = (\\i -> (i,10) : Int -> (Int,Int)) in (case f (100 : Int) { (a,b) -> a + b } : Int)", "110"), -- single arity function that returns struct
                 ("let flipConst = (\\a -> \\b -> b : Int -> Int -> Int); flipConst (1 : Int) (2 : Int)", "2") -- oh fuck
                 -- ("let sum = (\\a -> if a == 10 then 0 else let a2 = a + 1 in a + sum a2 : Int -> Int); sum (0 : Int)", "1783293664"),
                 -- ("let add3 = (\\a -> \\b -> \\c -> a + b + c : Int -> Int -> Int -> Int); add3 (1 : Int) (2 : Int) (3 : Int)", "6"),
@@ -195,11 +195,11 @@ spec = do
 
       describe "Tuples and matching" $ do
         let testVals =
-              [ ("let pair = (20,22); (case pair of (a,b) -> a + b : Int)", "42"),
-                ("(\\pair -> case pair of (a,b) -> a + b : (Int,Int) -> Int) (20,22)", "42"),
-                ("(\\triple -> case triple of (a,b,c) -> a + b + c : (Int,Int,Int) -> Int) (20,11,11)", "42"),
-                ("(\\bool -> case bool of True -> 0 | False -> 1 : Bool -> Int) False", "1"),
-                ("(\\bools -> case bools of (True,_) -> 0 | (False,_) -> 1 : (Bool,Bool) -> Int) (False,False)", "1")
+              [ ("let pair = (20,22); (case pair { (a,b) -> a + b } : Int)", "42"),
+                ("(\\pair -> case pair { (a,b) -> a + b } : (Int,Int) -> Int) (20,22)", "42"),
+                ("(\\triple -> case triple { (a,b,c) -> a + b + c } : (Int,Int,Int) -> Int) (20,11,11)", "42"),
+                ("(\\bool -> case bool { True -> 0, False -> 1 } : Bool -> Int) False", "1"),
+                ("(\\bools -> case bools { (True,_) -> 0,  (False,_) -> 1 } : (Bool,Bool) -> Int) (False,False)", "1")
               ]
 
         describe "IR compile" $ do
@@ -207,10 +207,10 @@ spec = do
 
       describe "Arrays and matching" $ do
         let testVals =
-              [ ("let arr = [20,22]; case arr of [a,b] -> (a + b : Int) | _ -> 0", "42"),
-                ("let arr = [20,20,2]; case arr of [a,b,c] -> (a + b + c : Int) | _ -> 0", "42"),
-                ("let arr = [1,100]; case arr of [100, a] -> 0 | [1,b] -> b | _ -> 0", "100"),
-                ("let arr = [1,2,3]; case arr of [_,_] -> 0 | _ -> 1", "1") -- ie, are we checking the length of the array?
+              [ ("let arr = [20,22]; case arr {[a,b] -> (a + b : Int), _ -> 0 }", "42"),
+                ("let arr = [20,20,2]; case arr { [a,b,c] -> (a + b + c : Int), _ -> 0 }", "42"),
+                ("let arr = [1,100]; case arr { [100, a] -> 0, [1,b] -> b,  _ -> 0 }", "100"),
+                ("let arr = [1,2,3]; case arr { [_,_] -> 0,  _ -> 1 }", "1") -- ie, are we checking the length of the array?
                 -- ("let arr1 = [1,2,3]; let arr2 = case arr1 of [_,...rest] -> rest | _ -> [1]; case arr2 of [d,e] -> d + e | _ -> 0", "5") -- need malloc to dynamically create new array
               ]
 
@@ -219,15 +219,15 @@ spec = do
 
       describe "Datatypes" $ do
         let testVals =
-              [ ("(\\ord -> case ord of GT -> 21 | EQ -> 23 | LT -> 42 : Ord -> Int) LT", "42"), -- constructor with no args
-                ("(\\maybe -> case maybe of _ -> 42 : Maybe Int -> Int) (Just 41)", "42"),
-                ("(\\maybe -> case maybe of Just a -> a + 1 | Nothing -> 0 : Maybe Int -> Int) (Just 41)", "42"),
-                ("(\\maybe -> case maybe of Just 40 -> 100 | Just a -> a + 1 | Nothing -> 0 : Maybe Int -> Int) (Just 41)", "42"), -- predicates in constructor
-                ("(\\maybe -> case maybe of Just 40 -> 100 | Just a -> a + 1 | Nothing -> 0 : Maybe Int -> Int) (Nothing : Maybe Int)", "0"), -- predicates in constructor
-                ("(\\these -> case these of This aa -> aa | That 27 -> 0 | These a b -> a + b : These Int Int -> Int) (This 42 : These Int Int)", "42"), -- data shapes are wrong
-                ("(\\these -> case these of This aa -> aa | That 60 -> 0 | These a b -> a + b : These Int Int -> Int) (These 20 22 : These Int Int)", "42"),
+              [ ("(\\ord -> case ord { GT -> 21, EQ -> 23, LT -> 42 }: Ord -> Int) LT", "42"), -- constructor with no args
+                ("(\\maybe -> case maybe { _ -> 42 } : Maybe Int -> Int) (Just 41)", "42"),
+                ("(\\maybe -> case maybe { Just a -> a + 1, Nothing -> 0 } : Maybe Int -> Int) (Just 41)", "42"),
+                ("(\\maybe -> case maybe { Just 40 -> 100, Just a -> a + 1, Nothing -> 0 } : Maybe Int -> Int) (Just 41)", "42"), -- predicates in constructor
+                ("(\\maybe -> case maybe { Just 40 -> 100, Just a -> a + 1, Nothing -> 0 } : Maybe Int -> Int) (Nothing : Maybe Int)", "0"), -- predicates in constructor
+                ("(\\these -> case these { This aa -> aa, That 27 -> 0, These a b -> a + b } : These Int Int -> Int) (This 42 : These Int Int)", "42"), -- data shapes are wrong
+                ("(\\these -> case these { This aa -> aa, That 60 -> 0, These a b -> a + b } : These Int Int -> Int) (These 20 22 : These Int Int)", "42"),
                 -- ("(\\these -> case these of This a -> a | That _ -> 1000 | These a b -> a + b : These Int Int -> Int) (That 42 : These Int Int)", "1000"),--wildcards fuck it up for some reason
-                ("(case (This 42 : These Int Int) of This a -> a : Int)", "42")
+                ("(case (This 42 : These Int Int) { This a -> a } : Int)", "42")
               ]
 
         describe "IR compile" $ do

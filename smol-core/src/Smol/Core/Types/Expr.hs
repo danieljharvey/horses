@@ -288,24 +288,25 @@ prettyPatternMatch ::
 prettyPatternMatch sumExpr matches =
   "case"
     <+> printSubExpr sumExpr
-    <+> "of"
-    <+> PP.line
+    <+> "{"
+    <> PP.line
     <> indentMulti
       2
       ( PP.align $
-          PP.vsep
-            ( zipWith
-                (<+>)
-                (" " : repeat "|")
-                (printMatch <$> NE.toList matches)
-            )
+          PP.vsep (printMatch <$> addNums matches)
       )
+    <> PP.line
+    <> "}"
   where
-    printMatch (construct, expr') =
+    addNums :: NE.NonEmpty a -> [(Int, a)]
+    addNums = zip [1 ..] . NE.toList
+
+    printMatch (index, (construct, expr')) =
       printSubPattern construct
         <+> "->"
         <> PP.softline
-        <> indentMulti 2 (printSubExpr expr')
+        <> printSubExpr expr'
+        <> if index < length matches then "," else ""
 
 prettyArray ::
   ( Printer (dep Constructor),
@@ -393,8 +394,6 @@ printSubExpr :: (Printer (dep Constructor), Printer (dep Identifier), Printer (d
 printSubExpr expr = case expr of
   all'@ELet {} -> inParens all'
   all'@ELambda {} -> inParens all'
-  all'@EIf {} -> inParens all'
   all'@EApp {} -> inParens all'
   all'@ETuple {} -> inParens all'
-  all'@EPatternMatch {} -> inParens all'
   a -> prettyDoc a
