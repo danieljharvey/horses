@@ -115,7 +115,7 @@ spec = do
         (addTypesToConstraint (Constraint "Eq" [tyTuple (tcVar "a") [tcVar "b"]]))
         ( Instance
             { inExpr =
-                unsafeParseInstanceExpr "\\a -> \\b -> case (a,b) of ((a1, a2), (b1, b2)) -> if equals a1 b1 then equals a2 b2 else False",
+                unsafeParseInstanceExpr "\\a -> \\b -> case (a,b) { ((a1, a2), (b1, b2)) -> if equals a1 b1 then equals a2 b2 else False }",
               inConstraints =
                 [ Constraint "Eq" [tcVar "a"],
                   Constraint "Eq" [tcVar "b"]
@@ -131,7 +131,7 @@ spec = do
         (addTypesToConstraint (Constraint "Show" [tyCons "Natural" []]))
         ( Instance
             { inExpr =
-                unsafeParseInstanceExpr "\\nat -> case nat of Suc n -> \"S \" + show n | _ -> \"\"",
+                unsafeParseInstanceExpr "\\nat -> case nat { Suc n -> \"S \" + show n, _ -> \"\"}",
               inConstraints =
                 []
             }
@@ -145,7 +145,7 @@ spec = do
         (addTypesToConstraint (Constraint "Functor" [tyCons "Maybe" []]))
         ( Instance
             { inExpr =
-                unsafeParseInstanceExpr "\\f -> \\maybe -> case maybe of Just a -> Just (f a) | Nothing -> Nothing",
+                unsafeParseInstanceExpr "\\f -> \\maybe -> case maybe { Just a -> Just (f a) , Nothing -> Nothing }",
               inConstraints = mempty
             }
         )
@@ -158,7 +158,7 @@ spec = do
         (addTypesToConstraint (Constraint "Functor" [tyCons "Maybe" [tcVar "a"]]))
         ( Instance
             { inExpr =
-                unsafeParseInstanceExpr "\\f -> \\maybe -> case maybe of Just a -> Just (f a) | Nothing -> Nothing",
+                unsafeParseInstanceExpr "\\f -> \\maybe -> case maybe { Just a -> Just (f a), Nothing -> Nothing }",
               inConstraints = mempty
             }
         )

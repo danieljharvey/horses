@@ -12,7 +12,7 @@ test "Show False" =
 type Natural  = Suc Natural | Zero
 
 instance Show Natural =
-  \nat -> case nat of    Suc n -> "S (" + (show n) + ")" | Zero -> "Z"
+  \nat -> case nat { Suc n -> "S (" + (show n) + ")", Zero -> "Z" }
 
 test "Show Zero" =
   (show Zero) == "Z"
@@ -24,9 +24,10 @@ type List a = Cons a (List a) | Nil
 
 instance(Show a) => Show List a =
   \list ->
-    case list of 
-        Cons a rest ->   (show a) + ":" + (show rest)
-      | Nil ->   "Nil"
+    case list {
+        Cons a rest ->   (show a) + ":" + (show rest),
+        Nil ->   "Nil"
+    }
 
 def showBoolList =
   (show (Cons (True : Bool) (Cons (False : Bool) Nil))) == "True:False:Nil"

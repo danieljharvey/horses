@@ -288,7 +288,7 @@ prettyPatternMatch ::
 prettyPatternMatch sumExpr matches =
   "case"
     <+> printSubExpr sumExpr
-    <+> "of"
+    <+> "{"
     <+> PP.line
     <> indentMulti
       2
@@ -296,10 +296,10 @@ prettyPatternMatch sumExpr matches =
           PP.vsep
             ( zipWith
                 (<+>)
-                (" " : repeat "|")
+                (" " : repeat ",")
                 (printMatch <$> NE.toList matches)
             )
-      )
+      ) <> PP.line <> "}"
   where
     printMatch (construct, expr') =
       printSubPattern construct

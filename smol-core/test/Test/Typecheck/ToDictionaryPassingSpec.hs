@@ -148,15 +148,15 @@ spec = do
           ( [ Constraint "Eq" [tcVar "a"],
               Constraint "Eq" [tcVar "b"]
             ],
-            [ "(\\a -> \\b -> case (a,b) of ((leftA, leftB), (rightA, rightB)) -> ",
-              "if equals leftA rightA then equals leftB rightB else False : (a,b) -> (a,b) -> Bool)"
+            [ "(\\a -> \\b -> case (a,b) { ((leftA, leftB), (rightA, rightB)) -> ",
+              "if equals leftA rightA then equals leftB rightB else False }: (a,b) -> (a,b) -> Bool)"
             ],
             [ Constraint "Eq" [tcVar "a"],
               Constraint "Eq" [tcVar "b"]
             ],
-            [ "\\instances -> case (instances : (a -> a -> Bool, b -> b -> Bool)) of (tcvaluefromdictionary0, tcvaluefromdictionary1) -> ",
-              "(\\a1 -> \\b2 -> case (a1,b2) of ((leftA3, leftB4), (rightA5, rightB6)) ->",
-              "if tcvaluefromdictionary0 leftA3 rightA5 then tcvaluefromdictionary1 leftB4 rightB6 else False : (a,b) -> (a,b) -> Bool)"
+            [ "\\instances -> case (instances : (a -> a -> Bool, b -> b -> Bool)) { (tcvaluefromdictionary0, tcvaluefromdictionary1) -> ",
+              "(\\a1 -> \\b2 -> case (a1,b2) { ((leftA3, leftB4), (rightA5, rightB6)) ->",
+              "if tcvaluefromdictionary0 leftA3 rightA5 then tcvaluefromdictionary1 leftB4 rightB6 else False } : (a,b) -> (a,b) -> Bool)}"
             ]
           )
         ]
@@ -197,24 +197,24 @@ spec = do
           ( mempty,
             ["equals ((1: Int), (2: Int)) ((2: Int), (3: Int))"],
             [ "let eqintint = let eqint = (\\a1 -> \\b2 -> a1 == b2 : Int -> Int -> Bool);",
-              "(\\pairA7 -> \\pairB8 -> case (pairA7, pairB8) of ((a19, b110), (a211, b212)) ->",
+              "(\\pairA7 -> \\pairB8 -> case (pairA7, pairB8) {((a19, b110), (a211, b212)) ->",
               "if eqint a19 a211 ",
               "then eqint b110 b212",
-              "else False : (a, b) -> (a,b) -> Bool); ",
+              "else False }: (a, b) -> (a,b) -> Bool); ",
               "eqintint ((1: Int), (2: Int)) ((2: Int), (3: Int))"
             ]
           ),
           ( [Constraint "Eq" [tcVar "a"]],
             ["(\\a -> \\b -> equals a b : a -> a -> Bool)"],
-            [ "\\instances -> case (instances : (a -> a -> Bool)) of tcvaluefromdictionary0 -> ",
-              "(\\a1 -> \\b2 -> tcvaluefromdictionary0 a1 b2 : a -> a -> Bool)"
+            [ "\\instances -> case (instances : (a -> a -> Bool)) { tcvaluefromdictionary0 -> ",
+              "(\\a1 -> \\b2 -> tcvaluefromdictionary0 a1 b2 : a -> a -> Bool) }"
             ]
           ),
           ( mempty,
             ["show Zero"],
             [ "let shownatural = (\\nat15 -> ",
-              "case nat15 of Suc n16 -> \"S \" + shownatural n16 ",
-              "| _ -> \"\" : Natural -> String); ",
+              "case nat15 { Suc n16 -> \"S \" + shownatural n16 ",
+              ", _ -> \"\" } : Natural -> String); ",
               "shownatural Zero"
             ]
           )

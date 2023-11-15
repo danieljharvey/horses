@@ -88,7 +88,7 @@ spec = do
               ),
               ( [ "class Eq a { equals: a -> a -> Bool }",
                   "instance Eq Int = \\a -> \\b -> a == b",
-                  "instance (Eq a, Eq b) => Eq (a,b) = \\a -> \\b -> case (a,b) of ((a1, b1), (a2, b2)) -> if equals a1 a2 then equals b1 b2 else False",
+                  "instance (Eq a, Eq b) => Eq (a,b) = \\a -> \\b -> case (a,b) {((a1, b1), (a2, b2)) -> if equals a1 a2 then equals b1 b2 else False }",
                   "def main = equals ((1:Int), (2: Int)) ((1: Int), (2: Int))"
                 ],
                 "True"
@@ -131,7 +131,7 @@ spec = do
               ),
               ( [ "type Pet = Dog | Cat | Rat",
                   "class Eq a { equals: a -> a -> Bool }",
-                  "instance Eq Pet = \\a -> \\b -> case (a,b) of (Dog, Dog) -> True | (Cat, Cat) -> True | (Rat, Rat) -> True | _ -> False",
+                  "instance Eq Pet = \\a -> \\b -> case (a,b) { (Dog, Dog) -> True, (Cat, Cat) -> True, (Rat, Rat) -> True, _ -> False }",
                   "def main : Bool",
                   "def main = equals Dog Rat"
                 ],
@@ -140,7 +140,7 @@ spec = do
               ( [ "class Eq a { equals: a -> a -> Bool }",
                   "instance Eq Int = \\a -> \\b -> a == b",
                   "type Maybe a = Just a | Nothing",
-                  "instance (Eq a) => Eq (Maybe a) = \\ma -> \\mb -> case (ma, mb) of (Just a, Just b) -> equals a b | (Nothing, Nothing) -> True | _ -> False",
+                  "instance (Eq a) => Eq (Maybe a) = \\ma -> \\mb -> case (ma, mb) { (Just a, Just b) -> equals a b, (Nothing, Nothing) -> True, _ -> False }",
                   "def main : Bool",
                   "def main = equals (Just (1: Int)) Nothing"
                 ],
@@ -149,8 +149,8 @@ spec = do
               ( [ "type Natural = Suc Natural | Zero",
                   "class Show a { show: a -> String }",
                   "instance Show Natural = \\nat -> ",
-                  "case nat of Suc n -> \"S \" + show n ",
-                  "| _ -> \"Z\"",
+                  "case nat { Suc n -> \"S \" + show n ",
+                  ", _ -> \"Z\"}",
                   "def main : String",
                   "def main = show (Suc Zero)"
                 ],

@@ -106,20 +106,20 @@ spec = do
               ("Maybe.Just", EConstructor () (ParseDep "Just" (Just "Maybe"))),
               ("Just True", EApp () (constructor "Just") (bool True)),
               ("These 1 False", EApp () (EApp () (constructor "These") (int 1)) (bool False)),
-              ( "case a of (b, c) -> b + c",
+              ( "case a {(b, c) -> b + c}",
                 patternMatch (var "a") [(PTuple () (PVar () "b") (NE.fromList [PVar () "c"]), EInfix () OpAdd (var "b") (var "c"))]
               ),
-              ( "case (1,2) of (a,_) -> a",
+              ( "case (1,2) {(a,_) -> a }",
                 patternMatch (tuple (int 1) [int 2]) [(PTuple () (PVar () "a") (NE.fromList [PWildcard ()]), var "a")]
               ),
-              ( "case (True, 1) of (True, a) -> a | (False,_) -> 0",
+              ( "case (True, 1) {(True, a) -> a, (False,_) -> 0}",
                 patternMatch
                   (tuple (bool True) [int 1])
                   [ (PTuple () (PLiteral () (PBool True)) (NE.fromList [PVar () "a"]), var "a"),
                     (PTuple () (PLiteral () (PBool False)) (NE.fromList [PWildcard ()]), int 0)
                   ]
               ),
-              ( "case [1,2,3] of [_, ...b] -> b | other -> other",
+              ( "case [1,2,3] { [_, ...b] -> b, other -> other }",
                 patternMatch
                   (array [int 1, int 2, int 3])
                   [ (PArray () [PWildcard ()] (SpreadValue () "b"), var "b"),

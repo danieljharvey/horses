@@ -75,11 +75,11 @@ spec = do
   describe "FloatDown" $ do
     let singleDefs =
           [ ("id", "id"),
-            ( "let a = 1; case a of True -> 1 | False -> 2",
-              "let a = 1; case a of True -> 1 | False -> 2"
+            ( "let a = 1; case a { True -> 1, False -> 2 }",
+              "let a = 1; case a { True -> 1, False -> 2 }"
             ),
-            ( "let a = 1; case b of True -> 1 | False -> 2",
-              "case b of True -> let a = 1; 1 | False -> let a = 1; 2"
+            ( "let a = 1; case b { True -> 1, False -> 2 }",
+              "case b { True -> let a = 1; 1, False -> let a = 1; 2}"
             ),
             ("let a = 1; if a then 1 else 2", "let a = 1; if a then 1 else 2"),
             ( "let a = 1; if b then 1 else 2",

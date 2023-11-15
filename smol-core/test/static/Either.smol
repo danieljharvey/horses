@@ -3,14 +3,16 @@ type Either e a = Left e | Right a
 def orDefault : 
   a -> (Either e a) -> a
 def orDefault default value =
-  case value of 
-      Right a ->   a
-    | Left _ ->   default
+  case value {
+    Right a ->   a,
+    Left _ ->   default
+  }
 
 def fmap : 
   (a -> b) -> (Either e a) -> Either e b
 def fmap f value =
-  case value of 
-      Right a ->   (Right (f a))
-    | Left e ->   (Left e)
+  case value {
+    Right a ->   (Right (f a)),
+    Left e ->   (Left e)
+  }
 

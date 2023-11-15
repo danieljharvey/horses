@@ -12,22 +12,24 @@ instance Eq String =
 instance(Eq a, Eq b) => Eq (a, b) =
   \pairA ->
     \pairB ->
-      case ((pairA, pairB)) of 
+      case ((pairA, pairB)) {
           ((a1,  b1),  (a2,  b2)) ->   (if (equals a1 a2)
                                        then
                                          (equals b1 b2)
                                        else
                                          False)
+      }
 
 type Maybe a = Just a | Nothing
 
 instance(Eq a) => Eq Maybe a =
   \a ->
     \b ->
-      case ((a, b)) of 
-          (Just a,  Just b) ->   (equals a b)
-        | (Nothing,  Nothing) ->   True
-        | _ ->   False
+      case ((a, b)) {
+        (Just a,  Just b) ->   (equals a b),
+        (Nothing,  Nothing) ->   True,
+        _ ->   False
+      }
 
 def useEqualsInt : 
   Bool
@@ -52,8 +54,9 @@ def pair =
 def flipPair : 
   (a, b) -> (b, a)
 def flipPair pair =
-  case pair of 
+  case pair {
       (a,  b) ->   ((b, a))
+  }
 
 def main : 
   Bool

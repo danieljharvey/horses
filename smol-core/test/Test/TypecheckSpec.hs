@@ -59,7 +59,7 @@ spec = do
               ("1 + 2", "3"),
               ("-1 + 200", "199"),
               ("200 + -100", "100"),
-              ("let f = \\a -> a + 41; let g = f 1 == 42; case g of True -> 1", "1"),
+              ("let f = \\a -> a + 41; let g = f 1 == 42; case g { True -> 1 }", "1"),
               ("1 == 1", "True"),
               ("6 == 7", "False"),
               ("(1 + 2 + 3 : Int)", "Int"),
@@ -67,13 +67,13 @@ spec = do
               ("(\"horse\" : String)", "String"),
               ("\"hor\" + \"se\"", "\"horse\""),
               ("let a = if True then \"eg\" else \"og\"; a + \"g\"", "\"egg\" | \"ogg\""),
-              ( "(\\pair -> case pair of (a,_) -> a : (Bool, Int) -> Bool) (True, 1)",
+              ( "(\\pair -> case pair { (a,_) -> a } : (Bool, Int) -> Bool) (True, 1)",
                 "Bool"
               ),
-              ( "(\\pair -> case pair of (True, a) -> a | (False,_) -> 0 : (Bool, Int) -> Int) (True,1)",
+              ( "(\\pair -> case pair { (True, a) -> a, (False,_) -> 0 } : (Bool, Int) -> Int) (True,1)",
                 "Int"
               ),
-              ( "(case (True, 1) of (True, a) -> a: Int)",
+              ( "(case (True, 1) { (True, a) -> a } : Int)",
                 "Int" -- this should remain total as we know it's always True
               ),
               ( "Just True",
@@ -97,13 +97,13 @@ spec = do
               ( "(Right True : Either e True)",
                 "Either e True"
               ),
-              ( "(case Just 1 of Just a -> a | _ -> 0 : Int)",
+              ( "(case Just 1 { Just a -> a, _ -> 0 }: Int)",
                 "Int"
               ),
-              ( "(\\a -> case a of 1 -> 10 | 2 -> 20 : (1 | 2) -> Int) 1",
+              ( "(\\a -> case a { 1 -> 10, 2 -> 20 }: (1 | 2) -> Int) 1",
                 "Int"
               ),
-              ( "(\\a -> case a of (1,_) -> 10 | (2,_) -> 20 : (1 | 2,Bool) -> Int) (1,False)",
+              ( "(\\a -> case a { (1,_) -> 10,  (2,_) -> 20 } : (1 | 2,Bool) -> Int) (1,False)",
                 "Int"
               ),
               ( "(\\a -> a : Maybe a -> Maybe a) (Nothing : Maybe Int)",
@@ -112,25 +112,25 @@ spec = do
               ( "(\\a -> a : Maybe a -> Maybe a) (Just 1)",
                 "Maybe 1"
               ),
-              ( "(\\f -> \\ident -> case ident of Identity a -> Identity (f a) : (a -> b) -> Identity a -> Identity b)",
+              ( "(\\f -> \\ident -> case ident { Identity a -> Identity (f a) }: (a -> b) -> Identity a -> Identity b)",
                 "(a -> b) -> Identity a -> Identity b"
               ),
-              ( "(\\f -> \\maybe -> case maybe of Just a -> Just (f a) | Nothing -> Nothing : (a -> b) -> Maybe a -> Maybe b)",
+              ( "(\\f -> \\maybe -> case maybe { Just a -> Just (f a), Nothing -> Nothing } : (a -> b) -> Maybe a -> Maybe b)",
                 "(a -> b) -> Maybe a -> Maybe b"
               ),
-              ( "(\\f -> \\maybe -> case maybe of Just a -> Just (f a) | Nothing -> Nothing : (b -> a) -> Maybe b -> Maybe a)",
+              ( "(\\f -> \\maybe -> case maybe { Just a -> Just (f a),  Nothing -> Nothing }: (b -> a) -> Maybe b -> Maybe a)",
                 "(b -> a) -> Maybe b -> Maybe a"
               ),
-              ( "(case (This 42 : These Int Int) of This a -> a : Int)",
+              ( "(case (This 42 : These Int Int) { This a -> a }: Int)",
                 "Int"
               ),
-              ( "let fmap = (\\f -> \\maybe -> case maybe of Just a -> Just (f a) | Nothing -> Nothing : (a -> b) -> Maybe a -> Maybe b); let inc = (\\a -> True : Int -> Bool); fmap inc",
+              ( "let fmap = (\\f -> \\maybe -> case maybe { Just a -> Just (f a), Nothing -> Nothing }: (a -> b) -> Maybe a -> Maybe b); let inc = (\\a -> True : Int -> Bool); fmap inc",
                 "Maybe Int -> Maybe Bool"
               ),
-              ( "let fmap = (\\f -> \\either -> case either of Right a -> Right (f a) | Left e -> Left e : (a -> b) -> Either e a -> Either e b); let inc = (\\a -> True : Int -> Bool); fmap inc",
+              ( "let fmap = (\\f -> \\either -> case either { Right a -> Right (f a), Left e -> Left e }: (a -> b) -> Either e a -> Either e b); let inc = (\\a -> True : Int -> Bool); fmap inc",
                 "Either e Int -> Either e Bool"
               ),
-              ( "let fmap = (\\f -> \\either -> case either of Right a -> Right (f a) | Left e -> Left e : (a -> b) -> Either e a -> Either e b); fmap",
+              ( "let fmap = (\\f -> \\either -> case either { Right a -> Right (f a), Left e -> Left e } : (a -> b) -> Either e a -> Either e b); fmap",
                 "(a -> b) -> Either e a -> Either e b"
               ),
               -- ( "let fmap = (\\f -> \\state -> case state of (State sas) -> State (\\s -> case sas s of (a, s) -> (f a, s)) : (a -> b) -> State s a -> State s b) in fmap",
@@ -145,13 +145,13 @@ spec = do
               ( "let id = (\\a -> a : a -> a); (id True, id 1)",
                 "(True, 1)"
               ),
-              ( "(\\f -> \\maybe -> case maybe of Just a -> Just (f a) | Nothing -> Nothing : (a -> b) -> Maybe a -> Maybe b)",
+              ( "(\\f -> \\maybe -> case maybe { Just a -> Just (f a),  Nothing -> Nothing } : (a -> b) -> Maybe a -> Maybe b)",
                 "(a -> b) -> Maybe a -> Maybe b"
               ),
-              ( "(\\maybeF -> \\maybeA -> case (maybeF, maybeA) of (Just f, Just a) -> Just (f a) | _ -> Nothing : Maybe (a -> b) -> Maybe a -> Maybe b)",
+              ( "(\\maybeF -> \\maybeA -> case (maybeF, maybeA) { (Just f, Just a) -> Just (f a) , _ -> Nothing } : Maybe (a -> b) -> Maybe a -> Maybe b)",
                 "Maybe (a -> b) -> Maybe a -> Maybe b"
               ),
-              ( "(\\value -> \\default -> case value of Right a -> a | Left _ -> default : Either e a -> a -> a)",
+              ( "(\\value -> \\default -> case value { Right a -> a, Left _ -> default }: Either e a -> a -> a)",
                 "Either e a -> a -> a"
               ),
               --              ( "let liftA2 = (\\ap -> \\fmap -> \\f -> \\ma -> \\mb -> ap (fmap f ma) mb : (m (a -> b) -> m a -> m b) -> ((a -> b) -> m a -> m b) -> (a -> b -> c) -> m a -> m b -> m c); let add2 = (\\a -> \\b -> a + b : Int -> Int -> Int); liftA2 add2 (Just 1) (Just 2)",
@@ -164,23 +164,23 @@ spec = do
               ("\"dog\" + \"log\"", "\"doglog\""),
               ("(\"dog\" : String) + (\"log\" : String)", "String"),
               ("let f = \\a -> a + 1; let g = 100; f 1", "2"),
-              ("(\\pair -> case pair of (a,b) -> a + b : (Int,Int) -> Int)", "(Int,Int) -> Int"),
-              ("let id = (\\i -> i : i -> i); case (Just 1) of Just a -> Just (id a) | Nothing -> Nothing", "Maybe 1"),
+              ("(\\pair -> case pair { (a,b) -> a + b } : (Int,Int) -> Int)", "(Int,Int) -> Int"),
+              ("let id = (\\i -> i : i -> i); case (Just 1) { Just a -> Just (id a), Nothing -> Nothing }", "Maybe 1"),
               ("[1,2]", "[ 1 | 2 ]"),
               ("[1,2,3,4]", "[1 | 4 | 2 | 3]"),
               ("[True]", "[True]"),
               ("([1,2,3,4] : [Int])", "[Int]"),
-              ("case (\"dog\" : String) of \"log\" -> True | _ -> False", "Bool"),
-              ("case ([1,2,3] : [Int]) of [a] -> [a] | [_,...b] -> b", "[Int]"),
-              ("case ([1,2]: [Int]) of [a,...] -> a | _ -> 0", "Int"),
+              ("case (\"dog\" : String) { \"log\" -> True, _ -> False }", "Bool"),
+              ("case ([1,2,3] : [Int]) { [a] -> [a],  [_,...b] -> b }", "[Int]"),
+              ("case ([1,2]: [Int]) { [a,...] -> a, _ -> 0 }", "Int"),
               ("let a = if True then 1 else 2; let b = if True then 7 else 9; a + b", "8 | 9 | 10 | 11"),
               ("\\a -> a == True", "Bool -> Bool"),
               ("(\\x -> (x 1, x (False,True))) (\\a -> a)", "(1, (False, True))"), -- look! higher rank types
               ("let f = (\\x -> (x 1, x False) : (a -> a) -> (1, False)); let id = \\a -> a; f id", "(1, False)"), -- they need annotation, but that's ok
               ("\\a -> \\b -> if a then a else b", "Bool -> Bool -> Bool"),
-              ("\\a -> case a of (b,c) -> if b then b else c", "(Bool,Bool) -> Bool"),
+              ("\\a -> case a { (b,c) -> if b then b else c }", "(Bool,Bool) -> Bool"),
               ("equals (10 : Int) (11: Int)", "Bool"), -- using Eq Int typeclass instance
-              ("let maybeFmap = \\f -> \\maybe -> case maybe of Just a -> Just (f a) | Nothing -> Nothing; let useFmap = (\\fmap -> fmap (\\a -> a + 1 : Int -> Int) : ((a -> b) -> f a -> f b) -> f Int -> f Int); useFmap maybeFmap", "Maybe Int -> Maybe Int")
+              ("let maybeFmap = \\f -> \\maybe -> case maybe { Just a -> Just (f a), Nothing -> Nothing}; let useFmap = (\\fmap -> fmap (\\a -> a + 1 : Int -> Int) : ((a -> b) -> f a -> f b) -> f Int -> f Int); useFmap maybeFmap", "Maybe Int -> Maybe Int")
             ]
       traverse_
         ( \(inputExpr, expectedType) -> it (T.unpack inputExpr <> " :: " <> T.unpack expectedType) $ do
@@ -326,13 +326,13 @@ spec = do
       let inputs =
             [ "(\\a -> if a then 1 else True) True",
               "(\\a -> True : (1 | 2) -> True) 3",
-              "(\\pair -> case pair of (a,b,c) -> a + b + c : (Int,Int) -> Int) (1,2)",
+              "(\\pair -> case pair { (a,b,c) -> a + b + c } : (Int,Int) -> Int) (1,2)",
               "1 + \"dog\"",
-              "(case (False, 1) of (True, a) -> a: Int)",
-              "(case Just 1 of These a -> a | _ -> 0 : Int)", -- need to lookup constructor
-              "(case Just 1 of Just _ a -> a | _ -> 0 : Int)", -- too many args in pattern
-              "(case Just 1 of Just -> 1 | _ -> 0 : Int)", -- not enough args in pattern
-              "(\\a -> case a of 1 -> 10 | 2 -> 20 | 3 -> 30 : (1 | 2) -> Int) 1" -- pattern contains something not found in union
+              "(case (False, 1) {(True, a) -> a }: Int)",
+              "(case Just 1 { These a -> a, _ -> 0 } : Int)", -- need to lookup constructor
+              "(case Just 1 { Just _ a -> a, _ -> 0 }: Int)", -- too many args in pattern
+              "(case Just 1 { Just -> 1, _ -> 0 } : Int)", -- not enough args in pattern
+              "(\\a -> case a { 1 -> 10, 2 -> 20, 3 -> 30 }: (1 | 2) -> Int) 1" -- pattern contains something not found in union
               -- "Nothing", -- don't know what 'a' is
               -- "This 1" -- don't know what 'b' is
             ]
@@ -694,7 +694,7 @@ spec = do
         testElaborate input `shouldSatisfy` isLeft
 
       it "Patterns have type of input type" $ do
-        let input = unsafeParseExpr "(\\maybe -> case maybe of Just b -> 1 | Nothing -> 0 : Maybe Bool -> Int)"
+        let input = unsafeParseExpr "(\\maybe -> case maybe { Just b -> 1, Nothing -> 0 }: Maybe Bool -> Int)"
             expected = TFunc () mempty (TApp () (TConstructor () "Maybe") tyBool) tyInt
 
         getExprAnnotation <$> testElaborate input `shouldBe` Right expected
@@ -755,7 +755,7 @@ spec = do
       it "OK boys 1" $ do
         let input =
               unsafeParseExpr
-                "let id = (\\i -> i : i -> i); case (Just 1) of Just a -> Just (id a) | Nothing -> Nothing"
+                "let id = (\\i -> i : i -> i); case (Just 1) { Just a -> Just (id a), Nothing -> Nothing }"
             expected = fromParsedType $ unsafeParseType "Maybe 1"
         getExprAnnotation <$> testElaborate input
           `shouldBe` Right
@@ -774,21 +774,21 @@ spec = do
           `shouldBe` Right expected
 
       it "Weird boys 0" $ do
-        let input = unsafeParseExpr "let fmap = (\\f -> case (Just (1 : Int)) of Just a -> Just (f a) : (Int -> b) -> Maybe b); let id = (\\i -> i : Int -> Int); fmap id"
+        let input = unsafeParseExpr "let fmap = (\\f -> case (Just (1 : Int)) { Just a -> Just (f a) } : (Int -> b) -> Maybe b); let id = (\\i -> i : Int -> Int); fmap id"
             expected = fromParsedType $ unsafeParseType "Maybe Int"
         getExprAnnotation <$> testElaborate input `shouldBe` Right expected
 
       it "Weird boys 4" $ do
         let input =
               unsafeParseExpr
-                "let fmap = (\\f -> \\val -> case val of Just aa -> Just (f aa) | Nothing -> Nothing : (a -> b) -> Maybe a -> Maybe b); let id = (\\i -> i : Int -> Int); fmap id (Just 1000)"
+                "let fmap = (\\f -> \\val -> case val { Just aa -> Just (f aa), Nothing -> Nothing } : (a -> b) -> Maybe a -> Maybe b); let id = (\\i -> i : Int -> Int); fmap id (Just 1000)"
             expected = fromParsedType $ unsafeParseType "Maybe Int"
         getExprAnnotation <$> testElaborate input `shouldBe` Right expected
 
       it "Weird boys 5" $ do
         let input =
               unsafeParseExpr
-                "let fmap = (\\f -> \\maybe -> case maybe of Just a -> Just (f a) | Nothing -> Nothing : (a -> b) -> Maybe a -> Maybe b); let id = (\\i -> i : c -> c); (fmap id (Just 1) : Maybe 1)"
+                "let fmap = (\\f -> \\maybe -> case maybe { Just a -> Just (f a), Nothing -> Nothing } : (a -> b) -> Maybe a -> Maybe b); let id = (\\i -> i : c -> c); (fmap id (Just 1) : Maybe 1)"
             expected = fromParsedType $ unsafeParseType "Maybe 1"
         getExprAnnotation <$> testElaborate input `shouldBe` Right expected
 

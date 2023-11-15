@@ -98,11 +98,11 @@ testModule =
           "instance Eq Bool = \\a -> \\b -> a == b",
           "instance Eq String = \\a -> \\b -> a == b",
           "instance (Eq a, Eq b) => Eq (a,b) = ",
-          "\\pairA -> \\pairB -> case (pairA, pairB) of ((a1, b1), (a2, b2)) -> ",
-          "if equals a1 a2 then equals b1 b2 else False",
+          "\\pairA -> \\pairB -> case (pairA, pairB) {((a1, b1), (a2, b2)) -> ",
+          "if equals a1 a2 then equals b1 b2 else False}",
           "type Natural = Suc Natural | Zero",
           "class Show a { show: a -> String }",
-          "instance Show Natural = \\nat -> case nat of Suc n -> \"S \" + show n | _ -> \"\""
+          "instance Show Natural = \\nat -> case nat { Suc n -> \"S \" + show n , _ -> \"\"}"
         ]
 
 tyBool :: (Monoid ann) => Type dep ann
@@ -302,7 +302,7 @@ instances =
       ( Constraint "Eq" [tyTuple (tcVar "a") [tcVar "b"]],
         Instance
           { inExpr =
-              unsafeParseInstanceExpr "\\a -> \\b -> case (a,b) of ((a1, a2), (b1, b2)) -> if equals a1 b1 then equals a2 b2 else False",
+              unsafeParseInstanceExpr "\\a -> \\b -> case (a,b) { ((a1, a2), (b1, b2)) -> if equals a1 b1 then equals a2 b2 else False }",
             inConstraints =
               [ Constraint "Eq" [tcVar "a"],
                 Constraint "Eq" [tcVar "b"]
@@ -312,7 +312,7 @@ instances =
       ( Constraint "Functor" [tyCons "Maybe" [tcVar "a"]],
         Instance
           { inExpr =
-              unsafeParseInstanceExpr "\\f -> \\maybe -> case maybe of Just a -> Just (f a) | Nothing -> Nothing",
+              unsafeParseInstanceExpr "\\f -> \\maybe -> case maybe { Just a -> Just (f a), Nothing -> Nothing }",
             inConstraints = mempty
           }
       )
