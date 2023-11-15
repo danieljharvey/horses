@@ -4,16 +4,16 @@ def fromMaybe :
   (Maybe a) -> a -> a
 def fromMaybe val fallback =
   case val {
-      Just a ->   a,
-      _ ->   fallback
+    Just a ->   a,
+    _ ->   fallback
   }
 
 def fmap : 
   (a -> b) -> (Maybe a) -> Maybe b
 def fmap f maybeA =
   case maybeA {
-      Just a ->   (Just (f a)),
-      _ ->   Nothing
+    Just a ->   (Just (f a)),
+    _ ->   Nothing
   }
 
 test "fmap id does nothing" =

@@ -2,8 +2,8 @@ type Expr ann = EAdd ann (Expr ann) (Expr ann) | ENumber ann Int
 
 def run expr =
   case expr {
-      ENumber _ i ->   i,
-      EAdd _ _ _ ->   100
+    ENumber _ i ->   i,
+    EAdd _ _ _ ->   100
   }
 
 def run2 expr =
