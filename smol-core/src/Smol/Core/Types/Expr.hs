@@ -394,7 +394,6 @@ printSubExpr :: (Printer (dep Constructor), Printer (dep Identifier), Printer (d
 printSubExpr expr = case expr of
   all'@ELet {} -> inParens all'
   all'@ELambda {} -> inParens all'
-  all'@EIf {} -> inParens all'
   all'@EApp {} -> inParens all'
   all'@ETuple {} -> inParens all'
   a -> prettyDoc a

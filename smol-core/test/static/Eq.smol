@@ -13,11 +13,11 @@ instance(Eq a, Eq b) => Eq (a, b) =
   \pairA ->
     \pairB ->
       case ((pairA, pairB)) {
-        ((a1,  b1),  (a2,  b2)) -> (if (equals a1 a2)
+        ((a1,  b1),  (a2,  b2)) -> if (equals a1 a2)
         then
           (equals b1 b2)
         else
-          False)
+          False
       }
 
 type Maybe a = Just a | Nothing
