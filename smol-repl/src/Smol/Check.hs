@@ -3,6 +3,7 @@ module Smol.Check
   )
 where
 
+import Control.Monad (when)
 import Control.Monad.IO.Class (MonadIO, liftIO)
 import Data.Text (Text)
 import qualified Data.Text as T
@@ -46,9 +47,9 @@ checkFile filePath = liftIO $ do
 format :: (MonadIO m) => FilePath -> Text -> [ModuleItem ann] -> m ()
 format filePath originalInput moduleItems = do
   let printed = renderWithWidth 80 $ printModuleParts moduleItems
-  if printed /= originalInput
-    then liftIO $ T.writeFile filePath printed
-    else pure ()
+  when (printed /= originalInput) $
+    liftIO $
+      T.writeFile filePath printed
 
 check :: Text -> IO ()
 check filePath = do
