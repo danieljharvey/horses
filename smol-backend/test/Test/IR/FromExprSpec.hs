@@ -272,7 +272,7 @@ spec = do
           ]
 
     it "Pattern matches enum" $ do
-      getMainExpr "(case LT of GT -> 21 | EQ -> 23 | LT -> 42 : Int)"
+      getMainExpr "(case LT { GT -> 21, EQ -> 23, LT -> 42 } : Int)"
         `shouldBe` IRMatch
           (IRPrim (IRPrimInt32 2))
           IRInt32
@@ -303,7 +303,7 @@ spec = do
           thisIntInt = IRStruct [IRInt32, IRInt32]
           thatIntInt = IRStruct [IRInt32, IRInt32]
           theseIntInt = IRStruct [IRInt32, IRInt32, IRInt32]
-      getMainExpr "(case (This 42 : These Int Int) of This a -> a | That b -> 0 | These tA tB -> tA + tB : Int)"
+      getMainExpr "(case (This 42 : These Int Int) { This a -> a, That b -> 0, These tA tB -> tA + tB } : Int)"
         `shouldBe` IRMatch
           ( IRInitialiseDataType
               (IRAlloc typeTheseIntInt)
