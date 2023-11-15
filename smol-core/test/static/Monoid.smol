@@ -1,19 +1,28 @@
 class Semigroup a { mappend: a -> a -> a }
 
-instance Semigroup Int = \a -> \b -> a + a
+instance Semigroup Int =
+  \a -> \b -> a + a
 
 class Monoid a { mempty: a }
 
-instance Monoid Int = 0
+instance Monoid Int =
+  0
 
-type All = All Bool
+type All  = All Bool
 
-def runAll : All -> Bool
-def runAll all = case all of All a -> a
+def runAll : 
+  All -> Bool
+def runAll all =
+  case all of 
+      All a ->   a
 
-instance Semigroup All = \a -> \b -> case (a,b) of
-                                    (All True, All True) -> All True
-                                   | _ -> All False
+instance Semigroup All =
+  \a ->
+    \b ->
+      case ((a, b)) of 
+          (All True,  All True) ->   (All True)
+        | _ ->   (All False)
 
-instance Monoid All = All True
+instance Monoid All =
+  All True
 

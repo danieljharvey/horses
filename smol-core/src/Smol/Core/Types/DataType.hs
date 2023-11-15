@@ -77,6 +77,10 @@ instance
   where
   prettyDoc = renderDataType
 
+-- when on multilines, indent by `i`, if not then nothing
+indentMulti :: Integer -> Doc style -> Doc style
+indentMulti i doc = flatAlt (indent (fromIntegral i) doc) doc
+
 renderDataType ::
   (Printer (dep Identifier), Printer (dep TypeName)) =>
   DataType dep ann ->
@@ -85,13 +89,12 @@ renderDataType (DataType tyCon vars' constructors') =
   "type"
     <+> prettyDoc tyCon
     <> printVars vars'
-    <+> if M.null constructors'
+    <> if M.null constructors'
       then mempty
       else
         group $
-          line
-            <> indent
-              2
+          softline
+            <> indentMulti 2
               ( align $
                   vsep $
                     zipWith
@@ -100,7 +103,7 @@ renderDataType (DataType tyCon vars' constructors') =
                       (printCons <$> M.toList constructors')
               )
   where
-    printVars [] = mempty
+    printVars [] = space
     printVars as = space <> sep (prettyDoc <$> as)
     printCons (consName, []) = prettyDoc consName
     printCons (consName, args) =

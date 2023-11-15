@@ -1,6 +1,0 @@
-def id : a -> a
-def id a = a
-
-type Dog = Log | Bog
-
-instance Show Dog = \dog -> case dog of Log -> "log" | Bog -> "bog"

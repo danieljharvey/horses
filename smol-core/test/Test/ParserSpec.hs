@@ -127,6 +127,9 @@ spec = do
                   ]
               ),
               ("let a = 1 in a", ELet () "a" (int 1) (var "a")),
+              ( "let id a = a in True",
+                ELet () "id" (ELambda () "a" (var "a")) (bool True)
+              ),
               ("f (a b)", EApp () (var "f") (EApp () (var "a") (var "b"))),
               ("fmap inc (Just 1)", EApp () (EApp () (var "fmap") (var "inc")) (EApp () (constructor "Just") (int 1))),
               ("Just (1 + 1)", EApp () (constructor "Just") (EInfix () OpAdd (int 1) (int 1))),

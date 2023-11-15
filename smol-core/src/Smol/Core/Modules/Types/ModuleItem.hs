@@ -115,16 +115,16 @@ deriving stock instance
 instance Printer (ModuleItem ann) where
   prettyDoc (ModuleExpression (ModuleExpressionC {meIdent, meArgs, meExpr})) =
     printExpression meIdent meArgs meExpr <> line <> line
-  prettyDoc (ModuleType (ModuleTypeC {mtIdent, mtType})) =
-    printType mtIdent mtType <> line
-  prettyDoc (ModuleDataType (ModuleDataTypeC {mdtDataType})) = 
+  prettyDoc (ModuleType (ModuleTypeC {mtConstraints, mtIdent, mtType})) =
+    printType mtConstraints mtIdent mtType <> line
+  prettyDoc (ModuleDataType (ModuleDataTypeC {mdtDataType})) =
     prettyDoc mdtDataType <> line <> line
   prettyDoc (ModuleTest testName expr) =
     printTest testName expr <> line <> line
   prettyDoc (ModuleInstance (ModuleInstanceC {miConstraints, miHead, miExpr})) =
     printInstance miConstraints miHead miExpr <> line <> line
-  prettyDoc (ModuleClass moduleClass) = 
-    prettyDoc moduleClass  <> line <> line
+  prettyDoc (ModuleClass moduleClass) =
+    prettyDoc moduleClass <> line <> line
 
 _withDoubleLines :: [Doc a] -> Doc a
 _withDoubleLines = vsep . fmap (line <>)
@@ -149,19 +149,29 @@ printInstance constraints instanceHead expr =
             <> concatWith
               (\a b -> a <> ", " <> b)
               (prettyDoc <$> cons)
-            <> ") =>"
+            <> ") => "
    in "instance"
         <> prettyConstraints
-        <+> prettyDoc instanceHead
+        <> prettyDoc instanceHead
         <+> "="
         <> line
         <> indentMulti 2 (prettyDoc expr)
 
-printType :: Identifier -> Type ParseDep ann -> Doc style
-printType name ty =
+printType :: [Constraint ParseDep ann] -> Identifier -> Type ParseDep ann -> Doc style
+printType constraints name ty =
+  let prettyConstraints = case constraints of
+        [] -> " "
+        cons ->
+          "("
+            <> concatWith
+              (\a b -> a <> ", " <> b)
+              (prettyDoc <$> cons)
+            <> ") =>"
+  in
   "def"
     <+> prettyDoc name
     <+> ":"
+    <> prettyConstraints
     <> line
     <> indentMulti 2 (prettyDoc ty)
 
@@ -169,11 +179,11 @@ printExpression :: Identifier -> [Identifier] -> Expr ParseDep ann -> Doc style
 printExpression name args expr =
   "def"
     <+> prettyDoc name
-    <+> printMany args
+    <> printMany args
     <+> "="
     <> line
     <> indentMulti 2 (prettyDoc expr)
 
 printTest :: TestName -> Expr ParseDep ann -> Doc style
 printTest testName expr =
-  "test" <+> "\"" <> prettyDoc testName <> "\"" <+> "=" <+> indentMulti 2 (prettyDoc expr)
+  "test" <+> dquotes (prettyDoc testName) <+> "=" <> line <> indentMulti 2 (prettyDoc expr)

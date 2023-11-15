@@ -1,16 +1,23 @@
 type Reader r a = Reader (r -> a)
 
-def run : Reader (r -> a) -> r -> a
+def run : 
+  (Reader (r -> a)) -> r -> a
 def run reader r =
-  case reader of (Reader ra) -> ra r
+  case reader of 
+      Reader ra ->   (ra r)
 
-def pure : a -> Reader r a
+def pure : 
+  a -> Reader r a
 def pure a =
-    Reader (\r -> a)
+  Reader (\r -> a)
 
-def ask : Reader (r -> r)
-def ask = let id = \a -> a in Reader id
+def ask : 
+  Reader (r -> r)
+def ask =
+  let id a = a in Reader id
 
-def local : (r -> r) -> Reader (r -> a) -> Reader (r -> a)
+def local : 
+  (r -> r) -> (Reader (r -> a)) -> Reader (r -> a)
 def local envF reader =
   Reader (\r -> run reader (envF r))
+

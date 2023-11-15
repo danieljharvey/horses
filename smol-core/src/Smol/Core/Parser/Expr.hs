@@ -183,7 +183,10 @@ boolParser =
 -----
 
 letParser :: Parser ParserExpr
-letParser = addLocation $ do
+letParser = try letInParser <|> letFuncParser
+
+letInParser :: Parser ParserExpr
+letInParser = addLocation $ do
   _ <- myString "let"
   ident <- emptyParseDep <$> identifierParser
   _ <- myString "="
@@ -191,24 +194,19 @@ letParser = addLocation $ do
   _ <- try (myString ";") <|> myString "in"
   ELet mempty ident boundExpr <$> expressionParser
 
-{-
-     textPrim :: Parser Text
-textPrim = T.pack <$> (char '\"' *> manyTill L.charLiteral (char '\"'))
--}
+plainIdentifierParser :: Parser (ParseDep Identifier)
+plainIdentifierParser = flip ParseDep Nothing <$> identifierParser
 
-{-
-stringPrim :: Parser Prim
-stringPrim =
-  MyString . StringType <$> textPrim
-
-stringParser :: Parser ParserExpr
-stringParser =
-  myLexeme
-    ( withLocation
-        EPrim
-        stringPrim
-    )
--}
+letFuncParser :: Parser ParserExpr
+letFuncParser = addLocation $ do
+  myString "let"
+  ident <- plainIdentifierParser
+  args <- chainl1 ((: []) <$> plainIdentifierParser) (pure (<>))
+  myString "="
+  expr <- expressionParser
+  _ <- try (myString ";") <|> myString "in"
+  let expr' = foldr (ELambda mempty) expr args
+  ELet mempty ident expr' <$> expressionParser
 
 ----
 

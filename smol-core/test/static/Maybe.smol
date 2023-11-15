@@ -1,19 +1,19 @@
-type Maybe a =
-    Just a
-  | Nothing
+type Maybe a = Just a | Nothing
 
-def fromMaybe : Maybe a -> a -> a
+def fromMaybe : 
+  (Maybe a) -> a -> a
 def fromMaybe val fallback =
-  case val of
-    Just a -> a
-    | _ -> fallback
+  case val of 
+      Just a ->   a
+    | _ ->   fallback
 
-def fmap : (a -> b) -> Maybe a -> Maybe b
+def fmap : 
+  (a -> b) -> (Maybe a) -> Maybe b
 def fmap f maybeA =
-  case maybeA of
-      Just a -> Just (f a)
-      | _ -> Nothing
+  case maybeA of 
+      Just a ->   (Just (f a))
+    | _ ->   Nothing
 
 test "fmap id does nothing" =
-    let id = \a -> a;
-    fromMaybe (fmap id (Just True)) False == True
+  let id a = a in (fromMaybe (fmap id (Just True)) False) == True
+

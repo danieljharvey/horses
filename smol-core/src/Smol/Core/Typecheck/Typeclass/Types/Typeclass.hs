@@ -1,11 +1,11 @@
-{-# LANGUAGE NamedFieldPuns #-}
-{-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE DeriveAnyClass #-}
 {-# LANGUAGE DeriveFunctor #-}
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE DerivingStrategies #-}
+{-# LANGUAGE FlexibleInstances #-}
+{-# LANGUAGE NamedFieldPuns #-}
 {-# LANGUAGE StandaloneDeriving #-}
-
+  {-# LANGUAGE OverloadedStrings #-}
 module Smol.Core.Typecheck.Typeclass.Types.Typeclass
   ( Typeclass (..),
   )
@@ -14,9 +14,10 @@ where
 import qualified Prettyprinter as PP
 import Data.Aeson (FromJSON, FromJSONKey, ToJSON, ToJSONKey)
 import GHC.Generics (Generic)
+import Prettyprinter ((<+>))
+import Smol.Core.Printer
 import Smol.Core.Typecheck.Typeclass.Types.TypeclassName
 import Smol.Core.Types
-import Smol.Core.Printer
 
 -- | the typeclass described in it's most general form, ie
 -- class Show a where show :: a -> String
@@ -72,10 +73,17 @@ deriving anyclass instance
   FromJSON (Typeclass dep ann)
 
 instance Printer (Typeclass ParseDep ann) where
-  prettyDoc (Typeclass {tcName,tcFuncName,tcFuncType}) =
-      prettyDoc "class" PP.<+> prettyDoc tcName PP.<+>
-          prettyDoc "{"
-            PP.<+> prettyDoc tcFuncName <> prettyDoc ":" PP.<+>
-            prettyDoc tcFuncType PP.<+>
+  prettyDoc (Typeclass {tcName, tcArgs, tcFuncName, tcFuncType}) =
+    "class"
+      <+> prettyDoc tcName
+      <+> 
 
-              prettyDoc "}"
+            PP.concatWith
+              (\a b -> a <> ", " <> b)
+              (prettyDoc <$> tcArgs)
+
+      <+> "{"
+      <+> prettyDoc tcFuncName
+      <> ":"
+      <+> prettyDoc tcFuncType
+      <+> "}"

@@ -30,5 +30,5 @@ renderPrim :: Prim -> PP.Doc doc
 renderPrim (PInt i) = PP.pretty i
 renderPrim (PBool True) = "True"
 renderPrim (PBool False) = "False"
-renderPrim (PString txt) = PP.pretty txt
+renderPrim (PString txt) = PP.dquotes (PP.pretty txt)
 renderPrim PUnit = "Unit"
