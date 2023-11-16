@@ -1,5 +1,29 @@
 class Functor f { fmap: (a -> b) -> (f a) -> f b }
 
+type Identity a = Identity a
+
+instance Functor Identity {
+  \f -> \Identity a -> Identity (f a)
+}
+
+test "fmap works with Identity" {
+  let runIdentity identity = 
+    let Identity a = identity;
+
+    a;
+
+  let inc = 
+    (\a -> a + 1 : Int -> Int);
+
+  let result = 
+    runIdentity (fmap inc (Identity (1 : Int)));
+
+  let expected = 
+    runIdentity (Identity (2 : Int));
+
+  (result : Int) == (expected : Int)
+}
+
 type Maybe a = Just a | Nothing
 
 instance Functor Maybe {

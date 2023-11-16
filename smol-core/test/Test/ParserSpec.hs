@@ -137,7 +137,21 @@ spec = do
               ("fmap inc (Just 1)", EApp () (EApp () (var "fmap") (var "inc")) (EApp () (constructor "Just") (int 1))),
               ("Just (1 + 1)", EApp () (constructor "Just") (EInfix () OpAdd (int 1) (int 1))),
               ("[]", EArray () mempty),
-              ("[1,2,3,4]", EArray () (Seq.fromList [int 1, int 2, int 3, int 4]))
+              ("[1,2,3,4]", EArray () (Seq.fromList [int 1, int 2, int 3, int 4])),
+              ( "\\(a,_) -> a",
+                ELambda
+                  ()
+                  "lambdaArg"
+                  ( EPatternMatch
+                      ()
+                      (var "lambdaArg")
+                      ( NE.singleton
+                          ( PTuple () (PVar () "a") (NE.singleton $ PWildcard ()),
+                            var "a"
+                          )
+                      )
+                  )
+              )
             ]
       traverse_
         ( \(str, expr) -> it (T.unpack str) $ do

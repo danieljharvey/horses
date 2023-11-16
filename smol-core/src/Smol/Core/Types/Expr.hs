@@ -118,7 +118,8 @@ deriving anyclass instance
   FromJSON (Expr dep ann)
 
 instance
-  ( Printer (dep Constructor),
+  ( Eq (dep Identifier),
+    Printer (dep Constructor),
     Printer (dep Identifier),
     Printer (dep TypeName)
   ) =>
@@ -148,7 +149,11 @@ getInfixList expr = case expr of
   other -> NE.fromList [IfStart other]
 
 prettyInfixList ::
-  (Printer (dep Constructor), Printer (dep Identifier), Printer (dep TypeName)) =>
+  ( Eq (dep Identifier),
+    Printer (dep Constructor),
+    Printer (dep Identifier),
+    Printer (dep TypeName)
+  ) =>
   NE.NonEmpty (InfixBit dep ann) ->
   PP.Doc style
 prettyInfixList (ifHead NE.:| ifRest) =
@@ -161,7 +166,8 @@ indentMulti :: Integer -> PP.Doc style -> PP.Doc style
 indentMulti i doc = PP.flatAlt (PP.indent (fromIntegral i) doc) doc
 
 prettyLet ::
-  ( Printer (dep Constructor),
+  ( Eq (dep Identifier),
+    Printer (dep Constructor),
     Printer (dep Identifier),
     Printer (dep TypeName)
   ) =>
@@ -196,7 +202,8 @@ newlineOrIn :: PP.Doc style
 newlineOrIn = PP.flatAlt (";" <> PP.line' <> PP.line) " in "
 
 prettyTuple ::
-  ( Printer (dep Constructor),
+  ( Eq (dep Identifier),
+    Printer (dep Constructor),
     Printer (dep Identifier),
     Printer (dep TypeName)
   ) =>
@@ -216,11 +223,30 @@ prettyTuple a as =
         <> ")"
     )
 
+prettyPatternLambda ::
+  (Eq (dep Identifier), Printer (dep Constructor), Printer (dep Identifier), Printer (dep TypeName)) =>
+  Pattern dep ann ->
+  Expr dep ann ->
+  PP.Doc style
+prettyPatternLambda pat patExpr =
+  PP.group
+    ( PP.vsep
+        [ "\\"
+            <> prettyDoc pat
+            <+> "->",
+          indentMulti 2 $
+            prettyDoc patExpr
+        ]
+    )
+
 prettyLambda ::
-  (Printer (dep Constructor), Printer (dep Identifier), Printer (dep TypeName)) =>
+  (Eq (dep Identifier), Printer (dep Constructor), Printer (dep Identifier), Printer (dep TypeName)) =>
   dep Identifier ->
   Expr dep ann ->
   PP.Doc style
+prettyLambda binder (EPatternMatch _ (EVar _ matchBinder) ((pat, patExpr) NE.:| []))
+  | binder == matchBinder =
+      prettyPatternLambda pat patExpr
 prettyLambda binder expr =
   PP.group
     ( PP.vsep
@@ -233,7 +259,11 @@ prettyLambda binder expr =
     )
 
 prettyRecord ::
-  (Printer (dep Constructor), Printer (dep Identifier), Printer (dep TypeName)) =>
+  ( Eq (dep Identifier),
+    Printer (dep Constructor),
+    Printer (dep Identifier),
+    Printer (dep TypeName)
+  ) =>
   Map Identifier (Expr dep ann) ->
   PP.Doc style
 prettyRecord map' =
@@ -258,7 +288,8 @@ prettyRecord map' =
                 )
 
 prettyIf ::
-  ( Printer (dep Constructor),
+  ( Eq (dep Identifier),
+    Printer (dep Constructor),
     Printer
       ( dep Identifier
       ),
@@ -281,7 +312,11 @@ prettyIf if' then' else' =
     )
 
 prettyLetPattern ::
-  (Printer (dep Constructor), Printer (dep Identifier), Printer (dep TypeName)) =>
+  ( Eq (dep Identifier),
+    Printer (dep Constructor),
+    Printer (dep Identifier),
+    Printer (dep TypeName)
+  ) =>
   Expr dep ann ->
   Pattern dep ann ->
   Expr dep ann ->
@@ -295,7 +330,11 @@ prettyLetPattern sumExpr pat patExpr =
     <> prettyDoc patExpr
 
 prettyPatternMatch ::
-  (Printer (dep Constructor), Printer (dep Identifier), Printer (dep TypeName)) =>
+  ( Eq (dep Identifier),
+    Printer (dep Constructor),
+    Printer (dep Identifier),
+    Printer (dep TypeName)
+  ) =>
   Expr dep ann ->
   NE.NonEmpty (Pattern dep ann, Expr dep ann) ->
   PP.Doc style
@@ -325,7 +364,8 @@ prettyPatternMatch sumExpr matches =
         <> if index < length matches then "," else ""
 
 prettyArray ::
-  ( Printer (dep Constructor),
+  ( Eq (dep Identifier),
+    Printer (dep Constructor),
     Printer (dep Identifier),
     Printer (dep TypeName)
   ) =>
@@ -350,7 +390,8 @@ prettyArray items =
         _ -> "[]"
 
 prettyExpr ::
-  ( Printer (dep Constructor),
+  ( Eq (dep Identifier),
+    Printer (dep Constructor),
     Printer (dep Identifier),
     Printer (dep TypeName)
   ) =>
@@ -386,7 +427,8 @@ prettyExpr (EArray _ as) =
   prettyArray as
 
 wrapInfix ::
-  ( Printer (dep Constructor),
+  ( Eq (dep Identifier),
+    Printer (dep Constructor),
     Printer (dep Identifier),
     Printer (dep TypeName)
   ) =>
@@ -397,7 +439,8 @@ wrapInfix val = case val of
   other -> printSubExpr other
 
 inParens ::
-  ( Printer (dep Constructor),
+  ( Eq (dep Identifier),
+    Printer (dep Constructor),
     Printer (dep Identifier),
     Printer (dep TypeName)
   ) =>
@@ -406,7 +449,14 @@ inParens ::
 inParens = PP.parens . prettyExpr
 
 -- print simple things with no brackets, and complex things inside brackets
-printSubExpr :: (Printer (dep Constructor), Printer (dep Identifier), Printer (dep TypeName)) => Expr dep ann -> PP.Doc style
+printSubExpr ::
+  ( Eq (dep Identifier),
+    Printer (dep Constructor),
+    Printer (dep Identifier),
+    Printer (dep TypeName)
+  ) =>
+  Expr dep ann ->
+  PP.Doc style
 printSubExpr expr = case expr of
   all'@ELet {} -> inParens all'
   all'@ELambda {} -> inParens all'
