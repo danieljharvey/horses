@@ -141,7 +141,7 @@ printInstance ::
   Doc style
 printInstance constraints instanceHead expr =
   let prettyConstraints = case constraints of
-        [] -> " "
+        [] -> ""
         cons ->
           "("
             <> concatWith
@@ -149,11 +149,13 @@ printInstance constraints instanceHead expr =
               (prettyDoc <$> cons)
             <> ") => "
    in "instance"
-        <> prettyConstraints
+        <+> prettyConstraints
         <> prettyDoc instanceHead
-        <+> "="
+        <+> "{"
         <> line
         <> indentMulti 2 (prettyDoc expr)
+        <> line
+        <> "}"
 
 printType :: [Constraint ParseDep ann] -> Identifier -> Type ParseDep ann -> Doc style
 printType constraints name ty =
@@ -183,4 +185,10 @@ printExpression name args expr =
 
 printTest :: TestName -> Expr ParseDep ann -> Doc style
 printTest testName expr =
-  "test" <+> dquotes (prettyDoc testName) <+> "=" <> line <> indentMulti 2 (prettyDoc expr)
+  "test"
+    <+> dquotes (prettyDoc testName)
+    <+> "{"
+    <> line
+    <> indentMulti 2 (prettyDoc expr)
+    <> line
+    <> "}"

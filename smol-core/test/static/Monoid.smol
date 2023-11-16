@@ -1,12 +1,14 @@
 class Semigroup a { mappend: a -> a -> a }
 
-instance Semigroup Int =
+instance Semigroup Int {
   \a -> \b -> a + a
+}
 
 class Monoid a { mempty: a }
 
-instance Monoid Int =
+instance Monoid Int {
   0
+}
 
 type All  = All Bool
 
@@ -17,10 +19,12 @@ def runAll all =
 
   a
 
-instance Semigroup All =
+instance Semigroup All {
   \a ->
     \b -> case ((a, b)) { (All True, All True) -> (All True), _ -> (All False) }
+}
 
-instance Monoid All =
+instance Monoid All {
   All True
+}
 
