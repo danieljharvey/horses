@@ -1,7 +1,8 @@
 class Show a { show: a -> String }
 
-instance Show Bool =
+instance Show Bool {
   \bool -> if bool then "True" else "False"
+}
 
 test "Show True" {
   (show (True : Bool)) == "True"
@@ -13,8 +14,9 @@ test "Show False" {
 
 type Natural  = Suc Natural | Zero
 
-instance Show Natural =
+instance Show Natural {
   \nat -> case nat { Suc n -> "S (" + (show n) + ")", Zero -> "Z" }
+}
 
 test "Show Zero" {
   (show Zero) == "Z"
@@ -26,12 +28,13 @@ test "Show Three" {
 
 type List a = Cons a (List a) | Nil
 
-instance(Show a) => Show List a =
+instance (Show a) => Show List a {
   \list ->
     case list {
       Cons a rest -> (show a) + ":" + (show rest),
       Nil -> "Nil"
     }
+}
 
 def showBoolList =
   (show (Cons (True : Bool) (Cons (False : Bool) Nil))) == "True:False:Nil"

@@ -135,15 +135,17 @@ parseTest = do
   myString "}"
   pure $ ModuleTest testName expr
 
--- `instance Eq Int = \a -> \b -> a == b`
+-- `instance Eq Int { \a -> \b -> a == b }`
 parseInstance :: Parser (ModuleItem Annotation)
 parseInstance =
   let parser = do
         myString "instance"
         constraints <- try typeConstraintParser <|> pure mempty
         mainConstraint <- constraintParser
-        myString "="
-        (,,) constraints mainConstraint <$> expressionParser
+        myString "{"
+        expr <- expressionParser
+        myString "}"
+        pure (constraints, mainConstraint, expr)
    in withLocation
         ( \ann (constraints, head', expr) ->
             ModuleInstance

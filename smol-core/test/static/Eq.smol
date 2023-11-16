@@ -1,24 +1,28 @@
 class Eq a { equals: a -> a -> Bool }
 
-instance Eq Int =
+instance Eq Int {
   \a -> \b -> a == b
+}
 
-instance Eq Bool =
+instance Eq Bool {
   \a -> \b -> a == b
+}
 
-instance Eq String =
+instance Eq String {
   \a -> \b -> a == b
+}
 
-instance(Eq a, Eq b) => Eq (a, b) =
+instance (Eq a, Eq b) => Eq (a, b) {
   \pairA ->
     \pairB ->
       let ((a1, b1), (a2, b2)) = ((pairA, pairB));
 
       if (equals a1 a2) then (equals b1 b2) else False
+}
 
 type Maybe a = Just a | Nothing
 
-instance(Eq a) => Eq Maybe a =
+instance (Eq a) => Eq Maybe a {
   \a ->
     \b ->
       case ((a, b)) {
@@ -26,6 +30,7 @@ instance(Eq a) => Eq Maybe a =
         (Nothing, Nothing) -> True,
         _ -> False
       }
+}
 
 def useEqualsInt : 
   Bool

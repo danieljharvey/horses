@@ -94,15 +94,15 @@ testModule =
     typedModule $
       joinText
         [ "class Eq a { equals: a -> a -> Bool }",
-          "instance Eq Int = \\a -> \\b -> a == b",
-          "instance Eq Bool = \\a -> \\b -> a == b",
-          "instance Eq String = \\a -> \\b -> a == b",
-          "instance (Eq a, Eq b) => Eq (a,b) = ",
+          "instance Eq Int { \\a -> \\b -> a == b }",
+          "instance Eq Bool { \\a -> \\b -> a == b }",
+          "instance Eq String { \\a -> \\b -> a == b }",
+          "instance (Eq a, Eq b) => Eq (a,b) { ",
           "\\pairA -> \\pairB -> case (pairA, pairB) {((a1, b1), (a2, b2)) -> ",
-          "if equals a1 a2 then equals b1 b2 else False}",
+          "if equals a1 a2 then equals b1 b2 else False} }",
           "type Natural = Suc Natural | Zero",
           "class Show a { show: a -> String }",
-          "instance Show Natural = \\nat -> case nat { Suc n -> \"S \" + show n , _ -> \"\"}"
+          "instance Show Natural { \\nat -> case nat { Suc n -> \"S \" + show n , _ -> \"\"} }"
         ]
 
 tyBool :: (Monoid ann) => Type dep ann

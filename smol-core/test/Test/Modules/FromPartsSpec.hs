@@ -57,7 +57,7 @@ spec = do
         let modParts =
               unsafeParseModuleItems $
                 joinText
-                  [ "instance Eq Int = \\a -> \\b -> a == b"
+                  [ "instance Eq Int { \\a -> \\b -> a == b }"
                   ]
             expected = MissingTypeclass () "Eq"
 

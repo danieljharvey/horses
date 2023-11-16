@@ -53,8 +53,8 @@ spec = do
               "test \"one plus one equals two\" { 1 + 1 == 2 }",
               "def usesEquals : (Eq (a,b)) => (a,b) -> (a,b) -> Bool",
               "class Eq a { equals: a -> a -> Bool }",
-              "instance Eq Int = eqInt",
-              "instance (Eq a) => Eq (Maybe a) = eqMaybeA"
+              "instance Eq Int { eqInt }",
+              "instance (Eq a) => Eq (Maybe a) { eqMaybeA }"
             ]
 
       it "All defs" $ do

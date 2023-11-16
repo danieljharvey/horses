@@ -2,8 +2,9 @@ class Functor f { fmap: (a -> b) -> (f a) -> f b }
 
 type Maybe a = Just a | Nothing
 
-instance Functor Maybe =
+instance Functor Maybe {
   \f -> \maybe -> case maybe { Just a -> (Just (f a)), Nothing -> Nothing }
+}
 
 test "fmap works with Just" {
   let unwrapMaybe maybe = 
@@ -20,9 +21,10 @@ test "fmap works with Just" {
 
 type List a = Cons a (List a) | Nil
 
-instance Functor List =
+instance Functor List {
   \f ->
     \list -> case list { Cons a rest -> (Cons (f a) (fmap f rest)), Nil -> Nil }
+}
 
 test "fmap works with List" {
   let listHead list = 
@@ -39,8 +41,9 @@ test "fmap works with List" {
 
 type Either e a = Left e | Right a
 
-instance Functor Either e =
+instance Functor Either e {
   \f -> \either -> case either { Right a -> (Right (f a)), Left e -> (Left e) }
+}
 
 test "fmap works with Either" {
   let unwrapEither either = 

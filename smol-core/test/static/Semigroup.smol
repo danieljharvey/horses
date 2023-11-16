@@ -1,12 +1,14 @@
 class Eq a { equals: a -> a -> Bool }
 
-instance Eq Int =
+instance Eq Int {
   \a -> \b -> a == b
+}
 
 class Semigroup a { mappend: a -> a -> a }
 
-instance Semigroup Int =
+instance Semigroup Int {
   \a -> \b -> a + a
+}
 
 type First a = First a
 
@@ -17,8 +19,9 @@ def runFirst firstA =
 
   a
 
-instance Semigroup First a =
+instance Semigroup First a {
   \a -> \b -> a
+}
 
 def true : 
   Bool
