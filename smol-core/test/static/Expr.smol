@@ -7,7 +7,7 @@ def run expr =
   }
 
 def run2 expr =
-  let go inner =
+  let go inner = 
     case inner {
       ENumber _ i -> i,
       EAdd _ a b -> (go a) + (go b)

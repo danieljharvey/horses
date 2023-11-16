@@ -6,13 +6,13 @@ instance Functor Maybe =
   \f -> \maybe -> case maybe { Just a -> (Just (f a)), Nothing -> Nothing }
 
 test "fmap works with Just" =
-  let unwrapMaybe maybe =
+  let unwrapMaybe maybe = 
     case maybe {
       Just a -> a,
       Nothing -> 0
     };
 
-  let inc =
+  let inc = 
     (\a -> a + 1 : Int -> Int);
 
   (unwrapMaybe (fmap inc (Just 1))) == (unwrapMaybe (Just (2 : Int)))
@@ -24,13 +24,13 @@ instance Functor List =
     \list -> case list { Cons a rest -> (Cons (f a) (fmap f rest)), Nil -> Nil }
 
 test "fmap works with List" =
-  let listHead list =
+  let listHead list = 
     case list {
       Cons a _ -> a,
       Nil -> 0
     };
 
-  let inc =
+  let inc = 
     (\a -> a + 1 : Int -> Int);
 
   (listHead (fmap inc (Cons 1 Nil))) == (listHead (Cons (2 : Int) Nil))
@@ -41,13 +41,13 @@ instance Functor Either e =
   \f -> \either -> case either { Right a -> (Right (f a)), Left e -> (Left e) }
 
 test "fmap works with Either" =
-  let unwrapEither either =
+  let unwrapEither either = 
     case either {
       Right a -> a,
       _ -> 0
     };
 
-  let inc =
+  let inc = 
     (\a -> a + 1 : Int -> Int);
 
   (unwrapEither (fmap inc (Right 1))) == (unwrapEither (Right (2 : Int)))

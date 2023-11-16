@@ -176,7 +176,7 @@ prettyLet var expr1 expr2 =
             <+> prettyDoc var
             <> prettyArgs args
             <+> "="
-            <> PP.line
+            <+> PP.line'
             <> indentMulti 2 (prettyDoc letExpr)
             <> newlineOrIn
             <> prettyDoc expr2
@@ -193,7 +193,7 @@ prettyLet var expr1 expr2 =
         other -> ([], other)
 
 newlineOrIn :: PP.Doc style
-newlineOrIn = PP.flatAlt (";" <> PP.line <> PP.line) " in "
+newlineOrIn = PP.flatAlt (";" <> PP.line' <> PP.line) " in "
 
 prettyTuple ::
   ( Printer (dep Constructor),
@@ -280,11 +280,27 @@ prettyIf if' then' else' =
         ]
     )
 
+prettyLetPattern ::
+  (Printer (dep Constructor), Printer (dep Identifier), Printer (dep TypeName)) =>
+  Expr dep ann ->
+  Pattern dep ann ->
+  Expr dep ann ->
+  PP.Doc style
+prettyLetPattern sumExpr pat patExpr =
+  "let"
+    <+> prettyDoc pat
+    <+> "="
+    <+> printSubExpr sumExpr
+    <> newlineOrIn
+    <> prettyDoc patExpr
+
 prettyPatternMatch ::
   (Printer (dep Constructor), Printer (dep Identifier), Printer (dep TypeName)) =>
   Expr dep ann ->
   NE.NonEmpty (Pattern dep ann, Expr dep ann) ->
   PP.Doc style
+prettyPatternMatch sumExpr ((pat, patExpr) NE.:| []) =
+  prettyLetPattern sumExpr pat patExpr
 prettyPatternMatch sumExpr matches =
   "case"
     <+> printSubExpr sumExpr
