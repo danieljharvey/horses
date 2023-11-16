@@ -67,7 +67,8 @@ deriving anyclass instance
   FromJSON (Instance dep ann)
 
 instance
-  ( Printer (dep Constructor),
+  ( Eq (dep Identifier),
+    Printer (dep Constructor),
     Printer (dep TypeName),
     Printer (dep Identifier)
   ) =>

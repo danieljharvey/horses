@@ -53,12 +53,36 @@ complexParser =
 
 lambdaParser :: Parser ParserExpr
 lambdaParser =
+  try regularLambdaParser
+    <|> patternLambdaParser
+
+regularLambdaParser :: Parser ParserExpr
+regularLambdaParser =
   label "lambda" $
     addLocation $ do
       _ <- myString "\\"
       ident <- emptyParseDep <$> identifierParser
       _ <- myString "->"
       ELambda mempty ident <$> expressionParser
+
+patternLambdaParser :: Parser ParserExpr
+patternLambdaParser =
+  label "lambda" $
+    addLocation $ do
+      _ <- myString "\\"
+      pat <- patternParser
+      _ <- myString "->"
+      expr <- expressionParser
+      pure
+        ( ELambda
+            mempty
+            (emptyParseDep "lambdaArg")
+            ( EPatternMatch
+                mempty
+                (EVar mempty (emptyParseDep "lambdaArg"))
+                (NE.singleton (pat, expr))
+            )
+        )
 
 -----
 
