@@ -280,11 +280,26 @@ prettyIf if' then' else' =
         ]
     )
 
+prettyLetPattern ::
+  (Printer (dep Constructor), Printer (dep Identifier), Printer (dep TypeName)) =>
+  Expr dep ann ->
+  Pattern dep ann -> Expr dep ann ->
+  PP.Doc style
+prettyLetPattern sumExpr pat patExpr =
+  "let"
+    <+> prettyDoc pat
+    <+> "="
+    <+> printSubExpr sumExpr
+    <> newlineOrIn
+    <+> printSubExpr patExpr
+
 prettyPatternMatch ::
   (Printer (dep Constructor), Printer (dep Identifier), Printer (dep TypeName)) =>
   Expr dep ann ->
   NE.NonEmpty (Pattern dep ann, Expr dep ann) ->
   PP.Doc style
+prettyPatternMatch sumExpr ((pat,patExpr) NE.:| []) =
+  prettyLetPattern sumExpr pat patExpr
 prettyPatternMatch sumExpr matches =
   "case"
     <+> printSubExpr sumExpr
@@ -307,6 +322,7 @@ prettyPatternMatch sumExpr matches =
         <> PP.softline
         <> printSubExpr expr'
         <> if index < length matches then "," else ""
+
 
 prettyArray ::
   ( Printer (dep Constructor),

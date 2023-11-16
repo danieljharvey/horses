@@ -183,11 +183,13 @@ boolParser =
 -----
 
 letParser :: Parser ParserExpr
-letParser = try letInParser <|> letFuncParser
+letParser = do
+  myString "let"
+  try letInParser <|> letFuncParser <|> letPatternParser
 
+-- `let a = 100 in a`
 letInParser :: Parser ParserExpr
 letInParser = addLocation $ do
-  _ <- myString "let"
   ident <- emptyParseDep <$> identifierParser
   _ <- myString "="
   boundExpr <- expressionParser
@@ -197,9 +199,9 @@ letInParser = addLocation $ do
 plainIdentifierParser :: Parser (ParseDep Identifier)
 plainIdentifierParser = flip ParseDep Nothing <$> identifierParser
 
+-- `let id a = a in True`
 letFuncParser :: Parser ParserExpr
 letFuncParser = addLocation $ do
-  myString "let"
   ident <- plainIdentifierParser
   args <- chainl1 ((: []) <$> plainIdentifierParser) (pure (<>))
   myString "="
@@ -207,6 +209,16 @@ letFuncParser = addLocation $ do
   _ <- try (myString ";") <|> myString "in"
   let expr' = foldr (ELambda mempty) expr args
   ELet mempty ident expr' <$> expressionParser
+
+-- `let (a,b) = (1,2) in a + b`
+letPatternParser :: Parser ParserExpr
+letPatternParser = addLocation $ do
+  pat <- patternParser
+  myString "="
+  matchExpr <- expressionParser
+  _ <- try (myString ";") <|> myString "in"
+  patExpr <- expressionParser
+  pure $ EPatternMatch mempty matchExpr (NE.singleton (pat,patExpr))
 
 ----
 

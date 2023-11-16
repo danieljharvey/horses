@@ -109,6 +109,9 @@ spec = do
               ( "case a {(b, c) -> b + c}",
                 patternMatch (var "a") [(PTuple () (PVar () "b") (NE.fromList [PVar () "c"]), EInfix () OpAdd (var "b") (var "c"))]
               ),
+              ( "let (a, _) = (1,2); a",
+                patternMatch (tuple (int 1) [int 2]) [(PTuple () (PVar () "a") (NE.fromList [PWildcard ()]), var "a")]
+              ),
               ( "case (1,2) {(a,_) -> a }",
                 patternMatch (tuple (int 1) [int 2]) [(PTuple () (PVar () "a") (NE.fromList [PWildcard ()]), var "a")]
               ),

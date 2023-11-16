@@ -96,7 +96,7 @@ instance
           _ -> foldr ((\a b -> " " <> a <> b) . printSubPattern) mempty args
      in prettyDoc tyCon <> prettyArgs
   prettyDoc (PTuple _ a as) =
-    "(" <> PP.hsep (PP.punctuate ", " (prettyDoc <$> ([a] <> NE.toList as))) <> ")"
+    "(" <> PP.hsep (PP.punctuate "," (prettyDoc <$> ([a] <> NE.toList as))) <> ")"
   prettyDoc (PArray _ as spread) =
     "["
       <> PP.concatWith
