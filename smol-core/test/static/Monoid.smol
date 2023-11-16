@@ -13,17 +13,13 @@ type All  = All Bool
 def runAll : 
   All -> Bool
 def runAll all =
-  case all {
-    All a -> a
-  }
+  let All a = all;
+
+  a
 
 instance Semigroup All =
   \a ->
-    \b ->
-      case ((a, b)) {
-        (All True,  All True) -> (All True),
-        _ -> (All False)
-      }
+    \b -> case ((a, b)) { (All True, All True) -> (All True), _ -> (All False) }
 
 instance Monoid All =
   All True

@@ -218,7 +218,7 @@ letPatternParser = addLocation $ do
   matchExpr <- expressionParser
   _ <- try (myString ";") <|> myString "in"
   patExpr <- expressionParser
-  pure $ EPatternMatch mempty matchExpr (NE.singleton (pat,patExpr))
+  pure $ EPatternMatch mempty matchExpr (NE.singleton (pat, patExpr))
 
 ----
 
