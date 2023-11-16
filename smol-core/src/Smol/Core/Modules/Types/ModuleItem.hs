@@ -183,4 +183,10 @@ printExpression name args expr =
 
 printTest :: TestName -> Expr ParseDep ann -> Doc style
 printTest testName expr =
-  "test" <+> dquotes (prettyDoc testName) <+> "=" <> line <> indentMulti 2 (prettyDoc expr)
+  "test"
+    <+> dquotes (prettyDoc testName)
+    <+> "{"
+    <> line
+    <> indentMulti 2 (prettyDoc expr)
+    <> line
+    <> "}"

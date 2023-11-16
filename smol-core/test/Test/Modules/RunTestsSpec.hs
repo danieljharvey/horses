@@ -37,8 +37,8 @@ spec = do
                 ( joinText
                     [ "def yes = True",
                       "def no = False",
-                      "test \"pass\" = yes",
-                      "test \"fail\" = no"
+                      "test \"pass\" { yes }",
+                      "test \"fail\" { no }"
                     ]
                 )
         runTests <$> typedMod `shouldBe` Right [("fail", False), ("pass", True)]
@@ -50,8 +50,8 @@ spec = do
                     [ "def id a = a",
                       "def yes = id True",
                       "def no = id False",
-                      "test \"pass\" = yes",
-                      "test \"fail\" = no"
+                      "test \"pass\" { yes }",
+                      "test \"fail\" { no }"
                     ]
                 )
         runTests <$> typedMod `shouldBe` Right [("fail", False), ("pass", True)]

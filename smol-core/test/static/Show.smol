@@ -3,22 +3,26 @@ class Show a { show: a -> String }
 instance Show Bool =
   \bool -> if bool then "True" else "False"
 
-test "Show True" =
+test "Show True" {
   (show (True : Bool)) == "True"
+}
 
-test "Show False" =
+test "Show False" {
   (show (False : Bool)) == "False"
+}
 
 type Natural  = Suc Natural | Zero
 
 instance Show Natural =
   \nat -> case nat { Suc n -> "S (" + (show n) + ")", Zero -> "Z" }
 
-test "Show Zero" =
+test "Show Zero" {
   (show Zero) == "Z"
+}
 
-test "Show Three" =
+test "Show Three" {
   (show (Suc (Suc (Suc Zero)))) == "S (S (S (Z)))"
+}
 
 type List a = Cons a (List a) | Nil
 
@@ -32,12 +36,14 @@ instance(Show a) => Show List a =
 def showBoolList =
   (show (Cons (True : Bool) (Cons (False : Bool) Nil))) == "True:False:Nil"
 
-test "Show Bool List" =
+test "Show Bool List" {
   showBoolList
+}
 
 def showNaturalList =
   (show (Cons (Suc Zero) (Cons Zero Nil))) == "S (Z):Z:Nil"
 
-test "Show Natural List" =
+test "Show Natural List" {
   showNaturalList
+}
 

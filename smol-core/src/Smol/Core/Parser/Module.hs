@@ -125,13 +125,15 @@ typeConstraintParser = do
   myString "=>"
   pure (NE.toList constraints)
 
--- `test "everything is fine" = 1 + 1 == 2`
+-- `test "everything is fine" { 1 + 1 == 2 }`
 parseTest :: Parser (ModuleItem Annotation)
 parseTest = do
   myString "test"
   testName <- testNameParser
-  myString "="
-  ModuleTest testName <$> expressionParser
+  myString "{"
+  expr <- expressionParser
+  myString "}"
+  pure $ ModuleTest testName expr
 
 -- `instance Eq Int = \a -> \b -> a == b`
 parseInstance :: Parser (ModuleItem Annotation)
