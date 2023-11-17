@@ -173,9 +173,9 @@ test-suite smol-core-tests
   other-modules:
     Test.BuiltInTypes
     Test.Helpers
-    Test.Interpreter.InterpreterSpec
     Test.Modules.FromPartsSpec
     Test.Modules.InterpreterSpec
+    Test.Modules.ParserSpec
     Test.Modules.ResolveDepsSpec
     Test.Modules.RunTestsSpec
     Test.Modules.TypecheckSpec

@@ -10,7 +10,6 @@ module Smol.Core.Parser.Identifiers
     typeNameParser,
     plainTypeNameParser,
     typeclassNameParser,
-    testNameParser,
   )
 where
 
@@ -20,9 +19,7 @@ import Data.Set (Set)
 import qualified Data.Set as S
 import Data.Text (Text)
 import Data.Void
-import Smol.Core.Modules.Types.ModuleName
-import Smol.Core.Modules.Types.TestName
-import Smol.Core.Parser.Primitives (textPrim)
+import Smol.Core.Types.ModuleName
 import Smol.Core.Parser.Shared
 import Smol.Core.Typecheck.Typeclass.Types
 import Smol.Core.Types
@@ -190,8 +187,3 @@ withNamespace p = do
   myString "."
   a <- p
   pure (a, mName)
-
------
-
-testNameParser :: Parser TestName
-testNameParser = myLexeme $ TestName <$> textPrim

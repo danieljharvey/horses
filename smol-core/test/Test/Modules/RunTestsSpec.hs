@@ -1,6 +1,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 
 module Test.Modules.RunTestsSpec (spec) where
+import Smol.Core.Modules.Parser
 
 import qualified Data.Text as T
 import Smol.Core

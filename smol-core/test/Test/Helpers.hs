@@ -65,6 +65,7 @@ import Smol.Core.Modules.Types.ModuleError
 import Smol.Core.Modules.Types.ModuleItem
 import Smol.Core.Typecheck.FromParsedExpr
 import Test.BuiltInTypes (builtInTypes)
+import Smol.Core.Modules.Parser
 
 typedModule ::
   (MonadError (ModuleError Annotation) m) =>

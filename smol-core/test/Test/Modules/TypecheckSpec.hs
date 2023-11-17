@@ -4,6 +4,7 @@
 {-# LANGUAGE TemplateHaskell #-}
 
 module Test.Modules.TypecheckSpec (spec) where
+import Smol.Core.Modules.Parser
 
 import Data.Bifunctor (second)
 import Data.Either (isRight)

@@ -2,6 +2,7 @@
 
 module Test.Modules.InterpreterSpec (spec) where
 
+import Smol.Core.Modules.Parser
 import Control.Monad (void)
 import Data.Foldable (traverse_)
 import Data.Text (Text)

@@ -13,7 +13,7 @@ where
 import Data.Aeson (FromJSON, ToJSON)
 import Data.String
 import GHC.Generics (Generic)
-import Smol.Core.Modules.Types.ModuleName
+import Smol.Core.Types.ModuleName
 import Smol.Core.Printer
 
 ---------------------------

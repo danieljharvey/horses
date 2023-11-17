@@ -5,6 +5,7 @@
 
 -- | test evaluating and running tests for a module
 module Test.Modules.CheckSpec (spec) where
+import Smol.Core.Modules.Parser
 
 import Data.Bifunctor (second)
 import Data.FileEmbed
