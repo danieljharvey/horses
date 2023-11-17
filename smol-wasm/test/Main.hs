@@ -6,16 +6,16 @@ module Main
 where
 
 import Data.Text (Text)
-import Test.Wasm.Helpers
 import qualified Language.Wasm as Wasm
 import qualified Language.Wasm.Interpreter as Wasm
 import Smol.Core
 import Smol.Core.Typecheck.FromParsedExpr
 import Smol.Wasm.Compile (compileRaw)
 import Test.Hspec
+import Test.Wasm.Helpers
 
 main :: IO ()
-main = hspec $ parallel $ spec
+main = hspec $ parallel spec
 
 runWasm :: Wasm.Module -> IO (Maybe [Wasm.Value])
 runWasm wasmModule = do

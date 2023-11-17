@@ -94,7 +94,6 @@ compileRaw ::
     Show (dep TypeName),
     Show (dep Identifier),
     Show (dep Constructor),
-
     Printer (dep Constructor),
     Printer (dep Identifier),
     Printer (dep TypeName)
@@ -126,15 +125,15 @@ localTypesFromState =
 
 compileTestFunc ::
   forall dep ann.
-  ( Show ann, 
+  ( Show ann,
     Show (dep Identifier),
     Show (dep Constructor),
     Show (dep TypeName),
-
-  Ord (dep Identifier),
-     Printer (dep Constructor),
+    Ord (dep Identifier),
+    Printer (dep Constructor),
     Printer (dep Identifier),
-    Printer (dep TypeName)) =>
+    Printer (dep TypeName)
+  ) =>
   Expr dep ann ->
   Wasm.Function
 compileTestFunc expr =
@@ -188,7 +187,8 @@ compileBinOp op =
     OpAdd -> Wasm.IBinOp Wasm.BS32 Wasm.IAdd
     -- Subtract -> Wasm.IBinOp Wasm.BS32 Wasm.ISub
     OpEquals -> Wasm.IRelOp Wasm.BS32 Wasm.IEq
-    -- GreaterThan -> Wasm.IRelOp Wasm.BS32 Wasm.IGtU
-    -- LessThan -> Wasm.IRelOp Wasm.BS32 Wasm.ILtU
-    -- GreaterThanOrEqualTo -> Wasm.IRelOp Wasm.BS32 Wasm.IGeU
-    -- LessThanOrEqualTo -> Wasm.IRelOp Wasm.BS32 Wasm.ILeU
+
+-- GreaterThan -> Wasm.IRelOp Wasm.BS32 Wasm.IGtU
+-- LessThan -> Wasm.IRelOp Wasm.BS32 Wasm.ILtU
+-- GreaterThanOrEqualTo -> Wasm.IRelOp Wasm.BS32 Wasm.IGeU
+-- LessThanOrEqualTo -> Wasm.IRelOp Wasm.BS32 Wasm.ILeU

@@ -43,7 +43,6 @@ module Test.Wasm.Helpers
   )
 where
 
-import Test.Wasm.BuiltInTypes (builtInTypes)
 import Control.Monad.Except
 import Control.Monad.Reader
 import Control.Monad.State
@@ -65,6 +64,7 @@ import Smol.Core.Modules.Types.Module
 import Smol.Core.Modules.Types.ModuleError
 import Smol.Core.Modules.Types.ModuleItem
 import Smol.Core.Typecheck.FromParsedExpr
+import Test.Wasm.BuiltInTypes (builtInTypes)
 
 typedModule ::
   (MonadError (ModuleError Annotation) m) =>
