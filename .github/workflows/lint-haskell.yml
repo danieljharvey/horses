@@ -21,6 +21,7 @@ jobs:
             smol-backend/**/*.hs
             smol-core/**/*.hs
             smol-repl/**/*.hs
+            smol-wasm/**/*.hs
 
   hlint:
     runs-on: ubuntu-latest
@@ -35,6 +36,6 @@ jobs:
       - name: "Run HLint"
         uses: rwe/actions-hlint-run@v2
         with:
-          path: '["builder/", "smol-backend/", "smol-core/", "smol-repl/"]'
+          path: '["builder/", "smol-backend/", "smol-core/", "smol-repl/", "smol-wasm/"]'
           fail-on: warning
 

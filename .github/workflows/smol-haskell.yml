@@ -8,6 +8,7 @@ on:
       - "smol-backend/**"
       - "smol-core/**"
       - "smol-repl/**"
+      - "smol-wasm/**"
       - "vendored/**"
       - "cabal.project"
       - "cabal.project.freeze"
@@ -19,6 +20,7 @@ on:
       - "smol-backend/**"
       - "smol-core/**"
       - "smol-repl/**"
+      - "smol-wasm/**"
       - "vendored/**"
       - "cabal.project"
       - "cabal.project.freeze"
@@ -55,6 +57,9 @@ jobs:
 
       - name: Test smol backend
         run: make test-smol-backend
+
+      - name: Test smol wasm
+        run: make test-smol-wasm
 
       - name: Build smol repl
         run: make build-smol-repl
