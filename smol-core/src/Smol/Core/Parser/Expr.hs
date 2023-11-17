@@ -216,7 +216,7 @@ letInParser :: Parser ParserExpr
 letInParser = addLocation $ do
   ident <- emptyParseDep <$> identifierParser
   _ <- myString "="
-  boundExpr <- expressionParser
+  boundExpr <- exprBlockParser
   _ <- try (myString ";") <|> myString "in"
   ELet mempty ident boundExpr <$> expressionParser
 
@@ -229,7 +229,7 @@ letFuncParser = addLocation $ do
   ident <- plainIdentifierParser
   args <- chainl1 ((: []) <$> plainIdentifierParser) (pure (<>))
   myString "="
-  expr <- expressionParser
+  expr <- exprBlockParser
   _ <- try (myString ";") <|> myString "in"
   let expr' = foldr (ELambda mempty) expr args
   ELet mempty ident expr' <$> expressionParser
@@ -305,6 +305,10 @@ infixParser =
         )
     )
 
+-- parse either a regular Expr or one that starts with `ELet`, inside brackets
+exprBlockParser :: Parser ParserExpr
+exprBlockParser = try (inCurlyBrackets letParser) <|> expressionParser
+
 {-
 pattern matches are of form
 
@@ -342,5 +346,5 @@ patternCaseParser :: Parser (ParserPattern, ParserExpr)
 patternCaseParser = do
   pat <- orInBrackets patternParser
   myString "->"
-  patExpr <- expressionParser
+  patExpr <- exprBlockParser
   pure (pat, patExpr)

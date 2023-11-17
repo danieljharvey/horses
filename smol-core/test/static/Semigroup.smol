@@ -15,9 +15,10 @@ type First a = First a
 def runFirst : 
   (First a) -> a
 def runFirst firstA =
-  let First a = firstA;
-
-  a
+  case firstA {
+    First a ->
+       a
+  }
 
 instance Semigroup First a {
   \a -> \b -> a

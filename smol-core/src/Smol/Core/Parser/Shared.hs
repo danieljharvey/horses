@@ -4,6 +4,7 @@ module Smol.Core.Parser.Shared
   ( emptyParseDep,
     inBrackets,
     orInBrackets,
+    inCurlyBrackets,
     myLexeme,
     withLocation,
     myString,
@@ -52,7 +53,10 @@ inBrackets :: Parser a -> Parser a
 inBrackets = between2 '(' ')'
 
 orInBrackets :: Parser a -> Parser a
-orInBrackets parser = try parser <|> try (inBrackets parser)
+orInBrackets parser = try parser <|> inBrackets parser
+
+inCurlyBrackets :: Parser a -> Parser a
+inCurlyBrackets = between2 '{' '}'
 
 maybePred :: (Show a) => Parser a -> (a -> Maybe b) -> Parser b
 maybePred parser predicate' = try $ do

@@ -15,10 +15,10 @@ instance Eq String {
 instance (Eq a, Eq b) => Eq (a, b) {
   \pairA ->
     \pairB ->
-      let ((a1, b1), (a2, b2)) = ((pairA, pairB));
-
-      if (equals a1 a2) then (equals b1 b2) else False
-}
+      case ((pairA, pairB)) {
+        ((a1,  b1),  (a2,  b2)) ->
+           if (equals a1 a2) then (equals b1 b2) else False
+      }
 
 type Maybe a = Just a | Nothing
 
@@ -26,9 +26,12 @@ instance (Eq a) => Eq Maybe a {
   \a ->
     \b ->
       case ((a, b)) {
-        (Just a, Just b) -> (equals a b),
-        (Nothing, Nothing) -> True,
-        _ -> False
+        (Just a,  Just b) ->
+           equals a b,
+        (Nothing,  Nothing) ->
+           True,
+        _ ->
+           False
       }
 }
 
@@ -55,9 +58,10 @@ def pair =
 def flipPair : 
   (a, b) -> (b, a)
 def flipPair pair =
-  let (a, b) = pair;
-
-  (b, a)
+  case pair {
+    (a,  b) ->
+       (b, a)
+  }
 
 def main : 
   Bool

@@ -115,6 +115,9 @@ spec = do
               ( "case (1,2) {(a,_) -> a }",
                 patternMatch (tuple (int 1) [int 2]) [(PTuple () (PVar () "a") (NE.fromList [PWildcard ()]), var "a")]
               ),
+              ( "case (1,2) {(a,_) -> { let b = 1 in a } }",
+                patternMatch (tuple (int 1) [int 2]) [(PTuple () (PVar () "a") (NE.fromList [PWildcard ()]), (ELet () "b" (int 1) (var "a")))]
+              ),
               ( "case (True, 1) {(True, a) -> a, (False,_) -> 0}",
                 patternMatch
                   (tuple (bool True) [int 1])
@@ -130,6 +133,7 @@ spec = do
                   ]
               ),
               ("let a = 1 in a", ELet () "a" (int 1) (var "a")),
+              ("let a = { let b = 1 in 1 } in a", ELet () "a" (ELet () "b" (int 1) (int 1)) (var "a")),
               ( "let id a = a in True",
                 ELet () "id" (ELambda () "a" (var "a")) (bool True)
               ),

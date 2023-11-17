@@ -183,7 +183,7 @@ prettyLet var expr1 expr2 =
             <> prettyArgs args
             <+> "="
             <+> PP.line'
-            <> indentMulti 2 (prettyDoc letExpr)
+            <> exprInBlock letExpr
             <> newlineOrIn
             <> prettyDoc expr2
         )
@@ -198,8 +198,20 @@ prettyLet var expr1 expr2 =
            in ([a] <> as, expr')
         other -> ([], other)
 
+-- when printing let bindings or exprs in a pattern,
+-- wrap stuff with let bindings inside `{` `}`
+exprInBlock ::
+  ( Printer (dep Constructor),
+    Printer (dep Identifier),
+    Printer (dep TypeName)
+  ) =>
+  Expr dep ann ->
+  PP.Doc style
+exprInBlock expr@(ELet {}) = "{" <> PP.line <+> indentMulti 2 (prettyDoc expr) <+> PP.line <> "}"
+exprInBlock expr = indentMulti 2 (prettyDoc expr)
+
 newlineOrIn :: PP.Doc style
-newlineOrIn = PP.flatAlt (";" <> PP.line' <> PP.line) " in "
+newlineOrIn = PP.flatAlt (";" <> PP.line <> PP.line') " in "
 
 prettyTuple ::
   ( Eq (dep Identifier),
@@ -359,8 +371,8 @@ prettyPatternMatch sumExpr matches =
     printMatch (index, (construct, expr')) =
       printSubPattern construct
         <+> "->"
-        <> PP.softline
-        <> printSubExpr expr'
+        <> PP.line'
+        <+> exprInBlock expr'
         <> if index < length matches then "," else ""
 
 prettyArray ::

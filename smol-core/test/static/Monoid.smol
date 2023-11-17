@@ -15,9 +15,10 @@ type All  = All Bool
 def runAll : 
   All -> Bool
 def runAll all =
-  let All a = all;
-
-  a
+  case all {
+    All a ->
+       a
+  }
 
 instance Semigroup All {
   \All a ->
