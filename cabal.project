@@ -3,6 +3,7 @@ packages:
   smol-backend/smol-backend.cabal,
   smol-core/smol-core.cabal,
   smol-repl/smol-repl.cabal,
+  smol-wasm/smol-wasm.cabal,
   vendored/**/*.cabal
 
 with-compiler: ghc-9.6.3

@@ -2,36 +2,6 @@ HS_FILES = $(shell git ls-files '*.hs' | grep -v 'vendored/')
 CHANGED_HS_FILES = $(shell git diff --diff-filter=d --name-only `git merge-base HEAD origin/trunk` | grep '.*\(\.hs\|hs-boot\)$$' | grep -E -v 'vendored/')
 CABAL_FILES = $(shell git ls-files '*.cabal' | grep -v 'vendored/')
 
-.PHONY: ghcid
-ghcid:
-	ghcid -c "cabal repl mimsa" -l=hlint
-
-.PHONY: ghcid-core
-ghcid-core:
-	ghcid -c "cabal repl core" -l=hlint
-
-.PHONY: ghcid-core-test
-ghcid-core-test:
-	ghcid -c "cabal repl core:test:core-test" -l=hlint
-
-.PHONY: ghcid-test
-ghcid-test:
-	ghcid -c "cabal repl mimsa:test:mimsa-test" -l=hlint
-
-.PHONY: ghcid-repl
-ghcid-repl:
-	ghcid -c "cabal repl repl:exe:mimsa-repl" -l=hlint
-
-.PHONY: ghcid-backends
-ghcid-backends:
-	ghcid -c "cabal repl backends:lib:backends" -l=hlint
-
-.PHONY: ghcid-backends-test
-ghcid-backends-test:
-	ghcid -c "cabal repl backends:test:backends-tests" --test "main"
-
-# EXCITING NEW WORLD
-
 .PHONY: ghcid-smol
 ghcid-smol:
 	ghcid -c "cabal repl smol-core"
@@ -43,6 +13,14 @@ ghcid-smol-test:
 .PHONY: ghcid-smol-backend-test
 ghcid-smol-backend-test:
 	ghcid -c "cabal repl smol-backend:test:smol-backend-tests" --test "main"
+
+.PHONY: ghcid-smol-wasm
+ghcid-smol-wasm:
+	ghcid -c "cabal repl smol-wasm"
+
+.PHONY: ghcid-smol-wasm-test
+ghcid-smol-wasm-test:
+	ghcid -c "cabal repl smol-wasm:test:smol-wasm-tests" --test "main"
 
 .PHONY: ghcid-smol-repl
 ghcid-smol-repl:
@@ -56,10 +34,6 @@ update:
 build:
 	cabal build all -j4
 
-.PHONY: install
-install:
-	cabal install repl:exe:mimsa-repl --overwrite-policy=always
-
 .PHONY: smol-repl
 smol-repl:
 	cabal run smol-repl:exe:smol-repl -- repl
@@ -69,17 +43,11 @@ CHECK_FILE = "file.smol"
 smol-check:
 	watchexec -w $(CHECK_FILE) cabal run smol-repl:exe:smol-repl -- check $(CHECK_FILE)
 
-.PHONY: run-server
-run-server:
-	cabal run server:exe:mimsa-server
-
 .PHONY: docker-server
 docker-server:
 	docker build docker/Dockerfile.server
 
-.PHONY: test
-test:
-	cabal run mimsa:test:mimsa-test
+# used in CI
 
 .PHONY: test-smol
 test-smol:
@@ -89,9 +57,11 @@ test-smol:
 test-smol-backend:
 	cabal run smol-backend:test:smol-backend-tests
 
-.PHONY: test-core
-test-core:
-	cabal run core:test:core-test
+.PHONY: test-smol-wasm
+test-smol-wasm:
+	cabal run smol-wasm:test:smol-wasm-tests
+
+# yep
 
 .PHONY: build-smol-repl
 build-smol-repl:
@@ -100,10 +70,6 @@ build-smol-repl:
 .PHONY: test-backends
 test-backends:
 	cabal run backends:test:backends-tests
-
-.PHONY: test-watch
-test-watch:
-	ghcid -c "cabal repl mimsa:test:mimsa-test" -l=hlint --test="main"
 
 .PHONY: freeze
 freeze:
