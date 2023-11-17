@@ -27,7 +27,7 @@ test "fmap works with Identity" {
 type Maybe a = Just a | Nothing
 
 instance Functor Maybe {
-  \f -> \maybe -> case maybe { Just a -> (Just (f a)), Nothing -> Nothing }
+  \f -> \maybe -> case maybe { Just a -> Just (f a), Nothing -> Nothing }
 }
 
 test "fmap works with Just" {
@@ -49,7 +49,7 @@ type List a = Cons a (List a) | Nil
 
 instance Functor List {
   \f ->
-    \list -> case list { Cons a rest -> (Cons (f a) (fmap f rest)), Nil -> Nil }
+    \list -> case list { Cons a rest -> Cons (f a) (fmap f rest), Nil -> Nil }
 }
 
 test "fmap works with List" {
@@ -70,7 +70,7 @@ test "fmap works with List" {
 type Either e a = Left e | Right a
 
 instance Functor Either e {
-  \f -> \either -> case either { Right a -> (Right (f a)), Left e -> (Left e) }
+  \f -> \either -> case either { Right a -> Right (f a), Left e -> Left e }
 }
 
 test "fmap works with Either" {

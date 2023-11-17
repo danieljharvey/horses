@@ -201,7 +201,8 @@ prettyLet var expr1 expr2 =
 -- when printing let bindings or exprs in a pattern,
 -- wrap stuff with let bindings inside `{` `}`
 exprInBlock ::
-  ( Printer (dep Constructor),
+  ( Eq (dep Identifier),
+    Printer (dep Constructor),
     Printer (dep Identifier),
     Printer (dep TypeName)
   ) =>

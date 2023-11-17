@@ -36,7 +36,6 @@ complexParser :: Parser ParserExpr
 complexParser =
   arrayParser
     <|> try letParser
-    --    <|> letPatternParser
     <|> try appParser
     <|> ifParser
     <|> try tupleParser
@@ -103,7 +102,6 @@ argParser =
         literalParser
           --  <|> arrayParser
           <|> letParser
-          -- <|> letPatternParser
           <|> ifParser
           <|> tupleParser
           <|> try recordAccessParser
@@ -239,7 +237,7 @@ letPatternParser :: Parser ParserExpr
 letPatternParser = addLocation $ do
   pat <- patternParser
   myString "="
-  matchExpr <- expressionParser
+  matchExpr <- exprBlockParser
   _ <- try (myString ";") <|> myString "in"
   patExpr <- expressionParser
   pure $ EPatternMatch mempty matchExpr (NE.singleton (pat, patExpr))
