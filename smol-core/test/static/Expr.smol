@@ -2,15 +2,21 @@ type Expr ann = EAdd ann (Expr ann) (Expr ann) | ENumber ann Int
 
 def run expr =
   case expr {
-    ENumber _ i -> i,
-    EAdd _ _ _ -> 100
+    ENumber _ i ->
+       i,
+    EAdd _ _ _ ->
+       100
   }
 
 def run2 expr =
   let go inner = 
     case inner {
-      ENumber _ i -> i,
-      EAdd _ a b -> (go a) + (go b)
+      ENumber _ i ->
+         i,
+      EAdd _ a b ->
+       {
+         let gA = go a in let gB = go b in gA + gB 
+      }
     };
 
   go expr

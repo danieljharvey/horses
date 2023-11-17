@@ -26,9 +26,12 @@ instance (Eq a) => Eq Maybe a {
   \a ->
     \b ->
       case ((a, b)) {
-        (Just a, Just b) -> (equals a b),
-        (Nothing, Nothing) -> True,
-        _ -> False
+        (Just a, Just b) ->
+           equals a b,
+        (Nothing, Nothing) ->
+           True,
+        _ ->
+           False
       }
 }
 

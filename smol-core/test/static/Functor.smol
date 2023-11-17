@@ -27,14 +27,16 @@ test "fmap works with Identity" {
 type Maybe a = Just a | Nothing
 
 instance Functor Maybe {
-  \f -> \maybe -> case maybe { Just a -> (Just (f a)), Nothing -> Nothing }
+  \f -> \maybe -> case maybe { Just a -> Just (f a), Nothing -> Nothing }
 }
 
 test "fmap works with Just" {
   let unwrapMaybe maybe = 
     case maybe {
-      Just a -> a,
-      Nothing -> 0
+      Just a ->
+         a,
+      Nothing ->
+         0
     };
 
   let inc = 
@@ -47,14 +49,16 @@ type List a = Cons a (List a) | Nil
 
 instance Functor List {
   \f ->
-    \list -> case list { Cons a rest -> (Cons (f a) (fmap f rest)), Nil -> Nil }
+    \list -> case list { Cons a rest -> Cons (f a) (fmap f rest), Nil -> Nil }
 }
 
 test "fmap works with List" {
   let listHead list = 
     case list {
-      Cons a _ -> a,
-      Nil -> 0
+      Cons a _ ->
+         a,
+      Nil ->
+         0
     };
 
   let inc = 
@@ -66,14 +70,16 @@ test "fmap works with List" {
 type Either e a = Left e | Right a
 
 instance Functor Either e {
-  \f -> \either -> case either { Right a -> (Right (f a)), Left e -> (Left e) }
+  \f -> \either -> case either { Right a -> Right (f a), Left e -> Left e }
 }
 
 test "fmap works with Either" {
   let unwrapEither either = 
     case either {
-      Right a -> a,
-      _ -> 0
+      Right a ->
+         a,
+      _ ->
+         0
     };
 
   let inc = 

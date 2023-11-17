@@ -20,8 +20,7 @@ def runAll all =
   a
 
 instance Semigroup All {
-  \All a ->
-    \All b -> case ((a, b)) { (True, True) -> (All True), _ -> (All False) }
+  \All a -> \All b -> case ((a, b)) { (True, True) -> All True, _ -> All False }
 }
 
 instance Monoid All {

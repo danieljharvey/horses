@@ -31,8 +31,10 @@ type List a = Cons a (List a) | Nil
 instance (Show a) => Show List a {
   \list ->
     case list {
-      Cons a rest -> (show a) + ":" + (show rest),
-      Nil -> "Nil"
+      Cons a rest ->
+         (show a) + ":" + (show rest),
+      Nil ->
+         "Nil"
     }
 }
 

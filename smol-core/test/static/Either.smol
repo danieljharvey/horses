@@ -4,15 +4,19 @@ def orDefault :
   a -> (Either e a) -> a
 def orDefault default value =
   case value {
-    Right a -> a,
-    Left _ -> default
+    Right a ->
+       a,
+    Left _ ->
+       default
   }
 
 def fmap : 
   (a -> b) -> (Either e a) -> Either e b
 def fmap f value =
   case value {
-    Right a -> (Right (f a)),
-    Left e -> (Left e)
+    Right a ->
+       Right (f a),
+    Left e ->
+       Left e
   }
 
