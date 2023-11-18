@@ -7,7 +7,7 @@ module Smol.Core.Typecheck.Errors
   )
 where
 
-import Data.Maybe (mapMaybe, catMaybes)
+import Data.Maybe (catMaybes, mapMaybe)
 import Data.Text (Text)
 import qualified Data.Text as T
 import Error.Diagnose
@@ -49,7 +49,7 @@ typeErrorDiagnostic input e =
     diag = addFile mempty filename (T.unpack input)
     report = case e of
       (TCExpectedFunction ty) ->
-         Err
+        Err
           Nothing
           ( "Expected a function type but got "
               <> prettyPrint ty
@@ -62,13 +62,13 @@ typeErrorDiagnostic input e =
                     input
                     (Smol.getTypeAnnotation ty)
                   <*> pure
-                    ( This ("Expected a function")
+                    ( This "Expected a function"
                     )
               ]
           )
           []
       (TCExpectedTuple ty) ->
-         Err
+        Err
           Nothing
           ( "Expected a tuple type but got "
               <> prettyPrint ty
@@ -81,13 +81,13 @@ typeErrorDiagnostic input e =
                     input
                     (Smol.getTypeAnnotation ty)
                   <*> pure
-                    ( This ("Expected a tuple")
+                    ( This "Expected a tuple"
                     )
               ]
           )
           []
       (TCExpectedRecord ty) ->
-         Err
+        Err
           Nothing
           ( "Expected a record type but got "
               <> prettyPrint ty
@@ -100,7 +100,7 @@ typeErrorDiagnostic input e =
                     input
                     (Smol.getTypeAnnotation ty)
                   <*> pure
-                    ( This ("Expected a record")
+                    ( This "Expected a record"
                     )
               ]
           )
@@ -119,7 +119,7 @@ typeErrorDiagnostic input e =
                     input
                     ann
                   <*> pure
-                    ( This ("Not found")
+                    ( This "Not found"
                     )
               ]
           )
@@ -152,12 +152,12 @@ typeErrorDiagnostic input e =
           )
           ["These two values should be of the same type"]
       other ->
-          let positions =
-                mapMaybe
-                  (positionFromAnnotation filename input)
-                  (getAllAnnotations other)
-           in Err
-                  Nothing
-                  (T.pack (show other))
-                  ((,Where "") <$> positions)
-                  []
+        let positions =
+              mapMaybe
+                (positionFromAnnotation filename input)
+                (getAllAnnotations other)
+         in Err
+              Nothing
+              (T.pack (show other))
+              ((,Where "") <$> positions)
+              []
