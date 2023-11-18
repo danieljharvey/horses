@@ -3,7 +3,6 @@
 
 module Smol.Core.Typecheck.Typeclass.Helpers
   ( recoverTypeclassUses,
-    constraintsFromTLE,
     lookupTypeclassInstance,
     matchType,
     lookupTypeclass,
@@ -12,12 +11,10 @@ module Smol.Core.Typecheck.Typeclass.Helpers
     recoverInstance,
     specialiseConstraint,
     substituteConstraint,
-    envFromTypecheckedModule,
     addTypesToConstraint,
     removeTypesFromConstraint,
     applyConstraintTypes,
     getTypeclassMethodNames,
-    getVarsInScope,
   )
 where
 
@@ -30,8 +27,6 @@ import qualified Data.Map.Strict as M
 import Data.Maybe (listToMaybe, mapMaybe)
 import Data.Monoid
 import qualified Data.Set as S
-import Smol.Core.Helpers
-import Smol.Core.Modules.Types
 import Smol.Core.TypeUtils
 import Smol.Core.Typecheck.Shared
 import Smol.Core.Typecheck.Substitute
@@ -226,51 +221,6 @@ specialiseConstraint classes ty (Constraint tcn _tys) = do
   tc <- lookupTypeclass classes tcn
   -- apply types
   applyTypeToConstraint tc ty
-
-constraintsFromTLE ::
-  TopLevelExpression ResolvedDep (Type ResolvedDep ann) ->
-  [Constraint ResolvedDep ann]
-constraintsFromTLE tle =
-  (fmap . fmap) getTypeAnnotation (tleConstraints tle)
-
--- get input for typechecker from module
-getVarsInScope ::
-  Module ResolvedDep (Type ResolvedDep ann) ->
-  M.Map (ResolvedDep Identifier) ([Constraint ResolvedDep ann], ResolvedType ann)
-getVarsInScope =
-  M.fromList
-    . fmap go
-    . M.toList
-    . moExpressions
-  where
-    go (ident, tle) =
-      ( LocalDefinition ident,
-        (constraintsFromTLE tle, getExprAnnotation (tleExpr tle))
-      )
-
--- make a typechecking env from a module
--- this means throwing away all the types which seems silly
-envFromTypecheckedModule :: (Ord ann, Monoid ann) => Module ResolvedDep (Type ResolvedDep ann) -> TCEnv ann
-envFromTypecheckedModule inputModule =
-  let instances =
-        mapKey (fmap (const mempty))
-          . (fmap . fmap) getTypeAnnotation
-          . moInstances
-          $ inputModule
-
-      classes = (fmap . fmap) getTypeAnnotation (moClasses inputModule)
-
-      dataTypes =
-        (fmap . fmap)
-          getTypeAnnotation
-          (M.mapKeys LocalDefinition (moDataTypes inputModule))
-   in TCEnv
-        { tceVars = getVarsInScope inputModule,
-          tceDataTypes = dataTypes,
-          tceInstances = instances,
-          tceClasses = classes,
-          tceConstraints = mempty
-        }
 
 addTypesToConstraint :: Constraint dep ann -> Constraint dep (Type dep ann)
 addTypesToConstraint (Constraint tcn tys) =

@@ -2,7 +2,7 @@ module Smol.Repl.Helpers.ShowTestResults (testsAllPass, printTestResults) where
 
 import Data.Foldable (traverse_)
 import Data.Monoid
-import Smol.Core.Modules.Types
+import Smol.Modules.Types
 
 testsAllPass :: [(a, Bool)] -> Bool
 testsAllPass = getAll . foldMap (All . snd)

@@ -1,13 +1,6 @@
 name: Haskell - lint
 
-on:
-  push:
-    branches:
-      - trunk
-
-  pull_request:
-    branches:
-      - trunk
+on: [push]
 
 jobs:
   ormolu:
@@ -20,6 +13,7 @@ jobs:
             builder/**/*.hs
             smol-backend/**/*.hs
             smol-core/**/*.hs
+            smol-modules/**/*.hs
             smol-repl/**/*.hs
             smol-wasm/**/*.hs
 
@@ -36,6 +30,6 @@ jobs:
       - name: "Run HLint"
         uses: rwe/actions-hlint-run@v2
         with:
-          path: '["builder/", "smol-backend/", "smol-core/", "smol-repl/", "smol-wasm/"]'
+          path: '["builder/", "smol-backend/", "smol-core/", "smol-modules/", "smol-repl/", "smol-wasm/"]'
           fail-on: warning
 

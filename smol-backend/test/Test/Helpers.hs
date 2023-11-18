@@ -30,10 +30,10 @@ import qualified Data.Sequence as Seq
 import qualified Data.Set.NonEmpty as NES
 import Data.Text (Text)
 import Smol.Core
-import Smol.Core.Modules.FromParts
-import Smol.Core.Modules.Parser
-import Smol.Core.Modules.Types.Module
 import Smol.Core.Typecheck.FromParsedExpr
+import Smol.Modules.FromParts
+import Smol.Modules.Parser
+import Smol.Modules.Types.Module
 
 tyBool :: (Monoid ann) => Type dep ann
 tyBool = TPrim mempty TPBool

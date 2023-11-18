@@ -8,13 +8,13 @@ import Control.Monad.IO.Class (MonadIO, liftIO)
 import Data.Text (Text)
 import qualified Data.Text as T
 import qualified Data.Text.IO as T
-import Smol.Core.Modules.Check
-import Smol.Core.Modules.Parser (parseModule)
-import Smol.Core.Modules.PrettyPrint (printModuleParts)
-import Smol.Core.Modules.RunTests
-import Smol.Core.Modules.Types.ModuleError
-import Smol.Core.Modules.Types.ModuleItem
 import Smol.Core.Printer
+import Smol.Modules.Check
+import Smol.Modules.Parser (parseModule)
+import Smol.Modules.PrettyPrint (printModuleParts)
+import Smol.Modules.RunTests
+import Smol.Modules.Types.ModuleError
+import Smol.Modules.Types.ModuleItem
 import Smol.Repl.Helpers.Diagnostics
 import Smol.Repl.Helpers.ShowTestResults
 import System.Exit
