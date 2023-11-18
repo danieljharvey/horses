@@ -13,12 +13,12 @@ jobs:
   build:
     strategy:
       matrix:
-        things:
-          - "make test-smol"
-          - "make test-smol-backend"
-          - "make test-smol-wasm"
-          - "make test-smol-modules"
-          - "make build-smol-repl"
+        command:
+          - test-smol
+          - test-smol-backend
+          - test-smol-wasm
+          - test-smol-modules
+          - build-smol-repl
 
     runs-on: ubuntu-latest
     steps:
@@ -46,5 +46,5 @@ jobs:
             ${{ runner.os }}-cabal-9.6.3
 
       - name: Test!
-        run: "${{ matrix.command }}"
+        run: "make ${{ matrix.command }}"
 
