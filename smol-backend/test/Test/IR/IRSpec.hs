@@ -14,11 +14,11 @@ import qualified Smol.Backend.Compile.RunLLVM as Run
 import Smol.Backend.IR.FromExpr.Expr
 import Smol.Backend.IR.ToLLVM.ToLLVM
 import Smol.Core.Modules.FromParts
+import Smol.Core.Modules.Parser (parseModuleAndFormatError)
 import Smol.Core.Modules.ResolveDeps
 import Smol.Core.Modules.Typecheck
 import Smol.Core.Modules.Types
 import Smol.Core.Modules.Types.ModuleError
-import Smol.Core.Parser (parseModuleAndFormatError)
 import Smol.Core.Typecheck.Typeclass.Types
 import Smol.Core.Types
 import Test.BuiltInTypes

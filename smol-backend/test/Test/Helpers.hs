@@ -31,6 +31,7 @@ import qualified Data.Set.NonEmpty as NES
 import Data.Text (Text)
 import Smol.Core
 import Smol.Core.Modules.FromParts
+import Smol.Core.Modules.Parser
 import Smol.Core.Modules.Types.Module
 import Smol.Core.Typecheck.FromParsedExpr
 
