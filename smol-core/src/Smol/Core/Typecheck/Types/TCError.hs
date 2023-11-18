@@ -22,7 +22,6 @@ data TCError ann
   | TCExpectedFunction (ResolvedType ann)
   | TCRecordMissingItems (Set Identifier)
   | TCExpectedRecord (ResolvedType ann)
-  | TCInfixMismatch Op (ResolvedType ann) (ResolvedType ann)
   | TCPatternMismatch (Pattern ResolvedDep ann) (ResolvedType ann)
   | TCUnknownConstructor (ResolvedDep Constructor) [Constructor]
   | TCConstructorArgumentMismatch (ResolvedDep Constructor) Int Int -- expected, actual
