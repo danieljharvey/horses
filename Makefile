@@ -10,6 +10,10 @@ ghcid-smol:
 ghcid-smol-test:
 	ghcid -c "cabal repl smol-core:test:smol-core-tests" --test "main"
 
+.PHONY: ghcid-smol-modules-test
+ghcid-smol-modules-test:
+	ghcid -c "cabal repl smol-modules:test:smol-modules-tests" --test "main"
+
 .PHONY: ghcid-smol-backend-test
 ghcid-smol-backend-test:
 	ghcid -c "cabal repl smol-backend:test:smol-backend-tests" --test "main"

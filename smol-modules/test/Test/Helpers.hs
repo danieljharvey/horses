@@ -26,6 +26,8 @@ module Test.Helpers
     patternMatch,
     getRight,
     unsafeParseExpr,
+    unsafeParseModule,
+    unsafeParseModuleItems,
     unsafeParseType,
     unsafeParseTypedExpr,
     joinText,
@@ -37,9 +39,11 @@ module Test.Helpers
     unsafeParseInstanceExpr,
     tcVar,
     typeForComparison,
+    testModule,
   )
 where
 
+import Control.Monad.Except
 import Control.Monad.Reader
 import Control.Monad.State
 import Control.Monad.Writer
@@ -48,17 +52,59 @@ import Data.Functor
 import qualified Data.List.NonEmpty as NE
 import qualified Data.Map.Strict as M
 import qualified Data.Sequence as Seq
+import qualified Data.Set as S
 import qualified Data.Set.NonEmpty as NES
 import Data.Text (Text)
 import qualified Data.Text as T
 import Smol.Core
+import Smol.Modules.FromParts
+import Smol.Modules.Parser
+import Smol.Modules.ResolveDeps
+import Smol.Modules.Typecheck
+import Smol.Modules.Types.Module
+import Smol.Modules.Types.ModuleError
+import Smol.Modules.Types.ModuleItem
 import Smol.Core.Typecheck.FromParsedExpr
 import Test.BuiltInTypes (builtInTypes)
 
+typedModule ::
+  (MonadError (ModuleError Annotation) m) =>
+  T.Text ->
+  m (Module ResolvedDep (Type ResolvedDep Annotation))
+typedModule input = do
+  let moduleItems = case parseModuleAndFormatError input of
+        Right a -> a
+        _ -> error "parsing module for typeclass spec"
+  myModule <- moduleFromModuleParts moduleItems
+
+  let typeClasses = resolveTypeclass <$> moClasses myModule
+      typeclassMethods = S.fromList . M.elems . fmap tcFuncName $ typeClasses
+
+  (resolvedModule, deps) <-
+    modifyError ErrorInResolveDeps (resolveModuleDeps typeclassMethods myModule)
+
+  typecheckModule input resolvedModule deps
 
 getRight :: (Show e) => Either e a -> a
 getRight (Right a) = a
 getRight (Left e) = error (show e)
+
+testModule :: Module ResolvedDep (Type ResolvedDep Annotation)
+testModule =
+  getRight $
+    typedModule $
+      joinText
+        [ "class Eq a { equals: a -> a -> Bool }",
+          "instance Eq Int { \\a -> \\b -> a == b }",
+          "instance Eq Bool { \\a -> \\b -> a == b }",
+          "instance Eq String { \\a -> \\b -> a == b }",
+          "instance (Eq a, Eq b) => Eq (a,b) { ",
+          "\\pairA -> \\pairB -> case (pairA, pairB) {((a1, b1), (a2, b2)) -> ",
+          "if equals a1 a2 then equals b1 b2 else False} }",
+          "type Natural = Suc Natural | Zero",
+          "class Show a { show: a -> String }",
+          "instance Show Natural { \\nat -> case nat { Suc n -> \"S \" + show n , _ -> \"\"} }"
+        ]
 
 tyBool :: (Monoid ann) => Type dep ann
 tyBool = TPrim mempty TPBool
@@ -157,6 +203,17 @@ unsafeParseExpr input = case parseExprAndFormatError input of
 unsafeParseType :: Text -> Type ParseDep ()
 unsafeParseType input = case parseTypeAndFormatError input of
   Right ty -> ty $> ()
+  Left e -> error (show e)
+
+unsafeParseModule :: Text -> Module ParseDep ()
+unsafeParseModule input =
+  case moduleFromModuleParts (unsafeParseModuleItems input) of
+    Right a -> a $> ()
+    Left e -> error (show e)
+
+unsafeParseModuleItems :: Text -> [ModuleItem ()]
+unsafeParseModuleItems input = case parseModuleAndFormatError input of
+  Right parts -> fmap void parts
   Left e -> error (show e)
 
 -- | parse a typed expr, ie parse it and fill the type with crap

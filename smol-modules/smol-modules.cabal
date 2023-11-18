@@ -1,0 +1,101 @@
+cabal-version:      2.4
+name:               smol-modules
+version:            0.1.0.0
+
+-- A short (one-line) description of the package.
+-- synopsis:
+
+-- A longer description of the package.
+-- description:
+
+-- A URL where users can report bugs.
+-- bug-reports:
+
+-- The license under which the package is released.
+-- license:
+author:             Daniel Harvey
+maintainer:         danieljamesharvey@gmail.com
+
+-- A copyright notice.
+-- copyright:
+-- category:
+extra-source-files: CHANGELOG.md
+
+common shared
+  ghc-options:
+    -threaded -rtsopts -with-rtsopts=-N -Wall
+    -Wno-unticked-promoted-constructors -Wcompat
+    -Wincomplete-record-updates -Wincomplete-uni-patterns
+    -Wredundant-constraints -Wmissing-deriving-strategies
+
+  build-depends:
+    , aeson
+    , base
+    , builder
+    , bytestring
+    , containers
+    , diagnose
+    , megaparsec
+    , memory
+    , mtl                  >=2.3.0.0
+    , nonempty-containers
+    , parser-combinators
+    , prettyprinter
+    , smol-core
+    , text
+    , transformers
+
+library
+  import:           shared
+
+  -- LANGUAGE extensions used by modules in this package.
+  -- other-extensions:
+  hs-source-dirs:   src
+  default-language: Haskell2010
+
+  -- Modules included in this executable, other than Main.
+  exposed-modules:
+    Smol.Modules.Check
+    Smol.Modules.Dependencies
+    Smol.Modules.FromParts
+    Smol.Modules.Helpers
+    Smol.Modules.Interpret
+    Smol.Modules.Parser
+    Smol.Modules.PrettyPrint
+    Smol.Modules.ResolveDeps
+    Smol.Modules.RunTests
+    Smol.Modules.Typecheck
+    Smol.Modules.Types
+    Smol.Modules.Types.DefIdentifier
+    Smol.Modules.Types.DepType
+    Smol.Modules.Types.Entity
+    Smol.Modules.Types.Module
+    Smol.Modules.Types.ModuleError
+    Smol.Modules.Types.ModuleItem
+    Smol.Modules.Types.Test
+    Smol.Modules.Types.TestName
+    Smol.Modules.Types.TopLevelExpression
+    Smol.Modules.Uses
+
+test-suite smol-modules-tests
+  import:           shared
+  type:             exitcode-stdio-1.0
+  hs-source-dirs:   test
+  hs-source-dirs:   src
+  build-depends:
+    , file-embed
+    , hspec       >=2.8.3 && <3
+    , hspec-core  >=2.8.3 && <3
+
+  other-modules:
+    Test.BuiltInTypes
+    Test.Helpers
+    Test.Modules.FromPartsSpec
+    Test.Modules.InterpreterSpec
+    Test.Modules.ParserSpec
+    Test.Modules.ResolveDepsSpec
+    Test.Modules.RunTestsSpec
+    Test.Modules.TypecheckSpec
+
+  main-is:          Main.hs
+  default-language: Haskell2010
