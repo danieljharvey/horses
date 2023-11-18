@@ -9,13 +9,13 @@ import qualified Data.Text as T
 import qualified Error.Diagnose as Diag
 import GHC.Natural
 import qualified Prettyprinter as PP
-import Smol.Interpreter.Types.Stack
 import Smol.Core.Printer
 import Smol.Core.Types.Annotation
 import Smol.Core.Types.Expr
 import Smol.Core.Types.Identifier
 import Smol.Core.Types.Op
 import Smol.Core.Types.ResolvedDep
+import Smol.Interpreter.Types.Stack
 
 type InterpretExpr ann = Expr ResolvedDep (ExprData ann)
 

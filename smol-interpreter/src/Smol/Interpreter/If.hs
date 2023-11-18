@@ -1,11 +1,11 @@
 module Smol.Interpreter.If (interpretIf) where
 
 import Control.Monad.Except
+import Smol.Core.Types.Expr
+import Smol.Core.Types.Prim
 import Smol.Interpreter.Types
 import Smol.Interpreter.Types.InterpreterError
 import Smol.Interpreter.Types.Stack
-import Smol.Core.Types.Expr
-import Smol.Core.Types.Prim
 
 interpretIf ::
   InterpretFn ann ->

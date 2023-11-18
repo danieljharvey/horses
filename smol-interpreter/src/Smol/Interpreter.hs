@@ -4,4 +4,3 @@ module Smol.Interpreter
 where
 
 import Smol.Interpreter.Interpret
-

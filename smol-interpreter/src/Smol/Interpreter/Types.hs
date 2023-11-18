@@ -11,12 +11,12 @@ where
 
 import Control.Monad.Reader
 import Data.Map.Strict (Map)
-import Smol.Interpreter.Types.InterpreterError
-import Smol.Interpreter.Types.Stack
 import Smol.Core.Types.Expr
 import Smol.Core.Types.Identifier
 import Smol.Core.Types.Pattern
 import Smol.Core.Types.ResolvedDep
+import Smol.Interpreter.Types.InterpreterError
+import Smol.Interpreter.Types.Stack
 
 type InterpreterM ann a =
   ReaderT

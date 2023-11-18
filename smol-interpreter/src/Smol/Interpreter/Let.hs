@@ -1,13 +1,13 @@
 module Smol.Interpreter.Let (interpretLet) where
 
 import Smol.Core.FindUses
-import Smol.Interpreter.Monad
-import Smol.Interpreter.Types
-import Smol.Interpreter.Types.Stack
 import Smol.Core.Typecheck.Shared (getExprAnnotation)
 import Smol.Core.Types.Expr
 import Smol.Core.Types.Identifier
 import Smol.Core.Types.ResolvedDep
+import Smol.Interpreter.Monad
+import Smol.Interpreter.Types
+import Smol.Interpreter.Types.Stack
 
 -- need to interpret the expr in the let binding
 -- BUT it needs to refer to itself

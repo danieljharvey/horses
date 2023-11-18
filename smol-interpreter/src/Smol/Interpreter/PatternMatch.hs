@@ -8,15 +8,15 @@ import Data.Foldable (toList)
 import qualified Data.List.NonEmpty as NE
 import Data.Monoid
 import qualified Data.Sequence as Seq
-import Smol.Interpreter.Monad
-import Smol.Interpreter.Types
-import Smol.Interpreter.Types.InterpreterError
 import Smol.Core.Types.Constructor
 import Smol.Core.Types.Expr
 import Smol.Core.Types.Identifier
 import Smol.Core.Types.Pattern
 import Smol.Core.Types.ResolvedDep
 import Smol.Core.Types.Spread
+import Smol.Interpreter.Monad
+import Smol.Interpreter.Types
+import Smol.Interpreter.Types.InterpreterError
 
 interpretPatternMatch ::
   InterpretFn ann ->
