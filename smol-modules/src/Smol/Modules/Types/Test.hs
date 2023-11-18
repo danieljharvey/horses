@@ -8,11 +8,11 @@ module Smol.Modules.Types.Test where
 
 import Data.Aeson (FromJSON, FromJSONKey, ToJSON, ToJSONKey)
 import GHC.Generics (Generic)
-import Smol.Modules.Types.TestName
 import Smol.Core.Types.Constructor
 import Smol.Core.Types.Expr
 import Smol.Core.Types.Identifier
 import Smol.Core.Types.TypeName
+import Smol.Modules.Types.TestName
 
 data Test dep ann
   = UnitTest TestName (Expr dep ann)

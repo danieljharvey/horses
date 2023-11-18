@@ -28,7 +28,6 @@ import Smol.Backend.IR.IRExpr
 import Smol.Backend.Types.GetPath
 import Smol.Backend.Types.PatternPredicate
 import Smol.Core.Helpers
-import Smol.Core.Modules.Types (Module (..), TopLevelExpression (..))
 import Smol.Core.Typecheck (flattenConstructorApplication, getTypeAnnotation)
 import Smol.Core.Typecheck.Shared (getExprAnnotation)
 import Smol.Core.Types.Constructor
@@ -40,6 +39,7 @@ import Smol.Core.Types.Prim
 import Smol.Core.Types.ResolvedDep
 import Smol.Core.Types.Type
 import Smol.Core.Types.TypeName
+import Smol.Modules.Types (Module (..), TopLevelExpression (..))
 
 irPrintInt :: IRExtern
 irPrintInt =

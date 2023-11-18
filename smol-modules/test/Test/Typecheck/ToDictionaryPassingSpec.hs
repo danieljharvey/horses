@@ -17,10 +17,10 @@ import qualified Data.Set as S
 import Data.String (fromString)
 import qualified Data.Text as T
 import Smol.Core
-import Smol.Modules.ResolveDeps
-import Smol.Modules.Types.Module
 import Smol.Core.Typecheck.FromParsedExpr (fromParsedExpr)
 import Smol.Core.Typecheck.Typeclass
+import Smol.Modules.ResolveDeps
+import Smol.Modules.Types.Module
 import Test.Helpers
 import Test.Hspec
 

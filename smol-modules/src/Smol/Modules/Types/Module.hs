@@ -20,8 +20,6 @@ import Data.Map.Strict (Map)
 import qualified Data.Map.Strict as M
 import GHC.Generics (Generic)
 import Prettyprinter
-import Smol.Modules.Types.Test
-import Smol.Modules.Types.TopLevelExpression
 import Smol.Core.Printer
 import Smol.Core.Typecheck.Typeclass.Types
 import Smol.Core.Types.Constructor
@@ -29,6 +27,8 @@ import Smol.Core.Types.DataType
 import Smol.Core.Types.Identifier
 import Smol.Core.Types.ParseDep
 import Smol.Core.Types.TypeName
+import Smol.Modules.Types.Test
+import Smol.Modules.Types.TopLevelExpression
 
 -- a module is, broadly, one file
 -- it defines some datatypes, infixes and definitions

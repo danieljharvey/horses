@@ -5,13 +5,13 @@
 module Smol.Modules.Helpers
   ( filterNameDefs,
     filterTypeDefs,
-    mapKey
+    mapKey,
   )
 where
 
 import Data.Bifunctor (first)
-import qualified Data.Map.Strict as M
 import Data.Map.Strict (Map)
+import qualified Data.Map.Strict as M
 import Smol.Core
 import Smol.Core.Helpers (filterMapKeys)
 import Smol.Modules.Types.DefIdentifier
@@ -34,4 +34,3 @@ filterTypeDefs =
 
 mapKey :: (Ord k1) => (k -> k1) -> Map k a -> Map k1 a
 mapKey f = M.fromList . fmap (first f) . M.toList
-

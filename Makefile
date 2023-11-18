@@ -61,6 +61,10 @@ test-smol:
 test-smol-backend:
 	cabal run smol-backend:test:smol-backend-tests
 
+.PHONY: test-smol-modules
+test-smol-modules:
+	cabal run smol-modules:test:smol-modules-tests
+
 .PHONY: test-smol-wasm
 test-smol-wasm:
 	cabal run smol-wasm:test:smol-wasm-tests

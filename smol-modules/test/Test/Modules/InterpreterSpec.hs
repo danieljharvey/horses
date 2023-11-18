@@ -7,12 +7,12 @@ import Data.Foldable (traverse_)
 import Data.Text (Text)
 import qualified Error.Diagnose as Diag
 import Smol.Core
+import Smol.Core.Typecheck.FromParsedExpr
 import Smol.Modules.Check
 import Smol.Modules.Interpret
 import Smol.Modules.Parser
 import Smol.Modules.Types.DefIdentifier
 import Smol.Modules.Types.ModuleError
-import Smol.Core.Typecheck.FromParsedExpr
 import Test.Helpers
 import Test.Hspec
 

@@ -55,7 +55,6 @@ import Smol.Core
 import Smol.Core.Typecheck.FromParsedExpr
 import Test.BuiltInTypes (builtInTypes)
 
-
 getRight :: (Show e) => Either e a -> a
 getRight (Right a) = a
 getRight (Left e) = error (show e)

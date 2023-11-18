@@ -29,6 +29,7 @@ common shared
     , optparse-applicative
     , smol-backend
     , smol-core
+    , smol-modules
     , text
 
   other-modules:

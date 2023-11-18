@@ -1,2 +1,0 @@
-type These a b = That b | These a b | This a
-

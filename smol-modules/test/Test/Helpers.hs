@@ -57,6 +57,7 @@ import qualified Data.Set.NonEmpty as NES
 import Data.Text (Text)
 import qualified Data.Text as T
 import Smol.Core
+import Smol.Core.Typecheck.FromParsedExpr
 import Smol.Modules.FromParts
 import Smol.Modules.Parser
 import Smol.Modules.ResolveDeps
@@ -64,7 +65,6 @@ import Smol.Modules.Typecheck
 import Smol.Modules.Types.Module
 import Smol.Modules.Types.ModuleError
 import Smol.Modules.Types.ModuleItem
-import Smol.Core.Typecheck.FromParsedExpr
 import Test.BuiltInTypes (builtInTypes)
 
 typedModule ::

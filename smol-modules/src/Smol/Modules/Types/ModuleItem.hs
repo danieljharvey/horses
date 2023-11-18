@@ -19,7 +19,6 @@ where
 
 import Data.Foldable (foldl')
 import Prettyprinter
-import Smol.Modules.Types.TestName
 import Smol.Core.Printer
 import Smol.Core.Typecheck.Typeclass.Types
 import Smol.Core.Types.DataType
@@ -27,6 +26,7 @@ import Smol.Core.Types.Expr
 import Smol.Core.Types.Identifier
 import Smol.Core.Types.ParseDep
 import Smol.Core.Types.Type
+import Smol.Modules.Types.TestName
 
 -- import Smol.Core.Types.TypeName
 

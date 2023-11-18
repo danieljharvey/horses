@@ -27,7 +27,6 @@ import qualified Data.Map.Strict as M
 import Data.Maybe (listToMaybe, mapMaybe)
 import Data.Monoid
 import qualified Data.Set as S
-import Smol.Core.Helpers
 import Smol.Core.TypeUtils
 import Smol.Core.Typecheck.Shared
 import Smol.Core.Typecheck.Substitute

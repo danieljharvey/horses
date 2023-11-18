@@ -13,8 +13,6 @@ import qualified Data.List.NonEmpty as NE
 import Data.Text (Text)
 import qualified Data.Text as T
 import Data.Void
-import Smol.Modules.Types.ModuleItem
-import Smol.Modules.Types.TestName
 import Smol.Core.Parser.DataType (dataTypeParser)
 import Smol.Core.Parser.Expr
 import Smol.Core.Parser.Identifiers
@@ -24,6 +22,8 @@ import Smol.Core.Parser.Type
 import Smol.Core.Parser.Typeclass
 import Smol.Core.Typecheck.Typeclass.Types
 import Smol.Core.Types
+import Smol.Modules.Types.ModuleItem
+import Smol.Modules.Types.TestName
 import Text.Megaparsec hiding (parseTest)
 import Text.Megaparsec.Char
 

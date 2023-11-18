@@ -12,10 +12,10 @@ import Data.Foldable (traverse_)
 import Data.Functor
 import Data.Text (Text)
 import qualified Data.Text.Encoding as T
+import Smol.Core.Printer
 import qualified Smol.Modules.Parser as Parse
 import Smol.Modules.PrettyPrint (printModuleParts)
 import Smol.Modules.Types.ModuleItem
-import Smol.Core.Printer
 import Test.Hspec
 
 -- these are saved in a file that is included in compilation

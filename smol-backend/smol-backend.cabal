@@ -41,6 +41,7 @@ common shared
     , mtl
     , process
     , smol-core
+    , smol-modules
     , string-conversions
     , text
     , unix

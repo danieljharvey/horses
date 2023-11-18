@@ -10,12 +10,12 @@ module Smol.Modules.Types.DefIdentifier
 where
 
 import GHC.Generics (Generic)
-import Smol.Modules.Types.TestName
 import Smol.Core.Printer
 import Smol.Core.Typecheck.Typeclass.Types
 import Smol.Core.Types.Constructor
 import Smol.Core.Types.Identifier
 import Smol.Core.Types.TypeName
+import Smol.Modules.Types.TestName
 
 -- | different kinds of top-level definitions
 data DefIdentifier dep
