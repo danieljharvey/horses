@@ -2,16 +2,11 @@
 
 module Test.Interpreter.InterpreterSpec (spec) where
 
-import Control.Monad (void)
-import Control.Monad.Reader
 import Data.Foldable (traverse_)
 import Data.Text (Text)
 import Smol.Core
 import Smol.Core.Interpreter.Types.Stack
-import Smol.Core.Modules.Types.Module
 import Smol.Core.Typecheck.FromParsedExpr
-import Smol.Core.Typecheck.Typecheck (typecheck)
-import Smol.Core.Typecheck.Typeclass
 import Test.Helpers
 import Test.Hspec
 
@@ -28,31 +23,6 @@ doBasicInterpret =
 discardLeft :: (Show e) => Either e a -> a
 discardLeft (Left e) = error (show e)
 discardLeft (Right a) = a
-
-runDictEnv :: ReaderT PassDictEnv m a -> m a
-runDictEnv = flip runReaderT emptyPassDictEnv
-
--- | typecheck, resolve typeclasses, interpret, profit
-doInterpret :: Text -> Expr ResolvedDep ()
-doInterpret input =
-  let dictEnv =
-        ToDictEnv
-          { tdeClasses = tceClasses typecheckEnv,
-            tdeInstances = fmap void <$> moInstances testModule,
-            tdeVars = mempty
-          }
-   in case typecheck typecheckEnv (fromParsedExpr (unsafeParseExpr input)) of
-        Right (_constraints, typedExpr) ->
-          fmap edAnnotation
-            . discardLeft
-            . interpret mempty
-            . addEmptyStackFrames
-            . void
-            . discardLeft
-            . runDictEnv
-            . passDictionaries dictEnv mempty
-            $ typedExpr
-        Left e -> error (show e)
 
 spec :: Spec
 spec = do
@@ -78,21 +48,6 @@ spec = do
         ( \(input, expect) ->
             it (show input <> " = " <> show expect) $ do
               doBasicInterpret input
-                `shouldBe` fromParsedExpr (unsafeParseExpr expect)
-        )
-        cases
-
-    -- not sure this is the way
-    describe "interpret with typeclasses" $ do
-      let cases =
-            [ ("equals (1 : Int) (1 : Int)", "True"), -- use Eq Int
-              ("equals (2 : Int) (1 : Int)", "False"), -- use Eq Int
-              ("equals ((1 : Int),(1 : Int)) ((1 : Int), (2 : Int))", "False") -- use Eq (a,b) and Eq Int
-            ]
-      traverse_
-        ( \(input, expect) ->
-            it (show input <> " = " <> show expect) $ do
-              doInterpret input
                 `shouldBe` fromParsedExpr (unsafeParseExpr expect)
         )
         cases

@@ -9,11 +9,11 @@ import Data.Text (Text)
 import qualified Data.Text as T
 import qualified Data.Text.IO as T
 import Smol.Core.Modules.Check
+import Smol.Core.Modules.Parser (parseModule)
 import Smol.Core.Modules.PrettyPrint (printModuleParts)
 import Smol.Core.Modules.RunTests
 import Smol.Core.Modules.Types.ModuleError
 import Smol.Core.Modules.Types.ModuleItem
-import Smol.Core.Parser (parseModule)
 import Smol.Core.Printer
 import Smol.Repl.Helpers.Diagnostics
 import Smol.Repl.Helpers.ShowTestResults

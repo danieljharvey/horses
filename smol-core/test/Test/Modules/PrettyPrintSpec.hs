@@ -12,9 +12,9 @@ import Data.Foldable (traverse_)
 import Data.Functor
 import Data.Text (Text)
 import qualified Data.Text.Encoding as T
+import qualified Smol.Core.Modules.Parser as Parse
 import Smol.Core.Modules.PrettyPrint (printModuleParts)
 import Smol.Core.Modules.Types.ModuleItem
-import qualified Smol.Core.Parser as Parse
 import Smol.Core.Printer
 import Test.Hspec
 

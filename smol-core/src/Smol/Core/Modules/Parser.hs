@@ -1,26 +1,46 @@
 {-# LANGUAGE DerivingStrategies #-}
 {-# LANGUAGE OverloadedStrings #-}
 
-module Smol.Core.Parser.Module
+module Smol.Core.Modules.Parser
   ( moduleParser,
+    parseModule,
+    parseModuleAndFormatError,
   )
 where
 
+import Data.Bifunctor (first)
 import qualified Data.List.NonEmpty as NE
 import Data.Text (Text)
+import qualified Data.Text as T
 import Data.Void
 import Smol.Core.Modules.Types.ModuleItem
+import Smol.Core.Modules.Types.TestName
 import Smol.Core.Parser.DataType (dataTypeParser)
 import Smol.Core.Parser.Expr
 import Smol.Core.Parser.Identifiers
+import Smol.Core.Parser.Primitives (textPrim)
 import Smol.Core.Parser.Shared
 import Smol.Core.Parser.Type
 import Smol.Core.Parser.Typeclass
 import Smol.Core.Typecheck.Typeclass.Types
 import Smol.Core.Types
 import Text.Megaparsec hiding (parseTest)
+import Text.Megaparsec.Char
 
 type Parser = Parsec Void Text
+
+type ParseErrorType = ParseErrorBundle Text Void
+
+parseAndFormat :: Parser a -> Text -> Either Text a
+parseAndFormat p = first (T.pack . errorBundlePretty) . parse (p <* eof) "repl"
+
+parseModule :: Text -> Either ParseErrorType [ModuleItem Annotation]
+parseModule = parse (space *> moduleParser <* eof) "repl"
+
+parseModuleAndFormatError :: Text -> Either Text [ModuleItem Annotation]
+parseModuleAndFormatError = parseAndFormat (space *> moduleParser <* eof)
+
+-------
 
 -- currently fails at the first hurdle
 -- since we can parse each thing separately, maybe
@@ -181,3 +201,6 @@ parseClass = do
             tcFuncType = ty
           }
       )
+
+testNameParser :: Parser TestName
+testNameParser = myLexeme $ TestName <$> textPrim

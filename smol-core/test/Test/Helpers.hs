@@ -58,6 +58,7 @@ import Data.Text (Text)
 import qualified Data.Text as T
 import Smol.Core
 import Smol.Core.Modules.FromParts
+import Smol.Core.Modules.Parser
 import Smol.Core.Modules.ResolveDeps
 import Smol.Core.Modules.Typecheck
 import Smol.Core.Modules.Types.Module

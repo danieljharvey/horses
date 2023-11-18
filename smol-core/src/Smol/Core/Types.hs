@@ -6,6 +6,7 @@ module Smol.Core.Types
     module Smol.Core.Types.Op,
     module Smol.Core.Types.Expr,
     module Smol.Core.Types.Identifier,
+    module Smol.Core.Types.ModuleName,
     module Smol.Core.Types.ParseDep,
     module Smol.Core.Types.Pattern,
     module Smol.Core.Types.Prim,
@@ -22,6 +23,7 @@ import Smol.Core.Types.Constructor
 import Smol.Core.Types.DataType
 import Smol.Core.Types.Expr
 import Smol.Core.Types.Identifier
+import Smol.Core.Types.ModuleName
 import Smol.Core.Types.Op
 import Smol.Core.Types.ParseDep
 import Smol.Core.Types.Pattern

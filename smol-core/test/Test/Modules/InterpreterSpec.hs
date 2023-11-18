@@ -9,6 +9,7 @@ import qualified Error.Diagnose as Diag
 import Smol.Core
 import Smol.Core.Modules.Check
 import Smol.Core.Modules.Interpret
+import Smol.Core.Modules.Parser
 import Smol.Core.Modules.Types.DefIdentifier
 import Smol.Core.Modules.Types.ModuleError
 import Smol.Core.Typecheck.FromParsedExpr

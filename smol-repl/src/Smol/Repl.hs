@@ -14,9 +14,9 @@ import qualified Smol.Backend.Compile.RunLLVM as Run
 import Smol.Backend.IR.FromExpr.Expr
 import Smol.Backend.IR.ToLLVM.ToLLVM
 import Smol.Core.Modules.Check
+import Smol.Core.Modules.Parser (parseModule)
 import Smol.Core.Modules.RunTests
 import Smol.Core.Modules.Types.ModuleError
-import Smol.Core.Parser (parseModule)
 import Smol.Repl.Helpers.Diagnostics
 import Smol.Repl.Helpers.ShowTestResults
 import System.Console.Haskeline
