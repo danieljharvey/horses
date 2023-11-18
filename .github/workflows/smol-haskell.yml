@@ -1,13 +1,6 @@
 name: Smol - build 
 
-on:
-  push:
-    branches:
-      - trunk
-
-  pull_request:
-    branches:
-      - trunk
+on: [push]
 
 jobs:
   build:
