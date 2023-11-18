@@ -4,7 +4,6 @@
 {-# LANGUAGE TemplateHaskell #-}
 
 module Test.Modules.TypecheckSpec (spec) where
-import Smol.Core.Modules.Parser
 
 import Data.Bifunctor (second)
 import Data.Either (isRight)
@@ -14,6 +13,7 @@ import Data.Text (Text)
 import qualified Data.Text.Encoding as T
 import Smol.Core
 import Smol.Core.Modules.Check
+import Smol.Core.Modules.Parser
 import Smol.Core.Modules.Types hiding (Entity (..))
 import Smol.Core.Modules.Types.ModuleError
 import Test.Helpers

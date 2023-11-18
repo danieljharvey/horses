@@ -1,14 +1,15 @@
 module Main (main) where
 
 import Test.Hspec
+import qualified Test.Interpreter.InterpreterSpec
 import qualified Test.Modules.CheckSpec
 import qualified Test.Modules.FromPartsSpec
 import qualified Test.Modules.InterpreterSpec
+import qualified Test.Modules.ParserSpec
 import qualified Test.Modules.PrettyPrintSpec
 import qualified Test.Modules.ResolveDepsSpec
 import qualified Test.Modules.RunTestsSpec
 import qualified Test.Modules.TypecheckSpec
-import qualified Test.Modules.ParserSpec
 import qualified Test.ParserSpec
 import qualified Test.TransformSpec
 import qualified Test.Typecheck.ExhaustivenessSpec
@@ -38,3 +39,4 @@ main = hspec $ parallel $ do
   Test.Modules.TypecheckSpec.spec
   Test.Modules.ParserSpec.spec
   Test.TransformSpec.spec
+  Test.Interpreter.InterpreterSpec.spec

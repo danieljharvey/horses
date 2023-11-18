@@ -58,6 +58,7 @@ import Data.Text (Text)
 import qualified Data.Text as T
 import Smol.Core
 import Smol.Core.Modules.FromParts
+import Smol.Core.Modules.Parser
 import Smol.Core.Modules.ResolveDeps
 import Smol.Core.Modules.Typecheck
 import Smol.Core.Modules.Types.Module
@@ -65,7 +66,6 @@ import Smol.Core.Modules.Types.ModuleError
 import Smol.Core.Modules.Types.ModuleItem
 import Smol.Core.Typecheck.FromParsedExpr
 import Test.BuiltInTypes (builtInTypes)
-import Smol.Core.Modules.Parser
 
 typedModule ::
   (MonadError (ModuleError Annotation) m) =>

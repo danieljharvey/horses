@@ -55,5 +55,3 @@ spec = do
               result `shouldSatisfy` isRight
         )
         testInputs
-
-

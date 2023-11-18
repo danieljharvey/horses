@@ -5,7 +5,6 @@
 
 -- | test evaluating and running tests for a module
 module Test.Modules.CheckSpec (spec) where
-import Smol.Core.Modules.Parser
 
 import Data.Bifunctor (second)
 import Data.FileEmbed
@@ -16,6 +15,7 @@ import Data.Text (Text)
 import qualified Data.Text.Encoding as T
 import Smol.Core
 import Smol.Core.Modules.Check
+import Smol.Core.Modules.Parser
 import Smol.Core.Modules.RunTests
 import Smol.Core.Modules.Types.ModuleError
 import Test.Hspec

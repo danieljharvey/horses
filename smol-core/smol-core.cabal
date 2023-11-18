@@ -75,6 +75,7 @@ library
     Smol.Core.Modules.FromParts
     Smol.Core.Modules.Helpers
     Smol.Core.Modules.Interpret
+    Smol.Core.Modules.Parser
     Smol.Core.Modules.PrettyPrint
     Smol.Core.Modules.ResolveDeps
     Smol.Core.Modules.RunTests
@@ -86,7 +87,6 @@ library
     Smol.Core.Modules.Types.Module
     Smol.Core.Modules.Types.ModuleError
     Smol.Core.Modules.Types.ModuleItem
-    Smol.Core.Modules.Types.ModuleName
     Smol.Core.Modules.Types.Test
     Smol.Core.Modules.Types.TestName
     Smol.Core.Modules.Types.TopLevelExpression
@@ -95,7 +95,6 @@ library
     Smol.Core.Parser.DataType
     Smol.Core.Parser.Expr
     Smol.Core.Parser.Identifiers
-    Smol.Core.Parser.Module
     Smol.Core.Parser.Op
     Smol.Core.Parser.Pattern
     Smol.Core.Parser.Primitives
@@ -148,6 +147,7 @@ library
     Smol.Core.Types.DataType
     Smol.Core.Types.Expr
     Smol.Core.Types.Identifier
+    Smol.Core.Types.ModuleName
     Smol.Core.Types.Op
     Smol.Core.Types.ParseDep
     Smol.Core.Types.Pattern

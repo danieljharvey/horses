@@ -6,13 +6,13 @@
 -- | test evaluating and running tests for a module
 module Test.Modules.PrettyPrintSpec (spec) where
 
-import qualified Smol.Core.Modules.Parser as Parse
 import Data.Bifunctor (second)
 import Data.FileEmbed
 import Data.Foldable (traverse_)
 import Data.Functor
 import Data.Text (Text)
 import qualified Data.Text.Encoding as T
+import qualified Smol.Core.Modules.Parser as Parse
 import Smol.Core.Modules.PrettyPrint (printModuleParts)
 import Smol.Core.Modules.Types.ModuleItem
 import Smol.Core.Printer
