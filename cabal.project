@@ -2,6 +2,7 @@ packages:
   builder/builder.cabal,
   smol-backend/smol-backend.cabal,
   smol-core/smol-core.cabal,
+  smol-interpreter/smol-interpreter.cabal,
   smol-modules/smol-modules.cabal,
   smol-repl/smol-repl.cabal,
   smol-wasm/smol-wasm.cabal,

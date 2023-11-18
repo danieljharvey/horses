@@ -7,7 +7,8 @@ import Control.Monad.Except
 import Data.List (find)
 import qualified Data.Map.Strict as M
 import Smol.Core
-import Smol.Core.Interpreter.Types.Stack
+import Smol.Interpreter.Interpret
+import Smol.Interpreter.Types.Stack
 import Smol.Modules.Types
 import Smol.Modules.Types.ModuleError
 

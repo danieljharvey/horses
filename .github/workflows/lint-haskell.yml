@@ -13,6 +13,7 @@ jobs:
             builder/**/*.hs
             smol-backend/**/*.hs
             smol-core/**/*.hs
+            smol-interpreter/**/*.hs
             smol-modules/**/*.hs
             smol-repl/**/*.hs
             smol-wasm/**/*.hs
@@ -30,6 +31,6 @@ jobs:
       - name: "Run HLint"
         uses: rwe/actions-hlint-run@v2
         with:
-          path: '["builder/", "smol-backend/", "smol-core/", "smol-modules/", "smol-repl/", "smol-wasm/"]'
+          path: '["builder/", "smol-backend/", "smol-core/", "smol-interpreter/", "smol-modules/", "smol-repl/", "smol-wasm/"]'
           fail-on: warning
 

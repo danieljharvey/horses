@@ -1,4 +1,4 @@
-module Smol.Core.Interpreter.Monad
+module Smol.Interpreter.Monad
   ( withNewStackFrame,
     extendStackFrame,
     getCurrentStackFrame,
@@ -10,12 +10,12 @@ where
 import Control.Monad.Except
 import Control.Monad.Reader
 import qualified Data.Map.Strict as M
-import Smol.Core.Interpreter.Types
-import Smol.Core.Interpreter.Types.InterpreterError
-import Smol.Core.Interpreter.Types.Stack
 import Smol.Core.Types.Expr
 import Smol.Core.Types.Identifier
 import Smol.Core.Types.ResolvedDep
+import Smol.Interpreter.Types
+import Smol.Interpreter.Types.InterpreterError
+import Smol.Interpreter.Types.Stack
 
 -- | run action with entirely new frame
 -- | useful for running functions from their closures

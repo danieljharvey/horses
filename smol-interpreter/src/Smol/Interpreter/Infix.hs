@@ -1,13 +1,13 @@
-module Smol.Core.Interpreter.Infix (interpretInfix) where
+module Smol.Interpreter.Infix (interpretInfix) where
 
 import Control.Monad (void, (<=<))
 import Control.Monad.Except
-import Smol.Core.Interpreter.Types
-import Smol.Core.Interpreter.Types.InterpreterError
 import Smol.Core.Typecheck.Shared
 import Smol.Core.Types.Expr
 import Smol.Core.Types.Op
 import Smol.Core.Types.Prim
+import Smol.Interpreter.Types
+import Smol.Interpreter.Types.InterpreterError
 
 -- | this assumes that
 interpretInfix ::

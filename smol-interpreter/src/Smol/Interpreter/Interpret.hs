@@ -1,19 +1,19 @@
-module Smol.Core.Interpreter.Interpret (interpret, addEmptyStackFrames) where
+module Smol.Interpreter.Interpret (interpret, addEmptyStackFrames) where
 
 import Control.Monad.Reader
 import qualified Data.List.NonEmpty as NE
 import Data.Map.Strict (Map)
-import Smol.Core.Interpreter.App
-import Smol.Core.Interpreter.If
-import Smol.Core.Interpreter.Infix
-import Smol.Core.Interpreter.Let
-import Smol.Core.Interpreter.Monad
-import Smol.Core.Interpreter.PatternMatch
-import Smol.Core.Interpreter.RecordAccess
-import Smol.Core.Interpreter.Types
-import Smol.Core.Interpreter.Types.InterpreterError
-import Smol.Core.Interpreter.Types.Stack
 import Smol.Core.Types
+import Smol.Interpreter.App
+import Smol.Interpreter.If
+import Smol.Interpreter.Infix
+import Smol.Interpreter.Let
+import Smol.Interpreter.Monad
+import Smol.Interpreter.PatternMatch
+import Smol.Interpreter.RecordAccess
+import Smol.Interpreter.Types
+import Smol.Interpreter.Types.InterpreterError
+import Smol.Interpreter.Types.Stack
 
 initialStack :: StackFrame ann
 initialStack = StackFrame mempty
