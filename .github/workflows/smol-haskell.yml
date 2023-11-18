@@ -39,7 +39,7 @@ jobs:
         uses: actions/cache@v3
         with:
           path: |
-            ${{ steps.setup-haskell-build-env.outputs.cabal-store }}
+            ~/.cabal/store
             dist-newstyle
           key: ${{ runner.os }}-cabal-9.6.3-${{ hashFiles('cabal.project.freeze') }}
           restore-keys: |
