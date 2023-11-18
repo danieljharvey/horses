@@ -13,7 +13,7 @@ import Data.Maybe (catMaybes)
 import Data.Set (Set)
 import qualified Data.Text as T
 import qualified Error.Diagnose as Diag
-import Smol.Core.Interpreter.Types.InterpreterError
+import Smol.Interpreter.Types.InterpreterError
 import Smol.Core.SourceSpan (sourceSpan, ssColEnd, ssColStart, ssRowEnd, ssRowStart)
 import Smol.Core.Typecheck
 import Smol.Core.Types

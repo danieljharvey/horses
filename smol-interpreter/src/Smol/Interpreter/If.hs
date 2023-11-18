@@ -1,9 +1,9 @@
-module Smol.Core.Interpreter.If (interpretIf) where
+module Smol.Interpreter.If (interpretIf) where
 
 import Control.Monad.Except
-import Smol.Core.Interpreter.Types
-import Smol.Core.Interpreter.Types.InterpreterError
-import Smol.Core.Interpreter.Types.Stack
+import Smol.Interpreter.Types
+import Smol.Interpreter.Types.InterpreterError
+import Smol.Interpreter.Types.Stack
 import Smol.Core.Types.Expr
 import Smol.Core.Types.Prim
 

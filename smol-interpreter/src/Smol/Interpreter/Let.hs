@@ -1,9 +1,9 @@
-module Smol.Core.Interpreter.Let (interpretLet) where
+module Smol.Interpreter.Let (interpretLet) where
 
-import Smol.Core.Interpreter.FindUses
-import Smol.Core.Interpreter.Monad
-import Smol.Core.Interpreter.Types
-import Smol.Core.Interpreter.Types.Stack
+import Smol.Core.FindUses
+import Smol.Interpreter.Monad
+import Smol.Interpreter.Types
+import Smol.Interpreter.Types.Stack
 import Smol.Core.Typecheck.Shared (getExprAnnotation)
 import Smol.Core.Types.Expr
 import Smol.Core.Types.Identifier

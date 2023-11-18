@@ -3,7 +3,7 @@
 {-# LANGUAGE StandaloneDeriving #-}
 {-# LANGUAGE UndecidableInstances #-}
 
-module Smol.Core.Interpreter.FindUses (findUses, memberInUses, numberOfUses, Uses (..)) where
+module Smol.Core.FindUses (findUses, memberInUses, numberOfUses, Uses (..)) where
 
 import Data.Map.Strict (Map)
 import qualified Data.Map.Strict as M

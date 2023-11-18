@@ -56,20 +56,8 @@ library
   exposed-modules:
     Smol.Core
     Smol.Core.ExprUtils
+    Smol.Core.FindUses
     Smol.Core.Helpers
-    Smol.Core.Interpreter
-    Smol.Core.Interpreter.App
-    Smol.Core.Interpreter.FindUses
-    Smol.Core.Interpreter.If
-    Smol.Core.Interpreter.Infix
-    Smol.Core.Interpreter.Interpret
-    Smol.Core.Interpreter.Let
-    Smol.Core.Interpreter.Monad
-    Smol.Core.Interpreter.PatternMatch
-    Smol.Core.Interpreter.RecordAccess
-    Smol.Core.Interpreter.Types
-    Smol.Core.Interpreter.Types.InterpreterError
-    Smol.Core.Interpreter.Types.Stack
     Smol.Core.Parser
     Smol.Core.Parser.DataType
     Smol.Core.Parser.Expr

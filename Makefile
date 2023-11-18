@@ -10,6 +10,10 @@ ghcid-smol:
 ghcid-smol-test:
 	ghcid -c "cabal repl smol-core:test:smol-core-tests" --test "main"
 
+.PHONY: ghcid-smol-interpreter-test
+ghcid-smol-interpreter-test:
+	ghcid -c "cabal repl smol-interpreter:test:smol-interpreter-tests" --test "main"
+
 .PHONY: ghcid-smol-modules-test
 ghcid-smol-modules-test:
 	ghcid -c "cabal repl smol-modules:test:smol-modules-tests" --test "main"
@@ -60,6 +64,10 @@ test-smol:
 .PHONY: test-smol-backend
 test-smol-backend:
 	cabal run smol-backend:test:smol-backend-tests
+
+.PHONY: test-smol-interpreter
+test-smol-interpreter:
+	cabal run smol-interpreter:test:smol-interpreter-tests
 
 .PHONY: test-smol-modules
 test-smol-modules:

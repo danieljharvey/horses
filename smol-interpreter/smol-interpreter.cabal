@@ -1,5 +1,5 @@
 cabal-version:      2.4
-name:               smol-modules
+name:               smol-interpreter
 version:            0.1.0.0
 
 -- A short (one-line) description of the package.
@@ -29,23 +29,15 @@ common shared
     -Wredundant-constraints -Wmissing-deriving-strategies
 
   build-depends:
-    , aeson
     , base
-    , builder
-    , bytestring
     , containers
     , diagnose
-    , megaparsec
-    , memory
-    , mtl                  >=2.3.0.0
-    , nonempty-containers
-    , parser-combinators
+    , mtl            >=2.3.0.0
     , prettyprinter
     , smol-core
-    , smol-interpreter
     , text
-    , transformers
 
+--, builder
 library
   import:           shared
 
@@ -56,29 +48,20 @@ library
 
   -- Modules included in this executable, other than Main.
   exposed-modules:
-    Smol.Modules.Check
-    Smol.Modules.Dependencies
-    Smol.Modules.FromParts
-    Smol.Modules.Helpers
-    Smol.Modules.Interpret
-    Smol.Modules.Parser
-    Smol.Modules.PrettyPrint
-    Smol.Modules.ResolveDeps
-    Smol.Modules.RunTests
-    Smol.Modules.Typecheck
-    Smol.Modules.Types
-    Smol.Modules.Types.DefIdentifier
-    Smol.Modules.Types.DepType
-    Smol.Modules.Types.Entity
-    Smol.Modules.Types.Module
-    Smol.Modules.Types.ModuleError
-    Smol.Modules.Types.ModuleItem
-    Smol.Modules.Types.Test
-    Smol.Modules.Types.TestName
-    Smol.Modules.Types.TopLevelExpression
-    Smol.Modules.Uses
+    Smol.Interpreter
+    Smol.Interpreter.App
+    Smol.Interpreter.If
+    Smol.Interpreter.Infix
+    Smol.Interpreter.Interpret
+    Smol.Interpreter.Let
+    Smol.Interpreter.Monad
+    Smol.Interpreter.PatternMatch
+    Smol.Interpreter.RecordAccess
+    Smol.Interpreter.Types
+    Smol.Interpreter.Types.InterpreterError
+    Smol.Interpreter.Types.Stack
 
-test-suite smol-modules-tests
+test-suite smol-interpreter-tests
   import:           shared
   type:             exitcode-stdio-1.0
   hs-source-dirs:   test
@@ -87,16 +70,12 @@ test-suite smol-modules-tests
     , file-embed
     , hspec       >=2.8.3 && <3
     , hspec-core  >=2.8.3 && <3
+    , smol-core
 
   other-modules:
     Test.BuiltInTypes
     Test.Helpers
-    Test.Modules.FromPartsSpec
-    Test.Modules.InterpreterSpec
-    Test.Modules.ParserSpec
-    Test.Modules.ResolveDepsSpec
-    Test.Modules.RunTestsSpec
-    Test.Modules.TypecheckSpec
+    Test.Interpreter.InterpreterSpec
 
   main-is:          Main.hs
   default-language: Haskell2010

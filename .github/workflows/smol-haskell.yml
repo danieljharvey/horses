@@ -16,8 +16,9 @@ jobs:
         command:
           - test-smol
           - test-smol-backend
-          - test-smol-wasm
+          - test-smol-interpreter
           - test-smol-modules
+          - test-smol-wasm
           - build-smol-repl
 
     runs-on: ubuntu-latest

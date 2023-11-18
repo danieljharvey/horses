@@ -3,7 +3,7 @@ module Smol.Core.Transform.FloatDown (floatDown) where
 import Data.Bifunctor (second)
 import Smol.Core
 import Smol.Core.Helpers
-import Smol.Core.Interpreter.FindUses
+import Smol.Core.FindUses
 
 floatDown ::
   ( Ord (dep Identifier)

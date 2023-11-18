@@ -1,6 +1,6 @@
 {-# LANGUAGE DerivingStrategies #-}
 
-module Smol.Core.Interpreter.Types.Stack (StackFrame (..), ExprData (..)) where
+module Smol.Interpreter.Types.Stack (StackFrame (..), ExprData (..)) where
 
 import Data.Map.Strict (Map)
 import Smol.Core.Printer

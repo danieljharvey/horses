@@ -1,4 +1,4 @@
-module Smol.Core.Interpreter.PatternMatch
+module Smol.Interpreter.PatternMatch
   ( interpretPatternMatch,
   )
 where
@@ -8,9 +8,9 @@ import Data.Foldable (toList)
 import qualified Data.List.NonEmpty as NE
 import Data.Monoid
 import qualified Data.Sequence as Seq
-import Smol.Core.Interpreter.Monad
-import Smol.Core.Interpreter.Types
-import Smol.Core.Interpreter.Types.InterpreterError
+import Smol.Interpreter.Monad
+import Smol.Interpreter.Types
+import Smol.Interpreter.Types.InterpreterError
 import Smol.Core.Types.Constructor
 import Smol.Core.Types.Expr
 import Smol.Core.Types.Identifier
