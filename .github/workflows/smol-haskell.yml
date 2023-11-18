@@ -46,5 +46,5 @@ jobs:
             ${{ runner.os }}-cabal-9.6.3
 
       - name: Test!
-        run: ${{ matrix.command }}
+        run: "${{ matrix.command }}"
 
