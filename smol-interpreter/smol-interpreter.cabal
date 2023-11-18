@@ -32,7 +32,8 @@ common shared
     , base
     , containers
     , diagnose
-    , mtl            >=2.3.0.0
+    , mtl                  >=2.3.0.0
+    , nonempty-containers
     , prettyprinter
     , smol-core
     , text
