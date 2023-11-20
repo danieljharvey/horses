@@ -5,9 +5,10 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE StandaloneDeriving #-}
+{-# LANGUAGE TypeApplications #-}
 {-# LANGUAGE UndecidableInstances #-}
 
-module Smol.Wasm.Compile where
+module Smol.Wasm.Compile (compileRaw, WasmFunction (..)) where
 
 -- this stays in the main compiler for now because the tests use the
 -- typechecker
@@ -15,6 +16,7 @@ module Smol.Wasm.Compile where
 
 import Control.Monad.Except
 import Control.Monad.State
+import Control.Monad.Writer
 import Data.Map (Map)
 import qualified Data.Map as M
 import GHC.Natural
@@ -24,7 +26,7 @@ import Smol.Core
 type WasmModule = Wasm.Module
 
 newtype WasmM dep a = WasmM
-  { getWasmM ::
+  { _getWasmM ::
       StateT (WasmState dep) (Except (WasmError dep)) a
   }
   deriving newtype
@@ -37,14 +39,17 @@ newtype WasmM dep a = WasmM
 
 data WasmState dep = WasmState
   { wsEnv :: Map (dep Identifier) (Natural, Wasm.ValueType),
-    wsCounter :: Natural,
-    wsFuncs :: Map Int (WasmFunction dep)
+    _wsCounter :: Natural,
+    _wsFuncs :: Map Int (WasmFunction dep)
   }
 
+data WasmExprState dep = WasmExprState { wesCounter :: Natural,
+    wesFuncs :: Map Int (WasmFunction dep) }
+
 data WasmFunction dep = WasmFunction
-  { wfRetType :: Type dep (),
-    wfArgs :: [Type dep ()],
-    wfBody :: Expr dep (Type dep ())
+  { _wfRetType :: Type dep (),
+    _wfArgs :: [Type dep ()],
+    _wfBody :: Expr dep (Type dep ())
   }
 
 newtype WasmError dep
@@ -58,16 +63,30 @@ emptyState :: (Ord (dep Identifier)) => WasmState dep
 emptyState = WasmState mempty 0 mempty
 
 addEnvItem ::
-  (Ord (dep Identifier)) =>
+  (Ord (dep Identifier), MonadState (WasmState dep) m) =>
   dep Identifier ->
   Wasm.ValueType ->
-  WasmM dep Natural
+  m Natural
 addEnvItem dep wasmType =
   state
     ( \(WasmState env count funcs) ->
         let newCount = count + 1
          in ( count,
               WasmState (env <> M.singleton dep (count, wasmType)) newCount funcs
+            )
+    )
+
+addWasmFunc ::
+  (Ord (dep Identifier), MonadState (WasmExprState dep) m) =>
+  dep Identifier ->
+  Wasm.ValueType ->
+  m Natural
+addWasmFunc dep wasmType =
+  state
+    ( \(WasmExprState count funcs) ->
+        let newCount = count + 1
+         in ( count,
+              WasmExprState newCount funcs
             )
     )
 
@@ -101,14 +120,14 @@ compileRaw ::
   Expr dep (Type dep ()) ->
   WasmModule
 compileRaw expr =
-  let func = compileTestFunc expr
+  let (wasmExpr, _funcs) = runState (toWasmExpr expr) (_
       localTypes = []
       funcType = Wasm.FuncType localTypes [Wasm.I32] -- assumption - return is an I32
       export =
         Wasm.Export "test" (Wasm.ExportFunc 0)
    in Wasm.Module
         { Wasm.types = [funcType],
-          Wasm.functions = [func],
+          Wasm.functions = [toWasmIR wasmExpr],
           Wasm.tables = mempty,
           Wasm.mems = mempty,
           Wasm.globals = mempty,
@@ -123,35 +142,61 @@ localTypesFromState :: WasmState dep -> [Wasm.ValueType]
 localTypesFromState =
   fmap snd . M.elems . wsEnv
 
-compileTestFunc ::
-  forall dep ann.
-  ( Show ann,
-    Show (dep Identifier),
-    Show (dep Constructor),
-    Show (dep TypeName),
-    Ord (dep Identifier),
-    Printer (dep Constructor),
-    Printer (dep Identifier),
-    Printer (dep TypeName)
-  ) =>
-  Expr dep ann ->
+-- simplified AST with functions lifted out
+data WasmExpr dep
+  = WPrim Prim
+  | WIf (WasmExpr dep) (WasmExpr dep) (WasmExpr dep)
+  | WInfix Op (WasmExpr dep) (WasmExpr dep)
+  | WLet (dep Identifier) (WasmExpr dep) (WasmExpr dep)
+  | WVar (dep Identifier)
+  | WApp (WasmExpr dep) (WasmExpr dep)
+  | WFnRef 
+
+toWasmExpr ::
+  (MonadState [WasmFunction dep] m, Show ann) =>
+  Expr dep (Type dep ann) ->
+  m (WasmExpr dep)
+toWasmExpr
+  (EPrim _ prim) = pure $ WPrim prim
+toWasmExpr (EIf _ predExpr thenExpr elseExpr) =
+  WIf <$> toWasmExpr predExpr <*> toWasmExpr thenExpr <*> toWasmExpr elseExpr
+toWasmExpr (EInfix _ op a b) =
+  WInfix op <$> toWasmExpr a <*> toWasmExpr b
+toWasmExpr (ELet _ ident letExpr body') =
+  WLet ident <$> toWasmExpr letExpr <*> toWasmExpr body'
+toWasmExpr (EVar _ ident) =
+  pure (WVar ident)
+toWasmExpr (EApp _ fn arg) =
+  WApp <$> toWasmExpr fn <*> toWasmExpr arg
+toWasmExpr (EAnn _ _ inner) = 
+  toWasmExpr inner
+toWasmExpr (ELambda _ _ident _body)
+ -- actually push func up pls
+  = pure WFnRef 
+toWasmExpr _ = error "Unimplemented toWasmExpr"
+
+toWasmIR ::
+  forall dep.
+  (Ord (dep Identifier), Show (dep Identifier)) =>
+  WasmExpr dep ->
   Wasm.Function
-compileTestFunc expr =
+toWasmIR expr =
   case runWasmM (mainFn emptyState expr) of
     Right (body, wsState) ->
       let locals = localTypesFromState wsState
        in Wasm.Function 0 locals body
     Left e -> error (show e)
   where
-    mainFn :: WasmState dep -> Expr dep ann -> WasmM dep [Wasm.Instruction Natural]
+    mainFn :: WasmState dep -> WasmExpr dep -> WasmM dep [Wasm.Instruction Natural]
     mainFn ws exp' = case exp' of
-      (EPrim _ (PInt i)) ->
+      (WPrim (PInt i)) ->
         pure [Wasm.I32Const (fromIntegral i)]
-      (EPrim _ (PBool True)) ->
+      (WPrim (PBool True)) ->
         pure [Wasm.I32Const 1]
-      (EPrim _ (PBool False)) ->
+      (WPrim (PBool False)) ->
         pure [Wasm.I32Const 0]
-      (EIf _ predExpr thenExpr elseExpr) -> do
+      (WPrim _) -> error "toWasmIR prim"
+      (WIf predExpr thenExpr elseExpr) -> do
         let block = Wasm.Inline (Just Wasm.I32) -- return type
         predW <- mainFn ws predExpr
         ifW <-
@@ -160,26 +205,26 @@ compileTestFunc expr =
             <$> mainFn ws thenExpr
             <*> mainFn ws elseExpr
         pure $ predW <> [ifW]
-      (EInfix _ op a b) -> do
+      (WInfix op a b) -> do
         valA <- mainFn ws a
         valB <- mainFn ws b
         pure $ valA <> valB <> [compileBinOp op]
-      (ELet _ ident letExpr body') -> do
+      (WLet ident letExpr body') -> do
         index <- addEnvItem ident Wasm.I32
         letW <- mainFn ws letExpr
         let setW = [Wasm.SetLocal index]
         bodyW <- mainFn ws body'
         pure $ letW <> setW <> bodyW
-      (EVar _ ident) -> do
+      (WVar ident) -> do
         -- ignoring namespaces
         -- should think about that at some point
         (n, _) <- lookupEnvItem ident
         pure [Wasm.GetLocal n]
-      (EApp _ (EVar _ f) a) -> do
+      (WApp (WVar f) a) -> do
         (fIndex, _) <- lookupEnvItem f
         fA <- mainFn ws a
         pure $ fA <> [Wasm.Call fIndex]
-      other -> error (show other)
+      _ -> error "toWasmIR other"
 
 compileBinOp :: Op -> Wasm.Instruction i
 compileBinOp op =

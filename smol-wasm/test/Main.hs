@@ -87,7 +87,7 @@ spec = do
         result <- wasmTest "1 + 2 + 3 + 4 + 5"
         result `shouldBe` Just [Wasm.VI32 15]
     describe "Function" $ do
-      xit "let inc = \\a -> a + 1; inc 1" $ do
+      it "let inc = \\a -> a + 1; inc 1" $ do
         result <- wasmTest "let inc = \\a -> a + 1; inc 1"
         result `shouldBe` Just [Wasm.VI32 2]
     describe "Variables" $ do
