@@ -16,7 +16,7 @@ module Smol.Wasm.Compile (compileRaw, WasmFunction (..)) where
 
 import Control.Monad.Except
 import Control.Monad.State
-import Control.Monad.Writer
+import Data.Functor (($>))
 import Data.Map (Map)
 import qualified Data.Map as M
 import GHC.Natural
@@ -39,18 +39,19 @@ newtype WasmM dep a = WasmM
 
 data WasmState dep = WasmState
   { wsEnv :: Map (dep Identifier) (Natural, Wasm.ValueType),
-    _wsCounter :: Natural,
-    _wsFuncs :: Map Int (WasmFunction dep)
+    _wsCounter :: Natural
   }
 
-data WasmExprState dep = WasmExprState { wesCounter :: Natural,
-    wesFuncs :: Map Int (WasmFunction dep) }
+data WasmExprState dep = WasmExprState
+  { _wesCounter :: Natural,
+    _wesFuncs :: Map Natural (WasmFunction dep)
+  }
 
 data WasmFunction dep = WasmFunction
-  { _wfRetType :: Type dep (),
-    _wfArgs :: [Type dep ()],
-    _wfBody :: Expr dep (Type dep ())
-  }
+  { wfRetType :: Type dep (),
+    wfArgs :: [(dep Identifier, Type dep ())],
+    wfExpr :: WasmExpr dep
+  } 
 
 newtype WasmError dep
   = CouldNotFindVar (dep Identifier)
@@ -60,7 +61,7 @@ deriving newtype instance
   Show (WasmError dep)
 
 emptyState :: (Ord (dep Identifier)) => WasmState dep
-emptyState = WasmState mempty 0 mempty
+emptyState = WasmState mempty 0
 
 addEnvItem ::
   (Ord (dep Identifier), MonadState (WasmState dep) m) =>
@@ -69,24 +70,23 @@ addEnvItem ::
   m Natural
 addEnvItem dep wasmType =
   state
-    ( \(WasmState env count funcs) ->
+    ( \(WasmState env count) ->
         let newCount = count + 1
          in ( count,
-              WasmState (env <> M.singleton dep (count, wasmType)) newCount funcs
+              WasmState (env <> M.singleton dep (count, wasmType)) newCount
             )
     )
 
 addWasmFunc ::
   (Ord (dep Identifier), MonadState (WasmExprState dep) m) =>
-  dep Identifier ->
-  Wasm.ValueType ->
+  WasmFunction dep ->
   m Natural
-addWasmFunc dep wasmType =
+addWasmFunc wasmFn =
   state
     ( \(WasmExprState count funcs) ->
         let newCount = count + 1
          in ( count,
-              WasmExprState newCount funcs
+              WasmExprState newCount ((M.singleton newCount wasmFn) <> funcs)
             )
     )
 
@@ -95,7 +95,7 @@ lookupEnvItem ::
   dep Identifier ->
   WasmM dep (Natural, Wasm.ValueType)
 lookupEnvItem ident = do
-  maybeVal <- gets (\(WasmState env _ _) -> M.lookup ident env)
+  maybeVal <- gets (\(WasmState env _) -> M.lookup ident env)
   case maybeVal of
     Just a -> pure a
     Nothing -> throwError (CouldNotFindVar ident)
@@ -120,14 +120,15 @@ compileRaw ::
   Expr dep (Type dep ()) ->
   WasmModule
 compileRaw expr =
-  let (wasmExpr, _funcs) = runState (toWasmExpr expr) (_
+  let (wasmExpr, WasmExprState _ funcs) = runState (toWasmExpr expr) (WasmExprState 0 mempty)
       localTypes = []
       funcType = Wasm.FuncType localTypes [Wasm.I32] -- assumption - return is an I32
       export =
         Wasm.Export "test" (Wasm.ExportFunc 0)
+      functions =  [toWasmIR wasmExpr] <> (toWasmIR . wfExpr <$> M.elems funcs)
    in Wasm.Module
         { Wasm.types = [funcType],
-          Wasm.functions = [toWasmIR wasmExpr],
+          Wasm.functions = functions, 
           Wasm.tables = mempty,
           Wasm.mems = mempty,
           Wasm.globals = mempty,
@@ -150,10 +151,10 @@ data WasmExpr dep
   | WLet (dep Identifier) (WasmExpr dep) (WasmExpr dep)
   | WVar (dep Identifier)
   | WApp (WasmExpr dep) (WasmExpr dep)
-  | WFnRef 
+  | WFnRef Natural
 
 toWasmExpr ::
-  (MonadState [WasmFunction dep] m, Show ann) =>
+  (MonadState (WasmExprState dep) m, Ord (dep Identifier), Show ann) =>
   Expr dep (Type dep ann) ->
   m (WasmExpr dep)
 toWasmExpr
@@ -168,11 +169,22 @@ toWasmExpr (EVar _ ident) =
   pure (WVar ident)
 toWasmExpr (EApp _ fn arg) =
   WApp <$> toWasmExpr fn <*> toWasmExpr arg
-toWasmExpr (EAnn _ _ inner) = 
+toWasmExpr (EAnn _ _ inner) =
   toWasmExpr inner
-toWasmExpr (ELambda _ _ident _body)
- -- actually push func up pls
-  = pure WFnRef 
+toWasmExpr (ELambda ty ident body) = do
+  wasmBody <- toWasmExpr body
+  case ty of
+    (TFunc _ _ tyArg tyRet) -> do
+      nat <-
+        addWasmFunc
+          ( WasmFunction
+              { wfRetType = tyRet $> (),
+                wfArgs = [(ident, tyArg $> ())],
+                wfExpr = wasmBody
+              }
+          )
+      pure (WFnRef nat)
+    _ -> error "should be function type"
 toWasmExpr _ = error "Unimplemented toWasmExpr"
 
 toWasmIR ::
