@@ -60,7 +60,9 @@ library
   import:           warnings
 
   -- Modules exported by the library.
-  exposed-modules:  Smol.Wasm.Compile
+  exposed-modules:
+    Smol.Wasm.Compile
+    Smol.Wasm.FromExpr
 
   -- Modules included in this library but not exported.
   -- other-modules:

@@ -1,4 +1,3 @@
-{-# LANGUAGE DataKinds #-}
 {-# LANGUAGE DerivingStrategies #-}
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
@@ -13,10 +12,10 @@ module Smol.Wasm.Compile (compileRaw, WasmFunction (..)) where
 -- this stays in the main compiler for now because the tests use the
 -- typechecker
 -- once those are moved, it can go into `backends`
-
+import qualified Data.List.NonEmpty as NE
+import Smol.Wasm.FromExpr
 import Control.Monad.Except
 import Control.Monad.State
-import Data.Functor (($>))
 import Data.Map (Map)
 import qualified Data.Map as M
 import GHC.Natural
@@ -42,17 +41,6 @@ data WasmState dep = WasmState
     _wsCounter :: Natural
   }
 
-data WasmExprState dep = WasmExprState
-  { _wesCounter :: Natural,
-    _wesFuncs :: Map Natural (WasmFunction dep)
-  }
-
-data WasmFunction dep = WasmFunction
-  { wfRetType :: Type dep (),
-    wfArgs :: [(dep Identifier, Type dep ())],
-    wfExpr :: WasmExpr dep
-  } 
-
 newtype WasmError dep
   = CouldNotFindVar (dep Identifier)
 
@@ -74,19 +62,6 @@ addEnvItem dep wasmType =
         let newCount = count + 1
          in ( count,
               WasmState (env <> M.singleton dep (count, wasmType)) newCount
-            )
-    )
-
-addWasmFunc ::
-  (Ord (dep Identifier), MonadState (WasmExprState dep) m) =>
-  WasmFunction dep ->
-  m Natural
-addWasmFunc wasmFn =
-  state
-    ( \(WasmExprState count funcs) ->
-        let newCount = count + 1
-         in ( count,
-              WasmExprState newCount ((M.singleton newCount wasmFn) <> funcs)
             )
     )
 
@@ -120,12 +95,12 @@ compileRaw ::
   Expr dep (Type dep ()) ->
   WasmModule
 compileRaw expr =
-  let (wasmExpr, WasmExprState _ funcs) = runState (toWasmExpr expr) (WasmExprState 0 mempty)
+  let funcs = toWasmFunc expr
       localTypes = []
       funcType = Wasm.FuncType localTypes [Wasm.I32] -- assumption - return is an I32
       export =
         Wasm.Export "test" (Wasm.ExportFunc 0)
-      functions =  [toWasmIR wasmExpr] <> (toWasmIR . wfExpr <$> M.elems funcs)
+      functions =  toWasmIR <$> NE.toList funcs
    in Wasm.Module
         { Wasm.types = [funcType],
           Wasm.functions = functions, 
@@ -143,60 +118,19 @@ localTypesFromState :: WasmState dep -> [Wasm.ValueType]
 localTypesFromState =
   fmap snd . M.elems . wsEnv
 
--- simplified AST with functions lifted out
-data WasmExpr dep
-  = WPrim Prim
-  | WIf (WasmExpr dep) (WasmExpr dep) (WasmExpr dep)
-  | WInfix Op (WasmExpr dep) (WasmExpr dep)
-  | WLet (dep Identifier) (WasmExpr dep) (WasmExpr dep)
-  | WVar (dep Identifier)
-  | WApp (WasmExpr dep) (WasmExpr dep)
-  | WFnRef Natural
-
-toWasmExpr ::
-  (MonadState (WasmExprState dep) m, Ord (dep Identifier), Show ann) =>
-  Expr dep (Type dep ann) ->
-  m (WasmExpr dep)
-toWasmExpr
-  (EPrim _ prim) = pure $ WPrim prim
-toWasmExpr (EIf _ predExpr thenExpr elseExpr) =
-  WIf <$> toWasmExpr predExpr <*> toWasmExpr thenExpr <*> toWasmExpr elseExpr
-toWasmExpr (EInfix _ op a b) =
-  WInfix op <$> toWasmExpr a <*> toWasmExpr b
-toWasmExpr (ELet _ ident letExpr body') =
-  WLet ident <$> toWasmExpr letExpr <*> toWasmExpr body'
-toWasmExpr (EVar _ ident) =
-  pure (WVar ident)
-toWasmExpr (EApp _ fn arg) =
-  WApp <$> toWasmExpr fn <*> toWasmExpr arg
-toWasmExpr (EAnn _ _ inner) =
-  toWasmExpr inner
-toWasmExpr (ELambda ty ident body) = do
-  wasmBody <- toWasmExpr body
-  case ty of
-    (TFunc _ _ tyArg tyRet) -> do
-      nat <-
-        addWasmFunc
-          ( WasmFunction
-              { wfRetType = tyRet $> (),
-                wfArgs = [(ident, tyArg $> ())],
-                wfExpr = wasmBody
-              }
-          )
-      pure (WFnRef nat)
-    _ -> error "should be function type"
-toWasmExpr _ = error "Unimplemented toWasmExpr"
-
 toWasmIR ::
   forall dep.
   (Ord (dep Identifier), Show (dep Identifier)) =>
-  WasmExpr dep ->
+  WasmFunction dep ->
   Wasm.Function
-toWasmIR expr =
-  case runWasmM (mainFn emptyState expr) of
+toWasmIR wasmFunc =
+  let action = do
+                 _ <- traverse (\(ident, _t) -> addEnvItem ident Wasm.I32) (wfArgs wasmFunc)
+                 mainFn emptyState (wfExpr wasmFunc)
+   in case runWasmM action of
     Right (body, wsState) ->
       let locals = localTypesFromState wsState
-       in Wasm.Function 0 locals body
+       in Wasm.Function (wfIdentifier wasmFunc) locals body
     Left e -> error (show e)
   where
     mainFn :: WasmState dep -> WasmExpr dep -> WasmM dep [Wasm.Instruction Natural]
@@ -228,15 +162,19 @@ toWasmIR expr =
         bodyW <- mainFn ws body'
         pure $ letW <> setW <> bodyW
       (WVar ident) -> do
-        -- ignoring namespaces
-        -- should think about that at some point
         (n, _) <- lookupEnvItem ident
         pure [Wasm.GetLocal n]
       (WApp (WVar f) a) -> do
         (fIndex, _) <- lookupEnvItem f
         fA <- mainFn ws a
         pure $ fA <> [Wasm.Call fIndex]
-      _ -> error "toWasmIR other"
+      (WApp (WFnRef nat) a) -> do
+        fA <- mainFn ws a
+        pure $ fA <> [Wasm.Call nat]
+      (WFnRef n) ->
+        -- the number is a WASM variable name, sort of
+        pure [Wasm.GetLocal n]
+      (WApp _ _) -> error "Wapp other"
 
 compileBinOp :: Op -> Wasm.Instruction i
 compileBinOp op =
