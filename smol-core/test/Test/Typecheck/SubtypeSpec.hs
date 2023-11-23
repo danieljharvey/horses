@@ -163,7 +163,7 @@ spec = do
                       (fromParsedType $ unsafeParseType lhs)
                       (fromParsedType $ unsafeParseType rhs)
                   )
-                `shouldSatisfy` isRight
+                  `shouldSatisfy` isRight
           )
           validPairs
 
@@ -180,7 +180,7 @@ spec = do
                       (fromParsedType $ unsafeParseType lhs)
                       (fromParsedType $ unsafeParseType rhs)
                   )
-                `shouldSatisfy` isLeft
+                  `shouldSatisfy` isLeft
           )
           validPairs
 
@@ -192,7 +192,7 @@ spec = do
                   (TInfix () OpAdd (TUnknown () 1) (TUnknown () 2))
                   tyInt
               )
-            `shouldSatisfy` isRight
+              `shouldSatisfy` isRight
 
         it "U1 == U2 <: Bool" $ do
           fst
@@ -201,4 +201,4 @@ spec = do
                   (TInfix () OpEquals (TUnknown () 1) (TUnknown () 2))
                   tyBool
               )
-            `shouldSatisfy` isRight
+              `shouldSatisfy` isRight

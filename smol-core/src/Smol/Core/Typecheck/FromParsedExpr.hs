@@ -1,4 +1,4 @@
--- don't use this!
+-- don't use this, it should be moved to /tests!
 module Smol.Core.Typecheck.FromParsedExpr (fromParsedExpr, fromParsedType) where
 
 import Smol.Core.ExprUtils

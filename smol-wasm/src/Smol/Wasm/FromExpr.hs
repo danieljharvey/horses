@@ -7,67 +7,78 @@
 {-# LANGUAGE TypeApplications #-}
 {-# LANGUAGE UndecidableInstances #-}
 
-module Smol.Wasm.FromExpr (toWasmFunc, WasmExpr(..), WasmFunction(..) ) where
+module Smol.Wasm.FromExpr (toWasmFunc, WasmDep (..), WasmExpr (..), WasmFunction (..)) where
 
-import qualified Data.List.NonEmpty as NE
 import Control.Monad.State
-import Data.Functor (($>), void)
+import Data.Functor (void, ($>))
+import qualified Data.List.NonEmpty as NE
 import Data.Map (Map)
 import qualified Data.Map as M
 import GHC.Natural
 import Smol.Core
 
-data WasmExprState dep = WasmExprState
-  { _wesCounter :: Natural,
-    _wesFuncs :: Map Natural (WasmFunction dep)
-  }
+-- | Use our own Identity shaped thing to avoid passing `dep` around
+newtype WasmDep a = WasmDep a
+  deriving stock (Eq, Ord, Show)
+  deriving newtype (Printer)
 
-data WasmFunction dep = WasmFunction
-  { wfRetType :: Type dep (),
-    wfArgs :: [(dep Identifier, Type dep ())],
-    wfExpr :: WasmExpr dep,
+-- simplified AST with functions lifted out
+data WasmExpr
+  = WPrim Prim
+  | WIf WasmExpr WasmExpr WasmExpr
+  | WInfix Op WasmExpr WasmExpr
+  | WLet (WasmDep Identifier) WasmExpr WasmExpr
+  | WVar (WasmDep Identifier)
+  | WApp WasmExpr WasmExpr
+  | WFnRef Natural
+  deriving stock (Eq, Ord, Show)
+
+data WasmExprState = WasmExprState
+  { _wesCounter :: Natural,
+    _wesFuncs :: Map Natural WasmFunction
+  }
+  deriving stock (Eq, Ord, Show)
+
+data WasmFunction = WasmFunction
+  { wfRetType :: Type WasmDep (),
+    wfArgs :: [(WasmDep Identifier, Type WasmDep ())],
+    wfExpr :: WasmExpr,
     wfIdentifier :: Natural
   }
+  deriving stock (Eq, Ord, Show)
 
 addWasmFunc ::
-  (Ord (dep Identifier), MonadState (WasmExprState dep) m) =>
-  WasmFunction dep ->
+  (MonadState WasmExprState m) =>
+  WasmFunction ->
   m Natural
 addWasmFunc wasmFn =
   state
     ( \(WasmExprState count funcs) ->
         let newCount = count + 1
-            wasmFuncWithIdentifier = wasmFn { wfIdentifier = count }
+            wasmFuncWithIdentifier = wasmFn {wfIdentifier = newCount}
          in ( count,
               WasmExprState newCount ((M.singleton newCount wasmFuncWithIdentifier) <> funcs)
             )
     )
 
--- simplified AST with functions lifted out
-data WasmExpr dep
-  = WPrim Prim
-  | WIf (WasmExpr dep) (WasmExpr dep) (WasmExpr dep)
-  | WInfix Op (WasmExpr dep) (WasmExpr dep)
-  | WLet (dep Identifier) (WasmExpr dep) (WasmExpr dep)
-  | WVar (dep Identifier)
-  | WApp (WasmExpr dep) (WasmExpr dep)
-  | WFnRef Natural
-
 -- turn onto expr into one or more functions
 -- the first one will be `main`
-toWasmFunc :: (Show ann, Ord (dep Identifier)) => Expr dep (Type dep ann) -> NE.NonEmpty (WasmFunction dep)
+toWasmFunc :: (Show ann) => Expr WasmDep (Type WasmDep ann) -> NE.NonEmpty WasmFunction
 toWasmFunc expr =
   let (wasmExpr, WasmExprState _ funcs) = runState (toWasmExpr expr) (WasmExprState 0 mempty)
-      in (WasmFunction {  wfRetType = void (getExprAnnotation expr),
-                                    wfArgs = mempty, -- assume this is `main` for now, although it might not be
-                            wfExpr = wasmExpr,
-                            wfIdentifier = 0
-                                 }) NE.:| M.elems funcs
+   in ( WasmFunction
+          { wfRetType = void (getExprAnnotation expr),
+            wfArgs = mempty, -- assume this is `main` for now, although it might not be
+            wfExpr = wasmExpr,
+            wfIdentifier = 0
+          }
+      )
+        NE.:| M.elems funcs
 
 toWasmExpr ::
-  (MonadState (WasmExprState dep) m, Ord (dep Identifier), Show ann) =>
-  Expr dep (Type dep ann) ->
-  m (WasmExpr dep)
+  (MonadState WasmExprState m, Show ann) =>
+  Expr WasmDep (Type WasmDep ann) ->
+  m WasmExpr
 toWasmExpr
   (EPrim _ prim) = pure $ WPrim prim
 toWasmExpr (EIf _ predExpr thenExpr elseExpr) =

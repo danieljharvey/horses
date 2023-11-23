@@ -45,6 +45,7 @@ spec = do
   describe "Modules" $ do
     describe "Check" $ do
       let testModule (filepath, input) =
-            it ("Checks " <> filepath <> " successfully") $
-              testCheckModule input `shouldBe` Right ()
+            it ("Checks " <> filepath <> " successfully")
+              $ testCheckModule input
+              `shouldBe` Right ()
       traverse_ testModule testInputs

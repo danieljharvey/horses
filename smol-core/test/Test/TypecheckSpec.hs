@@ -277,50 +277,54 @@ spec = do
         let pat = PConstructor () (LocalDefinition "Right") [PVar () "a"]
             ty = fromParsedType (tyCons "Either" [tyVar "e", tyVar "a"])
 
-        fst <$> runTypecheckM typecheckEnv (checkPattern ty pat)
-          `shouldBe` Right
-            ( PConstructor
-                ty
-                (LocalDefinition "Right")
-                [PVar (fromParsedType $ tyVar "a") "a"]
-            )
+        fst
+          <$> runTypecheckM typecheckEnv (checkPattern ty pat)
+            `shouldBe` Right
+              ( PConstructor
+                  ty
+                  (LocalDefinition "Right")
+                  [PVar (fromParsedType $ tyVar "a") "a"]
+              )
 
       it "Match Right True with Either 1 True" $ do
         let pat = PConstructor () (LocalDefinition "Right") [PLiteral () (PBool True)]
             ty = fromParsedType (tyCons "Either" [tyIntLit [1], tyBoolLit True])
 
-        fst <$> runTypecheckM typecheckEnv (checkPattern ty pat)
-          `shouldBe` Right
-            ( PConstructor
-                ty
-                (LocalDefinition "Right")
-                [PLiteral (fromParsedType $ tyBoolLit True) (PBool True)]
-            )
+        fst
+          <$> runTypecheckM typecheckEnv (checkPattern ty pat)
+            `shouldBe` Right
+              ( PConstructor
+                  ty
+                  (LocalDefinition "Right")
+                  [PLiteral (fromParsedType $ tyBoolLit True) (PBool True)]
+              )
 
       it "Match Left e with Either e a" $ do
         let pat = PConstructor () (LocalDefinition "Left") [PVar () "e"]
             ty = fromParsedType (tyCons "Either" [tyVar "e", tyVar "a"])
 
-        fst <$> runTypecheckM typecheckEnv (checkPattern ty pat)
-          `shouldBe` Right
-            ( PConstructor
-                ty
-                (LocalDefinition "Left")
-                [PVar (fromParsedType $ tyVar "e") "e"]
-            )
+        fst
+          <$> runTypecheckM typecheckEnv (checkPattern ty pat)
+            `shouldBe` Right
+              ( PConstructor
+                  ty
+                  (LocalDefinition "Left")
+                  [PVar (fromParsedType $ tyVar "e") "e"]
+              )
 
       it "Match State inner with State s a" $ do
         let pat = PConstructor () (LocalDefinition "State") [PVar () "inner"]
             ty = fromParsedType (tyCons "State" [tyVar "s", tyVar "a"])
             tyExpected = TFunc () mempty (tyVar "s") (tyTuple (tyVar "a") [tyVar "s"])
 
-        fst <$> runTypecheckM typecheckEnv (checkPattern ty pat)
-          `shouldBe` Right
-            ( PConstructor
-                ty
-                (LocalDefinition "State")
-                [PVar (fromParsedType tyExpected) "inner"]
-            )
+        fst
+          <$> runTypecheckM typecheckEnv (checkPattern ty pat)
+            `shouldBe` Right
+              ( PConstructor
+                  ty
+                  (LocalDefinition "State")
+                  [PVar (fromParsedType tyExpected) "inner"]
+              )
 
     describe "expected typechecking failures" $ do
       let inputs =
@@ -354,15 +358,17 @@ spec = do
         let input = EAnn () tyInt (EPrim () (PInt 1))
             expected = tyInt
 
-        getExprAnnotation <$> testElaborate input
-          `shouldBe` Right expected
+        getExprAnnotation
+          <$> testElaborate input
+            `shouldBe` Right expected
 
       it "Int literal becomes Int under annotation" $ do
         let input = EAnn () tyInt (EPrim () (PInt 1))
             expected = tyInt
 
-        getExprAnnotation <$> testElaborate input
-          `shouldBe` Right expected
+        getExprAnnotation
+          <$> testElaborate input
+            `shouldBe` Right expected
 
       it "Infers int" $ do
         let input = EPrim () (PInt (-1))
@@ -373,8 +379,9 @@ spec = do
         let input = EAnn () tyInt (EPrim () (PInt 1))
             expected = tyInt
 
-        getExprAnnotation <$> testElaborate input
-          `shouldBe` Right expected
+        getExprAnnotation
+          <$> testElaborate input
+            `shouldBe` Right expected
 
       it "Infers bool literal true" $ do
         let input = EPrim () (PBool True)
@@ -389,8 +396,9 @@ spec = do
       it "Knows bool literal is bool when annotated" $ do
         let input = EAnn () tyBool (EPrim () (PBool True))
             expected = tyBool
-        getExprAnnotation <$> testElaborate input
-          `shouldBe` Right expected
+        getExprAnnotation
+          <$> testElaborate input
+            `shouldBe` Right expected
 
       it "Infers annotated function" $ do
         let input =
@@ -413,8 +421,9 @@ spec = do
       it "If statement with annotation" $ do
         let input = EAnn () tyInt (EIf () (bool True) (int 1) (int 2))
             expected = tyInt
-        getExprAnnotation <$> testElaborate input
-          `shouldBe` Right expected
+        getExprAnnotation
+          <$> testElaborate input
+            `shouldBe` Right expected
 
       it "If statement with annotation - incorrect pred type" $ do
         let input = EAnn () tyInt (EIf () (int 1) (int 1) (int 2))
@@ -538,8 +547,9 @@ spec = do
             expected :: Type dep ()
             expected = tyInt
 
-        getExprAnnotation <$> testElaborate input
-          `shouldBe` Right expected
+        getExprAnnotation
+          <$> testElaborate input
+            `shouldBe` Right expected
 
       it "Uses polymorphic function" $ do
         let argInput =
@@ -552,8 +562,9 @@ spec = do
             expected :: Type dep ()
             expected = tyIntLit [1]
 
-        getExprAnnotation <$> testElaborate input
-          `shouldBe` Right expected
+        getExprAnnotation
+          <$> testElaborate input
+            `shouldBe` Right expected
 
       it "Uses polymorphic function once" $ do
         let argInput =
@@ -570,8 +581,9 @@ spec = do
             expected :: Type dep ()
             expected = tyIntLit [1]
 
-        getExprAnnotation <$> testElaborate input
-          `shouldBe` Right expected
+        getExprAnnotation
+          <$> testElaborate input
+            `shouldBe` Right expected
 
       it "Uses polymorphic function twice" $ do
         let argInput =
@@ -584,8 +596,9 @@ spec = do
             expected :: Type dep ()
             expected = tyTuple (tyIntLit [1]) [tyBoolLit True]
 
-        getExprAnnotation <$> testElaborate input
-          `shouldBe` Right expected
+        getExprAnnotation
+          <$> testElaborate input
+            `shouldBe` Right expected
 
       it "Succeeds when a function wants a subtype of a value but gets the value" $ do
         let input =
@@ -639,11 +652,13 @@ spec = do
                     ]
                 )
 
-        getExprAnnotation <$> testElaborate input
-          `shouldBe` Right expected
+        getExprAnnotation
+          <$> testElaborate input
+            `shouldBe` Right expected
 
-        getExprAnnotation <$> testElaborate input
-          `shouldBe` Right expected
+        getExprAnnotation
+          <$> testElaborate input
+            `shouldBe` Right expected
 
       it "Pass empty record to function that wants an empty one" $ do
         let input =
@@ -757,21 +772,24 @@ spec = do
               unsafeParseExpr
                 "let id = (\\i -> i : i -> i); case (Just 1) { Just a -> Just (id a), Nothing -> Nothing }"
             expected = fromParsedType $ unsafeParseType "Maybe 1"
-        getExprAnnotation <$> testElaborate input
-          `shouldBe` Right
-            expected
+        getExprAnnotation
+          <$> testElaborate input
+            `shouldBe` Right
+              expected
 
       it "id function" $ do
         let input = unsafeParseExpr "let id = (\\a -> a : a -> a); id True"
             expected = fromParsedType $ unsafeParseType "True"
-        getExprAnnotation <$> testElaborate input
-          `shouldBe` Right expected
+        getExprAnnotation
+          <$> testElaborate input
+            `shouldBe` Right expected
 
       it "const function" $ do
         let input = unsafeParseExpr "let const = (\\a -> \\b -> a : a -> b -> a); const True 100"
             expected = fromParsedType $ unsafeParseType "True"
-        getExprAnnotation <$> testElaborate input
-          `shouldBe` Right expected
+        getExprAnnotation
+          <$> testElaborate input
+            `shouldBe` Right expected
 
       it "Weird boys 0" $ do
         let input = unsafeParseExpr "let fmap = (\\f -> case (Just (1 : Int)) { Just a -> Just (f a) } : (Int -> b) -> Maybe b); let id = (\\i -> i : Int -> Int); fmap id"
@@ -796,5 +814,6 @@ spec = do
         let input =
               unsafeParseExpr "let apply = (\\f -> \\a -> f a : (a -> b) -> a -> b); let id = (\\c -> c : zz -> zz); apply id 1"
             expected = fromParsedType $ unsafeParseType "1"
-        getExprAnnotation <$> testElaborate input
-          `shouldBe` Right expected
+        getExprAnnotation
+          <$> testElaborate input
+            `shouldBe` Right expected

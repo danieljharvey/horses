@@ -37,6 +37,8 @@ module Test.Wasm.Helpers
     unsafeParseInstanceExpr,
     tcVar,
     typeForComparison,
+    toWasmDepExpr,
+    toWasmDepType,
   )
 where
 
@@ -53,7 +55,21 @@ import Data.Text (Text)
 import qualified Data.Text as T
 import Smol.Core
 import Smol.Core.Typecheck.FromParsedExpr
+import Smol.Wasm.FromExpr (WasmDep (..))
 import Test.Wasm.BuiltInTypes (builtInTypes)
+
+resolve :: ResolvedDep a -> WasmDep a
+resolve a = WasmDep (rdIdentifier a)
+
+-- | `ParsedExpr` has module names
+-- | `ResolvedExpr` has module hashes and unique ids
+-- this is like NumberVars from main `mimsa`, but for now we'll bodge it
+-- to get things typechecking
+toWasmDepExpr :: Expr ResolvedDep ann -> Expr WasmDep ann
+toWasmDepExpr = mapExprDep resolve
+
+toWasmDepType :: Type ResolvedDep ann -> Type WasmDep ann
+toWasmDepType = mapTypeDep resolve
 
 getRight :: (Show e) => Either e a -> a
 getRight (Right a) = a

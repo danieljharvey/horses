@@ -103,7 +103,8 @@ spec = do
                 }
 
         fmap simplify (runDictEnv $ createTypeclassDict dictEnv constraints)
-          `shouldBe` simplify <$> expected
+          `shouldBe` simplify
+          <$> expected
 
       it "Tuple for two constraints" $ do
         let constraints = addTypesToConstraint <$> NE.fromList [Constraint "Eq" [tyInt], Constraint "Eq" [tyInt]]
@@ -118,7 +119,8 @@ spec = do
                 }
 
         fmap simplify (runDictEnv $ createTypeclassDict dictEnv constraints)
-          `shouldBe` simplify <$> expected
+          `shouldBe` simplify
+          <$> expected
 
     describe "Convert expr to use typeclass dictionaries" $ do
       traverse_

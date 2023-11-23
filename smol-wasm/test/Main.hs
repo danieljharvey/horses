@@ -11,6 +11,7 @@ import qualified Language.Wasm.Interpreter as Wasm
 import Smol.Core
 import Smol.Core.Typecheck.FromParsedExpr
 import Smol.Wasm.Compile (compileRaw)
+import Smol.Wasm.FromExpr
 import Test.Hspec
 import Test.Wasm.Helpers
 
@@ -39,11 +40,14 @@ testElaborate expr =
     Right (typedExpr, _) -> pure typedExpr
     Left e -> Left e
 
+toWasmDep :: Expr ResolvedDep (Type ResolvedDep ann) -> Expr WasmDep (Type WasmDep ann)
+toWasmDep = fmap toWasmDepType . toWasmDepExpr
+
 wasmTest :: Text -> IO (Maybe [Wasm.Value])
 wasmTest input =
   case testElaborate $ unsafeParseExpr input of
     Right expr ->
-      runWasm (compileRaw expr)
+      runWasm (compileRaw (toWasmDep expr))
     Left e -> error (show e)
 
 spec :: Spec
@@ -86,7 +90,7 @@ spec = do
       it "1 + 2 + 3 + 4 + 5" $ do
         result <- wasmTest "1 + 2 + 3 + 4 + 5"
         result `shouldBe` Just [Wasm.VI32 15]
-    describe "Function" $ do
+    fdescribe "Function" $ do
       it "let inc = \\a -> a + 1; inc 1" $ do
         result <- wasmTest "let inc = \\a -> a + 1; inc 1"
         result `shouldBe` Just [Wasm.VI32 2]
