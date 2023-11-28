@@ -354,5 +354,8 @@ toDictionaryPassing ::
   [Constraint ResolvedDep (Type ResolvedDep ann)] ->
   Expr ResolvedDep (Type ResolvedDep ann) ->
   m (Expr ResolvedDep (Type ResolvedDep ann))
-toDictionaryPassing env subs constraints expr =
-  runReaderT (toDictionaryPassingInternal env subs constraints expr) emptyPassDictEnv
+toDictionaryPassing env subs constraints expr = do
+  tracePrettyM "expr" expr
+  newExpr <- runReaderT (toDictionaryPassingInternal env subs constraints expr) emptyPassDictEnv
+  tracePrettyM "toDictionaryPassing" newExpr
+  pure newExpr

@@ -35,6 +35,25 @@ instance (Eq a) => Eq Maybe a {
       }
 }
 
+type List a = Cons a (List a) | Nil
+
+instance (Eq a) => Eq (List a) {
+    \listA -> \listB -> case ((listA, listB)) {
+        (Nil, Nil) -> True,
+        (Cons a as, Cons b bs) ->
+                          if (equals a b) then (equals as bs) else False,
+        _ -> False }
+        }
+
+test "whoa" { equals (Nil : List Bool) (Nil : List Bool) }
+
+/*test "whoa" { equals (Cons (True : Bool) Nil) (Cons (True : Bool) Nil) } */
+
+
+
+
+
+
 def useEqualsInt : 
   Bool
 def useEqualsInt =
