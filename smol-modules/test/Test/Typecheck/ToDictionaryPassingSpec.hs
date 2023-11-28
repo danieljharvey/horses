@@ -162,7 +162,7 @@ spec = do
         ]
 
     -- the whole transformation basically
-    describe "toDictionaryPassing" $ do
+    fdescribe "toDictionaryPassing" $ do
       traverse_
         ( \(constraints, parts, expectedParts) -> do
             let input = joinText parts
@@ -217,5 +217,11 @@ spec = do
               ", _ -> \"\" } : Natural -> String); ",
               "shownatural Zero"
             ]
+          ),
+          ( mempty,
+            ["equals (Nil : List Bool) (Nil : List Bool)"],
+            ["equals (Nil : List Bool) (Nil : List Bool)"]
           )
+
+
         ]

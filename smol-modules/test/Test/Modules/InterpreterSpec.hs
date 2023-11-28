@@ -156,7 +156,21 @@ spec = do
                   "def main = show (Suc Zero)"
                 ],
                 "\"S Z\""
-              )
+              ){-,
+              ( ["class Eq a { equals : a -> a -> Bool }",
+                  "instance Eq Bool { \\a -> \\b -> a == b }",
+                          "type List a = Nil | Cons a (List a)",
+                          "instance (Eq a) => Eq (List a) { ",
+                          "\\listA -> \\listB -> case ((listA, listB)) { ",
+                          "(Nil, Nil) -> True,",
+                          "(Cons a as, Cons b bs) -> ",
+                          "if (equals a b) then (equals as bs) else False,",
+                          "_ -> False } }",
+                          "def main : Bool",
+                          "def main = equals (Cons (True : Bool) Nil) (Cons (True : Bool) Nil)"
+
+                  ],
+              "True") -}
             ]
       traverse_
         ( \(parts, expect) ->
