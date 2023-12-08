@@ -33,7 +33,7 @@ parseModule input =
 spec :: Spec
 spec = do
   describe "Modules" $ do
-    fdescribe "PrettyPrint" $ do
+    describe "PrettyPrint" $ do
       let printModule (filepath, input) =
             it ("Pretty pretting " <> filepath <> " round trips successfully") $ do
               let parts = parseModule input
