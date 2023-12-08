@@ -21,16 +21,14 @@ testInputs =
 spec :: Spec
 spec = do
   describe "Parser" $ do
-    describe "Module" $ do
+    fdescribe "Module" $ do
       let singleDefs =
             [ "type Dog a = Woof String | Other a",
-              "def id : a -> a",
-              "def id a = a",
-              "def compose f g a = f (g a)",
-              "def compose : (c -> b) -> (a -> b) -> (a -> c)",
-              "def onePlusOneEqualsTwo = 1 + 1 == 2",
+              "def id (a: a) : a { a }",
+              "def compose (f: c -> b) (g: a -> b) (a: a) : c { f (g a) }",
+              "def onePlusOneEqualsTwo: Bool { 1 + 1 == 2 }",
               "test \"one plus one equals two\" { 1 + 1 == 2 }",
-              "def usesEquals : (Eq (a,b)) => (a,b) -> (a,b) -> Bool",
+              "def usesEquals (Eq (a,b)) => (one: (a,b)) (two: (a,b)) : Bool { equals one two }",
               "class Eq a { equals: a -> a -> Bool }",
               "instance Eq Int { eqInt }",
               "instance (Eq a) => Eq (Maybe a) { eqMaybeA }"

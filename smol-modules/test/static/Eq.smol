@@ -35,49 +35,41 @@ instance (Eq a) => Eq Maybe a {
       }
 }
 
-def useEqualsInt : 
-  Bool
-def useEqualsInt =
+def useEqualsInt : Bool {
   equals (1 : Int) (2 : Int)
+}
 
-def useEqualsA :(Eq a) =>
-  a -> a -> Bool
-def useEqualsA a b =
+def useEqualsA (Eq a) => (a: a) (b: a): Bool {
   equals a b
+}
 
-def notEquals :(Eq a) =>
-  a -> a -> Bool
-def notEquals a b =
+def notEquals (Eq a) => (a: a) (b: a): Bool {
   if (useEqualsA a b) then False else True
+}
 
-def pair : 
-  (Int, Int)
-def pair =
+def pair: (Int,Int) {
   (1, 2)
+}
 
-def flipPair : 
-  (a, b) -> (b, a)
-def flipPair pair =
+def flipPair (pair: (a,b)): (b,a) {
   let (a, b) = pair;
 
   (b, a)
+}
 
-def main : 
-  Bool
-def main =
+def main: Bool {
   notEquals pair (flipPair pair)
+}
 
-def useMaybe : 
-  Bool
-def useMaybe =
+def useMaybe : Bool {
   equals Nothing (Just (1 : Int))
+}
 
-def useNewInstances : 
-  Bool
-def useNewInstances =
+def useNewInstances: Bool {
   if (equals (True : Bool) (False : Bool))
   then
     (equals ("dog" : String) ("log" : String))
   else
     False
+}
 

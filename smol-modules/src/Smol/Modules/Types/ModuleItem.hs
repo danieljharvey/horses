@@ -11,7 +11,6 @@
 module Smol.Modules.Types.ModuleItem
   ( ModuleItem (..),
     ModuleExpression (..),
-    ModuleType (..),
     ModuleDataType (..),
     ModuleInstance (..),
   )
@@ -39,7 +38,6 @@ import Smol.Modules.Types.TestName
 -- we will remove duplicates when we work out dependencies between everything
 data ModuleItem ann
   = ModuleExpression (ModuleExpression ann)
-  | ModuleType (ModuleType ann)
   | ModuleDataType (ModuleDataType ann)
   | ModuleTest TestName (Expr ParseDep ann)
   | ModuleInstance (ModuleInstance ann)
@@ -56,7 +54,9 @@ deriving stock instance
 data ModuleExpression ann = ModuleExpressionC
   { meAnn :: ann,
     meIdent :: Identifier,
-    meArgs :: [Identifier],
+    meConstraints :: [Constraint ParseDep ann],
+    meArgs :: [(Identifier,Type ParseDep ann)],
+    meReturnType :: Type ParseDep ann,
     meExpr :: Expr ParseDep ann
   }
   deriving stock (Eq, Ord, Functor)
@@ -66,21 +66,6 @@ deriving stock instance
     Show (DataType ParseDep ann)
   ) =>
   Show (ModuleExpression ann)
-
--- a top level type signature
-data ModuleType ann = ModuleTypeC
-  { mtAnn :: ann,
-    mtIdent :: Identifier,
-    mtConstraints :: [Constraint ParseDep ann],
-    mtType :: Type ParseDep ann
-  }
-  deriving stock (Eq, Ord, Functor)
-
-deriving stock instance
-  ( Show ann,
-    Show (DataType ParseDep ann)
-  ) =>
-  Show (ModuleType ann)
 
 -- a top level data type declaration
 data ModuleDataType ann = ModuleDataTypeC
@@ -113,8 +98,6 @@ deriving stock instance
 instance Printer (ModuleItem ann) where
   prettyDoc (ModuleExpression (ModuleExpressionC {meIdent, meArgs, meExpr})) =
     printExpression meIdent meArgs meExpr <> line <> line
-  prettyDoc (ModuleType (ModuleTypeC {mtConstraints, mtIdent, mtType})) =
-    printType mtConstraints mtIdent mtType <> line
   prettyDoc (ModuleDataType (ModuleDataTypeC {mdtDataType})) =
     prettyDoc mdtDataType <> line <> line
   prettyDoc (ModuleTest testName expr) =
@@ -157,6 +140,7 @@ printInstance constraints instanceHead expr =
         <> line
         <> "}"
 
+  {-
 printType :: [Constraint ParseDep ann] -> Identifier -> Type ParseDep ann -> Doc style
 printType constraints name ty =
   let prettyConstraints = case constraints of
@@ -173,8 +157,9 @@ printType constraints name ty =
         <> prettyConstraints
         <> line
         <> indentMulti 2 (prettyDoc ty)
+-}
 
-printExpression :: Identifier -> [Identifier] -> Expr ParseDep ann -> Doc style
+printExpression :: Identifier -> [(Identifier,Type ParseDep ann)] -> Expr ParseDep ann -> Doc style
 printExpression name args expr =
   "def"
     <+> prettyDoc name
