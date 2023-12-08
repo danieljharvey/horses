@@ -12,24 +12,21 @@ instance Semigroup Int {
 
 type First a = First a
 
-def runFirst : 
-  (First a) -> a
-def runFirst firstA =
+def runFirst (firstA: First a) : a {
   let First a = firstA;
 
   a
+}
 
 instance Semigroup First a {
   \a -> \b -> a
 }
 
-def true : 
-  Bool
-def true =
+def true : Bool {
   runFirst (mappend (First (True : Bool)) (First (False : Bool)))
+}
 
-def main : 
-  Bool
-def main =
+def main : Bool {
   equals (mappend (20 : Int) (22 : Int)) (42 : Int)
+}
 

@@ -57,7 +57,7 @@ moduleParser =
 -- we've excluded Export here
 parseModuleItem :: Parser (ModuleItem Annotation)
 parseModuleItem =
-    try moduleDefinitionParser
+  try moduleDefinitionParser
     <|> try moduleTypeDeclarationParser
     <|> parseTest
     <|> parseInstance
@@ -92,12 +92,12 @@ moduleTypeDeclarationParser =
 moduleDefinitionParser :: Parser (ModuleItem Annotation)
 moduleDefinitionParser =
   let argPairParser = do
-          myString "("
-          ident <- identifierParser
-          myString ":"
-          ty <- typeParser
-          myString ")"
-          pure (ident, ty)
+        myString "("
+        ident <- identifierParser
+        myString ":"
+        ty <- typeParser
+        myString ")"
+        pure (ident, ty)
       parser = do
         myString "def"
         ident <- identifierParser

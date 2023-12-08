@@ -21,7 +21,7 @@ testInputs =
 spec :: Spec
 spec = do
   describe "Parser" $ do
-    fdescribe "Module" $ do
+    describe "Module" $ do
       let singleDefs =
             [ "type Dog a = Woof String | Other a",
               "def id (a: a) : a { a }",

@@ -24,7 +24,7 @@ import Smol.Modules.Types.Module
 import Smol.Modules.Types.ModuleError
 import Smol.Modules.Types.ModuleItem
 import Smol.Modules.Types.Test
---import Smol.Modules.Types.TopLevelExpression
+import Smol.Modules.Types.TopLevelExpression
 
 moduleFromModuleParts ::
   ( MonadError (ModuleError ann) m
@@ -38,15 +38,15 @@ moduleFromModuleParts parts =
    in foldr addPart (pure mempty) parts
 
 addModulePart ::
-  (MonadError (ModuleError ann) m ) =>
+  (MonadError (ModuleError ann) m) =>
   [ModuleItem ann] ->
   ModuleItem ann ->
   Module ParseDep ann ->
   m (Module ParseDep ann)
 addModulePart allParts part mod' =
   case part of
-    ModuleExpression (ModuleExpressionC {meIdent}) -> do
-      tle <- undefined
+    ModuleExpression (ModuleExpressionC {meArgs, meReturnType, meExpr, meConstraints, meIdent}) -> do
+      tle <- exprAndTypeFromParts meConstraints meArgs meReturnType meExpr
       pure $
         mod'
           { moExpressions =
@@ -158,3 +158,34 @@ findTypeclass tcn moduleItems =
     moduleItems of
     [a] -> Just a
     _ -> Nothing -- we should have better errors for multiple type declarations, but for now, chill out friend
+
+-- given the bits of things, make a coherent type and expression
+exprAndTypeFromParts ::
+  (MonadError (ModuleError ann) m) =>
+  [Constraint ParseDep ann] ->
+  [(Identifier, Type ParseDep ann)] ->
+  Type ParseDep ann ->
+  Expr ParseDep ann ->
+  m (TopLevelExpression ParseDep ann)
+exprAndTypeFromParts constraints parts retType expr = do
+  let expr' =
+        foldr
+          ( \(ident, ty) rest -> ELambda (getTypeAnnotation ty) (emptyParseDep ident) rest
+          )
+          expr
+          parts
+  -- if we only have un-typed args, don't bother, we only want them as
+  -- placeholders
+  let exprType =
+        foldr
+          ( \(_ident, ty) rest -> do
+              TFunc (getTypeAnnotation ty) mempty ty rest
+          )
+          retType
+          parts
+  pure $
+    TopLevelExpression
+      { tleConstraints = constraints,
+        tleExpr = expr',
+        tleType = Just exprType
+      }

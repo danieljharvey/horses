@@ -1,30 +1,24 @@
 type State s a = State (s -> (a, s))
 
-def pure : 
-  a -> State s a
-def pure a =
+def pure (a: a) : State s a {
   State (\s -> (a, s))
+}
 
-def get : 
-  State s s
-def get =
+def get : State s s {
   State (\s -> (s, s))
+}
 
-def put : 
-  s -> State s Unit
-def put s =
+def put (s: s) : State s Unit {
   State (\oldS -> (Unit, s))
+}
 
-def fmap : 
-  (a -> b) -> (State s a) -> State s b
-def fmap f state =
+def fmap (f: a -> b) (state: State s a) : State s b {
   let State sas = state;
 
   State (\s -> let (a, s) = (sas s) in ((f a), s))
+}
 
-def ap : 
-  (State s (a -> b)) -> (State s a) -> State s b
-def ap stateF stateA =
+def ap (stateF: State s (a -> b)) (stateA: State s a) : State s b {
   State (\s ->
     let State sfs = stateF;
 
@@ -36,10 +30,9 @@ def ap stateF stateA =
     let State sas = stateA;
 
     let as = sas ss in let (a, sss) = as in ((f a), sss))
+}
 
-def bind : 
-  (a -> State s b) -> (State s a) -> State s b
-def bind f state =
+def bind (f: a -> State s b) (state: State s a) : State s b {
   State (\s ->
     let State sas = state;
 
@@ -48,11 +41,11 @@ def bind f state =
     let State sbs = (f a);
 
     sbs ss)
+}
 
-def run : 
-  (State s a) -> s -> (a, s)
-def run state s =
+def run (state: State s a) (s: s) : (a, s) {
   let State sas = state;
 
   sas s
+}
 

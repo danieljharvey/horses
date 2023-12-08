@@ -1,8 +1,6 @@
 type Tree a = Branch (Tree a) a (Tree a) | Leaf a
 
-def fmap : 
-  (a -> b) -> (Tree a) -> Tree b
-def fmap f =
+def fmap (f: a -> b) : (Tree a) -> Tree b {
   let map innerTree = 
     case innerTree {
       Branch left a right ->
@@ -12,10 +10,9 @@ def fmap f =
     };
 
   map
+}
 
-def invert : 
-  (Tree a) -> Tree b
-def invert =
+def invert : (Tree a) -> Tree b {
   let invertTree innerTree = 
     case innerTree {
       Branch left a right ->
@@ -25,4 +22,5 @@ def invert =
     };
 
   invertTree
+}
 

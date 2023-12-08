@@ -12,12 +12,11 @@ instance Monoid Int {
 
 type All  = All Bool
 
-def runAll : 
-  All -> Bool
-def runAll all =
+def runAll (all: All) : Bool {
   let All a = all;
 
   a
+}
 
 instance Semigroup All {
   \All a -> \All b -> case ((a, b)) { (True, True) -> All True, _ -> All False }
