@@ -116,8 +116,7 @@ spec = do
                 ],
                 "42"
               ),
-              ( [
-                  "def add (a: Int) (b: Int): Int { a + b }",
+              ( [ "def add (a: Int) (b: Int): Int { a + b }",
                   "def main { add 20 22 }"
                 ],
                 "42"
