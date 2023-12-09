@@ -3,8 +3,9 @@
 some sort of compiler
 
 ```haskell
-def inc : Int -> Int -> Int
-def inc a = a + 1
+def inc (a: Int): Int { 
+    a + 1
+}
 
 class Eq a { equals : a -> a -> Bool }
 
