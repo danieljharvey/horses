@@ -3,12 +3,10 @@
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE NamedFieldPuns #-}
 {-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE RecordWildCards #-}
 
 module Smol.Modules.FromParts
   ( addModulePart,
     moduleFromModuleParts,
-    exprAndTypeFromParts,
   )
 where
 
@@ -28,8 +26,7 @@ import Smol.Modules.Types.Test
 import Smol.Modules.Types.TopLevelExpression
 
 moduleFromModuleParts ::
-  ( MonadError (ModuleError ann) m,
-    Monoid ann
+  ( MonadError (ModuleError ann) m
   ) =>
   [ModuleItem ann] ->
   m (Module ParseDep ann)
@@ -40,24 +37,21 @@ moduleFromModuleParts parts =
    in foldr addPart (pure mempty) parts
 
 addModulePart ::
-  (MonadError (ModuleError ann) m, Monoid ann) =>
+  (MonadError (ModuleError ann) m) =>
   [ModuleItem ann] ->
   ModuleItem ann ->
   Module ParseDep ann ->
   m (Module ParseDep ann)
 addModulePart allParts part mod' =
   case part of
-    ModuleExpression (ModuleExpressionC {meIdent}) -> do
-      tle <- exprAndTypeFromParts allParts meIdent
+    ModuleExpression (ModuleExpressionC {meArgs, meReturnType, meExpr, meConstraints, meIdent}) -> do
+      _ <- findExpression meIdent allParts
+      tle <- exprAndTypeFromParts meConstraints meArgs meReturnType meExpr
       pure $
         mod'
           { moExpressions =
               M.singleton meIdent tle <> moExpressions mod'
           }
-    ModuleType (ModuleTypeC {mtIdent}) -> do
-      -- check for duplicates
-      _ <- findTypeExpression mtIdent allParts
-      pure mod' -- we sort these elsewhere
     ModuleTest testName expr
       | "" == testName ->
           throwError (EmptyTestName expr)
@@ -101,83 +95,6 @@ addModulePart allParts part mod' =
               M.singleton typeName dt
                 <> moDataTypes mod'
           }
-
--- given the bits of things, make a coherent type and expression
--- 1) check we have any type annotations
--- 2) if so - ensure we have a full set (error if not) and create annotation
--- 3) if not, just return expr
-exprAndTypeFromParts ::
-  (MonadError (ModuleError ann) m, Monoid ann) =>
-  [ModuleItem ann] ->
-  Identifier ->
-  m (TopLevelExpression ParseDep ann)
-exprAndTypeFromParts moduleItems ident = do
-  (idents, expr) <- findExpression ident moduleItems
-  let tleExpr =
-        foldr
-          (ELambda mempty . emptyParseDep)
-          expr
-          idents
-  (tleConstraints, tleType) <- do
-    foundType <- findTypeExpression ident moduleItems
-    case foundType of
-      Just (constraints, ty) ->
-        pure (constraints, Just ty)
-      Nothing ->
-        pure (mempty, Nothing)
-  pure $ TopLevelExpression {..}
-
-findExpression ::
-  (MonadError (ModuleError ann) m) =>
-  Identifier ->
-  [ModuleItem ann] ->
-  m ([Identifier], Expr ParseDep ann)
-findExpression ident moduleItems =
-  case mapMaybe
-    ( \case
-        ModuleExpression moduleExpression
-          | meIdent moduleExpression == ident ->
-              Just moduleExpression
-        _ -> Nothing
-    )
-    moduleItems of
-    [a] -> pure (meArgs a, meExpr a)
-    [] -> error "won't happen"
-    (a : b : _) ->
-      throwError
-        ( DuplicateDefinition
-            ( Duplicate
-                ident
-                (meAnn a)
-                (meAnn b)
-            )
-        )
-
-findTypeExpression ::
-  (MonadError (ModuleError ann) m) =>
-  Identifier ->
-  [ModuleItem ann] ->
-  m (Maybe ([Constraint ParseDep ann], Type ParseDep ann))
-findTypeExpression ident moduleItems =
-  case mapMaybe
-    ( \case
-        ModuleType moduleType
-          | mtIdent moduleType == ident ->
-              Just moduleType
-        _ -> Nothing
-    )
-    moduleItems of
-    [a] -> pure $ Just (mtConstraints a, mtType a)
-    [] -> pure Nothing
-    (a : b : _) ->
-      throwError
-        ( DuplicateTypeDefinition
-            ( Duplicate
-                ident
-                (mtAnn a)
-                (mtAnn b)
-            )
-        )
 
 findDataType ::
   (MonadError (ModuleError ann) m) =>
@@ -241,3 +158,67 @@ findTypeclass tcn moduleItems =
     moduleItems of
     [a] -> Just a
     _ -> Nothing -- we should have better errors for multiple type declarations, but for now, chill out friend
+
+findExpression ::
+  (MonadError (ModuleError ann) m) =>
+  Identifier ->
+  [ModuleItem ann] ->
+  m (Expr ParseDep ann)
+findExpression ident moduleItems =
+  case mapMaybe
+    ( \case
+        ModuleExpression moduleExpression
+          | meIdent moduleExpression == ident ->
+              Just moduleExpression
+        _ -> Nothing
+    )
+    moduleItems of
+    [a] -> pure (meExpr a)
+    [] -> error "won't happen"
+    (a : b : _) ->
+      throwError
+        ( DuplicateDefinition
+            ( Duplicate
+                ident
+                (meAnn a)
+                (meAnn b)
+            )
+        )
+
+-- given the bits of things, make a coherent type and expression
+exprAndTypeFromParts ::
+  (MonadError (ModuleError ann) m) =>
+  [Constraint ParseDep ann] ->
+  [(Identifier, Type ParseDep ann)] ->
+  Maybe (Type ParseDep ann) ->
+  Expr ParseDep ann ->
+  m (TopLevelExpression ParseDep ann)
+exprAndTypeFromParts constraints [] maybeRetType expr =
+  pure $
+    TopLevelExpression
+      { tleConstraints = constraints,
+        tleExpr = expr,
+        tleType = maybeRetType
+      }
+exprAndTypeFromParts constraints parts (Just retType) expr = do
+  let expr' =
+        foldr
+          ( \(ident, ty) rest -> ELambda (getTypeAnnotation ty) (emptyParseDep ident) rest
+          )
+          expr
+          parts
+  let exprType =
+        foldr
+          ( \(_ident, ty) rest -> do
+              TFunc (getTypeAnnotation ty) mempty ty rest
+          )
+          retType
+          parts
+  pure $
+    TopLevelExpression
+      { tleConstraints = constraints,
+        tleExpr = expr',
+        tleType = Just exprType
+      }
+exprAndTypeFromParts _constraints _parts Nothing _expr =
+  error "Need a return type when we have args"

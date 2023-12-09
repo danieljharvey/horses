@@ -13,14 +13,8 @@ spec = do
   describe "Modules" $ do
     describe "FromParts" $ do
       it "Can't have conflicting defs" $ do
-        let modParts = unsafeParseModuleItems (joinText ["def yes = True", "def yes = False"])
+        let modParts = unsafeParseModuleItems (joinText ["def yes: Bool { True }", "def yes: Bool{ False }"])
             expected = DuplicateDefinition (Duplicate "yes" () ())
-
-        moduleFromModuleParts modParts `shouldBe` Left expected
-
-      it "Can't have conflicting type defs" $ do
-        let modParts = unsafeParseModuleItems (joinText ["def yes : True", "def yes : False"])
-            expected = DuplicateTypeDefinition (Duplicate "yes" () ())
 
         moduleFromModuleParts modParts `shouldBe` Left expected
 
@@ -37,7 +31,7 @@ spec = do
         moduleFromModuleParts modParts `shouldBe` Left expected
 
       it "Can't have an empty test name" $ do
-        let modParts = unsafeParseModuleItems (joinText ["def yes = True", "test \"\" { yes }"])
+        let modParts = unsafeParseModuleItems (joinText ["def yes: Bool { True }", "test \"\" { yes }"])
             expected = EmptyTestName (unsafeParseExpr "yes")
 
         moduleFromModuleParts modParts `shouldBe` Left expected

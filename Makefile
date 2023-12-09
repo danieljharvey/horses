@@ -83,10 +83,6 @@ test-smol-wasm:
 build-smol-repl:
 	cabal build smol-repl
 
-.PHONY: test-backends
-test-backends:
-	cabal run backends:test:backends-tests
-
 .PHONY: freeze
 freeze:
 	cabal freeze --enable-tests --enable-benchmarks

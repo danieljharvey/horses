@@ -32,7 +32,7 @@ run llModule env =
 
 createLLVMModuleFromExpr :: Text -> LLVM.Module
 createLLVMModuleFromExpr input =
-  createLLVMModuleFromModule $ "def main = " <> input
+  createLLVMModuleFromModule $ "def main { " <> input <> " }"
 
 testCompileIR :: (Text, Text) -> Spec
 testCompileIR (input, result) = it ("Via IR " <> show input) $ do
@@ -106,41 +106,39 @@ spec = do
 
     describe "From modules" $ do
       let testModules =
-            [ ( [ "def one = 1",
-                  "def main = one + one"
+            [ ( [ "def one { 1 }",
+                  "def main { one + one }"
                 ],
                 "2"
               ),
-              ( [ "def increment a = (a + 1 : Int)",
-                  "def main = increment 41"
+              ( [ "def increment (a: Int): Int { a + 1 }",
+                  "def main { increment 41 }"
                 ],
                 "42"
               ),
-              ( [ "def add : Int -> Int -> Int",
-                  "def add a b = a + b",
-                  "def main = add 20 22"
-                ],
-                "42"
-              ),
-              ( [ "type Identity a = Identity a",
-                  "def main = case Identity 42 { Identity a -> a }"
+              ( [ "def add (a: Int) (b: Int): Int { a + b }",
+                  "def main { add 20 22 }"
                 ],
                 "42"
               ),
               ( [ "type Identity a = Identity a",
-                  "def main = case Identity (41 + 1) { Identity a -> a }"
+                  "def main { case Identity 42 { Identity a -> a } }"
                 ],
                 "42"
               ),
               ( [ "type Identity a = Identity a",
-                  "def main = let id = (\\a -> a : Int -> Int); case Identity (id 42) { Identity a -> a }"
+                  "def main { case Identity (41 + 1) { Identity a -> a } }"
                 ],
                 "42"
               ),
               ( [ "type Identity a = Identity a",
-                  "def runIdentity : Identity Int -> Int",
-                  "def runIdentity identA = case identA { Identity b -> b }",
-                  "def main = runIdentity (Identity 42)"
+                  "def main { let id = (\\a -> a : Int -> Int); case Identity (id 42) { Identity a -> a } }"
+                ],
+                "42"
+              ),
+              ( [ "type Identity a = Identity a",
+                  "def runIdentity (identA: Identity Int): Int { case identA { Identity b -> b } }",
+                  "def main { runIdentity (Identity 42) }"
                 ],
                 "42"
               )

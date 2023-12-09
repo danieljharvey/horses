@@ -42,7 +42,7 @@ spec = do
         testTypecheck
           ( joinText
               [ "test \"it's fine\" { yes }",
-                "def yes = True"
+                "def yes: Bool { True }"
               ]
           )
           `shouldSatisfy` isRight
@@ -51,7 +51,7 @@ spec = do
         let input =
               joinText
                 [ "test \"it's fine\" { yes }",
-                  "def yes = 100"
+                  "def yes : Int { 100 }"
                 ]
         testTypecheck input
           `shouldSatisfy` \case

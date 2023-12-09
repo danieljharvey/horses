@@ -57,8 +57,7 @@ moduleParser =
 -- we've excluded Export here
 parseModuleItem :: Parser (ModuleItem Annotation)
 parseModuleItem =
-  try moduleTypeDefinitionParser
-    <|> try moduleDefinitionParser
+  try moduleDefinitionParser
     <|> try moduleTypeDeclarationParser
     <|> parseTest
     <|> parseInstance
@@ -85,53 +84,44 @@ moduleTypeDeclarationParser =
 -------
 
 -- definitions
--- def oneHundred = 100
--- def id a = a
--- def const a b = a
---
+-- def oneHundred : Integer = 100
+-- def id (a: a) : a = a
+-- def const (a: a) (b: b): a = a
+-- def withEq (Eq a) => (one: a) (two: a): Boolean { equals one two }
 -- top level definition
 moduleDefinitionParser :: Parser (ModuleItem Annotation)
 moduleDefinitionParser =
-  let parser = do
+  let argPairParser = do
+        myString "("
+        ident <- identifierParser
+        myString ":"
+        ty <- typeParser
+        myString ")"
+        pure (ident, ty)
+      parser = do
         myString "def"
         ident <- identifierParser
+        constraints <- try typeConstraintParser <|> pure mempty
         args <-
-          chainl1 ((: []) <$> identifierParser) (pure (<>))
+          chainl1 ((: []) <$> argPairParser) (pure (<>))
             <|> pure mempty
-        myString "="
-        (,,) ident args <$> expressionParser
+        retType <-
+          (myString ":" >> Just <$> typeParser)
+            <|> pure Nothing
+        myString "{"
+        expr <- expressionParser
+        myString "}"
+        pure (ident, constraints, args, retType, expr)
    in withLocation
-        ( \ann (ident, args, expr) ->
+        ( \ann (ident, constraints, args, retType, expr) ->
             ModuleExpression
               ( ModuleExpressionC
                   { meAnn = ann,
                     meIdent = ident,
+                    meConstraints = constraints,
                     meArgs = args,
+                    meReturnType = retType,
                     meExpr = expr
-                  }
-              )
-        )
-        parser
-
--- top level type definition
--- def id : a -> a
--- def compose : (b -> c) -> (a -> b) -> (a -> c)
-moduleTypeDefinitionParser :: Parser (ModuleItem Annotation)
-moduleTypeDefinitionParser =
-  let parser = do
-        myString "def"
-        ident <- identifierParser
-        myString ":"
-        constraints <- try typeConstraintParser <|> pure mempty
-        (,,) ident constraints <$> typeParser
-   in withLocation
-        ( \ann (ident, constraints, ty) ->
-            ModuleType
-              ( ModuleTypeC
-                  { mtAnn = ann,
-                    mtIdent = ident,
-                    mtConstraints = constraints,
-                    mtType = ty
                   }
               )
         )

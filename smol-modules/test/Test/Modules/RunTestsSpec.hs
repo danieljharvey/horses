@@ -29,15 +29,15 @@ spec = do
   describe "Modules" $ do
     describe "Run tests" $ do
       it "No tests, no results" $ do
-        let typedMod = testTypecheck (joinText ["def id a = a"])
+        let typedMod = testTypecheck (joinText ["def id (a: a): a { a }"])
         runTests <$> typedMod `shouldBe` Right mempty
 
       it "Two tests, one pass, one fail, no deps" $ do
         let typedMod =
               testTypecheck
                 ( joinText
-                    [ "def yes = True",
-                      "def no = False",
+                    [ "def yes : Bool { True }",
+                      "def no : Bool { False }",
                       "test \"pass\" { yes }",
                       "test \"fail\" { no }"
                     ]
@@ -48,9 +48,9 @@ spec = do
         let typedMod =
               testTypecheck
                 ( joinText
-                    [ "def id a = a",
-                      "def yes = id True",
-                      "def no = id False",
+                    [ "def id (a:a): a { a }",
+                      "def yes : Bool { id True }",
+                      "def no : Bool { id False }",
                       "test \"pass\" { yes }",
                       "test \"fail\" { no }"
                     ]

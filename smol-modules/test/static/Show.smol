@@ -38,17 +38,11 @@ instance (Show a) => Show List a {
     }
 }
 
-def showBoolList =
-  (show (Cons (True : Bool) (Cons (False : Bool) Nil))) == "True:False:Nil"
-
 test "Show Bool List" {
-  showBoolList
+  (show (Cons (True : Bool) (Cons (False : Bool) Nil))) == "True:False:Nil"
 }
 
-def showNaturalList =
-  (show (Cons (Suc Zero) (Cons Zero Nil))) == "S (Z):Z:Nil"
-
 test "Show Natural List" {
-  showNaturalList
+  (show (Cons (Suc Zero) (Cons Zero Nil))) == "S (Z):Z:Nil"
 }
 

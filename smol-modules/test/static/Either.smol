@@ -1,22 +1,20 @@
 type Either e a = Left e | Right a
 
-def orDefault : 
-  a -> (Either e a) -> a
-def orDefault default value =
+def orDefault (default: a) (value: Either e a) : a {
   case value {
     Right a ->
        a,
     Left _ ->
        default
   }
+}
 
-def fmap : 
-  (a -> b) -> (Either e a) -> Either e b
-def fmap f value =
+def fmap (f: a -> b) (value: Either e a) : Either e b {
   case value {
     Right a ->
        Right (f a),
     Left e ->
        Left e
   }
+}
 

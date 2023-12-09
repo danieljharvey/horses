@@ -11,7 +11,6 @@
 module Smol.Modules.Types.ModuleItem
   ( ModuleItem (..),
     ModuleExpression (..),
-    ModuleType (..),
     ModuleDataType (..),
     ModuleInstance (..),
   )
@@ -39,7 +38,6 @@ import Smol.Modules.Types.TestName
 -- we will remove duplicates when we work out dependencies between everything
 data ModuleItem ann
   = ModuleExpression (ModuleExpression ann)
-  | ModuleType (ModuleType ann)
   | ModuleDataType (ModuleDataType ann)
   | ModuleTest TestName (Expr ParseDep ann)
   | ModuleInstance (ModuleInstance ann)
@@ -56,7 +54,9 @@ deriving stock instance
 data ModuleExpression ann = ModuleExpressionC
   { meAnn :: ann,
     meIdent :: Identifier,
-    meArgs :: [Identifier],
+    meConstraints :: [Constraint ParseDep ann],
+    meArgs :: [(Identifier, Type ParseDep ann)],
+    meReturnType :: Maybe (Type ParseDep ann), -- only necessary for functions
     meExpr :: Expr ParseDep ann
   }
   deriving stock (Eq, Ord, Functor)
@@ -66,21 +66,6 @@ deriving stock instance
     Show (DataType ParseDep ann)
   ) =>
   Show (ModuleExpression ann)
-
--- a top level type signature
-data ModuleType ann = ModuleTypeC
-  { mtAnn :: ann,
-    mtIdent :: Identifier,
-    mtConstraints :: [Constraint ParseDep ann],
-    mtType :: Type ParseDep ann
-  }
-  deriving stock (Eq, Ord, Functor)
-
-deriving stock instance
-  ( Show ann,
-    Show (DataType ParseDep ann)
-  ) =>
-  Show (ModuleType ann)
 
 -- a top level data type declaration
 data ModuleDataType ann = ModuleDataTypeC
@@ -111,10 +96,8 @@ deriving stock instance
   Show (ModuleInstance ann)
 
 instance Printer (ModuleItem ann) where
-  prettyDoc (ModuleExpression (ModuleExpressionC {meIdent, meArgs, meExpr})) =
-    printExpression meIdent meArgs meExpr <> line <> line
-  prettyDoc (ModuleType (ModuleTypeC {mtConstraints, mtIdent, mtType})) =
-    printType mtConstraints mtIdent mtType <> line
+  prettyDoc (ModuleExpression (ModuleExpressionC {meConstraints, meReturnType, meIdent, meArgs, meExpr})) =
+    printExpression meIdent meConstraints meArgs meReturnType meExpr <> line <> line
   prettyDoc (ModuleDataType (ModuleDataTypeC {mdtDataType})) =
     prettyDoc mdtDataType <> line <> line
   prettyDoc (ModuleTest testName expr) =
@@ -131,8 +114,8 @@ _withDoubleLines = vsep . fmap (line <>)
 indentMulti :: Int -> Doc style -> Doc style
 indentMulti i doc = flatAlt (indent i doc) doc
 
-printMany :: (Printer a) => [a] -> Doc style
-printMany = foldl' (\doc a -> doc <+> prettyDoc a) mempty
+printMany :: (a -> Doc style) -> [a] -> Doc style
+printMany f = foldl' (\doc a -> doc <+> f a) mempty
 
 printInstance ::
   [Constraint ParseDep ann] ->
@@ -157,31 +140,39 @@ printInstance constraints instanceHead expr =
         <> line
         <> "}"
 
-printType :: [Constraint ParseDep ann] -> Identifier -> Type ParseDep ann -> Doc style
-printType constraints name ty =
+printExpression ::
+  Identifier ->
+  [Constraint ParseDep ann] ->
+  [(Identifier, Type ParseDep ann)] ->
+  Maybe (Type ParseDep ann) ->
+  Expr ParseDep ann ->
+  Doc style
+printExpression name constraints args maybeReturnType expr =
   let prettyConstraints = case constraints of
-        [] -> " "
+        [] -> ""
         cons ->
-          "("
+          " ("
             <> concatWith
               (\a b -> a <> ", " <> b)
               (prettyDoc <$> cons)
             <> ") =>"
+      prettyReturnType = case maybeReturnType of
+        Just returnType -> " :" <+> prettyDoc returnType
+        Nothing -> mempty
    in "def"
         <+> prettyDoc name
-        <+> ":"
         <> prettyConstraints
+        <> printMany
+          ( \(ident, ty) ->
+              "(" <> prettyDoc ident <> ":" <+> prettyDoc ty <> ")"
+          )
+          args
+        <> prettyReturnType
+        <+> "{"
         <> line
-        <> indentMulti 2 (prettyDoc ty)
-
-printExpression :: Identifier -> [Identifier] -> Expr ParseDep ann -> Doc style
-printExpression name args expr =
-  "def"
-    <+> prettyDoc name
-    <> printMany args
-    <+> "="
-    <> line
-    <> indentMulti 2 (prettyDoc expr)
+        <> indentMulti 2 (prettyDoc expr)
+        <> line
+        <> "}"
 
 printTest :: TestName -> Expr ParseDep ann -> Doc style
 printTest testName expr =

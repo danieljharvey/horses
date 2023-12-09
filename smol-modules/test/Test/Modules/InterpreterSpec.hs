@@ -42,82 +42,72 @@ spec = do
   describe "Module InterpreterSpec" $ do
     describe "interpret" $ do
       let cases =
-            [ ( ["def main = 1 + 1"],
+            [ ( ["def main: Int { 1 + 1 }"],
                 "2"
               ),
-              ( [ "def id a = a",
-                  "def main = id -10"
+              ( [ "def id (a: a): a { a }",
+                  "def main : Int { id -10 }"
                 ],
                 "-10"
               ),
-              ( [ "def id a = a",
-                  "def useId a = id a",
-                  "def main = useId 100"
+              ( [ "def id (a: a): a { a }",
+                  "def useId (a: a): a { id a }",
+                  "def main : Int {useId 100 }"
                 ],
                 "100"
               ),
               ( [ "class Eq a { equals: a -> a -> Bool }",
                   "instance Eq Int { \\a -> \\b -> a == b }",
-                  "def main = equals (1: Int) (2: Int)"
+                  "def main : Bool {equals (1: Int) (2: Int) }"
                 ],
                 "False"
               ),
               ( [ "class Eq a { equals: a -> a -> Bool }",
                   "instance Eq Int { \\a -> \\b -> a == b }",
-                  "def useEquals = equals (1: Int) (2: Int)",
-                  "def main = useEquals"
+                  "def useEquals : Bool { equals (1: Int) (2: Int) }",
+                  "def main : Bool { useEquals }"
                 ],
                 "False"
               ),
               ( [ "class Eq a { equals: a -> a -> Bool }",
                   "instance Eq Int { \\a -> \\b -> a == b }",
-                  "def useEquals : Int -> Bool",
-                  "def useEquals a = equals a (1: Int)",
-                  "def main : Bool",
-                  "def main = useEquals 2"
+                  "def useEquals (a: Int): Bool {equals a (1: Int) }",
+                  "def main : Bool { useEquals 2 }"
                 ],
                 "False"
               ),
               ( [ "class Eq a { equals: a -> a -> Bool }",
                   "instance Eq Int { \\a -> \\b -> a == b }",
-                  "def useEquals : Bool -> Bool",
-                  "def useEquals a = equals (2: Int) (1: Int)",
-                  "def main : Bool",
-                  "def main = useEquals True"
+                  "def useEquals (a: Bool): Bool { equals (2: Int) (1: Int) }",
+                  "def main : Bool { useEquals True }"
                 ],
                 "False"
               ),
               ( [ "class Eq a { equals: a -> a -> Bool }",
                   "instance Eq Int { \\a -> \\b -> a == b }",
                   "instance (Eq a, Eq b) => Eq (a,b) { \\a -> \\b -> case (a,b) {((a1, b1), (a2, b2)) -> if equals a1 a2 then equals b1 b2 else False } }",
-                  "def main = equals ((1:Int), (2: Int)) ((1: Int), (2: Int))"
+                  "def main : Bool { equals ((1:Int), (2: Int)) ((1: Int), (2: Int)) }"
                 ],
                 "True"
               ),
               ( [ "class Eq a { equals: a -> a -> Bool }",
                   "instance Eq Int { \\a -> \\b -> a == b }",
-                  "def main : Bool",
-                  "def main = useEquals (1: Int) (2: Int)",
-                  "def useEquals : (Eq a) => a -> a -> Bool",
-                  "def useEquals a b = equals a b"
+                  "def main : Bool { useEquals (1: Int) (2: Int) }",
+                  "def useEquals (Eq a) => (a: a) (b: a) : Bool { equals a b }"
                 ],
                 "False"
               ),
               ( [ "class Eq a { equals: a -> a -> Bool }",
                   "instance Eq Int { \\a -> \\b -> a == b }",
-                  "def main : Bool",
-                  "def main = notEquals (1: Int) (2: Int)",
-                  "def notEquals : (Eq a) => a -> a -> Bool",
-                  "def notEquals a b = if isEquals a b then False else True",
-                  "def isEquals : (Eq a) => a -> a -> Bool",
-                  "def isEquals a b = equals a b"
+                  "def main : Bool { notEquals (1: Int) (2: Int) }",
+                  "def notEquals (Eq a) => (a: a) (b: a): Bool { if isEquals a b then False else True }",
+                  "def isEquals (Eq a) => (a: a) (b: a): Bool { equals a b }"
                 ],
                 "True"
               ),
               ( [ "class Eq a { equals: a -> a -> Bool }",
                   "instance Eq String { \\a -> \\b -> a == b }",
-                  "def main : Bool",
-                  "def main = equals (\"cat\" : String) (\"cat\" : String)"
+                  "def main : Bool { equals (\"cat\" : String) (\"cat\" : String) }"
                 ],
                 "True"
               ),
@@ -125,16 +115,14 @@ spec = do
                   "instance Eq Int { \\a -> \\b -> a == b }",
                   "class Semigroup a { mappend: a -> a -> a }",
                   "instance Semigroup Int { \\a -> \\b -> a + b }",
-                  "def main : Bool",
-                  "def main = equals (mappend (20 : Int) (22 : Int)) (42 : Int)"
+                  "def main : Bool { equals (mappend (20 : Int) (22 : Int)) (42 : Int) }"
                 ],
                 "True"
               ),
               ( [ "type Pet = Dog | Cat | Rat",
                   "class Eq a { equals: a -> a -> Bool }",
                   "instance Eq Pet { \\a -> \\b -> case (a,b) { (Dog, Dog) -> True, (Cat, Cat) -> True, (Rat, Rat) -> True, _ -> False } }",
-                  "def main : Bool",
-                  "def main = equals Dog Rat"
+                  "def main : Bool { equals Dog Rat }"
                 ],
                 "False"
               ),
@@ -142,8 +130,7 @@ spec = do
                   "instance Eq Int { \\a -> \\b -> a == b }",
                   "type Maybe a = Just a | Nothing",
                   "instance (Eq a) => Eq (Maybe a) { \\ma -> \\mb -> case (ma, mb) { (Just a, Just b) -> equals a b, (Nothing, Nothing) -> True, _ -> False } }",
-                  "def main : Bool",
-                  "def main = equals (Just (1: Int)) Nothing"
+                  "def main : Bool { equals (Just (1: Int)) Nothing }"
                 ],
                 "False"
               ),
@@ -152,8 +139,7 @@ spec = do
                   "instance Show Natural { \\nat -> ",
                   "case nat { Suc n -> \"S \" + show n ",
                   ", _ -> \"Z\"} }",
-                  "def main : String",
-                  "def main = show (Suc Zero)"
+                  "def main : String { show (Suc Zero) }"
                 ],
                 "\"S Z\""
               )
