@@ -46,7 +46,7 @@ addModulePart ::
 addModulePart allParts part mod' =
   case part of
     ModuleExpression (ModuleExpressionC {meArgs, meReturnType, meExpr, meConstraints, meIdent}) -> do
-      _ <- findExpression meIdent allParts 
+      _ <- findExpression meIdent allParts
       tle <- exprAndTypeFromParts meConstraints meArgs meReturnType meExpr
       pure $
         mod'

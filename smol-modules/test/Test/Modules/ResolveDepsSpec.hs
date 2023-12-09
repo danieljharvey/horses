@@ -26,7 +26,7 @@ spec = do
 
             expected =
               mempty
-                { moExpressions = M.singleton "main" (TopLevelExpression mempty expr (Just tyInt) )
+                { moExpressions = M.singleton "main" (TopLevelExpression mempty expr (Just tyInt))
                 }
 
         fst <$> resolveModuleDeps mempty mod' `shouldBe` Right expected
@@ -78,7 +78,7 @@ spec = do
 
             expected =
               mempty
-                { moExpressions = M.singleton "main" (TopLevelExpression mempty expr (Just $ tyFunc (TVar () "a") (TVar () "a") ))
+                { moExpressions = M.singleton "main" (TopLevelExpression mempty expr (Just $ tyFunc (TVar () "a") (TVar () "a")))
                 }
 
         fst <$> resolveModuleDeps mempty mod' `shouldBe` Right expected
@@ -97,8 +97,10 @@ spec = do
                 )
             expected =
               mempty
-                { moExpressions = M.singleton "main"
-                      (TopLevelExpression mempty expr (Just $ tyFunc (tyTuple (TVar () "a") [TVar () "b"]) (TVar () "a")) )
+                { moExpressions =
+                    M.singleton
+                      "main"
+                      (TopLevelExpression mempty expr (Just $ tyFunc (tyTuple (TVar () "a") [TVar () "b"]) (TVar () "a")))
                 }
 
         fst <$> resolveModuleDeps mempty mod' `shouldBe` Right expected
@@ -145,7 +147,7 @@ spec = do
             expected =
               mempty
                 { moExpressions =
-                    M.singleton "main" (TopLevelExpression mempty mainExpr (Just $ tyCons "Moybe" [tyInt ] )),
+                    M.singleton "main" (TopLevelExpression mempty mainExpr (Just $ tyCons "Moybe" [tyInt])),
                   moDataTypes =
                     M.singleton
                       "Moybe"

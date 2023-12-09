@@ -140,9 +140,13 @@ printInstance constraints instanceHead expr =
         <> line
         <> "}"
 
-printExpression :: Identifier -> [Constraint ParseDep ann] -> 
-      [(Identifier, Type ParseDep ann)] -> Type ParseDep ann -> 
-          Expr ParseDep ann -> Doc style
+printExpression ::
+  Identifier ->
+  [Constraint ParseDep ann] ->
+  [(Identifier, Type ParseDep ann)] ->
+  Type ParseDep ann ->
+  Expr ParseDep ann ->
+  Doc style
 printExpression name constraints args returnType expr =
   let prettyConstraints = case constraints of
         [] -> ""
@@ -152,17 +156,17 @@ printExpression name constraints args returnType expr =
               (\a b -> a <> ", " <> b)
               (prettyDoc <$> cons)
             <> ") =>"
-
-  in "def"
-    <+> prettyDoc name
-    <> prettyConstraints
-    <> printMany (\(ident, ty) -> "(" <> prettyDoc ident <> ":" <+> prettyDoc ty <>")") args
-    <+> ":" <+> prettyDoc returnType
-    <+> "{"
-    <> line
-    <> indentMulti 2 (prettyDoc expr)
-    <> line
-    <> "}"
+   in "def"
+        <+> prettyDoc name
+        <> prettyConstraints
+        <> printMany (\(ident, ty) -> "(" <> prettyDoc ident <> ":" <+> prettyDoc ty <> ")") args
+        <+> ":"
+        <+> prettyDoc returnType
+        <+> "{"
+        <> line
+        <> indentMulti 2 (prettyDoc expr)
+        <> line
+        <> "}"
 
 printTest :: TestName -> Expr ParseDep ann -> Doc style
 printTest testName expr =
