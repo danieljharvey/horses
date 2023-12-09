@@ -31,7 +31,7 @@ spec = do
         moduleFromModuleParts modParts `shouldBe` Left expected
 
       it "Can't have an empty test name" $ do
-        let modParts = unsafeParseModuleItems (joinText ["def yes = True", "test \"\" { yes }"])
+        let modParts = unsafeParseModuleItems (joinText ["def yes: Bool { True }", "test \"\" { yes }"])
             expected = EmptyTestName (unsafeParseExpr "yes")
 
         moduleFromModuleParts modParts `shouldBe` Left expected

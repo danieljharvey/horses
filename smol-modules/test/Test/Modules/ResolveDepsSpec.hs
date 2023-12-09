@@ -16,7 +16,7 @@ spec = do
   describe "Modules" $ do
     describe "ResolvedDeps" $ do
       it "No deps, marks var as unique" $ do
-        let mod' = unsafeParseModule "def main = let a = 123 in a"
+        let mod' = unsafeParseModule "def main: Int { let a = 123 in a }"
             expr =
               ELet
                 ()
@@ -26,13 +26,13 @@ spec = do
 
             expected =
               mempty
-                { moExpressions = M.singleton "main" (TopLevelExpression mempty expr Nothing)
+                { moExpressions = M.singleton "main" (TopLevelExpression mempty expr (Just tyInt) )
                 }
 
         fst <$> resolveModuleDeps mempty mod' `shouldBe` Right expected
 
       it "Marks a typeclass usage as TypeclassCall with unique number" $ do
-        let mod' = unsafeParseModule "def main = equals 1 2"
+        let mod' = unsafeParseModule "def main : Bool { equals 1 2 }"
             expr =
               EApp
                 ()
@@ -46,13 +46,13 @@ spec = do
             typeclassMethods = S.singleton "equals"
             expected =
               mempty
-                { moExpressions = M.singleton "main" (TopLevelExpression mempty expr Nothing)
+                { moExpressions = M.singleton "main" (TopLevelExpression mempty expr (Just tyBool))
                 }
 
         fst <$> resolveModuleDeps typeclassMethods mod' `shouldBe` Right expected
 
       it "No deps, marks two different `a` values correctly" $ do
-        let mod' = unsafeParseModule "def main = let a = 123 in let a = 456 in a"
+        let mod' = unsafeParseModule "def main : Bool { let a = 123 in let a = 456 in a }"
             expr =
               ELet
                 ()
@@ -67,24 +67,24 @@ spec = do
 
             expected =
               mempty
-                { moExpressions = M.singleton "main" (TopLevelExpression mempty expr Nothing)
+                { moExpressions = M.singleton "main" (TopLevelExpression mempty expr (Just tyBool))
                 }
 
         fst <$> resolveModuleDeps mempty mod' `shouldBe` Right expected
 
       it "Lambdas add new variables" $ do
-        let mod' = unsafeParseModule "def main = \\a -> a"
+        let mod' = unsafeParseModule "def main : (a -> a) { \\a -> a }"
             expr = ELambda () (UniqueDefinition "a" 1) (EVar () (UniqueDefinition "a" 1))
 
             expected =
               mempty
-                { moExpressions = M.singleton "main" (TopLevelExpression mempty expr Nothing)
+                { moExpressions = M.singleton "main" (TopLevelExpression mempty expr (Just $ tyFunc (TVar () "a") (TVar () "a") ))
                 }
 
         fst <$> resolveModuleDeps mempty mod' `shouldBe` Right expected
 
       it "Variables added in pattern matches are unique" $ do
-        let mod' = unsafeParseModule "def main pair = case pair { (a,_) -> a }"
+        let mod' = unsafeParseModule "def main (pair: (a,b)): a { case pair { (a,_) -> a } }"
             expr =
               ELambda
                 ()
@@ -97,13 +97,14 @@ spec = do
                 )
             expected =
               mempty
-                { moExpressions = M.singleton "main" (TopLevelExpression mempty expr Nothing)
+                { moExpressions = M.singleton "main"
+                      (TopLevelExpression mempty expr (Just $ tyFunc (tyTuple (TVar () "a") [TVar () "b"]) (TVar () "a")) )
                 }
 
         fst <$> resolveModuleDeps mempty mod' `shouldBe` Right expected
 
       it "'main' uses a dep from 'dep'" $ do
-        let mod' = unsafeParseModule "def main = let a = dep in let a = 456 in a\ndef dep = 1"
+        let mod' = unsafeParseModule "def main : Int { let a = dep in let a = 456 in a }\ndef dep : Int { 1 }"
             depExpr = int 1
             mainExpr =
               ELet
@@ -121,15 +122,15 @@ spec = do
               mempty
                 { moExpressions =
                     M.fromList
-                      [ ("main", TopLevelExpression mempty mainExpr Nothing),
-                        ("dep", TopLevelExpression mempty depExpr Nothing)
+                      [ ("main", TopLevelExpression mempty mainExpr (Just tyInt)),
+                        ("dep", TopLevelExpression mempty depExpr (Just tyInt))
                       ]
                 }
 
         fst <$> resolveModuleDeps mempty mod' `shouldBe` Right expected
 
       it "'main' uses a type dep from 'Moybe'" $ do
-        let mod' = unsafeParseModule "type Moybe a = Jost a | Noothing\ndef main = let a = 456 in Jost a"
+        let mod' = unsafeParseModule "type Moybe a = Jost a | Noothing\ndef main : Moybe Int { let a = 456 in Jost a }"
             mainExpr =
               ELet
                 ()
@@ -144,7 +145,7 @@ spec = do
             expected =
               mempty
                 { moExpressions =
-                    M.singleton "main" (TopLevelExpression mempty mainExpr Nothing),
+                    M.singleton "main" (TopLevelExpression mempty mainExpr (Just $ tyCons "Moybe" [tyInt ] )),
                   moDataTypes =
                     M.singleton
                       "Moybe"

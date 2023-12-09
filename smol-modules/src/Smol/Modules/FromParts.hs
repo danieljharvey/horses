@@ -46,6 +46,7 @@ addModulePart ::
 addModulePart allParts part mod' =
   case part of
     ModuleExpression (ModuleExpressionC {meArgs, meReturnType, meExpr, meConstraints, meIdent}) -> do
+      _ <- findExpression meIdent allParts 
       tle <- exprAndTypeFromParts meConstraints meArgs meReturnType meExpr
       pure $
         mod'
@@ -158,6 +159,32 @@ findTypeclass tcn moduleItems =
     moduleItems of
     [a] -> Just a
     _ -> Nothing -- we should have better errors for multiple type declarations, but for now, chill out friend
+
+findExpression ::
+  (MonadError (ModuleError ann) m) =>
+  Identifier ->
+  [ModuleItem ann] ->
+  m (Expr ParseDep ann)
+findExpression ident moduleItems =
+  case mapMaybe
+    ( \case
+        ModuleExpression moduleExpression
+          | meIdent moduleExpression == ident ->
+              Just moduleExpression
+        _ -> Nothing
+    )
+    moduleItems of
+    [a] -> pure (meExpr a)
+    [] -> error "won't happen"
+    (a : b : _) ->
+      throwError
+        ( DuplicateDefinition
+            ( Duplicate
+                ident
+                (meAnn a)
+                (meAnn b)
+            )
+        )
 
 -- given the bits of things, make a coherent type and expression
 exprAndTypeFromParts ::
