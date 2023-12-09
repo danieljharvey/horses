@@ -191,18 +191,23 @@ exprAndTypeFromParts ::
   (MonadError (ModuleError ann) m) =>
   [Constraint ParseDep ann] ->
   [(Identifier, Type ParseDep ann)] ->
-  Type ParseDep ann ->
+  Maybe (Type ParseDep ann) ->
   Expr ParseDep ann ->
   m (TopLevelExpression ParseDep ann)
-exprAndTypeFromParts constraints parts retType expr = do
+exprAndTypeFromParts constraints [] maybeRetType expr =
+  pure $
+    TopLevelExpression
+      { tleConstraints = constraints,
+        tleExpr = expr,
+        tleType = maybeRetType
+      }
+exprAndTypeFromParts constraints parts (Just retType) expr = do
   let expr' =
         foldr
           ( \(ident, ty) rest -> ELambda (getTypeAnnotation ty) (emptyParseDep ident) rest
           )
           expr
           parts
-  -- if we only have un-typed args, don't bother, we only want them as
-  -- placeholders
   let exprType =
         foldr
           ( \(_ident, ty) rest -> do
@@ -216,3 +221,5 @@ exprAndTypeFromParts constraints parts retType expr = do
         tleExpr = expr',
         tleType = Just exprType
       }
+exprAndTypeFromParts _constraints _parts Nothing _expr =
+  error "Need a return type when we have args"

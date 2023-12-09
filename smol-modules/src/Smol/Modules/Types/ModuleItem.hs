@@ -56,7 +56,7 @@ data ModuleExpression ann = ModuleExpressionC
     meIdent :: Identifier,
     meConstraints :: [Constraint ParseDep ann],
     meArgs :: [(Identifier, Type ParseDep ann)],
-    meReturnType :: Type ParseDep ann,
+    meReturnType :: Maybe (Type ParseDep ann), -- only necessary for functions
     meExpr :: Expr ParseDep ann
   }
   deriving stock (Eq, Ord, Functor)
@@ -144,10 +144,10 @@ printExpression ::
   Identifier ->
   [Constraint ParseDep ann] ->
   [(Identifier, Type ParseDep ann)] ->
-  Type ParseDep ann ->
+  Maybe (Type ParseDep ann) ->
   Expr ParseDep ann ->
   Doc style
-printExpression name constraints args returnType expr =
+printExpression name constraints args maybeReturnType expr =
   let prettyConstraints = case constraints of
         [] -> ""
         cons ->
@@ -156,12 +156,18 @@ printExpression name constraints args returnType expr =
               (\a b -> a <> ", " <> b)
               (prettyDoc <$> cons)
             <> ") =>"
+      prettyReturnType = case maybeReturnType of
+        Just returnType -> " :" <+> prettyDoc returnType
+        Nothing -> mempty
    in "def"
         <+> prettyDoc name
         <> prettyConstraints
-        <> printMany (\(ident, ty) -> "(" <> prettyDoc ident <> ":" <+> prettyDoc ty <> ")") args
-        <+> ":"
-        <+> prettyDoc returnType
+        <> printMany
+          ( \(ident, ty) ->
+              "(" <> prettyDoc ident <> ":" <+> prettyDoc ty <> ")"
+          )
+          args
+        <> prettyReturnType
         <+> "{"
         <> line
         <> indentMulti 2 (prettyDoc expr)

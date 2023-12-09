@@ -23,7 +23,7 @@ def run2 (expr: Expr ann) : Int {
   go expr
 }
 
-def main : Int {
+def main {
   run (EAdd Unit (ENumber Unit 1) (ENumber Unit 41))
 }
 

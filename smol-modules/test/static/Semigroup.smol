@@ -22,11 +22,11 @@ instance Semigroup First a {
   \a -> \b -> a
 }
 
-def true : Bool {
+def true {
   runFirst (mappend (First (True : Bool)) (First (False : Bool)))
 }
 
-def main : Bool {
+def main {
   equals (mappend (20 : Int) (22 : Int)) (42 : Int)
 }
 

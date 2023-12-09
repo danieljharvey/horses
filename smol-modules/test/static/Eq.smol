@@ -57,15 +57,15 @@ def flipPair (pair: (a, b)) : (b, a) {
   (b, a)
 }
 
-def main : Bool {
+def main {
   notEquals pair (flipPair pair)
 }
 
-def useMaybe : Bool {
+def useMaybe {
   equals Nothing (Just (1 : Int))
 }
 
-def useNewInstances : Bool {
+def useNewInstances {
   if (equals (True : Bool) (False : Bool))
   then
     (equals ("dog" : String) ("log" : String))

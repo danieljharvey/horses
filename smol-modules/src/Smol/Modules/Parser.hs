@@ -105,8 +105,9 @@ moduleDefinitionParser =
         args <-
           chainl1 ((: []) <$> argPairParser) (pure (<>))
             <|> pure mempty
-        myString ":"
-        retType <- typeParser
+        retType <-
+          (myString ":" >> Just <$> typeParser)
+            <|> pure Nothing
         myString "{"
         expr <- expressionParser
         myString "}"
