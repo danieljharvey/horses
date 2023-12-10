@@ -19,8 +19,7 @@ import Data.Aeson (FromJSON, FromJSONKey, ToJSON, ToJSONKey)
 import Data.Map.Strict (Map)
 import qualified Data.Map.Strict as M
 import GHC.Generics (Generic)
-import Prettyprinter
-import Smol.Core.Printer
+import qualified Prettyprinter as PP
 import Smol.Core.Typecheck.Typeclass.Types
 import Smol.Core.Types.Constructor
 import Smol.Core.Types.DataType

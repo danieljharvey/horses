@@ -14,7 +14,6 @@ where
 import Data.Aeson (FromJSON, FromJSONKey, ToJSON, ToJSONKey)
 import GHC.Generics (Generic)
 import qualified Prettyprinter as PP
-import Smol.Core.Printer
 import Smol.Core.Typecheck.Typeclass.Types.TypeclassName
 import Smol.Core.Types
 
@@ -88,13 +87,13 @@ deriving anyclass instance
   FromJSONKey (Constraint dep ann)
 
 instance
-  ( Printer (dep Identifier),
-    Printer (dep TypeName)
+  ( PP.Pretty (dep Identifier),
+    PP.Pretty (dep TypeName)
   ) =>
-  Printer (Constraint dep ann)
+  PP.Pretty (Constraint dep ann)
   where
-  prettyDoc (Constraint tcn tys) =
-    prettyDoc tcn
+  pretty (Constraint tcn tys) =
+    PP.pretty tcn
       PP.<+> PP.concatWith
         (\a b -> a <> " " <> b)
-        (prettyDoc <$> tys)
+        (PP.pretty <$> tys)
