@@ -12,8 +12,8 @@ where
 
 import qualified Data.Aeson as JSON
 import GHC.Generics
-import Smol.Core.Printer
 import Smol.Core.Types.Identifier
+import qualified Prettyprinter as PP
 
 data Spread dep ann
   = NoSpread
@@ -51,7 +51,7 @@ deriving anyclass instance
   (JSON.ToJSON ann, JSON.ToJSON (dep Identifier)) =>
   JSON.ToJSON (Spread dep ann)
 
-instance (Printer (dep Identifier)) => Printer (Spread dep ann) where
-  prettyDoc NoSpread = ""
-  prettyDoc (SpreadWildcard _) = ", ..."
-  prettyDoc (SpreadValue _ a) = ", ..." <> prettyDoc a
+instance (PP.Pretty (dep Identifier)) => PP.Pretty (Spread dep ann) where
+  pretty NoSpread = ""
+  pretty (SpreadWildcard _) = ", ..."
+  pretty (SpreadValue _ a) = ", ..." <> PP.pretty a

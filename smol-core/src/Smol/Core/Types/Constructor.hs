@@ -16,7 +16,6 @@ import Data.String
 import Data.Text (Text)
 import qualified Data.Text as T
 import qualified Prettyprinter as PP
-import Smol.Core.Printer
 
 newtype Constructor = Constructor Text
   deriving newtype
@@ -30,8 +29,8 @@ newtype Constructor = Constructor Text
       Semigroup
     )
 
-instance Printer Constructor where
-  prettyDoc (Constructor c) = PP.pretty c
+instance PP.Pretty Constructor where
+  pretty (Constructor c) = PP.pretty c
 
 instance IsString Constructor where
   fromString = Constructor . T.pack

@@ -9,11 +9,11 @@ module Smol.Modules.Types.Entity where
 -- terrible, pls improve
 import Data.Aeson (FromJSON, FromJSONKey, ToJSON, ToJSONKey)
 import GHC.Generics (Generic)
-import Smol.Core.Printer
 import Smol.Core.Types.Constructor
 import Smol.Core.Types.Identifier
 import Smol.Core.Types.ModuleName
 import Smol.Core.Types.TypeName
+import qualified Prettyprinter as PP
 
 data Entity
   = -- | a variable, `dog`
@@ -40,14 +40,14 @@ data Entity
       FromJSONKey
     )
 
-instance Printer Entity where
-  prettyDoc (EVar name) = prettyDoc name
-  prettyDoc (ENamespacedVar modName name) =
-    prettyDoc modName <> "." <> prettyDoc name
-  prettyDoc (EType typeName) = prettyDoc typeName
-  prettyDoc (ENamespacedType modName typeName) =
-    prettyDoc modName <> "." <> prettyDoc typeName
-  prettyDoc (EConstructor tyCon) =
-    prettyDoc tyCon
-  prettyDoc (ENamespacedConstructor modName tyCon) =
-    prettyDoc modName <> "." <> prettyDoc tyCon
+instance PP.Pretty Entity where
+  pretty (EVar name) = PP.pretty name
+  pretty (ENamespacedVar modName name) =
+    PP.pretty modName <> "." <> PP.pretty name
+  pretty (EType typeName) = PP.pretty typeName
+  pretty (ENamespacedType modName typeName) =
+    PP.pretty modName <> "." <> PP.pretty typeName
+  pretty (EConstructor tyCon) =
+    PP.pretty tyCon
+  pretty (ENamespacedConstructor modName tyCon) =
+    PP.pretty modName <> "." <> PP.pretty tyCon

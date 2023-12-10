@@ -13,7 +13,6 @@ import Data.Aeson (FromJSON, ToJSON)
 import Data.Text (Text)
 import GHC.Generics (Generic)
 import qualified Prettyprinter as PP
-import Smol.Core.Printer
 
 data Prim
   = PUnit
@@ -23,8 +22,8 @@ data Prim
   deriving stock (Eq, Ord, Show, Generic)
   deriving anyclass (FromJSON, ToJSON)
 
-instance Printer Prim where
-  prettyDoc = renderPrim
+instance PP.Pretty Prim where
+  pretty = renderPrim
 
 renderPrim :: Prim -> PP.Doc doc
 renderPrim (PInt i) = PP.pretty i

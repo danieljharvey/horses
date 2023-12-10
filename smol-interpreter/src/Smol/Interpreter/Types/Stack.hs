@@ -7,9 +7,11 @@ import Smol.Core.Printer
 import Smol.Core.Types.Expr
 import Smol.Core.Types.Identifier
 import Smol.Core.Types.ResolvedDep
+import qualified Prettyprinter as PP
 
 newtype StackFrame ann = StackFrame
-  { sfVariables :: Map (ResolvedDep Identifier) (Expr ResolvedDep (ExprData ann))
+  { sfVariables :: Map (ResolvedDep Identifier)
+          (Expr ResolvedDep (ExprData ann))
   }
   deriving stock (Eq, Ord, Show)
 
@@ -20,8 +22,8 @@ instance Semigroup (StackFrame ann) where
 instance Monoid (StackFrame ann) where
   mempty = StackFrame mempty
 
-instance Printer (StackFrame ann) where
-  prettyDoc (StackFrame sfVars) = prettyDoc sfVars
+instance PP.Pretty (StackFrame ann) where
+  pretty (StackFrame sfVars) = PP.pretty sfVars
 
 -- carried around in each node when interpreting
 data ExprData ann = ExprData

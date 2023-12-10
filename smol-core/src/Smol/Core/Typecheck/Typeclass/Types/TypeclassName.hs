@@ -17,8 +17,7 @@ import Data.String
 import Data.Text (Text)
 import qualified Data.Text as T
 import GHC.Generics
-import Prettyprinter
-import Smol.Core.Printer
+import qualified Prettyprinter as PP
 
 -- | A TypeclassName is like `Either` or `Maybe`.
 -- It must start with a capital letter.
@@ -62,5 +61,5 @@ safeMkTypeclassName a =
     then Just (TypeclassName a)
     else Nothing
 
-instance Printer TypeclassName where
-  prettyDoc = pretty . getTypeclassName
+instance PP.Pretty TypeclassName where
+  pretty = PP.pretty . getTypeclassName

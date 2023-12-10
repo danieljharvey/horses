@@ -16,7 +16,6 @@ import Data.String
 import Data.Text (Text)
 import qualified Data.Text as T
 import qualified Prettyprinter as PP
-import Smol.Core.Printer
 
 newtype Identifier = Identifier Text
   deriving newtype
@@ -30,8 +29,8 @@ newtype Identifier = Identifier Text
       Semigroup
     )
 
-instance Printer Identifier where
-  prettyDoc (Identifier i) = PP.pretty i
+instance PP.Pretty Identifier where
+  pretty (Identifier i) = PP.pretty i
 
 instance IsString Identifier where
   fromString = Identifier . T.pack

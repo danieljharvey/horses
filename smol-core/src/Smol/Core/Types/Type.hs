@@ -18,6 +18,7 @@ module Smol.Core.Types.Type
   )
 where
 
+import qualified Prettyprinter as PP
 import Data.Aeson (FromJSON, FromJSONKey, ToJSON, ToJSONKey)
 import qualified Data.List.NonEmpty as NE
 import Data.Map.Strict
@@ -29,7 +30,6 @@ import Data.Word (Word64)
 import GHC.Generics (Generic)
 import Prettyprinter ((<+>))
 import qualified Prettyprinter as PP
-import Smol.Core.Printer
 import Smol.Core.Types.Identifier
 import Smol.Core.Types.Op
 import Smol.Core.Types.ParseDep
@@ -44,10 +44,10 @@ data TypePrim = TPInt | TPBool | TPString
   deriving stock (Eq, Ord, Show, Generic)
   deriving anyclass (FromJSON, ToJSON)
 
-instance Printer TypePrim where
-  prettyDoc TPInt = "Int"
-  prettyDoc TPBool = "Bool"
-  prettyDoc TPString = "String"
+instance PP.Pretty TypePrim where
+  pretty TPInt = "Int"
+  pretty TPBool = "Bool"
+  pretty TPString = "String"
 
 data TypeLiteral
   = TLBool Bool
@@ -57,13 +57,13 @@ data TypeLiteral
   deriving stock (Eq, Ord, Show, Generic)
   deriving anyclass (FromJSON, ToJSON)
 
-instance Printer TypeLiteral where
-  prettyDoc (TLBool b) = PP.pretty b
-  prettyDoc (TLInt neInts) =
+instance PP.Pretty TypeLiteral where
+  pretty (TLBool b) = PP.pretty b
+  pretty (TLInt neInts) =
     PP.hsep (PP.punctuate "| " (PP.pretty <$> S.toList (NES.toSet neInts)))
-  prettyDoc (TLString neStrs) =
+  pretty (TLString neStrs) =
     PP.hsep (PP.punctuate "| " (PP.pretty <$> S.toList (NES.toSet neStrs)))
-  prettyDoc TLUnit = "Unit"
+  pretty TLUnit = "Unit"
 
 data Type dep ann
   = TLiteral ann TypeLiteral
@@ -128,20 +128,21 @@ deriving anyclass instance
   ) =>
   FromJSONKey (Type dep ann)
 
-instance (Printer (dep Identifier), Printer (dep TypeName)) => Printer (Type dep ann) where
-  prettyDoc = renderType
+instance (PP.Pretty (dep Identifier), PP.Pretty (dep TypeName)) =>
+    PP.Pretty (Type dep ann) where
+  pretty = renderType
 
 renderType ::
-  ( Printer (dep Identifier),
-    Printer (dep TypeName)
+  ( PP.Pretty (dep Identifier),
+    PP.Pretty (dep TypeName)
   ) =>
   Type dep ann ->
   PP.Doc style
-renderType (TPrim _ a) = prettyDoc a
-renderType (TInfix _ op a b) = prettyDoc a <+> prettyDoc op <+> prettyDoc b
-renderType (TLiteral _ l) = prettyDoc l
+renderType (TPrim _ a) = PP.pretty a
+renderType (TInfix _ op a b) = PP.pretty a <+> PP.pretty op <+> PP.pretty b
+renderType (TLiteral _ l) = PP.pretty l
 renderType (TUnknown _ i) = "U" <> PP.pretty i
-renderType (TArray _ _ as) = "[" <> prettyDoc as <> "]"
+renderType (TArray _ _ as) = "[" <> PP.pretty as <> "]"
 renderType (TFunc _ _ a b) =
   withParens a <+> "->" <+> renderType b
 renderType (TTuple _ a as) =
@@ -149,19 +150,19 @@ renderType (TTuple _ a as) =
 renderType (TRecord _ as) =
   renderRecord as
 -- renderType (TArray _ a) = "[" <+> renderType a <+> "]"
-renderType (TVar _ a) = prettyDoc a
+renderType (TVar _ a) = PP.pretty a
 renderType (TConstructor _ tyCon) =
-  prettyDoc tyCon
+  PP.pretty tyCon
 renderType mt@(TApp _ func arg) =
   case varsFromDataType mt of
     Just (tyCon, vars) ->
-      let typeName = prettyDoc tyCon
+      let typeName = PP.pretty tyCon
        in PP.align $ PP.sep ([typeName] <> (withParens <$> vars))
     Nothing ->
       PP.align $ PP.sep [renderType func, renderType arg]
 
 renderRecord ::
-  (Printer (dep Identifier), Printer (dep TypeName)) =>
+  (PP.Pretty (dep Identifier), PP.Pretty (dep TypeName)) =>
   Map Identifier (Type dep ann) ->
   PP.Doc style
 renderRecord as =
@@ -181,7 +182,7 @@ renderRecord as =
       <> PP.line
       <> "}"
   where
-    renderItem (k, v) = prettyDoc k <> ":" <+> withParens v
+    renderItem (k, v) = PP.pretty k <> ":" <+> withParens v
 
 -- turn nested shit back into something easy to pretty print (ie, easy to
 -- bracket)
@@ -199,7 +200,7 @@ varsFromDataType mt =
           _ -> Nothing
    in getInner mt
 
-withParens :: (Printer (dep Identifier), Printer (dep TypeName)) => Type dep ann -> PP.Doc a
+withParens :: (PP.Pretty (dep Identifier), PP.Pretty (dep TypeName)) => Type dep ann -> PP.Doc a
 withParens ma@TFunc {} = PP.parens (renderType ma)
 withParens mta@TApp {} = PP.parens (renderType mta)
 withParens other = renderType other

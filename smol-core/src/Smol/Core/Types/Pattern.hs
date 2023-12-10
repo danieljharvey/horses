@@ -17,7 +17,6 @@ import Data.Aeson (FromJSON, ToJSON)
 import qualified Data.List.NonEmpty as NE
 import GHC.Generics (Generic)
 import qualified Prettyprinter as PP
-import Smol.Core.Printer
 import Smol.Core.Types.Constructor
 import Smol.Core.Types.Identifier
 import Smol.Core.Types.Prim
@@ -67,70 +66,41 @@ deriving anyclass instance
   ) =>
   ToJSON (Pattern dep ann)
 
-_inParens :: (Printer a) => a -> PP.Doc style
-_inParens = PP.parens . prettyDoc
+_inParens :: (PP.Pretty a) => a -> PP.Doc style
+_inParens = PP.parens . PP.pretty
 
 -- print simple things with no brackets, and complex things inside brackets
 printSubPattern ::
-  ( Printer (dep Constructor),
-    Printer (dep Identifier)
+  ( PP.Pretty (dep Constructor),
+    PP.Pretty (dep Identifier)
   ) =>
   Pattern dep ann ->
   PP.Doc style
 printSubPattern pat = case pat of
-  all'@PConstructor {} -> prettyDoc all' -- inParens all'
-  a -> prettyDoc a
+  all'@PConstructor {} -> PP.pretty all' -- inParens all'
+  a -> PP.pretty a
 
 instance
-  ( Printer (dep Constructor),
-    Printer (dep Identifier)
+  ( PP.Pretty (dep Constructor),
+    PP.Pretty (dep Identifier)
   ) =>
-  Printer (Pattern dep ann)
+  PP.Pretty (Pattern dep ann)
   where
-  prettyDoc (PWildcard _) = "_"
-  prettyDoc (PVar _ a) = prettyDoc a
-  prettyDoc (PLiteral _ lit) = prettyDoc lit
-  prettyDoc (PConstructor _ tyCon args) =
+  pretty (PWildcard _) = "_"
+  pretty (PVar _ a) = PP.pretty a
+  pretty (PLiteral _ lit) = PP.pretty lit
+  pretty (PConstructor _ tyCon args) =
     let prettyArgs = case args of
           [] -> mempty
           _ -> foldr ((\a b -> " " <> a <> b) . printSubPattern) mempty args
-     in prettyDoc tyCon <> prettyArgs
-  prettyDoc (PTuple _ a as) =
-    "(" <> PP.hsep (PP.punctuate "," (prettyDoc <$> ([a] <> NE.toList as))) <> ")"
-  prettyDoc (PArray _ as spread) =
+     in PP.pretty tyCon <> prettyArgs
+  pretty (PTuple _ a as) =
+    "(" <> PP.hsep (PP.punctuate "," (PP.pretty <$> ([a] <> NE.toList as))) <> ")"
+  pretty (PArray _ as spread) =
     "["
       <> PP.concatWith
         (\a b -> a <> ", " <> b)
-        (prettyDoc <$> as)
-      <> prettyDoc spread
+        (PP.pretty <$> as)
+      <> PP.pretty spread
       <> "]"
 
-{-
-  prettyDoc (PRecord _ map') =
-    let items = M.toList map'
-        printRow i (name, val) =
-          let item = case val of
-                (PVar _ vName) | vName == name -> prettyDoc name
-                _ ->
-                  prettyDoc name
-                    <> ":"
-                    <+> printSubPattern val
-           in item <> if i < length items then "," else ""
-     in case items of
-          [] -> "{}"
-          rows ->
-            let prettyRows = mapWithIndex printRow rows
-             in group
-                  ( "{"
-                      <+> align
-                        ( vsep
-                            prettyRows
-                        )
-                      <+> "}"
-                  )
-
--}
-{-
-  prettyDoc (PString _ a as) =
-    prettyDoc a <> " ++ " <> prettyDoc as
--}

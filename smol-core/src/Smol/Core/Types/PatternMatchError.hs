@@ -13,8 +13,7 @@ where
 
 import Data.Set (Set)
 import qualified Data.Text as T
-import Prettyprinter
-import Smol.Core.Printer
+import qualified Prettyprinter as PP
 import Smol.Core.Types
 import Text.Megaparsec
 
@@ -38,11 +37,11 @@ data PatternMatchError ann
 instance Semigroup (PatternMatchError ann) where
   a <> _ = a
 
-instance Printer (PatternMatchError ann) where
-  prettyDoc = vsep . renderPatternMatchError
+instance PP.Pretty (PatternMatchError ann) where
+  pretty = vsep . renderPatternMatchError
 
 instance ShowErrorComponent (PatternMatchError Annotation) where
-  showErrorComponent = T.unpack . renderWithWidth 40 . prettyDoc
+  showErrorComponent = T.unpack . renderWithWidth 40 . PP.pretty
   errorComponentLen pmErr = let (_, len) = getErrorPos pmErr in len
 
 type Start = Int

@@ -73,15 +73,15 @@ deriving anyclass instance
   ) =>
   FromJSON (Typeclass dep ann)
 
-instance Printer (Typeclass ParseDep ann) where
-  prettyDoc (Typeclass {tcName, tcArgs, tcFuncName, tcFuncType}) =
+instance PP.Pretty (Typeclass ParseDep ann) where
+  pretty (Typeclass {tcName, tcArgs, tcFuncName, tcFuncType}) =
     "class"
-      <+> prettyDoc tcName
+      <+> PP.pretty tcName
       <+> PP.concatWith
         (\a b -> a <> ", " <> b)
-        (prettyDoc <$> tcArgs)
+        (PP.pretty <$> tcArgs)
       <+> "{"
-      <+> prettyDoc tcFuncName
+      <+> PP.pretty tcFuncName
       <> ":"
-      <+> prettyDoc tcFuncType
+      <+> PP.pretty tcFuncType
       <+> "}"
