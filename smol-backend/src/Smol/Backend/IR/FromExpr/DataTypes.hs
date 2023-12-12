@@ -20,11 +20,11 @@ import Data.Semigroup
 import Data.Word (Word64)
 import Smol.Backend.IR.FromExpr.Helpers
 import Smol.Backend.IR.FromExpr.Types
-import Smol.Core.Typecheck.Substitute
-import Smol.Core.Typecheck.Subtype
-import qualified Smol.Core.Typecheck.Types as Smol
 import qualified Smol.Core.Types as Smol
 import Smol.Core.Types.ResolvedDep
+import Smol.Typecheck.Substitute
+import Smol.Typecheck.Subtype
+import qualified Smol.Typecheck.Types as Smol
 
 patternTypeInMemory ::
   ( Show ann,

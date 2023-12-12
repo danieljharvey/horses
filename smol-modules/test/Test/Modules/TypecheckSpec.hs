@@ -16,6 +16,7 @@ import Smol.Modules.Check
 import Smol.Modules.Parser
 import Smol.Modules.Types hiding (Entity (..))
 import Smol.Modules.Types.ModuleError
+import Smol.Typecheck.Types
 import Test.Helpers
 import Test.Hspec
 

@@ -6,10 +6,9 @@ import Control.Monad.State
 import qualified Data.Map.Strict as M
 import qualified Smol.Backend.IR.FromExpr.DataTypes as DT
 import Smol.Backend.IR.FromExpr.Types
-import Smol.Core.Typecheck.FromParsedExpr
-import qualified Smol.Core.Typecheck.Types as Smol
 import Smol.Core.Types
 import qualified Smol.Core.Types as Smol
+import qualified Smol.Typecheck.Types as Smol
 import Test.BuiltInTypes (builtInTypes)
 import Test.Helpers
 import Test.Hspec

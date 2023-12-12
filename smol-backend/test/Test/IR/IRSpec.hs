@@ -13,7 +13,6 @@ import qualified LLVM.AST as LLVM
 import qualified Smol.Backend.Compile.RunLLVM as Run
 import Smol.Backend.IR.FromExpr.Expr
 import Smol.Backend.IR.ToLLVM.ToLLVM
-import Smol.Core.Typecheck.Typeclass.Types
 import Smol.Core.Types
 import Smol.Modules.FromParts
 import Smol.Modules.Parser (parseModuleAndFormatError)
@@ -21,6 +20,7 @@ import Smol.Modules.ResolveDeps
 import Smol.Modules.Typecheck
 import Smol.Modules.Types
 import Smol.Modules.Types.ModuleError
+import Smol.Typecheck.Typeclass.Types
 import Test.BuiltInTypes
 import Test.Hspec
 import Test.IR.Samples

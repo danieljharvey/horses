@@ -73,6 +73,10 @@ test-smol-interpreter:
 test-smol-modules:
 	cabal run smol-modules:test:smol-modules-tests
 
+.PHONY: test-smol-typechecker
+test-smol-typechecker:
+	cabal run smol-typechecker:test:smol-typechecker-tests
+
 .PHONY: test-smol-wasm
 test-smol-wasm:
 	cabal run smol-wasm:test:smol-wasm-tests

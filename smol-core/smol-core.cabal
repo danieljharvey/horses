@@ -55,6 +55,7 @@ library
   -- Modules included in this executable, other than Main.
   exposed-modules:
     Smol.Core
+    Smol.Core.Annotations
     Smol.Core.ExprUtils
     Smol.Core.FindUses
     Smol.Core.Helpers
@@ -75,41 +76,10 @@ library
     Smol.Core.Transform.EtaReduce
     Smol.Core.Transform.FlattenLets
     Smol.Core.Transform.FloatDown
-    Smol.Core.Typecheck
-    Smol.Core.Typecheck.Annotations
-    Smol.Core.Typecheck.Elaborate
-    Smol.Core.Typecheck.Errors
-    Smol.Core.Typecheck.Exhaustiveness
-    Smol.Core.Typecheck.FreeVars
-    Smol.Core.Typecheck.FromParsedExpr
-    Smol.Core.Typecheck.Pattern
-    Smol.Core.Typecheck.Shared
-    Smol.Core.Typecheck.Simplify
-    Smol.Core.Typecheck.Substitute
-    Smol.Core.Typecheck.Subtype
-    Smol.Core.Typecheck.Typecheck
-    Smol.Core.Typecheck.Typeclass
-    Smol.Core.Typecheck.Typeclass.Deduplicate
-    Smol.Core.Typecheck.Typeclass.Helpers
-    Smol.Core.Typecheck.Typeclass.KindChecker
-    Smol.Core.Typecheck.Typeclass.ToDictionaryPassing
-    Smol.Core.Typecheck.Typeclass.ToDictionaryPassing.Types
-    Smol.Core.Typecheck.Typeclass.Typecheck
-    Smol.Core.Typecheck.Typeclass.Types
-    Smol.Core.Typecheck.Typeclass.Types.Constraint
-    Smol.Core.Typecheck.Typeclass.Types.Instance
-    Smol.Core.Typecheck.Typeclass.Types.Kind
-    Smol.Core.Typecheck.Typeclass.Types.Typeclass
-    Smol.Core.Typecheck.Typeclass.Types.TypeclassError
-    Smol.Core.Typecheck.Typeclass.Types.TypeclassName
-    Smol.Core.Typecheck.Types
-    Smol.Core.Typecheck.Types.Substitution
-    Smol.Core.Typecheck.Types.TCError
-    Smol.Core.Typecheck.Types.TCState
-    Smol.Core.Typecheck.Types.TCWrite
     Smol.Core.Types
     Smol.Core.Types.Annotated
     Smol.Core.Types.Annotation
+    Smol.Core.Types.Constraint
     Smol.Core.Types.Constructor
     Smol.Core.Types.DataType
     Smol.Core.Types.Expr
@@ -124,6 +94,7 @@ library
     Smol.Core.Types.SourceSpan
     Smol.Core.Types.Spread
     Smol.Core.Types.Type
+    Smol.Core.Types.TypeclassName
     Smol.Core.Types.TypeName
     Smol.Core.TypeUtils
 
@@ -141,12 +112,6 @@ test-suite smol-core-tests
     Test.BuiltInTypes
     Test.Helpers
     Test.ParserSpec
-    Test.Typecheck.ExhaustivenessSpec
-    Test.Typecheck.NestingMonadSpec
-    Test.Typecheck.PatternSpec
-    Test.Typecheck.SubtypeSpec
-    Test.Typecheck.TypeclassSpec
-    Test.TypecheckSpec
 
   main-is:          Main.hs
   default-language: Haskell2010

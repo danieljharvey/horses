@@ -20,7 +20,6 @@ import qualified Data.Set as S
 import Data.Text (Text)
 import Data.Void
 import Smol.Core.Parser.Shared
-import Smol.Core.Typecheck.Typeclass.Types
 import Smol.Core.Types
 import Text.Megaparsec
 

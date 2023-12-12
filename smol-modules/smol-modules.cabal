@@ -43,6 +43,7 @@ common shared
     , prettyprinter
     , smol-core
     , smol-interpreter
+    , smol-typechecker
     , text
     , transformers
 

@@ -20,6 +20,7 @@ import Data.Map.Strict (Map)
 import qualified Data.Map.Strict as M
 import qualified Data.Text as T
 import Smol.Backend.IR.FromExpr.DataTypes
+import Smol.Backend.IR.FromExpr.Helpers
 import qualified Smol.Backend.IR.FromExpr.Helpers as Compile
 import Smol.Backend.IR.FromExpr.Pattern
 import Smol.Backend.IR.FromExpr.Type
@@ -27,9 +28,8 @@ import Smol.Backend.IR.FromExpr.Types
 import Smol.Backend.IR.IRExpr
 import Smol.Backend.Types.GetPath
 import Smol.Backend.Types.PatternPredicate
+import Smol.Core.Annotations
 import Smol.Core.Helpers
-import Smol.Core.Typecheck (flattenConstructorApplication, getTypeAnnotation)
-import Smol.Core.Typecheck.Shared (getExprAnnotation)
 import Smol.Core.Types.Constructor
 import Smol.Core.Types.DataType
 import Smol.Core.Types.Expr

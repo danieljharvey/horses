@@ -9,7 +9,8 @@ import Data.Text (Text)
 import qualified Language.Wasm as Wasm
 import qualified Language.Wasm.Interpreter as Wasm
 import Smol.Core
-import Smol.Core.Typecheck.FromParsedExpr
+import Smol.Typecheck.Elaborate
+import Smol.Typecheck.Types
 import Smol.Wasm.Compile (compileRaw)
 import Test.Hspec
 import Test.Wasm.Helpers

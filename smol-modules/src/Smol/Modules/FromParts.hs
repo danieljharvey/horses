@@ -19,11 +19,13 @@ import qualified Data.Map.Strict as M
 import Data.Maybe (isJust, mapMaybe)
 import qualified Data.Set as S
 import Smol.Core
+import Smol.Core.Annotations
 import Smol.Modules.Types.Module
 import Smol.Modules.Types.ModuleError
 import Smol.Modules.Types.ModuleItem
 import Smol.Modules.Types.Test
 import Smol.Modules.Types.TopLevelExpression
+import Smol.Typecheck.Typeclass.Types
 
 moduleFromModuleParts ::
   ( MonadError (ModuleError ann) m

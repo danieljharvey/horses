@@ -40,6 +40,7 @@ module Test.Helpers
     tcVar,
     typeForComparison,
     testModule,
+    fromParsedExpr,
   )
 where
 
@@ -57,7 +58,6 @@ import qualified Data.Set.NonEmpty as NES
 import Data.Text (Text)
 import qualified Data.Text as T
 import Smol.Core
-import Smol.Core.Typecheck.FromParsedExpr
 import Smol.Modules.FromParts
 import Smol.Modules.Parser
 import Smol.Modules.ResolveDeps
@@ -65,7 +65,18 @@ import Smol.Modules.Typecheck
 import Smol.Modules.Types.Module
 import Smol.Modules.Types.ModuleError
 import Smol.Modules.Types.ModuleItem
+import Smol.Typecheck.Types
 import Test.BuiltInTypes (builtInTypes)
+
+resolve :: ParseDep a -> ResolvedDep a
+resolve (ParseDep a _) = emptyResolvedDep a
+
+-- | `ParsedExpr` has module names
+-- | `ResolvedExpr` has module hashes and unique ids
+-- this is like NumberVars from main `mimsa`, but for now we'll bodge it
+-- to get things typechecking
+fromParsedExpr :: ParsedExpr ann -> ResolvedExpr ann
+fromParsedExpr = mapExprDep resolve
 
 typedModule ::
   (MonadError (ModuleError Annotation) m) =>

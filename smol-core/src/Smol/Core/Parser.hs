@@ -21,7 +21,6 @@ import Smol.Core.Parser.DataType (dataTypeParser)
 import Smol.Core.Parser.Expr
 import Smol.Core.Parser.Type
 import Smol.Core.Parser.Typeclass
-import Smol.Core.Typecheck.Types
 import Smol.Core.Types
 import Text.Megaparsec
 import Text.Megaparsec.Char

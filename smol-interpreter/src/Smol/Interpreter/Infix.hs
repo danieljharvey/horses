@@ -2,7 +2,7 @@ module Smol.Interpreter.Infix (interpretInfix) where
 
 import Control.Monad (void, (<=<))
 import Control.Monad.Except
-import Smol.Core.Typecheck.Shared
+import Smol.Core.Annotations (getExprAnnotation)
 import Smol.Core.Types.Expr
 import Smol.Core.Types.Op
 import Smol.Core.Types.Prim

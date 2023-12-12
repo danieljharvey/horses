@@ -1,0 +1,103 @@
+cabal-version:      2.4
+name:               smol-typechecker
+version:            0.1.0.0
+
+-- A short (one-line) description of the package.
+-- synopsis:
+
+-- A longer description of the package.
+-- description:
+
+-- A URL where users can report bugs.
+-- bug-reports:
+
+-- The license under which the package is released.
+-- license:
+author:             Daniel Harvey
+maintainer:         danieljamesharvey@gmail.com
+
+-- A copyright notice.
+-- copyright:
+-- category:
+extra-source-files: CHANGELOG.md
+
+common shared
+  ghc-options:
+    -threaded -rtsopts -with-rtsopts=-N -Wall
+    -Wno-unticked-promoted-constructors -Wcompat
+    -Wincomplete-record-updates -Wincomplete-uni-patterns
+    -Wredundant-constraints -Wmissing-deriving-strategies
+
+  build-depends:
+    , aeson
+    , base
+    , containers
+    , diagnose
+    , mtl                  >=2.3.0.0
+    , nonempty-containers
+    , prettyprinter
+    , smol-core
+    , text
+    , transformers
+
+library
+  import:           shared
+
+  -- LANGUAGE extensions used by modules in this package.
+  -- other-extensions:
+  hs-source-dirs:   src
+  default-language: Haskell2010
+
+  -- Modules included in this executable, other than Main.
+  exposed-modules:
+    Smol.Typecheck.Elaborate
+    Smol.Typecheck.Errors
+    Smol.Typecheck.Exhaustiveness
+    Smol.Typecheck.FreeVars
+    Smol.Typecheck.FromParsedExpr
+    Smol.Typecheck.Pattern
+    Smol.Typecheck.Shared
+    Smol.Typecheck.Simplify
+    Smol.Typecheck.Substitute
+    Smol.Typecheck.Subtype
+    Smol.Typecheck.Typecheck
+    Smol.Typecheck.Typeclass
+    Smol.Typecheck.Typeclass.Deduplicate
+    Smol.Typecheck.Typeclass.Helpers
+    Smol.Typecheck.Typeclass.KindChecker
+    Smol.Typecheck.Typeclass.ToDictionaryPassing
+    Smol.Typecheck.Typeclass.ToDictionaryPassing.Types
+    Smol.Typecheck.Typeclass.Typecheck
+    Smol.Typecheck.Typeclass.Types
+    Smol.Typecheck.Typeclass.Types.Instance
+    Smol.Typecheck.Typeclass.Types.Kind
+    Smol.Typecheck.Typeclass.Types.Typeclass
+    Smol.Typecheck.Typeclass.Types.TypeclassError
+    Smol.Typecheck.Types
+    Smol.Typecheck.Types.Substitution
+    Smol.Typecheck.Types.TCError
+    Smol.Typecheck.Types.TCState
+    Smol.Typecheck.Types.TCWrite
+
+test-suite smol-typechecker-tests
+  import:           shared
+  type:             exitcode-stdio-1.0
+  hs-source-dirs:   test
+  hs-source-dirs:   src
+  build-depends:
+    , file-embed
+    , hspec       >=2.8.3 && <3
+    , hspec-core  >=2.8.3 && <3
+
+  other-modules:
+    Test.BuiltInTypes
+    Test.Helpers
+    Test.Typecheck.ExhaustivenessSpec
+    Test.Typecheck.NestingMonadSpec
+    Test.Typecheck.PatternSpec
+    Test.Typecheck.SubtypeSpec
+    Test.Typecheck.TypeclassSpec
+    Test.TypecheckSpec
+
+  main-is:          Main.hs
+  default-language: Haskell2010
