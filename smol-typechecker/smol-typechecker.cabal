@@ -31,15 +31,10 @@ common shared
   build-depends:
     , aeson
     , base
-    , builder
-    , bytestring
     , containers
     , diagnose
-    , megaparsec
-    , memory
     , mtl                  >=2.3.0.0
     , nonempty-containers
-    , parser-combinators
     , prettyprinter
     , smol-core
     , text
