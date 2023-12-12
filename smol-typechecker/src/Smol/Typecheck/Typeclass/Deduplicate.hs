@@ -14,7 +14,6 @@ import Data.Maybe (fromMaybe)
 import Smol.Core.ExprUtils
 import Smol.Core.Types
 import Smol.Typecheck.Typeclass.Helpers (isConcrete)
-import Smol.Typecheck.Types
 
 -- | find deduplicated constraints and apply them to expr
 deduplicateConstraints ::

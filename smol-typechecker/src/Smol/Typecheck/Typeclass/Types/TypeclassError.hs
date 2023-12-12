@@ -9,7 +9,6 @@ where
 
 import Smol.Core.Types
 import Smol.Typecheck.Typeclass.KindChecker
-import Smol.Typecheck.Typeclass.Types
 
 data TypeclassError ann
   = TypeclassNotFound TypeclassName
