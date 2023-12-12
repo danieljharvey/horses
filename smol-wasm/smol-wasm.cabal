@@ -115,6 +115,7 @@ test-suite smol-wasm-tests
     , mtl
     , nonempty-containers
     , smol-core
+    , smol-typechecker
     , smol-wasm
     , text
     , wasm

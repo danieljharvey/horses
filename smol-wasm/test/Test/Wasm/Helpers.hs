@@ -15,49 +15,31 @@ module Test.Wasm.Helpers
     tyFunc,
     tyString,
     tyApp,
-    bool,
-    int,
-    var,
-    tuple,
-    array,
-    unit,
-    identifier,
-    constructor,
-    patternMatch,
-    getRight,
+    fromParsedExpr,
     unsafeParseExpr,
-    unsafeParseType,
-    unsafeParseTypedExpr,
-    joinText,
-    runTypecheckM,
     typecheckEnv,
-    showTypeclass,
-    eqTypeclass,
-    functorTypeclass,
-    unsafeParseInstanceExpr,
-    tcVar,
-    typeForComparison,
   )
 where
 
-import Control.Monad.Reader
-import Control.Monad.State
-import Control.Monad.Writer
 import Data.Foldable (foldl')
 import Data.Functor
 import qualified Data.List.NonEmpty as NE
 import qualified Data.Map.Strict as M
-import qualified Data.Sequence as Seq
 import qualified Data.Set.NonEmpty as NES
 import Data.Text (Text)
-import qualified Data.Text as T
 import Smol.Core
-import Smol.Core.Typecheck.FromParsedExpr
+import Smol.Typecheck.Types
 import Test.Wasm.BuiltInTypes (builtInTypes)
 
-getRight :: (Show e) => Either e a -> a
-getRight (Right a) = a
-getRight (Left e) = error (show e)
+resolve :: ParseDep a -> ResolvedDep a
+resolve (ParseDep a _) = emptyResolvedDep a
+
+-- | `ParsedExpr` has module names
+-- | `ResolvedExpr` has module hashes and unique ids
+-- this is like NumberVars from main `mimsa`, but for now we'll bodge it
+-- to get things typechecking
+fromParsedExpr :: ParsedExpr ann -> ResolvedExpr ann
+fromParsedExpr = mapExprDep resolve
 
 tyBool :: (Monoid ann) => Type dep ann
 tyBool = TPrim mempty TPBool
@@ -107,45 +89,6 @@ tyFunc = TFunc mempty mempty
 tyApp :: (Monoid ann) => Type dep ann -> Type dep ann -> Type dep ann
 tyApp = TApp mempty
 
-unit :: (Monoid ann) => Expr dep ann
-unit = EPrim mempty PUnit
-
-bool :: (Monoid ann) => Bool -> Expr dep ann
-bool = EPrim mempty . PBool
-
-int :: (Monoid ann) => Integer -> Expr dep ann
-int = EPrim mempty . PInt
-
-var :: (Monoid ann) => Text -> Expr ParseDep ann
-var = EVar mempty . emptyParseDep . Identifier
-
-tuple ::
-  (Monoid ann) =>
-  Expr dep ann ->
-  [Expr dep ann] ->
-  Expr dep ann
-tuple a as = ETuple mempty a (NE.fromList as)
-
-constructor ::
-  (Monoid ann) =>
-  Text ->
-  Expr ParseDep ann
-constructor lbl = EConstructor mempty (emptyParseDep (Constructor lbl))
-
-identifier :: Text -> ParseDep Identifier
-identifier = emptyParseDep . Identifier
-
-patternMatch ::
-  (Monoid ann) =>
-  Expr dep ann ->
-  [(Pattern dep ann, Expr dep ann)] ->
-  Expr dep ann
-patternMatch expr pats =
-  EPatternMatch mempty expr (NE.fromList pats)
-
-array :: (Monoid ann) => [Expr dep ann] -> Expr dep ann
-array as = EArray mempty (Seq.fromList as)
-
 ------
 
 unsafeParseExpr :: Text -> Expr ParseDep ()
@@ -153,39 +96,7 @@ unsafeParseExpr input = case parseExprAndFormatError input of
   Right expr -> expr $> ()
   Left e -> error (show e)
 
-unsafeParseType :: Text -> Type ParseDep ()
-unsafeParseType input = case parseTypeAndFormatError input of
-  Right ty -> ty $> ()
-  Left e -> error (show e)
-
--- | parse a typed expr, ie parse it and fill the type with crap
-unsafeParseTypedExpr :: Text -> ResolvedExpr (Type ResolvedDep Annotation)
-unsafeParseTypedExpr input = case parseExprAndFormatError input of
-  Right expr -> fromParsedExpr expr $> TPrim mempty TPBool
-  Left e -> error (show e)
-
-joinText :: [T.Text] -> T.Text
-joinText = T.intercalate "\n"
-
 ----
-
-runTypecheckM ::
-  (Monad m) =>
-  TCEnv ann ->
-  StateT (TCState ann) (WriterT [TCWrite ann] (ReaderT (TCEnv ann) m)) a ->
-  m a
-runTypecheckM env action =
-  fst
-    <$> runReaderT
-      ( runWriterT
-          ( evalStateT
-              action
-              (TCState mempty 0 mempty)
-          )
-      )
-      env
-
-------
 
 tcVar :: (Monoid ann) => Identifier -> Type ResolvedDep ann
 tcVar = TVar mempty . LocalDefinition
@@ -271,11 +182,3 @@ typecheckEnv =
     mempty
 
 ----
-
--- simplify type for equality check
--- remove anything that can't be described in a type signature
-typeForComparison :: (Ord (dep Identifier)) => Type dep ann -> Type dep ann
-typeForComparison (TFunc ann _ fn arg) =
-  TFunc ann mempty (typeForComparison fn) (typeForComparison arg)
-typeForComparison (TArray ann _ as) = TArray ann 0 (typeForComparison as)
-typeForComparison other = mapType typeForComparison other
