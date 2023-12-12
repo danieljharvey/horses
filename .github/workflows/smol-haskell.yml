@@ -19,6 +19,7 @@ jobs:
           - test-smol-interpreter
           - test-smol-modules
           - test-smol-wasm
+          - test-smol-typechecker
           - build-smol-repl
 
     runs-on: ubuntu-latest

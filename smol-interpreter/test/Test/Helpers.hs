@@ -29,31 +29,34 @@ module Test.Helpers
     unsafeParseType,
     unsafeParseTypedExpr,
     joinText,
-    runTypecheckM,
-    typecheckEnv,
-    showTypeclass,
-    eqTypeclass,
-    functorTypeclass,
     unsafeParseInstanceExpr,
     tcVar,
     typeForComparison,
+    fromParsedExpr,
   )
 where
 
-import Control.Monad.Reader
-import Control.Monad.State
-import Control.Monad.Writer
 import Data.Foldable (foldl')
 import Data.Functor
 import qualified Data.List.NonEmpty as NE
-import qualified Data.Map.Strict as M
 import qualified Data.Sequence as Seq
 import qualified Data.Set.NonEmpty as NES
 import Data.Text (Text)
 import qualified Data.Text as T
 import Smol.Core
-import Smol.Core.Typecheck.FromParsedExpr
-import Test.BuiltInTypes (builtInTypes)
+
+resolve :: ParseDep a -> ResolvedDep a
+resolve (ParseDep a _) = emptyResolvedDep a
+
+-- | `ParsedExpr` has module names
+-- | `ResolvedExpr` has module hashes and unique ids
+-- this is like NumberVars from main `mimsa`, but for now we'll bodge it
+-- to get things typechecking
+fromParsedExpr :: ParsedExpr ann -> ResolvedExpr ann
+fromParsedExpr = mapExprDep resolve
+
+-- fromParsedType :: ParsedType ann -> ResolvedType ann
+-- fromParsedType = mapTypeDep resolve
 
 getRight :: (Show e) => Either e a -> a
 getRight (Right a) = a
@@ -169,106 +172,12 @@ joinText = T.intercalate "\n"
 
 ----
 
-runTypecheckM ::
-  (Monad m) =>
-  TCEnv ann ->
-  StateT (TCState ann) (WriterT [TCWrite ann] (ReaderT (TCEnv ann) m)) a ->
-  m a
-runTypecheckM env action =
-  fst
-    <$> runReaderT
-      ( runWriterT
-          ( evalStateT
-              action
-              (TCState mempty 0 mempty)
-          )
-      )
-      env
-
-------
-
 tcVar :: (Monoid ann) => Identifier -> Type ResolvedDep ann
 tcVar = TVar mempty . LocalDefinition
-
-showTypeclass :: (Monoid ann) => Typeclass ResolvedDep ann
-showTypeclass =
-  Typeclass
-    { tcName = "Show",
-      tcArgs = ["a"],
-      tcFuncName = "show",
-      tcFuncType = tyFunc (tcVar "a") tyString
-    }
-
-eqTypeclass :: (Monoid ann) => Typeclass ResolvedDep ann
-eqTypeclass =
-  Typeclass
-    { tcName = "Eq",
-      tcArgs = ["a"],
-      tcFuncName = "equals",
-      tcFuncType = tyFunc (tcVar "a") (tyFunc (tcVar "a") tyBool)
-    }
-
-functorTypeclass :: (Monoid ann) => Typeclass ResolvedDep ann
-functorTypeclass =
-  Typeclass
-    { tcName = "Functor",
-      tcArgs = ["f"],
-      tcFuncName = "fmap",
-      tcFuncType =
-        -- (a -> b) -> f a -> f b
-        tyFunc
-          (tyFunc (tcVar "a") (tcVar "b"))
-          ( tyFunc
-              (tyApp (tcVar "f") (tcVar "a"))
-              (tyApp (tcVar "f") (tcVar "b"))
-          )
-    }
-
-classes :: (Monoid ann) => M.Map TypeclassName (Typeclass ResolvedDep ann)
-classes =
-  M.fromList
-    [ ("Eq", eqTypeclass),
-      ("Show", showTypeclass),
-      ("Functor", functorTypeclass)
-    ]
 
 unsafeParseInstanceExpr :: (Monoid ann) => Text -> Expr ResolvedDep ann
 unsafeParseInstanceExpr =
   fmap (const mempty) . fromParsedExpr . unsafeParseExpr
-
-instances :: (Ord ann, Monoid ann) => M.Map (Constraint ResolvedDep ann) (Instance ResolvedDep ann)
-instances =
-  M.fromList
-    [ ( Constraint "Eq" [tyInt],
-        Instance {inExpr = unsafeParseInstanceExpr "\\a -> \\b -> a == b", inConstraints = []}
-      ),
-      ( Constraint "Eq" [tyTuple (tcVar "a") [tcVar "b"]],
-        Instance
-          { inExpr =
-              unsafeParseInstanceExpr "\\a -> \\b -> case (a,b) { ((a1, a2), (b1, b2)) -> if equals a1 b1 then equals a2 b2 else False }",
-            inConstraints =
-              [ Constraint "Eq" [tcVar "a"],
-                Constraint "Eq" [tcVar "b"]
-              ]
-          }
-      ),
-      ( Constraint "Functor" [tyCons "Maybe" [tcVar "a"]],
-        Instance
-          { inExpr =
-              unsafeParseInstanceExpr "\\f -> \\maybe -> case maybe { Just a -> Just (f a), Nothing -> Nothing }",
-            inConstraints = mempty
-          }
-      )
-    ]
-
-typecheckEnv :: (Monoid ann, Ord ann) => TCEnv ann
-typecheckEnv =
-  TCEnv
-    mempty
-    (builtInTypes emptyResolvedDep)
-    classes
-    instances
-    mempty
 
 ----
 

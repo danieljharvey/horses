@@ -1,7 +1,7 @@
 module Smol.Interpreter.Let (interpretLet) where
 
+import Smol.Core.Annotations (getExprAnnotation)
 import Smol.Core.FindUses
-import Smol.Core.Typecheck.Shared (getExprAnnotation)
 import Smol.Core.Types.Expr
 import Smol.Core.Types.Identifier
 import Smol.Core.Types.ResolvedDep

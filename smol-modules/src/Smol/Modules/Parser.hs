@@ -20,10 +20,10 @@ import Smol.Core.Parser.Primitives (textPrim)
 import Smol.Core.Parser.Shared
 import Smol.Core.Parser.Type
 import Smol.Core.Parser.Typeclass
-import Smol.Core.Typecheck.Typeclass.Types
 import Smol.Core.Types
 import Smol.Modules.Types.ModuleItem
 import Smol.Modules.Types.TestName
+import Smol.Typecheck.Typeclass.Types
 import Text.Megaparsec hiding (parseTest)
 import Text.Megaparsec.Char
 

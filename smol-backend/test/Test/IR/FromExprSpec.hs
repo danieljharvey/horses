@@ -13,8 +13,9 @@ import Data.Text (Text)
 import qualified Smol.Backend.IR.FromExpr.Expr as IR
 import Smol.Backend.IR.IRExpr
 import Smol.Backend.IR.ToLLVM.Patterns
-import Smol.Core.Typecheck
 import Smol.Core.Types
+import Smol.Typecheck.Elaborate
+import Smol.Typecheck.Types
 import Test.BuiltInTypes (builtInTypes)
 import Test.Helpers
 import Test.Hspec

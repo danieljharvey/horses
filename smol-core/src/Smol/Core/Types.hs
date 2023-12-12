@@ -2,6 +2,7 @@ module Smol.Core.Types
   ( module Smol.Core.Types.Annotation,
     module Smol.Core.Types.Annotated,
     module Smol.Core.Types.Constructor,
+    module Smol.Core.Types.Constraint,
     module Smol.Core.Types.DataType,
     module Smol.Core.Types.Op,
     module Smol.Core.Types.Expr,
@@ -14,11 +15,13 @@ module Smol.Core.Types
     module Smol.Core.Types.Spread,
     module Smol.Core.Types.Type,
     module Smol.Core.Types.TypeName,
+    module Smol.Core.Types.TypeclassName,
   )
 where
 
 import Smol.Core.Types.Annotated
 import Smol.Core.Types.Annotation
+import Smol.Core.Types.Constraint
 import Smol.Core.Types.Constructor
 import Smol.Core.Types.DataType
 import Smol.Core.Types.Expr
@@ -32,3 +35,4 @@ import Smol.Core.Types.ResolvedDep
 import Smol.Core.Types.Spread
 import Smol.Core.Types.Type
 import Smol.Core.Types.TypeName
+import Smol.Core.Types.TypeclassName

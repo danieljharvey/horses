@@ -16,14 +16,17 @@ import Data.Maybe (fromMaybe, mapMaybe)
 import Data.Set (Set)
 import Data.Text (Text)
 import Smol.Core
+import Smol.Core.Annotations
 import Smol.Core.Helpers
-import Smol.Core.Typecheck.Typecheck (typecheck)
-import Smol.Core.Typecheck.Typeclass (addTypesToConstraint, checkInstance, lookupTypeclass)
 import Smol.Modules.Dependencies
 import Smol.Modules.Helpers (filterNameDefs, filterTypeDefs)
 import Smol.Modules.Types
 import Smol.Modules.Types.DepType
 import Smol.Modules.Types.ModuleError
+import Smol.Typecheck.Typecheck (typecheck)
+import Smol.Typecheck.Typeclass (addTypesToConstraint, checkInstance, lookupTypeclass)
+import Smol.Typecheck.Typeclass.Types
+import Smol.Typecheck.Types
 
 -- go through the module, and wrap all the items in DefIdentifier keys and
 -- DepType for items

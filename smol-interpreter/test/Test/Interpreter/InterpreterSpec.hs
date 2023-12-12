@@ -4,7 +4,6 @@ module Test.Interpreter.InterpreterSpec (spec) where
 
 import Data.Foldable (traverse_)
 import Data.Text (Text)
-import Smol.Core.Typecheck.FromParsedExpr
 import Smol.Core.Types
 import Smol.Interpreter
 import Smol.Interpreter.Types.Stack

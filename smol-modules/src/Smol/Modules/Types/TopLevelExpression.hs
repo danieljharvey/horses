@@ -17,8 +17,8 @@ where
 
 import Data.Aeson (FromJSON, FromJSONKey, ToJSON, ToJSONKey)
 import GHC.Generics (Generic)
-import Smol.Core.Typecheck.Annotations
-import Smol.Core.Typecheck.Types
+import Smol.Core.Annotations
+import Smol.Core.Types.Constraint
 import Smol.Core.Types.Constructor
 import Smol.Core.Types.Expr
 import Smol.Core.Types.Identifier

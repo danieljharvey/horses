@@ -7,7 +7,6 @@ import Data.Text (Text)
 import Data.Void
 import Smol.Core.Parser.Identifiers
 import Smol.Core.Parser.Type
-import Smol.Core.Typecheck.Types
 import Smol.Core.Types
 import Text.Megaparsec hiding (parseTest)
 

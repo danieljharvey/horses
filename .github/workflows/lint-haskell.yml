@@ -16,6 +16,7 @@ jobs:
             smol-interpreter/**/*.hs
             smol-modules/**/*.hs
             smol-repl/**/*.hs
+            smol-typechecker/**/*.hs
             smol-wasm/**/*.hs
 
   hlint:
@@ -31,6 +32,6 @@ jobs:
       - name: "Run HLint"
         uses: rwe/actions-hlint-run@v2
         with:
-          path: '["builder/", "smol-backend/", "smol-core/", "smol-interpreter/", "smol-modules/", "smol-repl/", "smol-wasm/"]'
+          path: '["builder/", "smol-backend/", "smol-core/", "smol-interpreter/", "smol-modules/", "smol-repl/", "smol-typechecker/", "smol-wasm/"]'
           fail-on: warning
 

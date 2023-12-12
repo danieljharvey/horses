@@ -29,6 +29,7 @@ import Smol.Modules.Types.ModuleError
 import Smol.Modules.Types.Test
 import Smol.Modules.Types.TopLevelExpression
 import Smol.Modules.Uses
+import Smol.Typecheck.Typeclass.Types
 
 resolveExprDeps ::
   (Show ann, MonadError ResolveDepsError m) =>

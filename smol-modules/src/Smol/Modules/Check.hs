@@ -11,8 +11,8 @@ import qualified Data.Map.Strict as M
 import qualified Data.Set as S
 import qualified Data.Text as T
 import Smol.Core
+import Smol.Core.Annotations
 import Smol.Core.Transform
-import Smol.Core.Typecheck.Typeclass
 import Smol.Modules.FromParts
 import Smol.Modules.Helpers
 import Smol.Modules.ResolveDeps
@@ -22,6 +22,8 @@ import Smol.Modules.Types.ModuleError
 import Smol.Modules.Types.ModuleItem
 import Smol.Modules.Types.Test
 import Smol.Modules.Types.TopLevelExpression
+import Smol.Typecheck.Typeclass
+import Smol.Typecheck.Types
 
 -- this is the front door as such
 checkModule ::

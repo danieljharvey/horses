@@ -11,16 +11,17 @@ module Smol.Backend.IR.FromExpr.Helpers
     isStringType,
     resolveConstructor,
     resolveIdentifier,
+    flattenConstructorApplication,
   )
 where
 
+import Control.Monad.Except
 import Control.Monad.State
 import qualified Data.Map.Strict as M
 import Data.String (fromString)
 import GHC.Records (HasField (..))
 import Smol.Backend.IR.FromExpr.Types
 import Smol.Core.Helpers
-import qualified Smol.Core.Typecheck.Shared as TC
 import qualified Smol.Core.Types as Smol
 import Smol.Core.Types.ResolvedDep
 
@@ -39,6 +40,17 @@ isStringType (Smol.TPrim _ Smol.TPString) = True
 isStringType (Smol.TLiteral _ (Smol.TLString _)) = True
 isStringType _ = False
 
+-- untangle a bunch of TApp (TApp (TConstructor typeName) 1) True into `(typeName, [1, True])`
+-- to make it easier to match up with patterns
+flattenConstructorApplication ::
+  Smol.Expr dep ann -> Maybe (dep Smol.Constructor, [Smol.Expr dep ann])
+flattenConstructorApplication (Smol.EApp _ f a) = do
+  (constructor, as) <- flattenConstructorApplication f
+  pure (constructor, as <> [a])
+flattenConstructorApplication (Smol.EConstructor _ constructor) =
+  pure (constructor, mempty)
+flattenConstructorApplication _ = Nothing
+
 flattenConstructorType ::
   ( Monad m,
     Show ann,
@@ -48,8 +60,21 @@ flattenConstructorType ::
   Smol.Type dep ann ->
   m (dep Smol.TypeName, [Smol.Type dep ann])
 flattenConstructorType ty = do
-  let result = TC.flattenConstructorType ty
+  let result = flattenConstructorTypeInner ty
   pure (fromRight result)
+
+-- untangle a bunch of TApp (TApp (TConstructor typeName) 1) True into `(typeName, [1, True])`
+-- to make it easier to match up with patterns
+flattenConstructorTypeInner ::
+  (Show (dep Smol.Identifier), Show (dep Smol.TypeName)) =>
+  Smol.Type dep ann ->
+  Either (Smol.Type dep ann) (dep Smol.TypeName, [Smol.Type dep ann])
+flattenConstructorTypeInner (Smol.TApp _ f a) = do
+  (typeName, as) <- flattenConstructorTypeInner f
+  pure (typeName, as <> [a])
+flattenConstructorTypeInner (Smol.TConstructor _ typeName) =
+  pure (typeName, mempty)
+flattenConstructorTypeInner ty = throwError ty
 
 -- | lookup constructor, get number for it and expected number of args
 -- we'll use this to create datatype etc

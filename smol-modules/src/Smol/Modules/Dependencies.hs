@@ -27,6 +27,7 @@ import Smol.Modules.Types.ModuleError
 import Smol.Modules.Types.Test
 import Smol.Modules.Types.TopLevelExpression
 import Smol.Modules.Uses
+import Smol.Typecheck.Typeclass.Types
 
 filterExprs :: Map k (DepType dep ann) -> Map k (TopLevelExpression dep ann)
 filterExprs =

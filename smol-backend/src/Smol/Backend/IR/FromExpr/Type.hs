@@ -13,8 +13,8 @@ import Smol.Backend.IR.FromExpr.DataTypes
 import qualified Smol.Backend.IR.FromExpr.Helpers as Compile
 import Smol.Backend.IR.FromExpr.Types
 import Smol.Backend.IR.IRExpr
-import Smol.Core.Typecheck.Subtype (isIntLiteral, isNatLiteral)
 import qualified Smol.Core.Types as Smol
+import Smol.Typecheck.Subtype (isIntLiteral, isNatLiteral)
 
 typeFromEnv ::
   (Show ann, MonadState (FromExprState ann) m) =>

@@ -5,6 +5,7 @@ packages:
   smol-interpreter/smol-interpreter.cabal,
   smol-modules/smol-modules.cabal,
   smol-repl/smol-repl.cabal,
+  smol-typechecker/smol-typechecker.cabal,
   smol-wasm/smol-wasm.cabal,
   vendored/**/*.cabal
 
