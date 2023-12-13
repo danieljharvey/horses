@@ -14,4 +14,17 @@ transform ::
   (Ord ann, Ord (dep Identifier)) =>
   Expr dep ann ->
   Expr dep ann
-transform = removeUnused . etaReduce . betaReduce . floatDown . floatUp . flattenLets . inline
+transform = transformPass . transformPass . transformPass
+
+transformPass ::
+  (Ord ann, Ord (dep Identifier)) =>
+  Expr dep ann ->
+  Expr dep ann
+transformPass =
+  removeUnused
+    . etaReduce
+    . floatDown
+    . flattenLets
+    . floatUp
+    . betaReduce
+    . inline

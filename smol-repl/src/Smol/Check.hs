@@ -9,7 +9,7 @@ import Data.Text (Text)
 import qualified Data.Text as T
 import qualified Data.Text.IO as T
 import Smol.Core.Printer
-import Smol.Modules.Check
+import Smol.Modules.Check (checkModule)
 import Smol.Modules.Parser (parseModule)
 import Smol.Modules.PrettyPrint (printModuleParts)
 import Smol.Modules.RunTests

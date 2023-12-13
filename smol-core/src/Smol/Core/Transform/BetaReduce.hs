@@ -15,6 +15,8 @@ betaReduceInternal (EApp ann (EAnn _ _ (ELambda _ann ident body)) val) =
   betaReduceInternal $ ELet ann ident val (betaReduceInternal body)
 betaReduceInternal (EApp annA (EApp annB (ELambda _ identA (ELambda _ identB body)) valA) valB) =
   betaReduceInternal $ ELet annA identA valA (ELet annB identB valB (betaReduceInternal body))
+betaReduceInternal (EApp annA (EApp annB (EAnn _ _ (ELambda _ identA (ELambda _ identB body))) valA) valB) =
+  betaReduceInternal $ ELet annA identA valA (ELet annB identB valB (betaReduceInternal body))
 betaReduceInternal (EIf _ (EPrim _ (PBool True)) thenExpr _) =
   betaReduceInternal thenExpr
 betaReduceInternal (EIf _ (EPrim _ (PBool False)) _ elseExpr) =
