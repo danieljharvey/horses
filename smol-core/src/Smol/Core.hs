@@ -4,6 +4,7 @@ module Smol.Core
     module Smol.Core.ExprUtils,
     module Smol.Core.TypeUtils,
     module Smol.Core.Printer,
+  module Smol.Core.Transform
   )
 where
 
@@ -12,3 +13,4 @@ import Smol.Core.Parser
 import Smol.Core.Printer
 import Smol.Core.TypeUtils
 import Smol.Core.Types
+import Smol.Core.Transform

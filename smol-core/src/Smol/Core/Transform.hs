@@ -6,9 +6,12 @@ import Smol.Core.Transform.FlattenLets
 import Smol.Core.Transform.FloatDown
 import Smol.Core.Types.Expr
 import Smol.Core.Types.Identifier
+import Smol.Core.Transform.FindUnused
+import Smol.Core.Transform.FloatUp
+import Smol.Core.Transform.Inliner
 
 transform ::
-  (Ord (dep Identifier)) =>
+  (Ord ann, Ord (dep Identifier)) =>
   Expr dep ann ->
   Expr dep ann
-transform = etaReduce . betaReduce . floatDown . flattenLets
+transform = removeUnused . etaReduce . betaReduce . floatDown . floatUp . flattenLets . inline

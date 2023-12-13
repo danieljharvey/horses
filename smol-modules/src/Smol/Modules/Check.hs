@@ -12,7 +12,6 @@ import qualified Data.Set as S
 import qualified Data.Text as T
 import Smol.Core
 import Smol.Core.Annotations
-import Smol.Core.Transform
 import Smol.Modules.FromParts
 import Smol.Modules.Helpers
 import Smol.Modules.ResolveDeps
@@ -46,7 +45,7 @@ checkModule input moduleItems = do
 
   pure (transformModule dictModule)
 
-transformModule :: (Ord (dep Identifier)) => Module dep ann -> Module dep ann
+transformModule :: (Ord ann, Ord (dep Identifier)) => Module dep ann -> Module dep ann
 transformModule inputModule =
   let transformTle tle =
         tle {tleExpr = transform (tleExpr tle)}
