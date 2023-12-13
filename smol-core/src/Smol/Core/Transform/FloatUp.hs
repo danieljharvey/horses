@@ -1,8 +1,8 @@
 module Smol.Core.Transform.FloatUp (floatUp) where
 
-import Smol.Core.Types
-import Smol.Core.FindUses
 import Smol.Core.ExprUtils
+import Smol.Core.FindUses
+import Smol.Core.Types
 
 -- we try three times, which is somewhat arbitrary
 floatUp :: (Ord (dep Identifier)) => Expr dep ann -> Expr dep ann

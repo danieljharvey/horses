@@ -1,9 +1,8 @@
 module Smol.Core.Transform.BetaReduce (betaReduce) where
 
 import qualified Data.Map.Strict as M
-
-import Smol.Core.Types
 import Smol.Core.ExprUtils
+import Smol.Core.Types
 
 betaReduce :: Expr dep ann -> Expr dep ann
 betaReduce = betaReduceInternal

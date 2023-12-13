@@ -1,26 +1,27 @@
 {-# LANGUAGE OverloadedStrings #-}
-  {-# LANGUAGE TypeApplications #-}
+{-# LANGUAGE TypeApplications #-}
+
 module Test.TransformSpec (spec) where
 
-import Data.Maybe (isJust)
-import Smol.Core.Transform.Inliner
-import Smol.Core.Transform.FloatUp
-import qualified Data.List.NonEmpty as NE
-import qualified Data.Set as S
-import Control.Monad.Identity
 import Control.Monad (void)
+import Control.Monad.Identity
 import Data.Foldable (traverse_)
+import qualified Data.List.NonEmpty as NE
+import Data.Maybe (isJust)
+import qualified Data.Set as S
 import qualified Data.Text as T
 import Smol.Core.Parser
 import Smol.Core.Transform.BetaReduce
 import Smol.Core.Transform.EtaReduce
+import Smol.Core.Transform.FindUnused
 import Smol.Core.Transform.FlattenLets
 import Smol.Core.Transform.FloatDown
-import Smol.Core.Transform.FindUnused
+import Smol.Core.Transform.FloatUp
+import Smol.Core.Transform.Inliner
+import Smol.Core.Types
+import Smol.Core.Types.Annotation
 import Test.Helpers
 import Test.Hspec
-import Smol.Core.Types.Annotation
-import Smol.Core.Types
 
 spec :: Spec
 spec = do
@@ -116,7 +117,7 @@ spec = do
 
       it "Finds `a` in simple Let assignment" $ do
         findUnused @Annotation @Identity
-          (ELet mempty ( pure "a") (bool True) (bool True))
+          (ELet mempty (pure "a") (bool True) (bool True))
           `shouldBe` S.singleton ("a", mempty)
 
       it "Does not find `a` when it is returned later from Let" $ do
@@ -170,7 +171,6 @@ spec = do
       let expr = unsafeParseExpr "let d = \"dog\"; \\opts -> case [ \"a\", \"b\" ] { [a, b, c] -> (Just ((a, d))), _ -> (Nothing)}"
           expected = unsafeParseExpr "let d = \"dog\"; \\opts -> case [ \"a\", \"b\" ] { [a, _, _] -> (Just ((a, d))), _ -> (Nothing) }"
       removeUnused expr `shouldBe` expected
-
 
   describe "FloatUp" $ do
     it "Does nothing when no pattern match" $ do
@@ -241,4 +241,3 @@ spec = do
         let expr = unsafeParseExpr "let flip as = if as then False else flip as in flip False"
         inlineInternal' expr
           `shouldBe` expr
-

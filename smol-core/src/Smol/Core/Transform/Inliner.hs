@@ -10,15 +10,15 @@ module Smol.Core.Transform.Inliner
   )
 where
 
-import Smol.Core.ExprUtils
 import Control.Monad.Reader
 import Control.Monad.State
 import qualified Data.List.NonEmpty as NE
 import Data.Map.Strict (Map)
 import qualified Data.Map.Strict as M
 import Data.Maybe
-import Smol.Core.Types
+import Smol.Core.ExprUtils
 import Smol.Core.FindUses
+import Smol.Core.Types
 
 type InlineM dep ann a =
   StateT (InlineState dep ann) (Reader (InlineEnv dep)) a
@@ -66,17 +66,20 @@ howTrivial (ETuple _ a as) = (+ 2) . sum <$> traverse howTrivial ([a] <> NE.toLi
 howTrivial EVar {} = Just 1
 howTrivial _ = Nothing
 
-inlineInternal :: (Ord (dep Identifier)) =>
-    InlineState dep ann -> Expr dep ann -> Expr dep ann
+inlineInternal ::
+  (Ord (dep Identifier)) =>
+  InlineState dep ann ->
+  Expr dep ann ->
+  Expr dep ann
 inlineInternal initialState expr =
   let initialEnv = InlineEnv (findUses expr) NotWithinLambda
    in runReader (evalStateT (inlineExpression expr) initialState) initialEnv
 
-inline :: (  Ord (dep Identifier)) => Expr dep ann -> Expr dep ann
+inline :: (Ord (dep Identifier)) => Expr dep ann -> Expr dep ann
 inline = inlineInternal (InlineState mempty)
 
 storeExprInState ::
-  ( Ord (dep Identifier), MonadState (InlineState dep ann) m) =>
+  (Ord (dep Identifier), MonadState (InlineState dep ann) m) =>
   dep Identifier ->
   Expr dep ann ->
   m ()
@@ -101,15 +104,16 @@ lookupVar var = do
 
 getUsesCount ::
   (Ord (dep Identifier)) =>
-
-  dep Identifier -> InlineM dep ann VarUses
+  dep Identifier ->
+  InlineM dep ann VarUses
 getUsesCount var = do
   i <- asks (numberOfUses var . ieUses)
   pure (VarUses i)
 
 substituteVar ::
   (Ord (dep Identifier)) =>
-  dep Identifier -> InlineM dep ann (Maybe (Expr dep ann))
+  dep Identifier ->
+  InlineM dep ann (Maybe (Expr dep ann))
 substituteVar var = do
   maybeItem <- lookupVar var
   uses <- getUsesCount var
@@ -125,7 +129,8 @@ withinLambda = local (\ie -> ie {ieIsWithinLambda = WithinLambda})
 
 inlineExpression ::
   (Ord (dep Identifier)) =>
-  Expr dep ann -> InlineM dep ann (Expr dep ann)
+  Expr dep ann ->
+  InlineM dep ann (Expr dep ann)
 inlineExpression (ELet ann ident expr rest) = do
   storeExprInState ident expr
   ELet ann ident <$> inlineExpression expr <*> inlineExpression rest
@@ -139,4 +144,3 @@ inlineExpression (ELambda ann ident body) = do
   pure (ELambda ann ident body')
 inlineExpression other =
   bindExpr inlineExpression other
-
