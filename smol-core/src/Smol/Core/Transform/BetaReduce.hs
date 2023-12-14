@@ -1,7 +1,8 @@
 module Smol.Core.Transform.BetaReduce (betaReduce) where
 
 import qualified Data.Map.Strict as M
-import Smol.Core
+import Smol.Core.ExprUtils
+import Smol.Core.Types
 
 betaReduce :: Expr dep ann -> Expr dep ann
 betaReduce = betaReduceInternal
@@ -13,6 +14,8 @@ betaReduceInternal (EApp ann (ELambda _ ident body) val) =
 betaReduceInternal (EApp ann (EAnn _ _ (ELambda _ann ident body)) val) =
   betaReduceInternal $ ELet ann ident val (betaReduceInternal body)
 betaReduceInternal (EApp annA (EApp annB (ELambda _ identA (ELambda _ identB body)) valA) valB) =
+  betaReduceInternal $ ELet annA identA valA (ELet annB identB valB (betaReduceInternal body))
+betaReduceInternal (EApp annA (EApp annB (EAnn _ _ (ELambda _ identA (ELambda _ identB body))) valA) valB) =
   betaReduceInternal $ ELet annA identA valA (ELet annB identB valB (betaReduceInternal body))
 betaReduceInternal (EIf _ (EPrim _ (PBool True)) thenExpr _) =
   betaReduceInternal thenExpr

@@ -1,6 +1,7 @@
 module Smol.Core.Transform.EtaReduce (etaReduce) where
 
-import Smol.Core
+import Smol.Core.ExprUtils
+import Smol.Core.Types
 
 etaReduce :: (Eq (dep Identifier)) => Expr dep ann -> Expr dep ann
 etaReduce = etaReduceInternal

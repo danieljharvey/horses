@@ -1,9 +1,10 @@
 module Smol.Core.Transform.FloatDown (floatDown) where
 
 import Data.Bifunctor (second)
-import Smol.Core
+import Smol.Core.ExprUtils
 import Smol.Core.FindUses
 import Smol.Core.Helpers
+import Smol.Core.Types
 
 floatDown ::
   ( Ord (dep Identifier)
