@@ -12,7 +12,6 @@ import qualified Data.Set as S
 import qualified Data.Text as T
 import Smol.Core
 import Smol.Core.Annotations
-import Smol.Core.Helpers (tracePrettyId)
 import Smol.Modules.FromParts
 import Smol.Modules.Helpers
 import Smol.Modules.ResolveDeps
@@ -46,14 +45,16 @@ checkModule input moduleItems = do
 
   pure (transformModule dictModule)
 
-transformModule :: (Ord ann, Printer (dep TypeName), Printer (dep Identifier), Printer (dep Constructor), Ord (dep Identifier)) => Module dep ann -> Module dep ann
+transformModule ::
+  ( Ord ann,
+    Ord (dep Identifier)
+  ) =>
+  Module dep ann ->
+  Module dep ann
 transformModule inputModule =
   let transformTle tle =
         tle
-          { tleExpr =
-              tracePrettyId
-                "after"
-                (transform (tracePrettyId "before" $ tleExpr tle))
+          { tleExpr = transform (tleExpr tle)
           }
    in inputModule {moExpressions = transformTle <$> moExpressions inputModule}
 
