@@ -73,11 +73,13 @@ library
     Smol.Core.SourceSpan
     Smol.Core.Transform
     Smol.Core.Transform.BetaReduce
+    Smol.Core.Transform.ConstantFold
     Smol.Core.Transform.EtaReduce
     Smol.Core.Transform.FindUnused
     Smol.Core.Transform.FlattenLets
     Smol.Core.Transform.FloatDown
     Smol.Core.Transform.FloatUp
+    Smol.Core.Transform.Helpers
     Smol.Core.Transform.Inliner
     Smol.Core.Types
     Smol.Core.Types.Annotated

@@ -47,7 +47,9 @@ checkModule input moduleItems = do
 
 transformModule ::
   ( Ord ann,
-    Ord (dep Identifier)
+    Ord (dep Identifier),
+    Eq (dep TypeName),
+    Eq (dep Constructor)
   ) =>
   Module dep ann ->
   Module dep ann

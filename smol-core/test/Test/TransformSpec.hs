@@ -10,9 +10,11 @@ import qualified Data.List.NonEmpty as NE
 import Data.Maybe (isJust)
 import qualified Data.Set as S
 import qualified Data.Text as T
+import Smol.Core.Helpers
 import Smol.Core.Parser
 import Smol.Core.Transform
 import Smol.Core.Transform.BetaReduce
+import Smol.Core.Transform.ConstantFold
 import Smol.Core.Transform.EtaReduce
 import Smol.Core.Transform.FindUnused
 import Smol.Core.Transform.FlattenLets
@@ -26,6 +28,24 @@ import Test.Hspec
 spec :: Spec
 spec = do
   describe "Transform" $ do
+    describe "ConstantFolding" $ do
+      let singleDefs =
+            [ ("id", "id"),
+              ("1 + a", "a + 1"),
+              ("2 + 2", "4"),
+              ("23 + 1 + a + 100 + 200", "a + 324")
+            ]
+
+      traverse_
+        ( \(input, expectText) -> it ("Constant folds: " <> input) $ do
+            let expr = getRight $ parseExprAndFormatError (T.pack input)
+                expected = getRight $ parseExprAndFormatError (T.pack expectText)
+                result = constantFold expr
+
+            void result `shouldBe` void expected
+        )
+        singleDefs
+
     describe "BetaReduce" $ do
       let singleDefs =
             [ ("id", "id"),
@@ -256,6 +276,9 @@ spec = do
               ),
               ( "let shownatural = (\\nat -> case nat { Suc _ -> \"Oh\", _ -> \"\" } : Natural -> String); shownatural (Suc Zero)",
                 "case (Suc Zero) { Suc _ -> \"Oh\", _ -> \"\" }"
+              ),
+              ( "let addMany = (\\a -> 1 + 123 + a + 123 : Int -> Int); addMany 1",
+                "248"
               )
             ]
       traverse_
