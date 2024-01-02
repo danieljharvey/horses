@@ -217,9 +217,9 @@ instance Pretty Type where
   pretty (FloatingPointType PPC_FP128FP) = "ppc_fp128"
 
   pretty VoidType = "void"
-  pretty (PointerType ref (AS.AddrSpace addr))
-    | addr == 0 = pretty ref <> "*"
-    | otherwise = pretty ref <+> "addrspace" <> parens (pretty addr) <> "*"
+  pretty (PointerType (AS.AddrSpace addr))
+    | addr == 0 = "ptr"
+    | otherwise = "ptr" <+> "addrspace" <> parens (pretty addr)
   pretty ft@(FunctionType {..}) = pretty resultType <+> ppFunctionArgumentTypes argumentTypes isVarArg
   pretty (VectorType {..}) = "<" <> pretty nVectorElements <+> "x" <+> pretty elementType <> ">"
   pretty (StructureType {..}) = if isPacked
@@ -307,6 +307,17 @@ ppAttrInGroup = \case
 
 instance Pretty FunctionAttribute where
   pretty = \case
+   Hot                 -> "hot"
+   NoCallback          -> "nocallback"
+   NoCfCheck           -> "nocf_check"
+   NoMerge             -> "nomerge"
+   NoProfile           -> "noprofile"
+   NullPointerIsValid  -> "null_pointer_is_valid"
+   OptForFuzzing       -> "optforfuzzing"
+   SanitizeMemTag      -> "sanitize_memtag"
+   ShadowCallStack     -> "shadowcallstack"
+   SpeculativeLoadHardening -> "speculative_load_hardening"
+   VScaleRange vMin vMax -> "vscale_range" <+> pretty vMin <+> "," <+> pretty vMax
    NoReturn            -> "noreturn"
    NoUnwind            -> "nounwind"
    FA.ReadNone         -> "readnone"
@@ -358,18 +369,19 @@ instance Pretty ParameterAttribute where
   pretty = \case
     ZeroExt                    -> "zeroext"
     SignExt                    -> "signext"
+    NoUndef                    -> "noundef"
     InReg                      -> "inreg"
-    SRet                       -> "sret"
+    SRet ty                    -> "sret" <+> parens (pretty ty)
     Alignment word             -> "align" <+> pretty word
     NoAlias                    -> "noalias"
-    ByVal                      -> "byval"
+    ByVal ty                   -> "byval" <+> parens (pretty ty)
     NoCapture                  -> "nocapture"
     Nest                       -> "nest"
     PA.ReadNone                -> "readnone"
     PA.ReadOnly                -> "readonly"
     PA.WriteOnly               -> "writeonly"
     PA.NoFree                  -> "nofree"
-    InAlloca                   -> "inalloca"
+    InAlloca ty                -> "inalloca" <+> parens (pretty ty)
     NonNull                    -> "nonnull"
     Dereferenceable word       -> "dereferenceable" <> parens (pretty word)
     DereferenceableOrNull word -> "dereferenceable_or_null" <> parens (pretty word)
@@ -535,7 +547,7 @@ instance Pretty Instruction where
     Load {..}   -> "load" <+> ppMAtomicity maybeAtomicity <+> ppVolatile volatile <+> pretty argTy `cma` ppTyped address <+> ppMOrdering maybeAtomicity <> ppAlign alignment <+> ppInstrMeta metadata
       where
         argTy = case typeOf address of
-          PointerType argTy_ _ -> argTy_
+          PointerType _ -> ptr
           _ -> error "invalid load of non-pointer type. (Malformed AST)"
     Phi {..}    -> "phi" <+> pretty type' <+> commas (fmap phiIncoming incomingValues) <+> ppInstrMeta metadata
 
@@ -1078,7 +1090,7 @@ instance Pretty C.Constant where
   pretty (C.Float (F.X86_FP80 val _))  = pretty $ pack $ printf "%6.6e" val
   pretty (C.Float (F.PPC_FP128 val _)) = pretty $ pack $ printf "%6.6e" val
 
-  pretty (C.GlobalReference ty nm) = "@" <> pretty nm
+  pretty (C.GlobalReference nm) = "@" <> pretty nm
   pretty (C.Vector args) = "<" <+> commas (fmap ppTyped args) <+> ">"
 
   pretty (C.Add {..})    = "add"  <+> ppTyped operand0 `cma` pretty operand1
@@ -1090,8 +1102,6 @@ instance Pretty C.Constant where
   pretty (C.And {..})    = "and"  <+> ppTyped operand0 `cma` pretty operand1
   pretty (C.Or {..})     = "or"   <+> ppTyped operand0 `cma` pretty operand1
   pretty (C.Xor {..})    = "xor"  <+> ppTyped operand0 `cma` pretty operand1
-  pretty (C.SDiv {..})   = "sdiv"  <+> ppTyped operand0 `cma` pretty operand1
-  pretty (C.UDiv {..})   = "udiv"  <+> ppTyped operand0 `cma` pretty operand1
   pretty (C.SRem {..})   = "srem"  <+> ppTyped operand0 `cma` pretty operand1
   pretty (C.URem {..})   = "urem"  <+> ppTyped operand0 `cma` pretty operand1
 
@@ -1138,7 +1148,7 @@ instance Pretty C.Constant where
   pretty C.GetElementPtr {..} = "getelementptr" <+> bounds inBounds <+> parens (commas (pretty argTy : fmap ppTyped (address:indices)))
     where
       argTy = case typeOf address of
-        PointerType argTy_ _ -> argTy_
+        PointerType _ -> ptr
         _ -> error "invalid load of non-pointer type. (Malformed AST)"
       bounds True = "inbounds"
       bounds False = mempty
@@ -1326,7 +1336,7 @@ ppCall Call { function = Right f,..}
       ftype = if fnIsVarArg
               then ppFunctionArgumentTypes fnArgumentTypes fnIsVarArg 
               else mempty
-      referencedType (PointerType t _) = referencedType t
+      referencedType (PointerType  _) = ptr
       referencedType t                 = t
 
       tail = case tailCallKind of
@@ -1334,7 +1344,7 @@ ppCall Call { function = Right f,..}
         Just MustTail -> "musttail"
         Just NoTail -> "notail"
         Nothing -> mempty
-ppCall Call { function = Left (IA.InlineAssembly {..}), ..}
+ppCall Call { function = Left (IA.InlineAssembly {type'=_iaType, ..}), ..}
   = tail <+> "call" <+> pretty callingConvention <+> ppReturnAttributes returnAttributes <+> pretty type'
     <+> "asm" <+> sideeffect' <+> align' <+> dialect' <+> dquotes (pretty (pack (BL.unpack assembly))) <> ","
     <+> dquotes (pretty constraints) <> parens (commas $ fmap ppArguments arguments) <+> ppFunctionAttributes functionAttributes
@@ -1369,7 +1379,7 @@ ppInvoke Invoke { function' = Right f,..}
       ftype = if fnIsVarArg
               then ppFunctionArgumentTypes fnArgumentTypes fnIsVarArg
               else mempty
-      referencedType (PointerType t _) = referencedType t
+      referencedType (PointerType _) = ptr
       referencedType t                 = t
 ppInvoke x = error "Non-callable argument. (Malformed AST)"
 
