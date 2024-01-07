@@ -1,0 +1,20 @@
+name: nix check
+
+on:
+  push:
+
+jobs:
+  nix-develop:
+    name: nix develop
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout 🛎️
+        uses: actions/checkout@v4
+
+      - uses: DeterminateSystems/nix-installer-action@main
+
+      - uses: DeterminateSystems/magic-nix-cache-action@main
+
+      - name: nix develop --command true
+        run: |
+          nix develop --print-build-logs --command true
