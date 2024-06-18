@@ -45,8 +45,8 @@ instance Typed C.Constant where
                                   []    -> error "Vectors of size zero are not allowed. (Malformed AST)"
                                   (x:_) -> typeOf x
   typeOf (C.Undef t)     = t
-  typeOf (C.BlockAddress {..})   = ptr i8
-  typeOf (C.GlobalReference t _) = t
+  typeOf (C.BlockAddress {..})   = ptr
+  typeOf (C.GlobalReference t ) = ptr
   typeOf (C.Add {..})     = typeOf operand0
   typeOf (C.FAdd {..})    = typeOf operand0
   typeOf (C.FDiv {..})    = typeOf operand0
@@ -55,8 +55,6 @@ instance Typed C.Constant where
   typeOf (C.FSub {..})    = typeOf operand0
   typeOf (C.Mul {..})     = typeOf operand0
   typeOf (C.FMul {..})    = typeOf operand0
-  typeOf (C.UDiv {..})    = typeOf operand0
-  typeOf (C.SDiv {..})    = typeOf operand0
   typeOf (C.URem {..})    = typeOf operand0
   typeOf (C.SRem {..})    = typeOf operand0
   typeOf (C.Shl {..})     = typeOf operand0
@@ -92,14 +90,12 @@ instance Typed C.Constant where
   typeOf (C.ShuffleVector {..})   = case (typeOf operand0, typeOf mask) of
                                       (VectorType _ t, VectorType m _) -> VectorType m t
                                       _ -> error "The first operand of an shufflevector instruction is a value of vector type. (Malformed AST)"
-  typeOf (C.ExtractValue {..})    = extractValueType indices' (typeOf aggregate)
-  typeOf (C.InsertValue {..})     = typeOf aggregate
   typeOf (C.TokenNone)          = TokenType
   typeOf (C.AddrSpaceCast {..}) = type'
 
 getElementPtrType :: Type -> [C.Constant] -> Type
-getElementPtrType ty [] = ptr ty
-getElementPtrType (PointerType ty _) (_:is) = getElementPtrType ty is
+getElementPtrType ty [] = ptr
+getElementPtrType (PointerType ty ) (_:is) = ptr
 getElementPtrType (StructureType _ elTys) (C.Int 32 val:is) =
   getElementPtrType (elTys !! fromIntegral val) is
 getElementPtrType (VectorType _ elTy) (_:is) = getElementPtrType elTy is
@@ -107,7 +103,7 @@ getElementPtrType (ArrayType _ elTy) (_:is) = getElementPtrType elTy is
 getElementPtrType _ _ = error "Expecting aggregate type. (Malformed AST)"
 
 getElementType :: Type -> Type
-getElementType (PointerType t _) = t
+getElementType (PointerType t ) = ptr
 getElementType _ = error $ "Expecting pointer type. (Malformed AST)"
 
 extractValueType :: [Word32] -> Type -> Type
