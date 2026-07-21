@@ -29,7 +29,7 @@ library
     base                 >= 4.6   && < 5.0,
     bytestring           >= 0.1   && < 0.11,
     llvm-hs-pure         >= 9.0   && < 10.0,
-    text                 >= 1.2   && < 2.0,
+    text >=1.2 && <2.2,
     prettyprinter        >= 1.2   && < 1.8
 
 Test-suite test
@@ -40,7 +40,7 @@ Test-suite test
   build-depends:
     llvm-hs-pretty,
     base                 >= 4.6  && < 5.0,
-    text                 >= 0.1  && < 1.3,
+    text >=0.1 && <2.2,
     mtl                  >= 2.2  && < 3.0,
     transformers         >= 0.3  && < 0.6,
     directory            >= 1.2  && < 2.0,
